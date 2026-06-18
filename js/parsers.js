@@ -84,6 +84,29 @@ function parseHtml(htmlText, docType = 'plain') {
     return ir;
 }
 
+/**
+ * DOM 요소 안의 인라인 서식을 runs 배열로 추출
+ * bold({text, bold:true}), italic({text, italic:true}), code({text, code:true}) 구분
+ * hwpx.js buildParaRuns()와 대응됨
+ */
+function extractInlineRuns(el) {
+    const runs = [];
+    function walk(node, bold, italic, code) {
+        if (node.nodeType === 3) {
+            const text = sanitize(node.textContent || '');
+            if (text) runs.push({ text, bold: !!bold, italic: !!italic, code: !!code });
+        } else if (node.nodeType === 1) {
+            const t = (node.tagName || '').toLowerCase();
+            const b = bold  || t === 'strong' || t === 'b';
+            const i = italic || t === 'em'     || t === 'i';
+            const c = code  || t === 'code';
+            for (const ch of node.childNodes) walk(ch, b, i, c);
+        }
+    }
+    for (const ch of el.childNodes) walk(ch, false, false, false);
+    return runs;
+}
+
 /** HTML 노드 재귀 순회 → 의미 있는 요소를 IR 블록으로 추출 */
 function extractFromNode(node, blocks) {
     for (const child of node.childNodes) {
@@ -95,10 +118,12 @@ function extractFromNode(node, blocks) {
             if (text) blocks.push({ type: 'heading', level: parseInt(tag[1], 10), text });
 
         } else if (tag === 'p') {
-            // <p> → para 블록; 빈 <p>는 빈 줄(blank) 블록으로 처리
-            const text = sanitize(child.textContent.trim());
-            if (text) {
-                blocks.push({ type: 'para', text });
+            // <p> → 인라인 서식 보존 runs 배열로 추출
+            // textContent 대신 DOM 순회 → bold/italic/code 플래그 유지
+            const runs = extractInlineRuns(child);
+            const hasText = runs.some(r => r.text && r.text.trim());
+            if (hasText) {
+                blocks.push({ type: 'para', runs });
             } else {
                 blocks.push({ type: 'blank' });
             }

@@ -1,6 +1,31 @@
 {
-  "current": "3.6.0",
+  "current": "3.7.0",
   "versions": [
+    {
+      "version": "3.7.0",
+      "date": "2026-06-18",
+      "user": [
+        "마크다운 볼드(**텍스트**), 이탤릭(*텍스트*) 변환 시 한글 파일에도 서식 적용",
+        "변환 옵션: 문서 제목 최상단 배치, 4개 항목(문서유형·폰트·글꼴·용지) 한 줄 정렬",
+        "페이지 여백 설정이 실제 종이 모양으로 시각화",
+        "변환기 섹션에서도 직접 파일 드래그·업로드 가능 (미니 드롭존 추가)",
+        "'이 포맷으로 변환하기' 이동 후 파일 바로 업로드 가능",
+        "포맷 팝업 본문 내용 왼쪽 여백 추가 (가독성 개선)"
+      ],
+      "dev": [
+        "parsers.js extractInlineRuns() 추가 — DOM childNode 재귀 순회로 <strong>/<em>/<code> 서식 보존",
+        "extractFromNode <p> 처리: textContent → extractInlineRuns() runs 배열로 변경",
+        "hwpx.js charBase() italic 매개변수 추가, charPr 7(본문bold), 8(본문italic) 추가",
+        "charProperties itemCnt 7→9, buildParaRuns(runs) 함수 추가",
+        "buildSection para 블록: block.runs 존재 시 buildParaRuns 호출",
+        "index.html 옵션 패널 완전 재구성 — 미니드롭존·4열그리드·여백종이시각화",
+        "style.css .options-grid-4col, .margin-visual, .mini-drop-zone 추가",
+        ".modal-body padding: 20px 24px 추가 (포맷 팝업 여백)",
+        "initMiniDropZone(), initPaperSizeLabel() 추가 (app.js)",
+        "updateDropZoneUI(): 파일 선택 시 미니드롭존 has-file 상태 동기화",
+        "sw.js CACHE_VERSION to-hwpx-v3.7.0"
+      ]
+    },
     {
       "version": "3.6.0",
       "date": "2026-06-18",

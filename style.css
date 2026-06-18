@@ -574,11 +574,128 @@ a:hover { text-decoration: underline; }
     border-bottom: 1px solid var(--c-border);
 }
 
-/* 옵션 폼 2열 묶음 — select 2개를 나란히 배치 */
+/* 옵션 폼 2열 묶음 (레거시 — 필요시 사용) */
 .form-group-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 0 16px;
+}
+
+/* 4열 옵션 그리드 — 문서유형·폰트·글꼴크기·용지크기 한 줄 */
+.options-grid-4col {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0 10px;
+}
+
+/* 변환기 섹션 미니 드롭존 */
+.mini-drop-zone {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 14px;
+    border: 2px dashed var(--c-border);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    background: var(--c-surface-alt);
+    margin-bottom: 16px;
+    transition: border-color var(--trans), background var(--trans);
+    user-select: none;
+}
+.mini-drop-zone:hover,
+.mini-drop-zone.drag-over {
+    border-color: var(--c-primary);
+    background: var(--c-primary-light);
+}
+.mini-drop-zone.has-file {
+    border-color: var(--c-success);
+    background: var(--c-success-light);
+}
+.mini-drop-icon { font-size: 1.1rem; }
+#mini-drop-label {
+    font-size: 0.85rem;
+    color: var(--c-text-sub);
+    flex: 1;
+}
+.detected-badge {
+    background: var(--c-primary);
+    color: #fff;
+    padding: 2px 8px;
+    border-radius: 100px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+}
+
+/* 페이지 여백 — 종이 시각화 레이아웃 */
+.margin-paper-wrap { margin-bottom: 18px; }
+.margin-visual {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 14px 16px;
+    background: var(--c-surface-alt);
+    border: 1.5px solid var(--c-border);
+    border-radius: var(--radius-md);
+    margin-top: 8px;
+}
+.margin-row-top,
+.margin-row-bottom { display: flex; justify-content: center; }
+.margin-row-middle {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+.margin-row-hf {
+    display: flex;
+    gap: 28px;
+    padding-top: 10px;
+    border-top: 1px dashed var(--c-border);
+    margin-top: 2px;
+}
+.margin-paper-icon {
+    width: 68px;
+    height: 88px;
+    background: #fff;
+    border: 2px solid var(--c-border);
+    border-radius: 2px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    box-shadow: 2px 3px 6px rgba(0,0,0,0.08);
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+.margin-paper-label {
+    font-size: 10px;
+    color: var(--c-text-muted);
+    font-weight: 700;
+    letter-spacing: 0.05em;
+}
+.margin-field {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+}
+.margin-field--horiz {
+    flex-direction: row;
+    gap: 6px;
+    align-items: center;
+}
+.margin-label {
+    font-size: 0.7rem;
+    color: var(--c-text-muted);
+    font-weight: 600;
+    white-space: nowrap;
+}
+.margin-input {
+    width: 52px;
+    padding: 5px 6px !important;
+    text-align: center;
 }
 
 .form-row {
@@ -610,27 +727,8 @@ a:hover { text-decoration: underline; }
     border-color: var(--c-primary);
 }
 
-/* 페이지 여백 6칸 그리드 (본문 4방향 + 머리말/꼬리말) */
-.margin-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
-}
-.margin-field {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-.margin-label {
-    font-size: 0.78rem;
-    color: var(--c-text-sub);
-    font-weight: 600;
-    margin-bottom: 0;
-}
-.margin-input {
-    padding: 7px 10px !important;
-    text-align: center;
-}
+/* margin-grid는 margin-visual로 교체됨 — 레거시 선택자 유지 */
+.margin-grid { display: none; }
 
 .checkbox-row {
     display: flex;
@@ -1103,8 +1201,8 @@ a:hover { text-decoration: underline; }
     /* 변환기 레이아웃 단일 컬럼 */
     .converter-layout { grid-template-columns: 1fr; }
     .form-group-row { grid-template-columns: 1fr; }
+    .options-grid-4col { grid-template-columns: repeat(2, 1fr); }
     #pipeline-steps { grid-template-columns: repeat(4, 1fr); }
-    .margin-grid { grid-template-columns: repeat(2, 1fr); }
 
     /* 포맷 그리드 작은 카드 */
     .format-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
@@ -1314,6 +1412,7 @@ a:hover { text-decoration: underline; }
 .modal-body {
     overflow-y: auto;
     flex: 1;
+    padding: 20px 24px;
 }
 
 

@@ -65,6 +65,8 @@ document.addEventListener('DOMContentLoaded', () => {
     initNavLinks();          // 부드러운 스크롤 네비게이션
     initModals();            // 미리보기·업데이트 내역 모달
     initBookmarkButton();    // 즐겨찾기 안내 버튼
+    initMiniDropZone();      // 변환기 섹션 내 미니 드롭존
+    initPaperSizeLabel();    // 용지 크기 변경 시 여백 종이 레이블 동기화
 });
 
 
@@ -214,6 +216,14 @@ function updateDropZoneUI(file, ext) {
             </button>
         </div>
     `;
+
+    // 미니 드롭존도 선택된 파일 정보 반영
+    const mini      = document.getElementById('mini-drop-zone');
+    const miniLabel = document.getElementById('mini-drop-label');
+    const miniBadge = document.getElementById('mini-drop-badge');
+    if (mini)      mini.classList.add('has-file');
+    if (miniLabel) miniLabel.textContent = `${escHtml(file.name)}  (${formatBytes(file.size)}) — 다른 파일 선택`;
+    if (miniBadge) { miniBadge.textContent = ext.toUpperCase(); miniBadge.hidden = false; }
 }
 
 /** 감지된 포맷 배지 업데이트 */
@@ -1059,6 +1069,41 @@ function closeChangelog() {
     document.body.style.overflow = '';
 }
 
+
+// ─────────────────────────────────────────────────────────────────────────
+// [미니 드롭존 — 변환기 섹션 내 파일 업로드]
+// ─────────────────────────────────────────────────────────────────────────
+function initMiniDropZone() {
+    const zone      = document.getElementById('mini-drop-zone');
+    const fileInput = document.getElementById('file-input');
+    if (!zone || !fileInput) return;
+
+    zone.addEventListener('click', () => fileInput.click());
+    zone.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') fileInput.click();
+    });
+    zone.addEventListener('dragover', e => {
+        e.preventDefault();
+        zone.classList.add('drag-over');
+    });
+    zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+    zone.addEventListener('drop', e => {
+        e.preventDefault();
+        zone.classList.remove('drag-over');
+        const file = e.dataTransfer?.files?.[0];
+        if (file) handleFileSelect(file);
+    });
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// [용지 크기 레이블 동기화 — 여백 종이 아이콘 위 표시]
+// ─────────────────────────────────────────────────────────────────────────
+function initPaperSizeLabel() {
+    const sel   = document.getElementById('paper-size');
+    const label = document.getElementById('margin-paper-label');
+    if (!sel || !label) return;
+    sel.addEventListener('change', () => { label.textContent = sel.value; });
+}
 
 // ─────────────────────────────────────────────────────────────────────────
 // [즐겨찾기 안내 버튼]

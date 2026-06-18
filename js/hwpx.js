@@ -211,15 +211,16 @@ function buildHeaderXml(fontName, basePt) {
       </hh:fontface>`;
 
     // bold=true 시: boldFn이 있으면 font face 1 참조(별도 Bold 폰트), 없으면 <hh:bold/> 태그
-    const charBase = (id, height, bold = false) => {
+    const charBase = (id, height, bold = false, italic = false) => {
         const fi = (bold && boldFn) ? '1' : '0';
-        const boldTag = (bold && !boldFn) ? '\n        <hh:bold/>' : '';
+        const boldTag   = (bold   && !boldFn) ? '\n        <hh:bold/>'   : '';
+        const italicTag = italic ? '\n        <hh:italic/>' : '';
         return `      <hh:charPr id="${id}" height="${height}" textColor="#000000" shadeColor="none" useFontSpace="0" useKerning="0" symMark="NONE" borderFillIDRef="1">
         <hh:fontRef hangul="${fi}" latin="${fi}" hanja="${fi}" japanese="${fi}" other="${fi}" symbol="${fi}" user="${fi}"/>
         <hh:ratio hangul="100" latin="100" hanja="100" japanese="100" other="100" symbol="100" user="100"/>
         <hh:spacing hangul="0" latin="0" hanja="0" japanese="0" other="0" symbol="0" user="0"/>
         <hh:relSz hangul="100" latin="100" hanja="100" japanese="100" other="100" symbol="100" user="100"/>
-        <hh:offset hangul="0" latin="0" hanja="0" japanese="0" other="0" symbol="0" user="0"/>${boldTag}
+        <hh:offset hangul="0" latin="0" hanja="0" japanese="0" other="0" symbol="0" user="0"/>${boldTag}${italicTag}
       </hh:charPr>`;
     };
 
@@ -246,15 +247,17 @@ ${fontFaceBlock('OTHER')}
 ${fontFaceBlock('SYMBOL')}
 ${fontFaceBlock('USER')}
     </hh:fontfaces>
-    <hh:charProperties itemCnt="7">
-      <!-- 0=본문, 1=H1 bold, 2=H2 bold, 3=H3 bold, 4=H4 bold, 5=표머리 bold, 6=코드 -->
-${charBase(0, sz.body,  false)}
-${charBase(1, sz.h1,   true)}
-${charBase(2, sz.h2,   true)}
-${charBase(3, sz.h3,   true)}
-${charBase(4, sz.h4,   true)}
-${charBase(5, sz.tblHd,true)}
-${charBase(6, sz.code, false).replace('"#000000"', '"#333333"')}
+    <hh:charProperties itemCnt="9">
+      <!-- 0=본문, 1=H1 bold, 2=H2 bold, 3=H3 bold, 4=H4 bold, 5=표머리 bold, 6=코드, 7=본문bold, 8=본문italic -->
+${charBase(0, sz.body,  false, false)}
+${charBase(1, sz.h1,   true,  false)}
+${charBase(2, sz.h2,   true,  false)}
+${charBase(3, sz.h3,   true,  false)}
+${charBase(4, sz.h4,   true,  false)}
+${charBase(5, sz.tblHd,true,  false)}
+${charBase(6, sz.code, false, false).replace('"#000000"', '"#333333"')}
+${charBase(7, sz.body, true,  false)}
+${charBase(8, sz.body, false, true)}
     </hh:charProperties>
     <hh:paraProperties itemCnt="8">
       <!-- id  정렬    행간  전    후   들여 -->
@@ -325,6 +328,27 @@ function buildPara(text, charId = '0', paraId = '0') {
     const pid  = _nextParaId();
     return `<hp:p id="${pid}" paraPrIDRef="${paraId}" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0">` +
         `<hp:run charPrIDRef="${charId}"><hp:t>${safe}</hp:t></hp:run></hp:p>`;
+}
+
+/**
+ * 인라인 runs 배열(bold/italic/code 플래그) → 단락 XML
+ * parsers.js extractInlineRuns()가 생성한 runs 배열을 처리한다.
+ * charPr ID: 0=본문, 6=코드, 7=본문bold, 8=본문italic
+ */
+function buildParaRuns(runs, paraId = '0') {
+    const pid = _nextParaId();
+    let runsXml = '';
+    for (const run of (runs || [])) {
+        if (!run.text) continue;
+        const safe = xmlEsc(replaceEmoji(run.text));
+        let cId = '0';
+        if      (run.code)  cId = '6';
+        else if (run.bold)  cId = '7';
+        else if (run.italic) cId = '8';
+        runsXml += `<hp:run charPrIDRef="${cId}"><hp:t>${safe}</hp:t></hp:run>`;
+    }
+    if (!runsXml) return buildBlankPara();
+    return `<hp:p id="${pid}" paraPrIDRef="${paraId}" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0">${runsXml}</hp:p>`;
 }
 
 /** 빈 단락 (빈 줄 표현용) — 공백 문자 하나 포함 */
@@ -503,8 +527,11 @@ function buildSection(ir, marginsHwp, paperKey) {
             parts.push(buildPara(block.text || '', charId, paraId));
 
         } else if (bt === 'para') {
-            // 빈 텍스트 para → 빈 단락(빈 줄 표현)
-            if (!block.text || !block.text.trim()) {
+            if (block.runs && block.runs.length > 0) {
+                // 인라인 서식(bold/italic/code) 보존 경로
+                const hasText = block.runs.some(r => r.text && r.text.trim());
+                parts.push(hasText ? buildParaRuns(block.runs, '0') : buildBlankPara());
+            } else if (!block.text || !block.text.trim()) {
                 parts.push(buildBlankPara());
             } else {
                 parts.push(buildPara(block.text, '0', '0'));

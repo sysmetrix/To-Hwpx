@@ -90,7 +90,7 @@
         <div class="container">
             <span>｢BWYF｣ AX Challenger 2026</span>
             <button class="util-changelog-btn" id="open-changelog" aria-label="업데이트 내역 보기">
-                📋 v3.6.0 업데이트 내역
+                📋 v3.7.0 업데이트 내역
             </button>
         </div>
     </div>
@@ -199,45 +199,24 @@
             <div class="options-panel">
                 <h3>⚙️ 변환 옵션</h3>
 
+                <!-- 미니 드롭존 — 변환기 섹션에서 직접 파일 업로드 -->
+                <div id="mini-drop-zone" class="mini-drop-zone" role="button" tabindex="0"
+                     aria-label="파일을 드래그하거나 클릭하여 선택">
+                    <span class="mini-drop-icon">📂</span>
+                    <span id="mini-drop-label">파일을 드래그하거나 클릭하여 선택</span>
+                    <span id="mini-drop-badge" class="detected-badge" hidden></span>
+                </div>
+
                 <!-- 감지된 포맷 표시 -->
                 <div class="detected-row">
                     <span>감지된 포맷:</span>
-                    <!-- app.js의 updateFormatBadge에서 내용 업데이트 -->
                     <span id="detected-format" aria-live="polite"></span>
                 </div>
-
-                <!-- 포맷 카드 클릭 시 표시되는 힌트 -->
                 <div id="format-hint" role="status" aria-live="polite"></div>
 
-                <!-- 문서 유형 + 한글 폰트 (2열) -->
-                <div class="form-group-row">
-                    <!-- [수정 시] 옵션 값은 parsers.js의 emptyIR docType과 맞춰야 함 -->
-                    <div class="form-row">
-                        <label for="doc-type">문서 유형</label>
-                        <select id="doc-type" name="doc-type">
-                            <option value="plain" selected>일반 문서</option>
-                            <option value="official">공문 (명사형 종결체)</option>
-                            <option value="report">보고서</option>
-                        </select>
-                    </div>
-                    <div class="form-row">
-                        <label for="doc-font">한글 폰트</label>
-                        <select id="doc-font" name="doc-font">
-                            <option value="휴먼명조" selected>휴먼명조 (기본)</option>
-                            <option value="바탕">바탕</option>
-                            <option value="함초롬바탕">함초롬바탕</option>
-                            <option value="함초롬돋움">함초롬돋움</option>
-                            <option value="KoPub돋움체 Medium">KoPub돋움체 Medium</option>
-                            <option value="맑은 고딕">맑은 고딕</option>
-                            <option value="나눔고딕">나눔고딕</option>
-                            <option value="굴림">굴림</option>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- 사용자 지정 제목 입력 (전체 폭) -->
+                <!-- 문서 제목 (전체 폭 — 가장 먼저 설정) -->
                 <div class="form-row">
-                    <label for="doc-title">문서 제목 (선택 — 비우면 자동 감지)</label>
+                    <label for="doc-title">문서 제목 <small style="font-weight:400;color:var(--c-text-muted)">(선택 — 비우면 자동 감지)</small></label>
                     <input type="text"
                            id="doc-title"
                            name="doc-title"
@@ -245,15 +224,37 @@
                            maxlength="200">
                 </div>
 
-                <!-- 글꼴 크기 + 용지 크기 (2열) -->
-                <div class="form-group-row">
+                <!-- 4열: 문서 유형 | 한글 폰트 | 글꼴 크기 | 용지 크기 -->
+                <!-- [수정 시] 옵션 값은 parsers.js의 emptyIR docType과 맞춰야 함 -->
+                <div class="options-grid-4col">
+                    <div class="form-row">
+                        <label for="doc-type">문서 유형</label>
+                        <select id="doc-type" name="doc-type">
+                            <option value="plain" selected>일반 문서</option>
+                            <option value="official">공문</option>
+                            <option value="report">보고서</option>
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <label for="doc-font">한글 폰트</label>
+                        <select id="doc-font" name="doc-font">
+                            <option value="휴먼명조" selected>휴먼명조</option>
+                            <option value="바탕">바탕</option>
+                            <option value="함초롬바탕">함초롬바탕</option>
+                            <option value="함초롬돋움">함초롬돋움</option>
+                            <option value="KoPub돋움체 Medium">KoPub돋움체</option>
+                            <option value="맑은 고딕">맑은 고딕</option>
+                            <option value="나눔고딕">나눔고딕</option>
+                            <option value="굴림">굴림</option>
+                        </select>
+                    </div>
                     <div class="form-row">
                         <label for="font-size">글꼴 크기</label>
                         <select id="font-size" name="font-size">
                             <option value="9">9pt</option>
                             <option value="10">10pt</option>
                             <option value="11">11pt</option>
-                            <option value="12" selected>12pt (기본)</option>
+                            <option value="12" selected>12pt</option>
                             <option value="13">13pt</option>
                             <option value="14">14pt</option>
                             <option value="16">16pt</option>
@@ -263,48 +264,64 @@
                     <div class="form-row">
                         <label for="paper-size">용지 크기</label>
                         <select id="paper-size" name="paper-size">
-                            <option value="A4" selected>A4 (210×297mm)</option>
-                            <option value="B5">B5 (182×257mm)</option>
-                            <option value="Letter">Letter (8.5×11")</option>
+                            <option value="A4" selected>A4</option>
+                            <option value="B5">B5</option>
+                            <option value="Letter">Letter</option>
                         </select>
                     </div>
                 </div>
 
-                <!-- 페이지 여백 (mm 단위)
+                <!-- 페이지 여백 — 실제 종이 모양으로 시각화
                      hwpx.js buildHwpx()에서 mm → HWPUNIT 변환 (1mm ≈ 283 HWPUNIT)
                      [수정 시] 기본값 변경은 app.js state.pageMargins 와 hwpx.js DEFAULT_MARGINS_MM 에서 -->
-                <div class="form-row">
+                <div class="form-row margin-paper-wrap">
                     <label>페이지 여백 (mm)</label>
-                    <div class="margin-grid">
-                        <div class="margin-field">
-                            <label for="margin-top" class="margin-label">위</label>
-                            <input type="number" id="margin-top" class="margin-input"
-                                   value="10" min="0" max="60" step="1" aria-label="위 여백 mm">
+                    <div class="margin-visual">
+                        <!-- 위 여백 -->
+                        <div class="margin-row-top">
+                            <div class="margin-field">
+                                <label for="margin-top" class="margin-label">위</label>
+                                <input type="number" id="margin-top" class="margin-input"
+                                       value="10" min="0" max="60" step="1" aria-label="위 여백 mm">
+                            </div>
                         </div>
-                        <div class="margin-field">
-                            <label for="margin-bottom" class="margin-label">아래</label>
-                            <input type="number" id="margin-bottom" class="margin-input"
-                                   value="10" min="0" max="60" step="1" aria-label="아래 여백 mm">
+                        <!-- 왼쪽 | 종이 | 오른쪽 -->
+                        <div class="margin-row-middle">
+                            <div class="margin-field margin-field--horiz">
+                                <label for="margin-left" class="margin-label">왼쪽</label>
+                                <input type="number" id="margin-left" class="margin-input"
+                                       value="20" min="0" max="60" step="1" aria-label="왼쪽 여백 mm">
+                            </div>
+                            <div class="margin-paper-icon" aria-hidden="true">
+                                <span>📄</span>
+                                <span id="margin-paper-label" class="margin-paper-label">A4</span>
+                            </div>
+                            <div class="margin-field margin-field--horiz">
+                                <input type="number" id="margin-right" class="margin-input"
+                                       value="20" min="0" max="60" step="1" aria-label="오른쪽 여백 mm">
+                                <label for="margin-right" class="margin-label">오른쪽</label>
+                            </div>
                         </div>
-                        <div class="margin-field">
-                            <label for="margin-left" class="margin-label">왼쪽</label>
-                            <input type="number" id="margin-left" class="margin-input"
-                                   value="20" min="0" max="60" step="1" aria-label="왼쪽 여백 mm">
+                        <!-- 아래 여백 -->
+                        <div class="margin-row-bottom">
+                            <div class="margin-field">
+                                <input type="number" id="margin-bottom" class="margin-input"
+                                       value="10" min="0" max="60" step="1" aria-label="아래 여백 mm">
+                                <label for="margin-bottom" class="margin-label">아래</label>
+                            </div>
                         </div>
-                        <div class="margin-field">
-                            <label for="margin-right" class="margin-label">오른쪽</label>
-                            <input type="number" id="margin-right" class="margin-input"
-                                   value="20" min="0" max="60" step="1" aria-label="오른쪽 여백 mm">
-                        </div>
-                        <div class="margin-field">
-                            <label for="margin-header" class="margin-label">머리말</label>
-                            <input type="number" id="margin-header" class="margin-input"
-                                   value="10" min="0" max="30" step="1" aria-label="머리말 여백 mm">
-                        </div>
-                        <div class="margin-field">
-                            <label for="margin-footer" class="margin-label">꼬리말</label>
-                            <input type="number" id="margin-footer" class="margin-input"
-                                   value="10" min="0" max="30" step="1" aria-label="꼬리말 여백 mm">
+                        <!-- 머리말 / 꼬리말 -->
+                        <div class="margin-row-hf">
+                            <div class="margin-field">
+                                <label for="margin-header" class="margin-label">머리말</label>
+                                <input type="number" id="margin-header" class="margin-input"
+                                       value="10" min="0" max="30" step="1" aria-label="머리말 여백 mm">
+                            </div>
+                            <div class="margin-field">
+                                <label for="margin-footer" class="margin-label">꼬리말</label>
+                                <input type="number" id="margin-footer" class="margin-input"
+                                       value="10" min="0" max="30" step="1" aria-label="꼬리말 여백 mm">
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -318,16 +335,12 @@
                 </label>
 
                 <!-- IR 미리보기 토글 -->
-                <!-- [이유] IR 확인으로 변환 품질 사전 검토 가능 -->
                 <button id="ir-toggle"
                         class="ir-toggle-btn"
                         aria-expanded="false"
                         aria-controls="ir-preview">
                     ▶ IR 미리보기 보기
                 </button>
-
-                <!-- IR JSON 미리보기 (숨김 상태) -->
-                <!-- [보안] app.js에서 textContent로만 업데이트 (innerHTML 금지) -->
                 <pre id="ir-preview" hidden aria-label="IR 미리보기"><code id="ir-content">파일을 업로드하면 중간 표현(IR)이 여기에 표시됩니다.</code></pre>
 
                 <!-- 변환 시작 버튼 -->
