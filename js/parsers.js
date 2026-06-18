@@ -47,9 +47,10 @@ function parseMd(text, docType = 'plain') {
         console.warn('[parsers] marked.js 미로드 — TXT 파서로 폴백');
         return parseTxt(text, docType);
     }
-    // marked.parse()는 MD 문자열을 HTML 문자열로 변환
-    const html = marked.parse(text);
-    // HTML 파서로 IR 변환 (코드 재사용)
+    // 3개 이상 연속 빈 줄 → 빈 단락 HTML 마커로 보존
+    // (marked.js는 연속 빈 줄을 하나의 단락 구분으로 처리해서 정보가 손실됨)
+    const preprocessed = text.replace(/\n{3,}/g, '\n\n<p></p>\n\n');
+    const html = marked.parse(preprocessed);
     return parseHtml(html, docType);
 }
 
@@ -94,9 +95,13 @@ function extractFromNode(node, blocks) {
             if (text) blocks.push({ type: 'heading', level: parseInt(tag[1], 10), text });
 
         } else if (tag === 'p') {
-            // <p> → para 블록
+            // <p> → para 블록; 빈 <p>는 빈 줄(blank) 블록으로 처리
             const text = sanitize(child.textContent.trim());
-            if (text) blocks.push({ type: 'para', text });
+            if (text) {
+                blocks.push({ type: 'para', text });
+            } else {
+                blocks.push({ type: 'blank' });
+            }
 
         } else if (tag === 'ul') {
             // 순서없는 목록 → ordered:false

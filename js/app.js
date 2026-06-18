@@ -23,9 +23,10 @@ const state = {
     ir:           null,                // 파싱 완료된 IR JSON
     docType:      'plain',             // 문서 유형: "official" | "report" | "plain"
     customTitle:  '',                  // 사용자가 입력한 제목 (비어 있으면 파서가 자동 감지)
-    docFont:      'KoPubDotumMedium',  // 출력 폰트 (index.html #doc-font select 값)
+    docFont:      '휴먼명조',           // 출력 폰트 (기본: 휴먼명조)
+    fontSize:     12,                  // 기본 글꼴 크기 (pt)
     paperSize:    'A4',                // 용지 크기: "A4" | "B5" | "Letter"
-    pageMargins:  { top: 20, bottom: 20, left: 30, right: 30 },  // 단위: mm
+    pageMargins:  { top: 20, bottom: 20, left: 20, right: 20 },  // 단위: mm (기본 20mm)
     isConverting: false                // 변환 중 중복 실행 방지 플래그
 };
 
@@ -176,6 +177,12 @@ function handleFileSelect(file) {
     hideResult();                    // 이전 변환 결과 숨기기
     resetPipeline();                 // 파이프라인 초기화
 
+    // 문서 제목 입력 placeholder를 파일명(확장자 제외)으로 설정
+    const titleInput = document.getElementById('doc-title');
+    if (titleInput) {
+        titleInput.placeholder = file.name.replace(/\.[^.]+$/, '');
+    }
+
     // 변환기 패널로 부드럽게 스크롤
     document.getElementById('converter')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
@@ -273,6 +280,15 @@ function initOptions() {
     const fontEl = document.getElementById('doc-font');
     if (fontEl) {
         fontEl.addEventListener('change', () => { state.docFont = fontEl.value; });
+    }
+
+    // 글꼴 크기 (<select id="font-size">)
+    const fontSizeEl = document.getElementById('font-size');
+    if (fontSizeEl) {
+        fontSizeEl.addEventListener('change', () => {
+            const v = parseInt(fontSizeEl.value, 10);
+            if (!isNaN(v) && v >= 6 && v <= 36) state.fontSize = v;
+        });
     }
 
     // 용지 크기 선택 (<select id="paper-size">)
@@ -386,8 +402,8 @@ async function runConversionPipeline() {
 
         let hwpxBlob;
         try {
-            // hwpx.js의 buildHwpx() 호출 (폰트·여백·용지 전달)
-            hwpxBlob = await buildHwpx(ir, state.docFont, state.pageMargins, state.paperSize);
+            // hwpx.js의 buildHwpx() 호출 (폰트·크기·여백·용지 전달)
+            hwpxBlob = await buildHwpx(ir, state.docFont, state.fontSize, state.pageMargins, state.paperSize);
         } catch (e) {
             throw new Error('HWPX 생성 실패: ' + e.message);
         }

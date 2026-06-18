@@ -120,7 +120,7 @@ a:hover { text-decoration: underline; }
 }
 .utility-bar .container {
     display: flex;
-    justify-content: flex-end;
+    justify-content: space-between;
     gap: 16px;
     align-items: center;
 }
@@ -193,22 +193,6 @@ a:hover { text-decoration: underline; }
     color: var(--c-primary);
     text-decoration: none;
 }
-
-/* GitHub 링크 버튼 */
-.btn-github {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: var(--c-text);
-    color: #fff !important;
-    padding: 7px 16px;
-    border-radius: var(--radius-sm);
-    font-size: 0.88rem;
-    font-weight: 600;
-    transition: background var(--trans);
-    flex-shrink: 0;
-}
-.btn-github:hover { background: #000; text-decoration: none; }
 
 /* 모바일 햄버거 버튼 */
 #menu-toggle {
@@ -957,8 +941,6 @@ a:hover { text-decoration: underline; }
         z-index: 999;
     }
     .main-nav.open { display: flex; }
-
-    .btn-github { display: none; }  /* 모바일에서 GitHub 버튼 숨김 */
 
     /* 변환기 레이아웃 단일 컬럼 */
     .converter-layout { grid-template-columns: 1fr; }

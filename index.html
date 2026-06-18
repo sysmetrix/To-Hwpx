@@ -85,11 +85,11 @@
      재단 홈페이지(bwyf.or.kr) 헤더 레이아웃 참조
      ════════════════════════════════════════════════════════════════ -->
 <header class="site-header">
-    <!-- 유틸리티 바: 깃허브 링크 등 부가 정보 -->
+    <!-- 유틸리티 바: 서비스 안내 문구 -->
     <div class="utility-bar">
         <div class="container">
-            <span>무료 · 브라우저 전용 · 파일 업로드 없음</span>
-            <a href="https://github.com/sysmetrix/To-Hwpx" target="_blank" rel="noopener">GitHub ↗</a>
+            <span>로컬 처리 · 개인정보 보호 · 설치 불필요 · 완전 무료</span>
+            <span>HWPX v3 · 오픈소스</span>
         </div>
     </div>
 
@@ -114,14 +114,6 @@
                 </ul>
             </nav>
 
-            <!-- GitHub 버튼 (데스크톱) -->
-            <a href="https://github.com/sysmetrix/To-Hwpx"
-               class="btn-github"
-               target="_blank"
-               rel="noopener"
-               aria-label="GitHub 저장소 열기">
-                ⭐ GitHub
-            </a>
         </div>
     </div>
 </header>
@@ -367,7 +359,7 @@
                     <input type="text"
                            id="doc-title"
                            name="doc-title"
-                           placeholder="예: 2026년 업무 계획서"
+                           placeholder="파일 선택 시 자동 입력"
                            maxlength="200">
                 </div>
 
@@ -375,11 +367,27 @@
                 <div class="form-row">
                     <label for="doc-font">한글 폰트</label>
                     <select id="doc-font" name="doc-font">
-                        <option value="KoPubDotumMedium" selected>KoPub 돋움 Medium (기본)</option>
+                        <option value="휴먼명조" selected>휴먼명조 (기본)</option>
+                        <option value="바탕">바탕</option>
                         <option value="나눔고딕">나눔고딕</option>
                         <option value="맑은 고딕">맑은 고딕</option>
                         <option value="굴림">굴림</option>
-                        <option value="바탕">바탕</option>
+                        <option value="KoPubDotumMedium">KoPub 돋움 Medium</option>
+                    </select>
+                </div>
+
+                <!-- 글꼴 크기 선택 -->
+                <div class="form-row">
+                    <label for="font-size">글꼴 크기</label>
+                    <select id="font-size" name="font-size">
+                        <option value="9">9pt</option>
+                        <option value="10">10pt</option>
+                        <option value="11">11pt</option>
+                        <option value="12" selected>12pt (기본)</option>
+                        <option value="13">13pt</option>
+                        <option value="14">14pt</option>
+                        <option value="16">16pt</option>
+                        <option value="18">18pt</option>
                     </select>
                 </div>
 
@@ -412,12 +420,12 @@
                         <div class="margin-field">
                             <label for="margin-left" class="margin-label">왼쪽</label>
                             <input type="number" id="margin-left" class="margin-input"
-                                   value="30" min="5" max="60" step="1" aria-label="왼쪽 여백 mm">
+                                   value="20" min="5" max="60" step="1" aria-label="왼쪽 여백 mm">
                         </div>
                         <div class="margin-field">
                             <label for="margin-right" class="margin-label">오른쪽</label>
                             <input type="number" id="margin-right" class="margin-input"
-                                   value="30" min="5" max="60" step="1" aria-label="오른쪽 여백 mm">
+                                   value="20" min="5" max="60" step="1" aria-label="오른쪽 여백 mm">
                         </div>
                     </div>
                 </div>
