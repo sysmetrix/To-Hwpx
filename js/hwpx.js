@@ -166,7 +166,7 @@ function getFontMeta(name) {
  * @returns {string|null} bold 폰트명, 없으면 null
  */
 function getBoldFontName(name) {
-    if (/KoPubWorld Dotum Medium/i.test(name)) return 'KoPubWorld Dotum Bold';
+    if (/KoPub돋움체 Medium/i.test(name)) return 'KoPub돋움체 Bold';
     return null;
 }
 
