@@ -26,7 +26,7 @@ const state = {
     docFont:      '휴먼명조',           // 출력 폰트 (기본: 휴먼명조)
     fontSize:     12,                  // 기본 글꼴 크기 (pt)
     paperSize:    'A4',                // 용지 크기: "A4" | "B5" | "Letter"
-    pageMargins:  { top: 15, bottom: 15, left: 20, right: 20, header: 10, footer: 10 },  // 단위: mm
+    pageMargins:  { top: 10, bottom: 10, left: 20, right: 20, header: 10, footer: 10 },  // 단위: mm
     autoDownload: true,                // 변환 완료 시 자동 다운로드
     isConverting: false,               // 변환 중 중복 실행 방지 플래그
     hwpxBlob:    null,                 // 미리보기용 마지막 변환 결과 Blob

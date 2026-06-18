@@ -32,8 +32,8 @@ const PAPER_SIZES = {
 };
 
 const DEFAULT_MARGINS_MM = {
-    top: 15,
-    bottom: 15,
+    top: 10,
+    bottom: 10,
     left: 20,
     right: 20,
     header: 10,
