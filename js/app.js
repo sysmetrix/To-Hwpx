@@ -27,7 +27,8 @@ const state = {
     fontSize:     12,                  // 기본 글꼴 크기 (pt)
     paperSize:    'A4',                // 용지 크기: "A4" | "B5" | "Letter"
     pageMargins:  { top: 20, bottom: 20, left: 20, right: 20 },  // 단위: mm (기본 20mm)
-    isConverting: false                // 변환 중 중복 실행 방지 플래그
+    isConverting: false,               // 변환 중 중복 실행 방지 플래그
+    hwpxBlob:    null                  // 미리보기용 마지막 변환 결과 Blob
 };
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -59,6 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initScrollBehavior();    // 스크롤 시 헤더 효과
     initMobileMenu();        // 모바일 햄버거 메뉴
     initNavLinks();          // 부드러운 스크롤 네비게이션
+    initModals();            // 미리보기·업데이트 내역 모달
 });
 
 
@@ -437,7 +439,7 @@ async function runConversionPipeline() {
         setProgress(93);
 
         const finalBlob = hwpxBlob;  // 클라이언트 사이드 복구 제한으로 현재는 원본 사용
-        // [향후 개선] 검증 실패 패턴에 따른 자동 수정 로직 추가 가능
+        state.hwpxBlob = finalBlob;  // 미리보기 버튼에서 참조
         setStepState('repair', 'done');
 
         // ═══ 7단계: Ship (다운로드 준비) ═══
@@ -513,13 +515,18 @@ function showResult({ url, fileName, size, validation }) {
             <div class="result-validation ${validClass}">
                 ${escHtml(validText)}
             </div>
-            <a href="${url}"
-               download="${escHtml(fileName)}"
-               class="btn-download"
-               onclick="this.closest('.result-card').querySelector('.result-validation').textContent += ' (다운로드됨)'">
-                ⬇ HWPX 다운로드
-            </a>
-            <p class="result-note">이 링크는 60초 후 만료됩니다. 바로 다운로드하세요.</p>
+            <div class="result-actions">
+                <a href="${url}"
+                   download="${escHtml(fileName)}"
+                   class="btn-download"
+                   onclick="this.closest('.result-card').querySelector('.result-validation').textContent += ' (다운로드됨)'">
+                    ⬇ HWPX 다운로드
+                </a>
+                <button class="btn-preview" onclick="openPreview(state.hwpxBlob)">
+                    👁 미리보기
+                </button>
+            </div>
+            <p class="result-note">다운로드 링크는 60초 후 만료됩니다. 바로 다운로드하세요.</p>
         </div>
     `;
     area.style.display = 'block';
@@ -694,4 +701,216 @@ function getFormatIcon(ext) {
         epub: '📚',
     };
     return map[ext.toLowerCase()] || '📄';
+}
+
+
+// ─────────────────────────────────────────────────────────────────────────
+// [모달 초기화]
+//   미리보기·업데이트 내역 모달의 열기/닫기·탭 이벤트 등록
+// ─────────────────────────────────────────────────────────────────────────
+function initModals() {
+    // 닫기 버튼
+    document.getElementById('close-preview')?.addEventListener('click', closePreview);
+    document.getElementById('close-changelog')?.addEventListener('click', closeChangelog);
+
+    // 업데이트 내역 열기 버튼 (유틸리티 바)
+    document.getElementById('open-changelog')?.addEventListener('click', showChangelog);
+
+    // 오버레이 바깥 클릭으로 닫기
+    document.getElementById('preview-modal')?.addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) closePreview();
+    });
+    document.getElementById('changelog-modal')?.addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) closeChangelog();
+    });
+
+    // ESC 키로 닫기
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') { closePreview(); closeChangelog(); }
+    });
+
+    // 체인지로그 탭 전환
+    document.querySelectorAll('.changelog-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            document.querySelectorAll('.changelog-tab').forEach(t => {
+                t.classList.remove('active');
+                t.setAttribute('aria-selected', 'false');
+            });
+            tab.classList.add('active');
+            tab.setAttribute('aria-selected', 'true');
+            renderChangelogContent(tab.dataset.tab);
+        });
+    });
+}
+
+function closePreview() {
+    document.getElementById('preview-modal')?.classList.remove('open');
+    document.body.style.overflow = '';
+}
+
+function closeChangelog() {
+    document.getElementById('changelog-modal')?.classList.remove('open');
+    document.body.style.overflow = '';
+}
+
+
+// ─────────────────────────────────────────────────────────────────────────
+// [rhwp 뷰어 클라이언트]
+//   edwardkim.github.io/rhwp iframe과 postMessage로 통신
+//   API: {type:'rhwp-request', id, method, params} → {type:'rhwp-response', id, result/error}
+// ─────────────────────────────────────────────────────────────────────────
+class RhwpEditorClient {
+    constructor(iframeEl) {
+        this._iframe  = iframeEl;
+        this._pending = new Map();
+        this._reqId   = 0;
+        window.addEventListener('message', e => this._onMessage(e));
+    }
+
+    _onMessage(e) {
+        if (!e.data || e.data.type !== 'rhwp-response' || e.data.id == null) return;
+        const cb = this._pending.get(e.data.id);
+        if (!cb) return;
+        this._pending.delete(e.data.id);
+        e.data.error ? cb.reject(new Error(e.data.error)) : cb.resolve(e.data.result);
+    }
+
+    _send(method, params = {}) {
+        const id = ++this._reqId;
+        return new Promise((resolve, reject) => {
+            this._pending.set(id, { resolve, reject });
+            this._iframe.contentWindow.postMessage(
+                { type: 'rhwp-request', id, method, params }, '*'
+            );
+            // 10초 타임아웃
+            setTimeout(() => {
+                if (this._pending.has(id)) {
+                    this._pending.delete(id);
+                    reject(new Error(`rhwp timeout: ${method}`));
+                }
+            }, 10000);
+        });
+    }
+
+    // WASM 로드 완료까지 최대 15초(30회 × 500ms) 대기
+    // rhwp 내부 API: 'ready' 메서드로 준비 확인
+    async waitReady() {
+        for (let i = 0; i < 30; i++) {
+            try {
+                const ok = await this._send('ready');
+                if (ok) return;
+            } catch (_) {
+                await new Promise(r => setTimeout(r, 500));
+            }
+        }
+        throw new Error('rhwp 뷰어가 응답하지 않습니다 (WASM 로드 실패)');
+    }
+
+    // 반환값: { pageCount: number }
+    async loadFile(buf, fileName = 'document.hwpx') {
+        const bytes = buf instanceof ArrayBuffer
+            ? Array.from(new Uint8Array(buf))
+            : Array.from(buf);
+        return this._send('loadFile', { data: bytes, fileName });
+    }
+}
+
+let _rhwpClient = null;
+
+/** 미리보기 모달 열기 — HWPX Blob을 rhwp iframe에 로드 */
+async function openPreview(blob) {
+    const modal   = document.getElementById('preview-modal');
+    const loading = document.getElementById('preview-loading');
+    const iframe  = document.getElementById('rhwp-iframe');
+    const countEl = document.getElementById('preview-pagecount');
+    if (!modal || !iframe || !blob) return;
+
+    // 모달 표시
+    modal.classList.add('open');
+    loading.style.display = 'flex';
+    loading.innerHTML = `
+        <div>
+            <div class="loading-spinner"></div>
+            <p>rhwp 뷰어를 불러오는 중...</p>
+            <p class="preview-loading-sub">최초 실행 시 WebAssembly 로드로 10~20초 소요될 수 있습니다</p>
+        </div>`;
+    if (countEl) countEl.textContent = '';
+    document.body.style.overflow = 'hidden';
+
+    try {
+        // 클라이언트 최초 초기화 (iframe이 바뀌지 않으면 재사용)
+        if (!_rhwpClient) _rhwpClient = new RhwpEditorClient(iframe);
+
+        // WASM 준비 대기
+        await _rhwpClient.waitReady();
+
+        // Blob → ArrayBuffer → rhwp 로드 (반환값: {pageCount: number})
+        const buf      = await blob.arrayBuffer();
+        const fileName = (state.file?.name || 'document').replace(/\.[^.]+$/, '') + '.hwpx';
+        const result   = await _rhwpClient.loadFile(buf, fileName);
+
+        if (result?.pageCount && countEl) {
+            countEl.textContent = `총 ${result.pageCount}페이지`;
+        }
+        loading.style.display = 'none';
+    } catch (err) {
+        loading.innerHTML = `
+            <div style="text-align:center;padding:24px">
+                <p style="font-size:1.8rem;margin-bottom:10px">⚠</p>
+                <p style="font-weight:600;color:var(--c-error)">뷰어 로드 실패</p>
+                <p style="font-size:0.8rem;color:var(--c-text-muted);margin-top:6px">${escHtml(err.message)}</p>
+                <p style="font-size:0.78rem;color:var(--c-text-muted);margin-top:4px">
+                    팝업 차단, CORS, 또는 네트워크 문제일 수 있습니다
+                </p>
+            </div>`;
+        console.error('[rhwp]', err);
+    }
+}
+
+
+// ─────────────────────────────────────────────────────────────────────────
+// [업데이트 내역]
+//   changelog.json 로드 후 버전별 사용자/개발자 변경사항 렌더링
+// ─────────────────────────────────────────────────────────────────────────
+let _changelogData = null;
+let _changelogTab  = 'user';
+
+/** 업데이트 내역 모달 열기 */
+async function showChangelog() {
+    const modal = document.getElementById('changelog-modal');
+    if (!modal) return;
+
+    modal.classList.add('open');
+    document.body.style.overflow = 'hidden';
+
+    if (!_changelogData) {
+        try {
+            const res     = await fetch('changelog.json');
+            _changelogData = await res.json();
+        } catch (e) {
+            document.getElementById('changelog-content').innerHTML =
+                '<p style="color:var(--c-error);text-align:center;padding:24px">업데이트 내역을 불러오지 못했습니다.</p>';
+            return;
+        }
+    }
+    renderChangelogContent(_changelogTab);
+}
+
+/** 선택된 탭(user|dev)에 맞게 changelog-content 렌더링 */
+function renderChangelogContent(tab) {
+    _changelogTab = tab;
+    const el = document.getElementById('changelog-content');
+    if (!el || !_changelogData) return;
+
+    el.innerHTML = _changelogData.versions.map(v => `
+        <div class="changelog-version">
+            <div class="changelog-version-header">
+                <span class="changelog-ver-badge">v${escHtml(v.version)}</span>
+                <span class="changelog-date">${escHtml(v.date)}</span>
+            </div>
+            <ul class="changelog-list">
+                ${(v[tab] || []).map(item => `<li>${escHtml(item)}</li>`).join('')}
+            </ul>
+        </div>
+    `).join('');
 }

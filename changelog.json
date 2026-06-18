@@ -1,0 +1,83 @@
+{
+  "current": "3.1.0",
+  "versions": [
+    {
+      "version": "3.1.0",
+      "date": "2026-06-18",
+      "user": [
+        "표가 긴 경우 다음 페이지로 자동 넘어가도록 수정",
+        "표 제목 행이 쪽마다 반복 출력되도록 설정",
+        "rhwp 기반 HWPX 미리보기 뷰어 추가 (변환 직후 브라우저에서 바로 확인 가능)",
+        "업데이트 내역 확인 기능 추가 (사용자용·개발자용 분리)",
+        "Markdown 전용 변환 페이지(md-to-hwpx) 링크 버튼 추가"
+      ],
+      "dev": [
+        "buildTable: pageBreak 속성 CELL → TABLE (rhwp TablePageBreak::RowBreak 기준)",
+        "buildTable: hp:tr 에 header 속성 추가, height=0 으로 자동 계산",
+        "RhwpEditorClient 클래스 추가 (postMessage 기반 iframe API)",
+        "openPreview(blob) 함수 추가 — HWPX Blob → rhwp iframe loadFile",
+        "changelog.json 도입, showChangelog() 렌더링 함수 추가",
+        "모달 시스템(preview-modal, changelog-modal) CSS + HTML 추가"
+      ]
+    },
+    {
+      "version": "3.0.0",
+      "date": "2026-06-18",
+      "user": [
+        "기본 글꼴 휴먼명조로 변경",
+        "글꼴 크기 선택 옵션 추가 (9~18pt, 기본 12pt)",
+        "페이지 여백 기본값 전부 20mm로 변경 (이전: 좌우 30mm)",
+        "표 셀 내용 가운데 정렬",
+        "이모지를 □로 자동 치환 (HWP 미지원 문자 처리)",
+        "문서 유형별(공문/보고서) 서식 차이 구현",
+        "원본 빈 줄이 변환 결과에 반영됨",
+        "문서 제목 입력란에 업로드 파일명 자동 표시",
+        "GitHub 버튼 삭제, 상단 바 문구 교체"
+      ],
+      "dev": [
+        "buildHwpx(ir, fontName, fontSize, marginsMm, paperSize) 시그니처 변경",
+        "buildHeaderXml(fontName, basePt) 동적 생성 — 글꼴 크기 비례 적용",
+        "paraPr id=7 추가 (표 셀 CENTER 정렬)",
+        "replaceEmoji() 유틸리티 추가 (surrogate pair + BMP 이모지 블록)",
+        "secPr 위치를 section 맨 앞으로 이동 (한컴 호환 방식)",
+        "서비스 워커 캐시 버전 v1 → v3"
+      ]
+    },
+    {
+      "version": "2.0.0",
+      "date": "2026-06-17",
+      "user": [
+        "모든 글자에 테두리가 생기던 심각한 버그 수정 (charPr borderFillIDRef 오류)",
+        "제목 단계(H1~H4)별 글자 크기·굵기 차이 적용",
+        "페이지 여백 설정 옵션 추가 (mm 단위)",
+        "용지 크기 선택 추가 (A4/B5/Letter)",
+        "HWPX 구조 자동 검증 기능 추가",
+        "HWP/HWPX 파일 → 재변환 지원",
+        "DOCX 파서 정확도 개선"
+      ],
+      "dev": [
+        "IR(Intermediate Representation) 구조 도입",
+        "parsers.js 분리 — 포맷별 파서 모듈화",
+        "hwpx.js 완전 재작성 (v2): 7종 charPr, 7종 paraPr, secPr",
+        "GitHub Pages 자동 배포 워크플로우 설정",
+        "PWA 서비스 워커 추가 (오프라인 동작)",
+        "CDN SRI 해시 적용 (JSZip, marked.js, SheetJS)"
+      ]
+    },
+    {
+      "version": "1.0.0",
+      "date": "2026-06-16",
+      "user": [
+        "Markdown → HWPX 변환 초기 구현",
+        "HTML, TXT, CSV, JSON, IPYNB, DOCX 지원",
+        "드래그앤드롭 파일 업로드",
+        "7단계 변환 파이프라인 UI"
+      ],
+      "dev": [
+        "JSZip 3.10.1, marked.js 9.1.6, SheetJS 0.18.5 CDN 통합",
+        "HWPX ZIP+XML 패키징 구현 (mimetype ZIP_STORED 규칙)",
+        "부천여성청소년재단 홈페이지 디자인 참조 UI 구성"
+      ]
+    }
+  ]
+}

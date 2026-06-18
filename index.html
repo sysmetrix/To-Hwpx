@@ -89,7 +89,9 @@
     <div class="utility-bar">
         <div class="container">
             <span>로컬 처리 · 개인정보 보호 · 설치 불필요 · 완전 무료</span>
-            <span>HWPX v3 · 오픈소스</span>
+            <button class="util-changelog-btn" id="open-changelog" aria-label="업데이트 내역 보기">
+                📋 v3.1 업데이트 내역
+            </button>
         </div>
     </div>
 
@@ -155,6 +157,17 @@
                accept=".md,.markdown,.html,.htm,.txt,.csv,.xlsx,.xls,.json,.ipynb,.docx,.hwp,.hwpx">
 
         <p class="hero-note">파일은 브라우저에서만 처리됩니다. 서버에 전송되지 않습니다.</p>
+
+        <!-- Markdown 전용 변환기 링크 -->
+        <div class="hero-alt-link">
+            <span>텍스트를 직접 입력하려면</span>
+            <a href="https://md-to-hwpx.netlify.app/"
+               target="_blank"
+               rel="noopener"
+               class="btn-alt-service">
+                MD 직접 입력 변환기 →
+            </a>
+        </div>
     </div>
 </section>
 
@@ -706,6 +719,67 @@
     </div><!-- /.container -->
 </footer>
 
+
+<!-- ════════════════════════════════════════════════════════════════
+     [미리보기 모달]  rhwp iframe 기반 HWPX 미리보기
+     ════════════════════════════════════════════════════════════════ -->
+<div id="preview-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-label="HWPX 미리보기">
+    <div class="modal-box modal-box--xl">
+        <div class="modal-header">
+            <span class="modal-title">📄 HWPX 미리보기</span>
+            <div class="modal-header-actions">
+                <span id="preview-pagecount" class="preview-pageinfo"></span>
+                <button class="modal-close" id="close-preview" aria-label="미리보기 닫기">✕</button>
+            </div>
+        </div>
+        <div class="modal-body">
+            <div class="preview-iframe-wrap">
+                <div class="preview-loading" id="preview-loading">
+                    <div>
+                        <div class="loading-spinner"></div>
+                        <p>rhwp 뷰어를 불러오는 중...</p>
+                        <p class="preview-loading-sub">최초 실행 시 WebAssembly 로드로 10~20초 소요될 수 있습니다</p>
+                    </div>
+                </div>
+                <!-- rhwp studio — edwardkim.github.io/rhwp — postMessage API -->
+                <iframe id="rhwp-iframe"
+                        src="https://edwardkim.github.io/rhwp/"
+                        title="HWPX 미리보기 뷰어"
+                        allow="clipboard-read; clipboard-write"
+                        sandbox="allow-scripts allow-same-origin allow-forms allow-popups">
+                </iframe>
+            </div>
+            <div class="preview-footer">
+                미리보기는 <a href="https://github.com/edwardkim/rhwp" target="_blank" rel="noopener">rhwp</a>
+                (WebAssembly 기반 오픈소스 뷰어)를 사용합니다. 렌더링 결과는 한컴 오피스와 다소 다를 수 있습니다.
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     [업데이트 내역 모달]  사용자용·개발자용 탭 분리
+     ════════════════════════════════════════════════════════════════ -->
+<div id="changelog-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-label="업데이트 내역">
+    <div class="modal-box modal-box--md">
+        <div class="modal-header">
+            <span class="modal-title">📋 업데이트 내역</span>
+            <button class="modal-close" id="close-changelog" aria-label="닫기">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="changelog-tabs" role="tablist">
+                <button class="changelog-tab active" data-tab="user"
+                        role="tab" aria-selected="true">사용자 변경사항</button>
+                <button class="changelog-tab" data-tab="dev"
+                        role="tab" aria-selected="false">개발자 변경사항</button>
+            </div>
+            <!-- JS에서 changelog.json 로드 후 렌더링 -->
+            <div class="changelog-content" id="changelog-content">
+                <p style="color:var(--c-text-muted);text-align:center;padding:20px">로드 중...</p>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- ─── JS 로드 (defer 스크립트보다 뒤에 위치) ─────────────────────
      실행 순서: parsers.js → hwpx.js → app.js

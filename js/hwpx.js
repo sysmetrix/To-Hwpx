@@ -295,14 +295,17 @@ function buildTable(header, rows) {
                 buildPara(val, cId, '7') +  // paraPr=7: CENTER 정렬
                 `</hp:subList></hp:tc>`;
         }
-        rowsXml += `<hp:tr>${cellsXml}</hp:tr>`;
+        // [v4] 제목 행에 header="1" 속성 추가 — repeatHeader와 함께 쪽 반복 출력
+        rowsXml += `<hp:tr header="${isHd ? '1' : '0'}">${cellsXml}</hp:tr>`;
     }
 
+    // [v4] pageBreak="TABLE" → 행 단위로 쪽 넘김 허용 (rhwp TablePageBreak::RowBreak 기준)
+    //      height="0" → HWP이 셀 내용 기준으로 자동 계산 (고정값 제거)
     return `<hp:p paraPrIDRef="0" styleIDRef="0" pageBreak="0" columnBreak="0"><hp:run charPrIDRef="0">` +
         `<hp:tbl id="0" zOrder="0" numberingType="TABLE" textWrap="TOP_AND_BOTTOM" ` +
-        `textFlow="BOTH_SIDES" lock="0" dropcapstyle="None" pageBreak="CELL" ` +
+        `textFlow="BOTH_SIDES" lock="0" dropcapstyle="None" pageBreak="TABLE" ` +
         `repeatHeader="1" rowCnt="${nRows}" colCnt="${nCols}" cellSpacing="0" borderFillIDRef="2">` +
-        `<hp:sz width="48000" widthRelTo="ABSOLUTE" height="${nRows * 1000}" heightRelTo="ABSOLUTE" protect="0"/>` +
+        `<hp:sz width="48000" widthRelTo="ABSOLUTE" height="0" heightRelTo="ABSOLUTE" protect="0"/>` +
         `<hp:pos treatAsChar="1" affectLSpacing="0" flowWithText="1" allowOverlap="0" holdAnchorAndSO="0" ` +
         `vertRelTo="PARA" horzRelTo="COLUMN" vertAlign="TOP" horzAlign="LEFT" vertOffset="0" horzOffset="0"/>` +
         `<hp:outMargin left="0" right="0" top="0" bottom="0"/>` +
