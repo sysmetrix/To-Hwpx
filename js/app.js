@@ -24,6 +24,8 @@ const state = {
     docType:      'plain',             // 문서 유형: "official" | "report" | "plain"
     customTitle:  '',                  // 사용자가 입력한 제목 (비어 있으면 파서가 자동 감지)
     docFont:      'KoPubDotumMedium',  // 출력 폰트 (index.html #doc-font select 값)
+    paperSize:    'A4',                // 용지 크기: "A4" | "B5" | "Letter"
+    pageMargins:  { top: 20, bottom: 20, left: 30, right: 30 },  // 단위: mm
     isConverting: false                // 변환 중 중복 실행 방지 플래그
 };
 
@@ -270,10 +272,29 @@ function initOptions() {
     // 폰트 선택 (<select id="doc-font">)
     const fontEl = document.getElementById('doc-font');
     if (fontEl) {
-        fontEl.addEventListener('change', () => {
-            state.docFont = fontEl.value;
-        });
+        fontEl.addEventListener('change', () => { state.docFont = fontEl.value; });
     }
+
+    // 용지 크기 선택 (<select id="paper-size">)
+    const paperEl = document.getElementById('paper-size');
+    if (paperEl) {
+        paperEl.addEventListener('change', () => { state.paperSize = paperEl.value; });
+    }
+
+    // 페이지 여백 입력 (mm 단위, #margin-top/bottom/left/right)
+    const marginIds = ['top', 'bottom', 'left', 'right'];
+    marginIds.forEach(side => {
+        const el = document.getElementById(`margin-${side}`);
+        if (!el) return;
+        el.addEventListener('change', () => {
+            const val = parseInt(el.value, 10);
+            // 최소/최대 클램핑 (5mm ~ 60mm)
+            if (!isNaN(val)) {
+                state.pageMargins[side] = Math.max(5, Math.min(60, val));
+                el.value = state.pageMargins[side];
+            }
+        });
+    });
 
     // IR 미리보기 접기/펼치기 버튼
     const irToggle  = document.getElementById('ir-toggle');
@@ -365,8 +386,8 @@ async function runConversionPipeline() {
 
         let hwpxBlob;
         try {
-            // hwpx.js의 buildHwpx() 호출 (폰트 선택 전달)
-            hwpxBlob = await buildHwpx(ir, state.docFont);
+            // hwpx.js의 buildHwpx() 호출 (폰트·여백·용지 전달)
+            hwpxBlob = await buildHwpx(ir, state.docFont, state.pageMargins, state.paperSize);
         } catch (e) {
             throw new Error('HWPX 생성 실패: ' + e.message);
         }

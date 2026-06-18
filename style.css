@@ -490,7 +490,8 @@ a:hover { text-decoration: underline; }
     margin-bottom: 6px;
 }
 .form-row select,
-.form-row input[type="text"] {
+.form-row input[type="text"],
+.form-row input[type="number"] {
     width: 100%;
     padding: 9px 12px;
     border: 1.5px solid var(--c-border);
@@ -505,6 +506,28 @@ a:hover { text-decoration: underline; }
 .form-row input:focus {
     outline: none;
     border-color: var(--c-primary);
+}
+
+/* 페이지 여백 4칸 그리드 (위/아래/왼쪽/오른쪽) */
+.margin-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+.margin-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.margin-label {
+    font-size: 0.78rem;
+    color: var(--c-text-sub);
+    font-weight: 600;
+    margin-bottom: 0;
+}
+.margin-input {
+    padding: 7px 10px !important;
+    text-align: center;
 }
 
 /* 감지된 포맷 배지 */

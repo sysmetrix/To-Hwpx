@@ -371,9 +371,7 @@
                            maxlength="200">
                 </div>
 
-                <!-- HWPX 출력 폰트 선택
-                     선택한 폰트가 HWPX의 charPr/폰트명(fc) 속성에 반영됨
-                     hwpx.js의 buildHwpx에서 이 값을 읽어 HEADER_XML 수정 -->
+                <!-- HWPX 출력 폰트 선택 -->
                 <div class="form-row">
                     <label for="doc-font">한글 폰트</label>
                     <select id="doc-font" name="doc-font">
@@ -383,6 +381,45 @@
                         <option value="굴림">굴림</option>
                         <option value="바탕">바탕</option>
                     </select>
+                </div>
+
+                <!-- 용지 크기 선택 -->
+                <div class="form-row">
+                    <label for="paper-size">용지 크기</label>
+                    <select id="paper-size" name="paper-size">
+                        <option value="A4" selected>A4 (210×297mm)</option>
+                        <option value="B5">B5 (182×257mm)</option>
+                        <option value="Letter">Letter (8.5×11")</option>
+                    </select>
+                </div>
+
+                <!-- 페이지 여백 (mm 단위)
+                     hwpx.js buildHwpx()에서 mm → HWPUNIT 변환 (1mm ≈ 283 HWPUNIT)
+                     [수정 시] 기본값 변경은 app.js state.pageMargins 에서 -->
+                <div class="form-row">
+                    <label>페이지 여백 (mm)</label>
+                    <div class="margin-grid">
+                        <div class="margin-field">
+                            <label for="margin-top" class="margin-label">위</label>
+                            <input type="number" id="margin-top" class="margin-input"
+                                   value="20" min="5" max="50" step="1" aria-label="위 여백 mm">
+                        </div>
+                        <div class="margin-field">
+                            <label for="margin-bottom" class="margin-label">아래</label>
+                            <input type="number" id="margin-bottom" class="margin-input"
+                                   value="20" min="5" max="50" step="1" aria-label="아래 여백 mm">
+                        </div>
+                        <div class="margin-field">
+                            <label for="margin-left" class="margin-label">왼쪽</label>
+                            <input type="number" id="margin-left" class="margin-input"
+                                   value="30" min="5" max="60" step="1" aria-label="왼쪽 여백 mm">
+                        </div>
+                        <div class="margin-field">
+                            <label for="margin-right" class="margin-label">오른쪽</label>
+                            <input type="number" id="margin-right" class="margin-input"
+                                   value="30" min="5" max="60" step="1" aria-label="오른쪽 여백 mm">
+                        </div>
+                    </div>
                 </div>
 
                 <!-- IR 미리보기 토글 -->
@@ -669,16 +706,6 @@
 <script src="js/parsers.js"></script>
 <script src="js/hwpx.js"></script>
 <script src="js/app.js"></script>
-
-<!-- PWA 서비스 워커 등록 (캐싱 → 오프라인 동작) -->
-<script>
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js')
-            .catch(() => {}); // 로컬 파일:// 환경에서는 SW 등록 실패 무시
-    });
-}
-</script>
 
 </body>
 </html>

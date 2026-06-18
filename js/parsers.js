@@ -65,13 +65,21 @@ function parseHtml(htmlText, docType = 'plain') {
 
     // <title> 태그가 있으면 문서 제목으로 사용
     const titleEl = doc.querySelector('title');
-    const ir = emptyIR(
-        titleEl ? sanitize(titleEl.textContent.trim()) : '제목 없음',
-        docType
-    );
+    const explicitTitle = titleEl ? sanitize(titleEl.textContent.trim()) : '';
+    const ir = emptyIR(explicitTitle || '제목 없음', docType);
 
-    // body 요소가 없는 경우(단편 HTML) documentElement 전체 탐색
     extractFromNode(doc.body || doc.documentElement, ir.blocks);
+
+    // <title> 없는 경우(Markdown→HTML 변환 등): 첫 번째 H1 블록을 문서 제목으로 승격
+    // 승격된 H1은 본문 목록에서 제거 (buildSection이 ir.title을 별도로 출력)
+    if (!explicitTitle) {
+        const firstH1Idx = ir.blocks.findIndex(b => b.type === 'heading' && b.level === 1);
+        if (firstH1Idx !== -1) {
+            ir.title = ir.blocks[firstH1Idx].text;
+            ir.blocks.splice(firstH1Idx, 1);
+        }
+    }
+
     return ir;
 }
 
@@ -90,25 +98,38 @@ function extractFromNode(node, blocks) {
             const text = sanitize(child.textContent.trim());
             if (text) blocks.push({ type: 'para', text });
 
-        } else if (tag === 'ul' || tag === 'ol') {
-            // <ul>/<ol> → list 블록
+        } else if (tag === 'ul') {
+            // 순서없는 목록 → ordered:false
             const items = Array.from(child.querySelectorAll(':scope > li'))
-                .map(li => sanitize(li.textContent.trim()))
+                .map(li => sanitize((li.firstChild ? li.firstChild.textContent : li.textContent) || li.textContent).trim())
                 .filter(Boolean);
-            if (items.length) blocks.push({ type: 'list', items });
+            if (items.length) blocks.push({ type: 'list', ordered: false, items });
+
+        } else if (tag === 'ol') {
+            // 순서있는 목록 → ordered:true (buildSection에서 "1. 2. 3." 형식으로 출력)
+            const items = Array.from(child.querySelectorAll(':scope > li'))
+                .map(li => sanitize((li.firstChild ? li.firstChild.textContent : li.textContent) || li.textContent).trim())
+                .filter(Boolean);
+            if (items.length) blocks.push({ type: 'list', ordered: true, items });
 
         } else if (tag === 'table') {
             // <table> → table 블록
             const tb = extractHtmlTable(child);
             if (tb) blocks.push(tb);
 
-        } else if (tag === 'pre' || tag === 'code') {
-            // 코드 블록 → para로 처리 (HWPX에 코드 블록 스타일 없음)
+        } else if (tag === 'pre') {
+            // <pre> 또는 <pre><code> → code 블록 (코드 스타일 9pt 들여쓰기)
+            const codeEl = child.querySelector('code') || child;
+            const text = sanitize(codeEl.textContent.trim());
+            if (text) blocks.push({ type: 'code', text });
+
+        } else if (tag === 'code' && (child.parentNode && (child.parentNode.tagName || '').toLowerCase() !== 'pre')) {
+            // 인라인 <code>: 백틱 감싸서 para로 처리 (블록 수준 code와 구분)
             const text = sanitize(child.textContent.trim());
-            if (text) blocks.push({ type: 'para', text: '[코드] ' + text });
+            if (text) blocks.push({ type: 'para', text: '`' + text + '`' });
 
         } else if (tag === 'blockquote') {
-            // 인용 → para (▶ 접두어)
+            // 인용 → 들여쓰기 para (▶ 접두어)
             const text = sanitize(child.textContent.trim());
             if (text) blocks.push({ type: 'para', text: '▶ ' + text });
 
@@ -152,21 +173,45 @@ function parseTxt(text, docType = 'plain') {
     const ir = emptyIR('텍스트 문서', docType);
     // 2개 이상 연속 줄바꿈을 단락 구분자로 사용
     const paragraphs = text.split(/\n{2,}/);
+    let titleSet = false;
 
     for (const para of paragraphs) {
         const trimmed = sanitize(para.trim());
         if (!trimmed) continue;
 
-        // 간이 Markdown 제목 인식 (# / ## / ###)
-        if (trimmed.startsWith('### ')) {
-            ir.blocks.push({ type: 'heading', level: 3, text: trimmed.slice(4) });
-        } else if (trimmed.startsWith('## ')) {
-            ir.blocks.push({ type: 'heading', level: 2, text: trimmed.slice(3) });
-        } else if (trimmed.startsWith('# ')) {
-            ir.blocks.push({ type: 'heading', level: 1, text: trimmed.slice(2) });
-        } else {
-            ir.blocks.push({ type: 'para', text: trimmed });
+        // 간이 Markdown 제목 인식 (####, ###, ##, #)
+        const headMatch = trimmed.match(/^(#{1,6})\s+(.+)$/);
+        if (headMatch) {
+            const level = headMatch[1].length;
+            const headText = headMatch[2];
+            if (level === 1 && !titleSet) {
+                // 첫 번째 H1 → 문서 제목으로 승격
+                ir.title = headText;
+                titleSet = true;
+            } else {
+                ir.blocks.push({ type: 'heading', level, text: headText });
+            }
+            continue;
         }
+
+        // 줄 단위 목록 인식 ("- " / "* " / "+ " 으로 시작하는 항목들)
+        const lines = para.split('\n').map(l => sanitize(l.trim())).filter(Boolean);
+        const isList = lines.every(l => /^[-*+]\s/.test(l) || /^\d+\.\s/.test(l));
+        if (isList && lines.length > 0) {
+            const isOrdered = /^\d+\.\s/.test(lines[0]);
+            const items = lines.map(l => l.replace(/^[-*+]\s+/, '').replace(/^\d+\.\s+/, ''));
+            ir.blocks.push({ type: 'list', ordered: isOrdered, items });
+            continue;
+        }
+
+        // 코드 블록 (``` 로 감싼 경우)
+        if (trimmed.startsWith('```')) {
+            const codeText = trimmed.replace(/^```[^\n]*\n?/, '').replace(/```$/, '').trim();
+            if (codeText) ir.blocks.push({ type: 'code', text: codeText });
+            continue;
+        }
+
+        ir.blocks.push({ type: 'para', text: trimmed });
     }
 
     return ir;
