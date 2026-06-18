@@ -1,6 +1,21 @@
 {
-  "current": "3.3.0",
+  "current": "3.4.0",
   "versions": [
+    {
+      "version": "3.4.0",
+      "date": "2026-06-18",
+      "user": [
+        "다운로드 준비 중 진행 표시줄 추가: 변환 완료 후 브라우저 다운로드가 시작될 때까지의 대기 시간을 시각적으로 안내합니다",
+        "한글 폰트에 KoPubWorld Dotum Medium 추가: 제목·표머리·볼드 구간은 KoPubWorld Dotum Bold로 자동 처리됩니다",
+        "페이지 레이아웃 개선: 변환 작업 공간과 서비스 안내 영역이 시각적으로 구분됩니다"
+      ],
+      "dev": [
+        "getBoldFontName() 추가 — KoPubWorld Dotum Medium처럼 Bold가 별도 파일인 폰트 감지",
+        "buildHeaderXml() 개선 — boldFn 설정 시 fontFaceBlock에 id=1 Bold 폰트 face 추가, charPr 볼드 항목은 fontRef='1' 참조 (hh:bold/ 태그 대신)",
+        "dl-indicator UI — progress-panel 내 dl-scan 키프레임 스캐닝 애니메이션 (triggerDownload 및 수동 다운로드 클릭 시 2.8초 표시)",
+        "zone-divider CSS — 작업 공간(--work, 파란 배경)과 안내 공간(--info, 회색 배경) 라벨 구분자"
+      ]
+    },
     {
       "version": "3.3.0",
       "date": "2026-06-18",

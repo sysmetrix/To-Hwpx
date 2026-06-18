@@ -1428,3 +1428,72 @@ a:hover { text-decoration: underline; }
     .changelog-tab { padding: 10px 12px; font-size: 0.82rem; }
     .hero-alt-link { flex-direction: column; gap: 6px; }
 }
+
+
+/* ─────────────────────────────────────────────────────────────────
+   [존 구분자]  작업 공간(변환)과 안내 공간(정보)을 시각적으로 분리
+   ───────────────────────────────────────────────────────────────── */
+.zone-divider {
+    padding: 7px 0;
+    border-top: 1px solid var(--c-border);
+    border-bottom: 1px solid var(--c-border);
+}
+.zone-divider--work {
+    background: var(--c-primary-light);
+    border-color: rgba(37,99,235,0.25);
+}
+.zone-divider--info {
+    background: var(--c-surface-alt);
+}
+.zone-divider-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--c-primary);
+}
+.zone-divider--info .zone-divider-label {
+    color: var(--c-text-muted);
+}
+
+
+/* ─────────────────────────────────────────────────────────────────
+   [다운로드 준비 인디케이터]  triggerDownload 시 스캔 애니메이션 표시
+   ───────────────────────────────────────────────────────────────── */
+.dl-indicator {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 0 2px;
+}
+.dl-indicator[hidden] { display: none; }
+.dl-indicator-text {
+    font-size: 0.8rem;
+    color: var(--c-primary);
+    font-weight: 600;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.dl-indicator-bar {
+    flex: 1;
+    height: 5px;
+    background: var(--c-border);
+    border-radius: 100px;
+    overflow: hidden;
+    position: relative;
+}
+.dl-indicator-bar::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -45%;
+    width: 45%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, var(--c-primary), var(--c-accent), transparent);
+    border-radius: 100px;
+    animation: dl-scan 1.1s ease-in-out infinite;
+}
+@keyframes dl-scan {
+    0%   { left: -45%; }
+    100% { left: 100%; }
+}

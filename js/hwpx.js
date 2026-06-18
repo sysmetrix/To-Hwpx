@@ -161,6 +161,16 @@ function getFontMeta(name) {
 }
 
 /**
+ * Bold 전용 분리 폰트가 필요한 글꼴인지 확인
+ * KoPubWorld Dotum Medium → Bold는 별도 폰트 파일이므로 <hh:bold/> 대신 폰트 face 전환 필요
+ * @returns {string|null} bold 폰트명, 없으면 null
+ */
+function getBoldFontName(name) {
+    if (/KoPubWorld Dotum Medium/i.test(name)) return 'KoPubWorld Dotum Bold';
+    return null;
+}
+
+/**
  * HEADER_XML 동적 생성
  * @param {string} fontName  글꼴명 (기본: 휴먼명조)
  * @param {number} basePt    기본 본문 글꼴 크기 pt (기본: 12)
@@ -172,7 +182,12 @@ function getFontMeta(name) {
 function buildHeaderXml(fontName, basePt) {
     const fn = xmlEsc(fontName || '휴먼명조');
     const bp = Math.max(6, Math.min(36, parseInt(basePt, 10) || 12));
-    const { familyType, weight, type } = getFontMeta(fn);
+    const { familyType, weight, type } = getFontMeta(fontName || '휴먼명조');
+
+    // KoPubWorld Dotum Medium처럼 Bold가 별도 폰트 파일인 경우
+    const boldFontName = getBoldFontName(fontName || '휴먼명조');
+    const boldFn = boldFontName ? xmlEsc(boldFontName) : null;
+    const fontCnt = boldFn ? 2 : 1;
 
     // 글자 크기 HWPUNIT (1pt = 100)
     const sz = {
@@ -186,21 +201,27 @@ function buildHeaderXml(fontName, basePt) {
     };
 
     const fontFaceBlock = (lang) => `
-      <hh:fontface lang="${lang}" fontCnt="1">
+      <hh:fontface lang="${lang}" fontCnt="${fontCnt}">
         <hh:font id="0" face="${fn}" type="${type}" isEmbedded="0">
           <hh:typeInfo familyType="${familyType}" weight="${weight}" proportion="4" contrast="0" strokeVariation="1" armStyle="1" letterform="1" midline="1" xHeight="1"/>
-        </hh:font>
+        </hh:font>${boldFn ? `
+        <hh:font id="1" face="${boldFn}" type="TTF" isEmbedded="0">
+          <hh:typeInfo familyType="FCAT_GOTHIC" weight="8" proportion="4" contrast="0" strokeVariation="1" armStyle="1" letterform="1" midline="1" xHeight="1"/>
+        </hh:font>` : ''}
       </hh:fontface>`;
 
-    const charBase = (id, height, bold = false) =>
-        `      <hh:charPr id="${id}" height="${height}" textColor="#000000" shadeColor="none" useFontSpace="0" useKerning="0" symMark="NONE" borderFillIDRef="1">
-        <hh:fontRef hangul="0" latin="0" hanja="0" japanese="0" other="0" symbol="0" user="0"/>
+    // bold=true 시: boldFn이 있으면 font face 1 참조(별도 Bold 폰트), 없으면 <hh:bold/> 태그
+    const charBase = (id, height, bold = false) => {
+        const fi = (bold && boldFn) ? '1' : '0';
+        const boldTag = (bold && !boldFn) ? '\n        <hh:bold/>' : '';
+        return `      <hh:charPr id="${id}" height="${height}" textColor="#000000" shadeColor="none" useFontSpace="0" useKerning="0" symMark="NONE" borderFillIDRef="1">
+        <hh:fontRef hangul="${fi}" latin="${fi}" hanja="${fi}" japanese="${fi}" other="${fi}" symbol="${fi}" user="${fi}"/>
         <hh:ratio hangul="100" latin="100" hanja="100" japanese="100" other="100" symbol="100" user="100"/>
         <hh:spacing hangul="0" latin="0" hanja="0" japanese="0" other="0" symbol="0" user="0"/>
         <hh:relSz hangul="100" latin="100" hanja="100" japanese="100" other="100" symbol="100" user="100"/>
-        <hh:offset hangul="0" latin="0" hanja="0" japanese="0" other="0" symbol="0" user="0"/>` +
-        (bold ? '\n        <hh:bold/>' : '') +
-        `\n      </hh:charPr>`;
+        <hh:offset hangul="0" latin="0" hanja="0" japanese="0" other="0" symbol="0" user="0"/>${boldTag}
+      </hh:charPr>`;
+    };
 
     const paraBase = (id, align, spacing, prev, next, indentLeft = 0) =>
         `      <hh:paraPr id="${id}" tabPrIDRef="0" condense="0" fontLineHeight="0" snapToGrid="1" suppressLineNumbers="0" checked="0">
