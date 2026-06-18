@@ -6,8 +6,17 @@ desktop.ini
 # 편집기 설정
 .vscode/settings.json
 .idea/
+.claude/settings.local.json
 *.swp
 *.swo
+
+# 로컬 HWPX 참고 구현/외부 소스
+HwpForge/
+hwp2hwpx/
+hwpxlib/
+openhwp/
+rhwp/
+unhwp/
 
 # 개발 의존성 (CDN 사용 중이라 node_modules 없음)
 node_modules/
