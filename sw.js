@@ -10,7 +10,7 @@
 
 'use strict';
 
-const CACHE_VERSION = 'to-hwpx-v3.3.0';
+const CACHE_VERSION = 'to-hwpx-v3.4.0';
 
 // 설치 시 미리 캐시할 파일 목록 (앱 셸)
 const APP_SHELL = [
@@ -21,6 +21,7 @@ const APP_SHELL = [
     '/js/hwpx.js',
     '/js/app.js',
     '/manifest.json',
+    '/changelog.json',
     // CDN 라이브러리 (SRI 검증 통과한 것들)
     'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js',
     'https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js',

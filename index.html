@@ -88,7 +88,7 @@
     <!-- 유틸리티 바: 서비스 안내 문구 -->
     <div class="utility-bar">
         <div class="container">
-            <span>로컬 처리 · 개인정보 보호 · 설치 불필요 · 완전 무료</span>
+            <span>｢BWYF｣ AX Challenger 2026</span>
             <button class="util-changelog-btn" id="open-changelog" aria-label="업데이트 내역 보기">
                 📋 v3.4.0 업데이트 내역
             </button>
@@ -109,10 +109,8 @@
             <!-- 주 내비게이션 -->
             <nav id="main-nav" role="navigation" aria-label="주 메뉴">
                 <ul class="main-nav">
-                    <li><a href="#formats">지원 포맷</a></li>
                     <li><a href="#converter">변환하기</a></li>
-                    <li><a href="#how-it-works">동작 원리</a></li>
-                    <li><a href="#support">지원 표</a></li>
+                    <li><a href="#formats">지원 포맷</a></li>
                 </ul>
             </nav>
 
@@ -158,174 +156,6 @@
 
         <p class="hero-note">파일은 브라우저에서만 처리됩니다. 서버에 전송되지 않습니다.</p>
     </div>
-</section>
-
-
-<!-- ════════════════════════════════════════════════════════════════
-     [존 구분자: 서비스 안내]
-     ════════════════════════════════════════════════════════════════ -->
-<div class="zone-divider zone-divider--info" aria-hidden="true">
-    <div class="container">
-        <span class="zone-divider-label">📋 서비스 안내</span>
-    </div>
-</div>
-
-<!-- ════════════════════════════════════════════════════════════════
-     [포맷 그리드]  지원 포맷 카드 목록
-     재단 홈페이지의 관련기관 카드 패턴 참조
-     ════════════════════════════════════════════════════════════════ -->
-<section class="formats-section" id="formats" aria-labelledby="formats-title">
-    <div class="container">
-        <h2 class="section-title" id="formats-title">지원 포맷</h2>
-        <p class="section-sub">클릭하면 해당 포맷 변환기로 이동합니다</p>
-
-        <!-- 탭: 기본 서비스 / 확장 서비스 (재단 홈페이지 탭 패턴 참조) -->
-        <!-- app.js의 initFormatTabs에서 탭 전환 로직 처리 -->
-        <div class="format-tabs" role="tablist">
-            <button class="format-tab active"
-                    data-target="panel-basic"
-                    role="tab"
-                    aria-selected="true"
-                    aria-controls="panel-basic">
-                🟦 기본 서비스 (7종)
-            </button>
-            <button class="format-tab"
-                    data-target="panel-ext"
-                    role="tab"
-                    aria-selected="false"
-                    aria-controls="panel-ext">
-                🔜 확장 서비스 (5종)
-            </button>
-        </div>
-
-        <!-- ── 기본 서비스 패널 ─────────────────────────────────────
-             [수정 시] 새 포맷 카드 추가 → .format-card 복사 후 data-ext/내용 수정
-             ─────────────────────────────────────────────────────── -->
-        <div class="format-panel active" id="panel-basic" role="tabpanel">
-            <div class="format-grid">
-
-                <!-- Markdown -->
-                <div class="format-card" data-ext="md" role="button" tabindex="0">
-                    <div class="card-icon">📝</div>
-                    <div class="card-ext">MD</div>
-                    <div class="card-name">Markdown</div>
-                    <div class="card-quality">★★★</div>
-                    <span class="card-badge badge-available">지원됨</span>
-                </div>
-
-                <!-- HTML -->
-                <div class="format-card" data-ext="html" role="button" tabindex="0">
-                    <div class="card-icon">🌐</div>
-                    <div class="card-ext">HTML</div>
-                    <div class="card-name">HTML 문서</div>
-                    <div class="card-quality">★★☆</div>
-                    <span class="card-badge badge-available">지원됨</span>
-                </div>
-
-                <!-- DOCX -->
-                <div class="format-card" data-ext="docx" role="button" tabindex="0">
-                    <div class="card-icon">📘</div>
-                    <div class="card-ext">DOCX</div>
-                    <div class="card-name">Word 문서</div>
-                    <div class="card-quality">★★☆</div>
-                    <span class="card-badge badge-available">지원됨</span>
-                </div>
-
-                <!-- HWP (Beta) -->
-                <div class="format-card" data-ext="hwp" role="button" tabindex="0">
-                    <div class="card-icon">🇰🇷</div>
-                    <div class="card-ext">HWP</div>
-                    <div class="card-name">한글 문서</div>
-                    <div class="card-quality">★☆☆</div>
-                    <span class="card-badge badge-beta">베타</span>
-                </div>
-
-                <!-- TXT -->
-                <div class="format-card" data-ext="txt" role="button" tabindex="0">
-                    <div class="card-icon">📄</div>
-                    <div class="card-ext">TXT</div>
-                    <div class="card-name">일반 텍스트</div>
-                    <div class="card-quality">★★★</div>
-                    <span class="card-badge badge-available">지원됨</span>
-                </div>
-
-                <!-- CSV / XLSX -->
-                <div class="format-card" data-ext="csv" role="button" tabindex="0">
-                    <div class="card-icon">📊</div>
-                    <div class="card-ext">CSV / XLSX</div>
-                    <div class="card-name">스프레드시트</div>
-                    <div class="card-quality">★★★</div>
-                    <span class="card-badge badge-available">지원됨</span>
-                </div>
-
-                <!-- JSON -->
-                <div class="format-card" data-ext="json" role="button" tabindex="0">
-                    <div class="card-icon">{ }</div>
-                    <div class="card-ext">JSON</div>
-                    <div class="card-name">JSON 데이터</div>
-                    <div class="card-quality">★★★</div>
-                    <span class="card-badge badge-available">지원됨</span>
-                </div>
-
-            </div><!-- /.format-grid -->
-        </div><!-- /#panel-basic -->
-
-        <!-- ── 확장 서비스 패널 ─────────────────────────────────────
-             IPYNB는 JSON 기반이라 클라이언트에서 처리 가능
-             나머지는 향후 백엔드 연동 예정
-             ─────────────────────────────────────────────────────── -->
-        <div class="format-panel" id="panel-ext" role="tabpanel">
-            <div class="format-grid">
-
-                <!-- IPYNB -->
-                <div class="format-card" data-ext="ipynb" role="button" tabindex="0">
-                    <div class="card-icon">🔬</div>
-                    <div class="card-ext">IPYNB</div>
-                    <div class="card-name">Jupyter Notebook</div>
-                    <div class="card-quality">★★☆</div>
-                    <span class="card-badge badge-available">지원됨</span>
-                </div>
-
-                <!-- PDF (Coming Soon) -->
-                <div class="format-card coming-soon" data-ext="pdf" aria-disabled="true">
-                    <div class="card-icon">📕</div>
-                    <div class="card-ext">PDF</div>
-                    <div class="card-name">PDF 문서</div>
-                    <div class="card-quality">★★☆</div>
-                    <span class="card-badge badge-soon">예정</span>
-                </div>
-
-                <!-- PPTX (Coming Soon) -->
-                <div class="format-card coming-soon" data-ext="pptx" aria-disabled="true">
-                    <div class="card-icon">📑</div>
-                    <div class="card-ext">PPTX</div>
-                    <div class="card-name">PowerPoint</div>
-                    <div class="card-quality">★☆☆</div>
-                    <span class="card-badge badge-soon">예정</span>
-                </div>
-
-                <!-- ODT/RTF (Coming Soon) -->
-                <div class="format-card coming-soon" data-ext="odt" aria-disabled="true">
-                    <div class="card-icon">📃</div>
-                    <div class="card-ext">ODT / RTF</div>
-                    <div class="card-name">오픈 문서</div>
-                    <div class="card-quality">★★☆</div>
-                    <span class="card-badge badge-soon">예정</span>
-                </div>
-
-                <!-- EPUB (Coming Soon) -->
-                <div class="format-card coming-soon" data-ext="epub" aria-disabled="true">
-                    <div class="card-icon">📚</div>
-                    <div class="card-ext">EPUB</div>
-                    <div class="card-name">전자책</div>
-                    <div class="card-quality">★★☆</div>
-                    <span class="card-badge badge-soon">예정</span>
-                </div>
-
-            </div><!-- /.format-grid -->
-        </div><!-- /#panel-ext -->
-
-    </div><!-- /.container -->
 </section>
 
 
@@ -532,7 +362,7 @@
 
 
 <!-- ════════════════════════════════════════════════════════════════
-     [존 구분자: 서비스 안내 (동작 설명)]
+     [존 구분자: 서비스 안내]
      ════════════════════════════════════════════════════════════════ -->
 <div class="zone-divider zone-divider--info" aria-hidden="true">
     <div class="container">
@@ -541,166 +371,324 @@
 </div>
 
 <!-- ════════════════════════════════════════════════════════════════
-     [동작 원리]  5단계 시각적 설명
+     [포맷 그리드 + 동작 원리 + 지원 현황]  탭 전환
      ════════════════════════════════════════════════════════════════ -->
-<section class="how-section" id="how-it-works" aria-labelledby="how-title">
+<section class="formats-section" id="formats" aria-labelledby="formats-title">
     <div class="container">
-        <h2 class="section-title" id="how-title">동작 원리</h2>
-        <p class="section-sub">브라우저 안에서 5단계로 완전히 처리됩니다</p>
+        <h2 class="section-title" id="formats-title">지원 포맷</h2>
+        <p class="section-sub">클릭하면 해당 포맷 변환기로 이동합니다</p>
 
-        <!-- [수정 시] 단계 추가/변경 시 .how-step 블록 복사 -->
-        <div class="steps-grid">
+        <!-- 탭: 기본 서비스 / 확장 서비스 / 동작 원리 / 지원 현황 -->
+        <!-- app.js의 initFormatTabs에서 탭 전환 로직 처리 -->
+        <div class="format-tabs" role="tablist">
+            <button class="format-tab active"
+                    data-target="panel-basic"
+                    role="tab"
+                    aria-selected="true"
+                    aria-controls="panel-basic">
+                🟦 기본 서비스 (7종)
+            </button>
+            <button class="format-tab"
+                    data-target="panel-ext"
+                    role="tab"
+                    aria-selected="false"
+                    aria-controls="panel-ext">
+                🔜 확장 서비스 (5종)
+            </button>
+            <button class="format-tab"
+                    data-target="panel-how"
+                    role="tab"
+                    aria-selected="false"
+                    aria-controls="panel-how">
+                🔍 동작 원리
+            </button>
+            <button class="format-tab"
+                    data-target="panel-support"
+                    role="tab"
+                    aria-selected="false"
+                    aria-controls="panel-support">
+                📊 지원 현황
+            </button>
+        </div>
 
-            <div class="how-step">
-                <div class="how-step-icon" aria-hidden="true">📥</div>
-                <h4>1. 파일 선택</h4>
-                <p>드래그앤드롭 또는 클릭으로 변환할 파일을 선택합니다.</p>
-            </div>
+        <!-- ── 기본 서비스 패널 ─────────────────────────────────────
+             [수정 시] 새 포맷 카드 추가 → .format-card 복사 후 data-ext/내용 수정
+             ─────────────────────────────────────────────────────── -->
+        <div class="format-panel active" id="panel-basic" role="tabpanel">
+            <div class="format-grid">
 
-            <div class="how-step">
-                <div class="how-step-icon" aria-hidden="true">🔄</div>
-                <h4>2. 포맷 파싱</h4>
-                <p>확장자를 자동으로 감지하고 포맷별 파서로 IR(중간 표현)으로 변환합니다.</p>
-            </div>
+                <!-- Markdown -->
+                <div class="format-card" data-ext="md" role="button" tabindex="0">
+                    <div class="card-icon">📝</div>
+                    <div class="card-ext">MD</div>
+                    <div class="card-name">Markdown</div>
+                    <div class="card-quality">★★★</div>
+                    <span class="card-badge badge-available">지원됨</span>
+                </div>
 
-            <div class="how-step">
-                <div class="how-step-icon" aria-hidden="true">⚙️</div>
-                <h4>3. HWPX 생성</h4>
-                <p>IR → section0.xml → JSZip 패키징으로 HWPX 파일을 생성합니다.</p>
-            </div>
+                <!-- HTML -->
+                <div class="format-card" data-ext="html" role="button" tabindex="0">
+                    <div class="card-icon">🌐</div>
+                    <div class="card-ext">HTML</div>
+                    <div class="card-name">HTML 문서</div>
+                    <div class="card-quality">★★☆</div>
+                    <span class="card-badge badge-available">지원됨</span>
+                </div>
 
-            <div class="how-step">
-                <div class="how-step-icon" aria-hidden="true">✅</div>
-                <h4>4. 구조 검증</h4>
-                <p>ZIP_STORED 규칙, 네임스페이스, 참조 무결성 등 4개 영역을 자동 검증합니다.</p>
-            </div>
+                <!-- DOCX -->
+                <div class="format-card" data-ext="docx" role="button" tabindex="0">
+                    <div class="card-icon">📘</div>
+                    <div class="card-ext">DOCX</div>
+                    <div class="card-name">Word 문서</div>
+                    <div class="card-quality">★★☆</div>
+                    <span class="card-badge badge-available">지원됨</span>
+                </div>
 
-            <div class="how-step">
-                <div class="how-step-icon" aria-hidden="true">📦</div>
-                <h4>5. 다운로드</h4>
-                <p>검증을 통과한 .hwpx 파일을 즉시 다운로드합니다.</p>
-            </div>
+                <!-- HWP (Beta) -->
+                <div class="format-card" data-ext="hwp" role="button" tabindex="0">
+                    <div class="card-icon">🇰🇷</div>
+                    <div class="card-ext">HWP</div>
+                    <div class="card-name">한글 문서</div>
+                    <div class="card-quality">★☆☆</div>
+                    <span class="card-badge badge-beta">베타</span>
+                </div>
 
-        </div><!-- /.steps-grid -->
-    </div><!-- /.container -->
-</section>
+                <!-- TXT -->
+                <div class="format-card" data-ext="txt" role="button" tabindex="0">
+                    <div class="card-icon">📄</div>
+                    <div class="card-ext">TXT</div>
+                    <div class="card-name">일반 텍스트</div>
+                    <div class="card-quality">★★★</div>
+                    <span class="card-badge badge-available">지원됨</span>
+                </div>
 
+                <!-- CSV / XLSX -->
+                <div class="format-card" data-ext="csv" role="button" tabindex="0">
+                    <div class="card-icon">📊</div>
+                    <div class="card-ext">CSV / XLSX</div>
+                    <div class="card-name">스프레드시트</div>
+                    <div class="card-quality">★★★</div>
+                    <span class="card-badge badge-available">지원됨</span>
+                </div>
 
-<!-- ════════════════════════════════════════════════════════════════
-     [포맷 지원 표]  상세 품질/특이사항 표
-     ════════════════════════════════════════════════════════════════ -->
-<section class="support-section" id="support" aria-labelledby="support-title">
-    <div class="container">
-        <h2 class="section-title" id="support-title">포맷 지원 현황</h2>
-        <p class="section-sub">★★★: 고품질 / ★★☆: 주요 내용 보존 / ★☆☆: 텍스트 추출만</p>
+                <!-- JSON -->
+                <div class="format-card" data-ext="json" role="button" tabindex="0">
+                    <div class="card-icon">{ }</div>
+                    <div class="card-ext">JSON</div>
+                    <div class="card-name">JSON 데이터</div>
+                    <div class="card-quality">★★★</div>
+                    <span class="card-badge badge-available">지원됨</span>
+                </div>
 
-        <div class="support-table-wrap">
-            <!-- [수정 시] 포맷 추가 시 <tbody>에 <tr> 행 추가 -->
-            <table class="support-table">
-                <thead>
-                    <tr>
-                        <th scope="col">포맷</th>
-                        <th scope="col">품질</th>
-                        <th scope="col">상태</th>
-                        <th scope="col">파싱 방식</th>
-                        <th scope="col">주요 제한사항</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><strong>MD (Markdown)</strong></td>
-                        <td>★★★</td>
-                        <td><span class="card-badge badge-available">지원됨</span></td>
-                        <td>marked.js → HTML → IR</td>
-                        <td>이미지 미지원</td>
-                    </tr>
-                    <tr>
-                        <td><strong>HTML</strong></td>
-                        <td>★★☆</td>
-                        <td><span class="card-badge badge-available">지원됨</span></td>
-                        <td>DOMParser → IR</td>
-                        <td>CSS 스타일 손실, 이미지 미지원</td>
-                    </tr>
-                    <tr>
-                        <td><strong>DOCX</strong></td>
-                        <td>★★☆</td>
-                        <td><span class="card-badge badge-available">지원됨</span></td>
-                        <td>JSZip → word/document.xml → IR</td>
-                        <td>이미지·머리글·바닥글 미지원</td>
-                    </tr>
-                    <tr>
-                        <td><strong>HWP</strong></td>
-                        <td>★☆☆</td>
-                        <td><span class="card-badge badge-beta">베타</span></td>
-                        <td>ZIP 시도 → 텍스트 추출</td>
-                        <td>HWP5(바이너리) 파싱 제한적</td>
-                    </tr>
-                    <tr>
-                        <td><strong>TXT</strong></td>
-                        <td>★★★</td>
-                        <td><span class="card-badge badge-available">지원됨</span></td>
-                        <td>줄바꿈 분석 → IR</td>
-                        <td>없음</td>
-                    </tr>
-                    <tr>
-                        <td><strong>CSV</strong></td>
-                        <td>★★★</td>
-                        <td><span class="card-badge badge-available">지원됨</span></td>
-                        <td>RFC 4180 파서 → 표 IR</td>
-                        <td>없음</td>
-                    </tr>
-                    <tr>
-                        <td><strong>XLSX</strong></td>
-                        <td>★★★</td>
-                        <td><span class="card-badge badge-available">지원됨</span></td>
-                        <td>SheetJS → 첫 시트 → IR</td>
-                        <td>첫 번째 시트만 변환</td>
-                    </tr>
-                    <tr>
-                        <td><strong>JSON</strong></td>
-                        <td>★★★</td>
-                        <td><span class="card-badge badge-available">지원됨</span></td>
-                        <td>JSON.parse → 구조 분석 → IR</td>
-                        <td>IR 형식이면 직접 사용</td>
-                    </tr>
-                    <tr>
-                        <td><strong>IPYNB</strong></td>
-                        <td>★★☆</td>
-                        <td><span class="card-badge badge-available">지원됨</span></td>
-                        <td>JSON 파싱 → cell_type별 처리</td>
-                        <td>이미지 출력 셀 미지원</td>
-                    </tr>
-                    <tr>
-                        <td><strong>PDF</strong></td>
-                        <td>★★☆</td>
-                        <td><span class="card-badge badge-soon">예정</span></td>
-                        <td>—</td>
-                        <td>레이아웃 추출 복잡도로 백엔드 필요</td>
-                    </tr>
-                    <tr>
-                        <td><strong>PPTX</strong></td>
-                        <td>★☆☆</td>
-                        <td><span class="card-badge badge-soon">예정</span></td>
-                        <td>—</td>
-                        <td>슬라이드→문서 변환 시 정보 손실 큼</td>
-                    </tr>
-                    <tr>
-                        <td><strong>ODT / RTF</strong></td>
-                        <td>★★☆</td>
-                        <td><span class="card-badge badge-soon">예정</span></td>
-                        <td>—</td>
-                        <td>복잡한 바이너리/XML 파싱</td>
-                    </tr>
-                    <tr>
-                        <td><strong>EPUB</strong></td>
-                        <td>★★☆</td>
-                        <td><span class="card-badge badge-soon">예정</span></td>
-                        <td>—</td>
-                        <td>EPUB3 구조 파싱 복잡도</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div><!-- /.support-table-wrap -->
+            </div><!-- /.format-grid -->
+        </div><!-- /#panel-basic -->
+
+        <!-- ── 확장 서비스 패널 ─────────────────────────────────────
+             IPYNB는 JSON 기반이라 클라이언트에서 처리 가능
+             나머지는 향후 백엔드 연동 예정
+             ─────────────────────────────────────────────────────── -->
+        <div class="format-panel" id="panel-ext" role="tabpanel">
+            <div class="format-grid">
+
+                <!-- IPYNB -->
+                <div class="format-card" data-ext="ipynb" role="button" tabindex="0">
+                    <div class="card-icon">🔬</div>
+                    <div class="card-ext">IPYNB</div>
+                    <div class="card-name">Jupyter Notebook</div>
+                    <div class="card-quality">★★☆</div>
+                    <span class="card-badge badge-available">지원됨</span>
+                </div>
+
+                <!-- PDF (Coming Soon) -->
+                <div class="format-card coming-soon" data-ext="pdf" aria-disabled="true">
+                    <div class="card-icon">📕</div>
+                    <div class="card-ext">PDF</div>
+                    <div class="card-name">PDF 문서</div>
+                    <div class="card-quality">★★☆</div>
+                    <span class="card-badge badge-soon">예정</span>
+                </div>
+
+                <!-- PPTX (Coming Soon) -->
+                <div class="format-card coming-soon" data-ext="pptx" aria-disabled="true">
+                    <div class="card-icon">📑</div>
+                    <div class="card-ext">PPTX</div>
+                    <div class="card-name">PowerPoint</div>
+                    <div class="card-quality">★☆☆</div>
+                    <span class="card-badge badge-soon">예정</span>
+                </div>
+
+                <!-- ODT/RTF (Coming Soon) -->
+                <div class="format-card coming-soon" data-ext="odt" aria-disabled="true">
+                    <div class="card-icon">📃</div>
+                    <div class="card-ext">ODT / RTF</div>
+                    <div class="card-name">오픈 문서</div>
+                    <div class="card-quality">★★☆</div>
+                    <span class="card-badge badge-soon">예정</span>
+                </div>
+
+                <!-- EPUB (Coming Soon) -->
+                <div class="format-card coming-soon" data-ext="epub" aria-disabled="true">
+                    <div class="card-icon">📚</div>
+                    <div class="card-ext">EPUB</div>
+                    <div class="card-name">전자책</div>
+                    <div class="card-quality">★★☆</div>
+                    <span class="card-badge badge-soon">예정</span>
+                </div>
+
+            </div><!-- /.format-grid -->
+        </div><!-- /#panel-ext -->
+
+        <!-- ── 동작 원리 패널 ────────────────────────────────────── -->
+        <div class="format-panel" id="panel-how" role="tabpanel">
+            <span id="how-it-works" aria-hidden="true"></span>
+            <p class="section-sub" style="margin:16px 0 32px">브라우저 안에서 5단계로 완전히 처리됩니다</p>
+            <div class="steps-grid">
+
+                <div class="how-step">
+                    <div class="how-step-icon" aria-hidden="true">📥</div>
+                    <h4>1. 파일 선택</h4>
+                    <p>드래그앤드롭 또는 클릭으로 변환할 파일을 선택합니다.</p>
+                </div>
+
+                <div class="how-step">
+                    <div class="how-step-icon" aria-hidden="true">🔄</div>
+                    <h4>2. 포맷 파싱</h4>
+                    <p>확장자를 자동으로 감지하고 포맷별 파서로 IR(중간 표현)으로 변환합니다.</p>
+                </div>
+
+                <div class="how-step">
+                    <div class="how-step-icon" aria-hidden="true">⚙️</div>
+                    <h4>3. HWPX 생성</h4>
+                    <p>IR → section0.xml → JSZip 패키징으로 HWPX 파일을 생성합니다.</p>
+                </div>
+
+                <div class="how-step">
+                    <div class="how-step-icon" aria-hidden="true">✅</div>
+                    <h4>4. 구조 검증</h4>
+                    <p>ZIP_STORED 규칙, 네임스페이스, 참조 무결성 등 4개 영역을 자동 검증합니다.</p>
+                </div>
+
+                <div class="how-step">
+                    <div class="how-step-icon" aria-hidden="true">📦</div>
+                    <h4>5. 다운로드</h4>
+                    <p>검증을 통과한 .hwpx 파일을 즉시 다운로드합니다.</p>
+                </div>
+
+            </div><!-- /.steps-grid -->
+        </div><!-- /#panel-how -->
+
+        <!-- ── 지원 현황 패널 ────────────────────────────────────── -->
+        <div class="format-panel" id="panel-support" role="tabpanel">
+            <span id="support" aria-hidden="true"></span>
+            <p class="section-sub" style="margin:16px 0 24px">★★★: 고품질 / ★★☆: 주요 내용 보존 / ★☆☆: 텍스트 추출만</p>
+            <div class="support-table-wrap">
+                <table class="support-table">
+                    <thead>
+                        <tr>
+                            <th scope="col">포맷</th>
+                            <th scope="col">품질</th>
+                            <th scope="col">상태</th>
+                            <th scope="col">파싱 방식</th>
+                            <th scope="col">주요 제한사항</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>MD (Markdown)</strong></td>
+                            <td>★★★</td>
+                            <td><span class="card-badge badge-available">지원됨</span></td>
+                            <td>marked.js → HTML → IR</td>
+                            <td>이미지 미지원</td>
+                        </tr>
+                        <tr>
+                            <td><strong>HTML</strong></td>
+                            <td>★★☆</td>
+                            <td><span class="card-badge badge-available">지원됨</span></td>
+                            <td>DOMParser → IR</td>
+                            <td>CSS 스타일 손실, 이미지 미지원</td>
+                        </tr>
+                        <tr>
+                            <td><strong>DOCX</strong></td>
+                            <td>★★☆</td>
+                            <td><span class="card-badge badge-available">지원됨</span></td>
+                            <td>JSZip → word/document.xml → IR</td>
+                            <td>이미지·머리글·바닥글 미지원</td>
+                        </tr>
+                        <tr>
+                            <td><strong>HWP</strong></td>
+                            <td>★☆☆</td>
+                            <td><span class="card-badge badge-beta">베타</span></td>
+                            <td>ZIP 시도 → 텍스트 추출</td>
+                            <td>HWP5(바이너리) 파싱 제한적</td>
+                        </tr>
+                        <tr>
+                            <td><strong>TXT</strong></td>
+                            <td>★★★</td>
+                            <td><span class="card-badge badge-available">지원됨</span></td>
+                            <td>줄바꿈 분석 → IR</td>
+                            <td>없음</td>
+                        </tr>
+                        <tr>
+                            <td><strong>CSV</strong></td>
+                            <td>★★★</td>
+                            <td><span class="card-badge badge-available">지원됨</span></td>
+                            <td>RFC 4180 파서 → 표 IR</td>
+                            <td>없음</td>
+                        </tr>
+                        <tr>
+                            <td><strong>XLSX</strong></td>
+                            <td>★★★</td>
+                            <td><span class="card-badge badge-available">지원됨</span></td>
+                            <td>SheetJS → 첫 시트 → IR</td>
+                            <td>첫 번째 시트만 변환</td>
+                        </tr>
+                        <tr>
+                            <td><strong>JSON</strong></td>
+                            <td>★★★</td>
+                            <td><span class="card-badge badge-available">지원됨</span></td>
+                            <td>JSON.parse → 구조 분석 → IR</td>
+                            <td>IR 형식이면 직접 사용</td>
+                        </tr>
+                        <tr>
+                            <td><strong>IPYNB</strong></td>
+                            <td>★★☆</td>
+                            <td><span class="card-badge badge-available">지원됨</span></td>
+                            <td>JSON 파싱 → cell_type별 처리</td>
+                            <td>이미지 출력 셀 미지원</td>
+                        </tr>
+                        <tr>
+                            <td><strong>PDF</strong></td>
+                            <td>★★☆</td>
+                            <td><span class="card-badge badge-soon">예정</span></td>
+                            <td>—</td>
+                            <td>레이아웃 추출 복잡도로 백엔드 필요</td>
+                        </tr>
+                        <tr>
+                            <td><strong>PPTX</strong></td>
+                            <td>★☆☆</td>
+                            <td><span class="card-badge badge-soon">예정</span></td>
+                            <td>—</td>
+                            <td>슬라이드→문서 변환 시 정보 손실 큼</td>
+                        </tr>
+                        <tr>
+                            <td><strong>ODT / RTF</strong></td>
+                            <td>★★☆</td>
+                            <td><span class="card-badge badge-soon">예정</span></td>
+                            <td>—</td>
+                            <td>복잡한 바이너리/XML 파싱</td>
+                        </tr>
+                        <tr>
+                            <td><strong>EPUB</strong></td>
+                            <td>★★☆</td>
+                            <td><span class="card-badge badge-soon">예정</span></td>
+                            <td>—</td>
+                            <td>EPUB3 구조 파싱 복잡도</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div><!-- /.support-table-wrap -->
+        </div><!-- /#panel-support -->
+
     </div><!-- /.container -->
 </section>
 

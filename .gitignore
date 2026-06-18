@@ -10,13 +10,8 @@ desktop.ini
 *.swp
 *.swo
 
-# 로컬 HWPX 참고 구현/외부 소스
-HwpForge/
-hwp2hwpx/
-hwpxlib/
-openhwp/
-rhwp/
-unhwp/
+# 로컬 전용 폴더 (참고 구현/외부 소스/임시 파일)
+_local/
 
 # 개발 의존성 (CDN 사용 중이라 node_modules 없음)
 node_modules/
