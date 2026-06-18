@@ -26,6 +26,7 @@ const state = {
     docFont:      '휴먼명조',           // 출력 폰트 (기본: 휴먼명조)
     fontSize:     12,                  // 기본 글꼴 크기 (pt)
     paperSize:    'A4',                // 용지 크기: "A4" | "B5" | "Letter"
+    orientation:  'portrait',          // 용지 방향: "portrait" | "landscape"
     pageMargins:  { top: 10, bottom: 10, left: 20, right: 20, header: 10, footer: 10 },  // 단위: mm
     autoDownload: true,                // 변환 완료 시 자동 다운로드
     isConverting: false,               // 변환 중 중복 실행 방지 플래그
@@ -169,10 +170,13 @@ function initDropZone() {
  * 상태 업데이트 → 포맷 감지 → UI 갱신 → 이전 결과 초기화
  */
 function handleFileSelect(file) {
-    // [보안] 클라이언트 사이드 파일 크기 사전 검사 (20MB)
-    const MAX_MB = 20;
+    const ext = file.name.split('.').pop().toLowerCase();
+
+    // 포맷별 클라이언트 사이드 크기 사전 검사
+    const isBinary = ['xlsx', 'xls', 'docx', 'hwp', 'hwpx'].includes(ext);
+    const MAX_MB   = isBinary ? 50 : 100;
     if (file.size > MAX_MB * 1024 * 1024) {
-        showAlert(`파일 크기 초과: ${(file.size / 1024 / 1024).toFixed(1)}MB (최대 ${MAX_MB}MB 지원)`);
+        showAlert(`파일 크기 초과: ${(file.size / 1024 / 1024).toFixed(1)}MB (최대 ${MAX_MB}MB)`);
         return;
     }
 
@@ -180,8 +184,6 @@ function handleFileSelect(file) {
     state.ir   = null;
     state.hwpxBlob = null;
     revokeDownloadUrl();
-
-    const ext = file.name.split('.').pop().toLowerCase();
     updateDropZoneUI(file, ext);     // 드롭존에 파일 정보 표시
     updateFormatBadge(ext);          // 감지된 포맷 배지 표시
     updateConvertButton(true);       // 변환 버튼 활성화
@@ -542,6 +544,26 @@ function initOptions() {
         });
     }
 
+    // 용지 방향 버튼 (#paper-orient)
+    const orientBtn = document.getElementById('paper-orient');
+    if (orientBtn) {
+        const savedOrient = localStorage.getItem('tohwpx_orientation');
+        if (savedOrient === 'landscape') {
+            state.orientation = 'landscape';
+            orientBtn.textContent = '가로';
+            orientBtn.classList.add('is-landscape');
+            orientBtn.setAttribute('aria-label', '용지 방향: 가로');
+        }
+        orientBtn.addEventListener('click', () => {
+            const toLandscape = state.orientation === 'portrait';
+            state.orientation = toLandscape ? 'landscape' : 'portrait';
+            orientBtn.textContent = toLandscape ? '가로' : '세로';
+            orientBtn.classList.toggle('is-landscape', toLandscape);
+            orientBtn.setAttribute('aria-label', `용지 방향: ${toLandscape ? '가로' : '세로'}`);
+            localStorage.setItem('tohwpx_orientation', state.orientation);
+        });
+    }
+
     // 페이지 여백 입력 (mm 단위, #margin-top/bottom/left/right/header/footer)
     const marginIds = ['top', 'bottom', 'left', 'right', 'header', 'footer'];
     marginIds.forEach(side => {
@@ -691,7 +713,7 @@ async function runConversionPipeline() {
             hwpxBlob = await buildHwpx(ir, state.docFont, state.fontSize, state.pageMargins, state.paperSize, (pct) => {
                  setProgress(58 + (pct * 0.14)); // 58% ~ 72%
                  setStatusText(`HWPX 파일을 압축하는 중... ${Math.round(pct)}%`);
-            });
+            }, state.orientation);
         } catch (e) {
             throw new Error('HWPX 생성 실패: ' + e.message);
         }

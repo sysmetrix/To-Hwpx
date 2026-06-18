@@ -791,11 +791,12 @@ async function fileToIR(file, docType = 'plain') {
         return ir;
     }
 
-    // [보안] 클라이언트 사이드 파일 크기 제한 (20MB)
-    const MAX_BYTES = 20 * 1024 * 1024;
+    // 포맷별 파일 크기 제한: 바이너리(buffer) 50MB, 텍스트 100MB
+    const maxMb    = parser.accept === 'buffer' ? 50 : 100;
+    const MAX_BYTES = maxMb * 1024 * 1024;
     if (file.size > MAX_BYTES) {
         const ir = emptyIR(file.name, docType);
-        ir.blocks.push({ type: 'para', text: `파일 크기 초과: ${(file.size / 1024 / 1024).toFixed(1)}MB (최대 20MB)` });
+        ir.blocks.push({ type: 'para', text: `파일 크기 초과: ${(file.size / 1024 / 1024).toFixed(1)}MB (최대 ${maxMb}MB)` });
         return ir;
     }
 

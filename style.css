@@ -194,7 +194,7 @@ a:hover { text-decoration: underline; }
     text-decoration: none;
 }
 
-/* 자매 서비스 링크 (헤더 내 외부 링크 배지 스타일) */
+/* 연계 서비스 링크 (헤더 내 외부 링크 배지 스타일) */
 .nav-sister-link {
     border: 1.5px solid var(--c-border) !important;
     border-radius: 20px !important;
@@ -713,6 +713,39 @@ a:hover { text-decoration: underline; }
 }
 .options-left { display: flex; flex-direction: column; }
 .options-right .form-row { margin-bottom: 0; }
+
+/* 용지 크기 + 방향 버튼 묶음 */
+.paper-size-wrap {
+    display: flex;
+    gap: 4px;
+}
+.paper-size-wrap > select { flex: 1; min-width: 0; }
+.paper-orient-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    padding: 0 8px;
+    border: 1.5px solid var(--c-border);
+    border-radius: var(--radius-sm);
+    background: var(--c-surface-alt);
+    cursor: pointer;
+    font-family: var(--font-main);
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--c-text-sub);
+    white-space: nowrap;
+    transition: background var(--trans), border-color var(--trans), color var(--trans);
+}
+.paper-orient-btn:hover {
+    border-color: var(--c-primary);
+    color: var(--c-primary);
+}
+.paper-orient-btn.is-landscape {
+    background: var(--c-primary-light);
+    border-color: var(--c-primary);
+    color: var(--c-primary);
+}
 
 .checkbox-row {
     display: flex;

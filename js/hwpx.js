@@ -368,8 +368,9 @@ function headingIds(level) {
  * 표(hp:tbl) XML 생성
  * [v3 변경] 셀 내용 paraPrIDRef="7" (CENTER 정렬)
  */
-function getContentWidthHwp(marginsHwp, paperKey) {
-    const paper = PAPER_SIZES[paperKey] || PAPER_SIZES['A4'];
+function getContentWidthHwp(marginsHwp, paperKey, landscape = false) {
+    const paperBase = PAPER_SIZES[paperKey] || PAPER_SIZES['A4'];
+    const paper = landscape ? { w: paperBase.h, h: paperBase.w } : paperBase;
     const m = Object.assign({}, DEFAULT_MARGINS_HWP, marginsHwp || {});
     return Math.max(12000, paper.w - m.left - m.right);
 }
@@ -412,11 +413,11 @@ function buildTable(header, rows, contentWidthHwp = 48000) {
         rowsXml += `<hp:tr>${cellsXml}</hp:tr>`;
     }
 
-    // [v4] pageBreak="TABLE" → 행 단위로 쪽 넘김 허용 (rhwp TablePageBreak::RowBreak 기준)
+    // pageBreak="ROW" → 행 경계에서 쪽 넘김 허용 (긴 표가 다음 페이지로 이어짐)
     //      height="0" → HWP이 셀 내용 기준으로 자동 계산 (고정값 제거)
     return `<hp:p id="${pid}" paraPrIDRef="0" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0"><hp:run charPrIDRef="0">` +
         `<hp:tbl id="0" zOrder="0" numberingType="TABLE" textWrap="TOP_AND_BOTTOM" ` +
-        `textFlow="BOTH_SIDES" lock="0" dropcapstyle="None" pageBreak="TABLE" ` +
+        `textFlow="BOTH_SIDES" lock="0" dropcapstyle="None" pageBreak="ROW" ` +
         `repeatHeader="1" rowCnt="${nRows}" colCnt="${nCols}" cellSpacing="0" borderFillIDRef="2">` +
         `<hp:sz width="${tableWidth}" widthRelTo="ABSOLUTE" height="0" heightRelTo="ABSOLUTE" protect="0"/>` +
         `<hp:pos treatAsChar="1" affectLSpacing="0" flowWithText="1" allowOverlap="0" holdAnchorAndSO="0" ` +
@@ -431,8 +432,9 @@ function buildTable(header, rows, contentWidthHwp = 48000) {
  * 페이지 설정(secPr) XML
  * HWPX 스키마 기준 secPr는 paragraph 네임스페이스이며 hp:run 내부에 위치한다.
  */
-function buildSecPr(marginsHwp, paperKey) {
-    const paper = PAPER_SIZES[paperKey] || PAPER_SIZES['A4'];
+function buildSecPr(marginsHwp, paperKey, landscape = false) {
+    const paperBase = PAPER_SIZES[paperKey] || PAPER_SIZES['A4'];
+    const paper = landscape ? { w: paperBase.h, h: paperBase.w } : paperBase;
     const m = Object.assign({}, DEFAULT_MARGINS_HWP, marginsHwp || {});
     return `<hp:secPr id="" textDirection="HORIZONTAL" spaceColumns="1134" tabStop="8000" ` +
         `tabStopVal="4000" tabStopUnit="HWPUNIT" outlineShapeIDRef="0" memoShapeIDRef="0" ` +
@@ -476,7 +478,7 @@ function buildSectionBootstrap(secPrXml, contentWidthHwp) {
  * IR → section0.xml 전체 문자열
  * [v4] 참조 앱(md-to-hwpx)처럼 첫 bootstrap 문단에 secPr를 배치한다.
  */
-function buildSection(ir, marginsHwp, paperKey) {
+function buildSection(ir, marginsHwp, paperKey, landscape = false) {
     const NS_HS = 'http://www.hancom.co.kr/hwpml/2011/section';
     const NS_HP = 'http://www.hancom.co.kr/hwpml/2011/paragraph';
     const docType = ir.doc_type || 'plain';
@@ -484,9 +486,9 @@ function buildSection(ir, marginsHwp, paperKey) {
     // 섹션마다 문단 ID를 0부터 재시작 (HWPX 섹션 범위 기준)
     _resetParaId();
 
-    const contentWidthHwp = getContentWidthHwp(marginsHwp, paperKey);
+    const contentWidthHwp = getContentWidthHwp(marginsHwp, paperKey, landscape);
     const parts = [];
-    parts.push(buildSectionBootstrap(buildSecPr(marginsHwp, paperKey), contentWidthHwp));
+    parts.push(buildSectionBootstrap(buildSecPr(marginsHwp, paperKey, landscape), contentWidthHwp));
 
     // ── 문서 유형별 머리글 ────────────────────────────────────────────
     if (docType === 'official') {
@@ -578,14 +580,16 @@ function buildSection(ir, marginsHwp, paperKey) {
  * @param {object|null} marginsMm 여백 mm {left,right,top,bottom,header,footer} — null=기본값
  * @param {string} paperSize     용지 "A4"|"B5"|"Letter"
  * @param {function} onProgress  진행률 콜백 함수 (0~100)
+ * @param {string} orientation   용지 방향 "portrait"|"landscape"
  */
-async function buildHwpx(ir, fontName = '휴먼명조', fontSize = 12, marginsMm = null, paperSize = 'A4', onProgress = null) {
+async function buildHwpx(ir, fontName = '휴먼명조', fontSize = 12, marginsMm = null, paperSize = 'A4', onProgress = null, orientation = 'portrait') {
     if (typeof JSZip === 'undefined') throw new Error('JSZip 미로드: 인터넷 연결을 확인하세요.');
 
     const marginsHwp = marginsMmToHwp(marginsMm || DEFAULT_MARGINS_MM);
+    const landscape  = orientation === 'landscape';
 
     const headerXml   = buildHeaderXml(fontName, fontSize);
-    const section0Xml = buildSection(ir, marginsHwp, paperSize);
+    const section0Xml = buildSection(ir, marginsHwp, paperSize, landscape);
 
     const zip = new JSZip();
     zip.file('mimetype',              MIMETYPE,      { compression: 'STORE' });
