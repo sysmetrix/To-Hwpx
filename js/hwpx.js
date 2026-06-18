@@ -314,13 +314,20 @@ function headingIds(level) {
  * 표(hp:tbl) XML 생성
  * [v3 변경] 셀 내용 paraPrIDRef="7" (CENTER 정렬)
  */
-function buildTable(header, rows) {
+function getContentWidthHwp(marginsHwp, paperKey) {
+    const paper = PAPER_SIZES[paperKey] || PAPER_SIZES['A4'];
+    const m = Object.assign({}, DEFAULT_MARGINS_HWP, marginsHwp || {});
+    return Math.max(12000, paper.w - m.left - m.right);
+}
+
+function buildTable(header, rows, contentWidthHwp = 48000) {
     const allRows = (header && header.length ? [header] : []).concat(rows || []);
     if (!allRows.length) return buildBlankPara();
 
     const nRows = allRows.length;
     const nCols = Math.max(...allRows.map(r => (r || []).length), 1);
-    const cellWidth = Math.floor(48000 / nCols);
+    const tableWidth = Math.min(48000, Math.max(12000, contentWidthHwp));
+    const cellWidth = Math.floor(tableWidth / nCols);
 
     let rowsXml = '';
     for (let r = 0; r < nRows; r++) {
@@ -356,7 +363,7 @@ function buildTable(header, rows) {
         `<hp:tbl id="0" zOrder="0" numberingType="TABLE" textWrap="TOP_AND_BOTTOM" ` +
         `textFlow="BOTH_SIDES" lock="0" dropcapstyle="None" pageBreak="TABLE" ` +
         `repeatHeader="1" rowCnt="${nRows}" colCnt="${nCols}" cellSpacing="0" borderFillIDRef="2">` +
-        `<hp:sz width="48000" widthRelTo="ABSOLUTE" height="0" heightRelTo="ABSOLUTE" protect="0"/>` +
+        `<hp:sz width="${tableWidth}" widthRelTo="ABSOLUTE" height="0" heightRelTo="ABSOLUTE" protect="0"/>` +
         `<hp:pos treatAsChar="1" affectLSpacing="0" flowWithText="1" allowOverlap="0" holdAnchorAndSO="0" ` +
         `vertRelTo="PARA" horzRelTo="COLUMN" vertAlign="TOP" horzAlign="LEFT" vertOffset="0" horzOffset="0"/>` +
         `<hp:outMargin left="0" right="0" top="0" bottom="0"/>` +
@@ -400,17 +407,16 @@ function buildSecPr(marginsHwp, paperKey) {
         `</hp:secPr>`;
 }
 
-function injectSecPrIntoFirstRun(parts, secPrXml) {
-    if (!parts.length) return parts;
-    const idx = parts.findIndex(xml => xml.includes('<hp:run '));
-    if (idx < 0) return parts;
-    parts[idx] = parts[idx].replace(/(<hp:run\b[^>]*>)/, `$1${secPrXml}`);
-    return parts;
+function buildSectionBootstrap(secPrXml) {
+    return `<hp:p paraPrIDRef="0" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0">` +
+        `<hp:run charPrIDRef="0">${secPrXml}` +
+        `<hp:ctrl><hp:colPr id="" type="NEWSPAPER" layout="LEFT" colCount="1" sameSz="1" sameGap="0"/></hp:ctrl>` +
+        `</hp:run><hp:run charPrIDRef="0"><hp:t></hp:t></hp:run></hp:p>`;
 }
 
 /**
  * IR → section0.xml 전체 문자열
- * [v4] secPr를 첫 hp:run 내부로 주입, docType 분기, 빈 블록 처리
+ * [v4] 참조 앱(md-to-hwpx)처럼 첫 bootstrap 문단에 secPr를 배치한다.
  */
 function buildSection(ir, marginsHwp, paperKey) {
     const NS_HS = 'http://www.hancom.co.kr/hwpml/2011/section';
@@ -421,6 +427,8 @@ function buildSection(ir, marginsHwp, paperKey) {
     _resetParaId();
 
     const parts = [];
+    parts.push(buildSectionBootstrap(buildSecPr(marginsHwp, paperKey)));
+    const contentWidthHwp = getContentWidthHwp(marginsHwp, paperKey);
 
     // ── 문서 유형별 머리글 ────────────────────────────────────────────
     if (docType === 'official') {
@@ -479,7 +487,7 @@ function buildSection(ir, marginsHwp, paperKey) {
             });
 
         } else if (bt === 'table') {
-            parts.push(buildTable(block.header, block.rows));
+            parts.push(buildTable(block.header, block.rows, contentWidthHwp));
 
         } else if (bt === 'code') {
             const lines = (block.text || '').split('\n');
@@ -489,10 +497,6 @@ function buildSection(ir, marginsHwp, paperKey) {
             parts.push(buildPara(block.text, '0', '0'));
         }
     }
-
-    if (!parts.length) parts.push(buildBlankPara());
-
-    injectSecPrIntoFirstRun(parts, buildSecPr(marginsHwp, paperKey));
 
     return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n` +
         `<hs:sec xmlns:hs="${NS_HS}" xmlns:hp="${NS_HP}">` +

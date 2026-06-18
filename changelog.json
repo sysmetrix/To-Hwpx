@@ -1,6 +1,19 @@
 {
-  "current": "3.2.1",
+  "current": "3.2.2",
   "versions": [
+    {
+      "version": "3.2.2",
+      "date": "2026-06-18",
+      "user": [
+        "md-to-hwpx 페이지의 HWPX 여백 처리 방식을 참조해 페이지 여백 반영 로직 개선",
+        "표 폭 계산에 좌우 페이지 여백을 반영하도록 수정"
+      ],
+      "dev": [
+        "section bootstrap 문단을 만들어 hp:secPr와 hp:colPr를 첫 문단에 배치",
+        "표 너비를 고정 48000 HWPUNIT 대신 page.width - left - right 기반으로 계산",
+        "서비스 워커 캐시 버전 v3.2.1 → v3.2.2"
+      ]
+    },
     {
       "version": "3.2.1",
       "date": "2026-06-18",
