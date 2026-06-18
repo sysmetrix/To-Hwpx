@@ -54,19 +54,18 @@ const PIPELINE_STEPS = [
 //   모든 기능 초기화를 DOMContentLoaded 이후 실행
 // ─────────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-    renderPipelineSteps();  // 파이프라인 단계 DOM 렌더링
-    initDropZone();          // 파일 드롭/선택 영역
-    initFormatTabs();        // 포맷 탭 전환 (기본/확장 서비스)
-    initFormatCards();       // 포맷 카드 클릭 이벤트
-    initOptions();           // 문서 유형·제목 옵션
-    initConvertButton();     // 변환 시작 버튼
-    initScrollBehavior();    // 스크롤 시 헤더 효과
-    initMobileMenu();        // 모바일 햄버거 메뉴
-    initNavLinks();          // 부드러운 스크롤 네비게이션
-    initModals();            // 미리보기·업데이트 내역 모달
-    initBookmarkButton();    // 즐겨찾기 안내 버튼
-    initMiniDropZone();      // 변환기 섹션 내 미니 드롭존
-    initPaperSizeLabel();    // 용지 크기 변경 시 여백 종이 레이블 동기화
+    renderPipelineSteps();      // 파이프라인 단계 DOM 렌더링
+    initDropZone();             // 파일 드롭/선택 영역 (히어로 드롭존)
+    initConverterDropArea();    // 변환기 섹션 통합 드롭 영역
+    initFormatTabs();           // 포맷 탭 전환 (기본/확장 서비스)
+    initFormatCards();          // 포맷 카드 클릭 이벤트
+    initOptions();              // 문서 유형·제목·폰트·여백 옵션
+    initConvertButton();        // 변환 시작 버튼 + Ctrl+Enter 단축키
+    initScrollBehavior();       // 스크롤 시 헤더 효과
+    initMobileMenu();           // 모바일 햄버거 메뉴
+    initNavLinks();             // 부드러운 스크롤 네비게이션
+    initModals();               // 미리보기·업데이트 내역 모달
+    initBookmarkButton();       // 즐겨찾기 안내 버튼
 });
 
 
@@ -202,36 +201,34 @@ function handleFileSelect(file) {
 /** 드롭존 내부 UI를 파일 선택 상태로 업데이트 */
 function updateDropZoneUI(file, ext) {
     const dz = document.getElementById('drop-zone');
-    if (!dz) return;
-
-    dz.innerHTML = `
-        <div class="file-selected-info">
-            <span class="file-emoji">${getFormatIcon(ext)}</span>
-            <div class="file-meta">
-                <strong class="file-name">${escHtml(file.name)}</strong>
-                <span class="file-size">${formatBytes(file.size)}</span>
+    if (dz) {
+        dz.innerHTML = `
+            <div class="file-selected-info">
+                <span class="file-emoji">${getFormatIcon(ext)}</span>
+                <div class="file-meta">
+                    <strong class="file-name">${escHtml(file.name)}</strong>
+                    <span class="file-size">${formatBytes(file.size)}</span>
+                </div>
+                <button class="file-change" onclick="document.getElementById('file-input').click()">
+                    다른 파일 선택
+                </button>
             </div>
-            <button class="file-change" onclick="document.getElementById('file-input').click()">
-                다른 파일 선택
-            </button>
-        </div>
-    `;
+        `;
+    }
 
-    // 미니 드롭존도 선택된 파일 정보 반영
-    const mini      = document.getElementById('mini-drop-zone');
-    const miniLabel = document.getElementById('mini-drop-label');
-    const miniBadge = document.getElementById('mini-drop-badge');
-    if (mini)      mini.classList.add('has-file');
-    if (miniLabel) miniLabel.textContent = `${escHtml(file.name)}  (${formatBytes(file.size)}) — 다른 파일 선택`;
-    if (miniBadge) { miniBadge.textContent = ext.toUpperCase(); miniBadge.hidden = false; }
+    // 변환기 섹션 통합 드롭 영역도 선택된 파일 반영
+    const cda      = document.getElementById('converter-drop-area');
+    const cdaLabel = document.getElementById('cda-label');
+    if (cda)      cda.classList.add('has-file');
+    if (cdaLabel) cdaLabel.textContent = `${file.name}  (${formatBytes(file.size)}) — 다른 파일 선택`;
 }
 
 /** 감지된 포맷 배지 업데이트 */
 function updateFormatBadge(ext) {
     const badge = document.getElementById('detected-format');
     if (!badge) return;
-    badge.textContent  = ext.toUpperCase();
-    badge.style.display = 'inline-flex';
+    badge.textContent   = ext.toUpperCase();
+    badge.style.display = 'inline-block';
 }
 
 
@@ -307,10 +304,10 @@ const FORMAT_INFO = {
         tip: {
             title: '💡 한글에서 HWPX로 직접 저장하는 더 쉬운 방법',
             steps: [
-                '한글 프로그램에서 HWP 파일을 엽니다',
+                '한글 프로그램에서 파일을 엽니다',
                 '[파일] → [다른 이름으로 저장] 선택 (단축키: F12)',
                 '"파일 형식" 드롭다운에서 <strong>HWPX(*.hwpx)</strong> 선택',
-                '저장한 .hwpx 파일을 이 사이트에 업로드하면 더 높은 품질로 변환됩니다',
+                '저장하면 완료됩니다. 이 사이트에 업로드할 필요 없이 바로 사용할 수 있습니다.',
             ],
         },
     },
@@ -497,25 +494,52 @@ function initOptions() {
         });
     }
 
-    // 폰트 선택 (<select id="doc-font">)
+    // 폰트 선택 (<select id="doc-font">) — 선택 값 localStorage 저장
     const fontEl = document.getElementById('doc-font');
     if (fontEl) {
-        fontEl.addEventListener('change', () => { state.docFont = fontEl.value; });
-    }
-
-    // 글꼴 크기 (<select id="font-size">)
-    const fontSizeEl = document.getElementById('font-size');
-    if (fontSizeEl) {
-        fontSizeEl.addEventListener('change', () => {
-            const v = parseInt(fontSizeEl.value, 10);
-            if (!isNaN(v) && v >= 6 && v <= 36) state.fontSize = v;
+        const savedFont = localStorage.getItem('tohwpx_font');
+        if (savedFont) {
+            const valid = Array.from(fontEl.options).some(o => o.value === savedFont);
+            if (valid) { fontEl.value = savedFont; state.docFont = savedFont; }
+        }
+        fontEl.addEventListener('change', () => {
+            state.docFont = fontEl.value;
+            localStorage.setItem('tohwpx_font', fontEl.value);
         });
     }
 
-    // 용지 크기 선택 (<select id="paper-size">)
+    // 글꼴 크기 (<select id="font-size">) — 선택 값 localStorage 저장
+    const fontSizeEl = document.getElementById('font-size');
+    if (fontSizeEl) {
+        const savedSize = localStorage.getItem('tohwpx_fontSize');
+        if (savedSize) {
+            const v = parseInt(savedSize, 10);
+            if (!isNaN(v) && v >= 6 && v <= 36) {
+                fontSizeEl.value = String(v);
+                state.fontSize = v;
+            }
+        }
+        fontSizeEl.addEventListener('change', () => {
+            const v = parseInt(fontSizeEl.value, 10);
+            if (!isNaN(v) && v >= 6 && v <= 36) {
+                state.fontSize = v;
+                localStorage.setItem('tohwpx_fontSize', String(v));
+            }
+        });
+    }
+
+    // 용지 크기 선택 (<select id="paper-size">) — 선택 값 localStorage 저장
     const paperEl = document.getElementById('paper-size');
     if (paperEl) {
-        paperEl.addEventListener('change', () => { state.paperSize = paperEl.value; });
+        const savedPaper = localStorage.getItem('tohwpx_paperSize');
+        if (savedPaper) {
+            const valid = Array.from(paperEl.options).some(o => o.value === savedPaper);
+            if (valid) { paperEl.value = savedPaper; state.paperSize = savedPaper; }
+        }
+        paperEl.addEventListener('change', () => {
+            state.paperSize = paperEl.value;
+            localStorage.setItem('tohwpx_paperSize', paperEl.value);
+        });
     }
 
     // 페이지 여백 입력 (mm 단위, #margin-top/bottom/left/right/header/footer)
@@ -542,9 +566,16 @@ function initOptions() {
 
     const autoDownloadEl = document.getElementById('auto-download');
     if (autoDownloadEl) {
-        state.autoDownload = autoDownloadEl.checked;
+        const savedAuto = localStorage.getItem('tohwpx_autoDownload');
+        if (savedAuto !== null) {
+            autoDownloadEl.checked = savedAuto !== 'false';
+            state.autoDownload = autoDownloadEl.checked;
+        } else {
+            state.autoDownload = autoDownloadEl.checked;
+        }
         autoDownloadEl.addEventListener('change', () => {
             state.autoDownload = autoDownloadEl.checked;
+            localStorage.setItem('tohwpx_autoDownload', String(autoDownloadEl.checked));
         });
     }
 
@@ -563,7 +594,7 @@ function initOptions() {
 
 
 // ─────────────────────────────────────────────────────────────────────────
-// [변환 버튼]
+// [변환 버튼 + Ctrl+Enter 단축키]
 // ─────────────────────────────────────────────────────────────────────────
 function initConvertButton() {
     const btn = document.getElementById('convert-btn');
@@ -572,6 +603,17 @@ function initConvertButton() {
         if (!state.file || state.isConverting) return;
         syncMarginInputs();
         runConversionPipeline();
+    });
+
+    // Ctrl+Enter (Windows/Linux) / ⌘+Enter (Mac) 단축키로 변환 시작
+    document.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+            if (state.file && !state.isConverting) {
+                e.preventDefault();
+                syncMarginInputs();
+                runConversionPipeline();
+            }
+        }
     });
 }
 
@@ -1071,38 +1113,32 @@ function closeChangelog() {
 
 
 // ─────────────────────────────────────────────────────────────────────────
-// [미니 드롭존 — 변환기 섹션 내 파일 업로드]
+// [변환기 섹션 통합 드롭 영역]
+//   히어로 드롭존과 달리 옵션 패널 상단에 위치 — 클릭·드래그 모두 지원
+//   파일 선택 시 .has-file 클래스로 상태 전환 (updateDropZoneUI에서 처리)
 // ─────────────────────────────────────────────────────────────────────────
-function initMiniDropZone() {
-    const zone      = document.getElementById('mini-drop-zone');
+function initConverterDropArea() {
+    const area      = document.getElementById('converter-drop-area');
     const fileInput = document.getElementById('file-input');
-    if (!zone || !fileInput) return;
+    if (!area || !fileInput) return;
 
-    zone.addEventListener('click', () => fileInput.click());
-    zone.addEventListener('keydown', e => {
+    area.addEventListener('click', () => fileInput.click());
+    area.addEventListener('keydown', e => {
         if (e.key === 'Enter' || e.key === ' ') fileInput.click();
     });
-    zone.addEventListener('dragover', e => {
+    area.addEventListener('dragover', e => {
         e.preventDefault();
-        zone.classList.add('drag-over');
+        area.classList.add('drag-over');
     });
-    zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
-    zone.addEventListener('drop', e => {
+    area.addEventListener('dragleave', e => {
+        if (!area.contains(e.relatedTarget)) area.classList.remove('drag-over');
+    });
+    area.addEventListener('drop', e => {
         e.preventDefault();
-        zone.classList.remove('drag-over');
+        area.classList.remove('drag-over');
         const file = e.dataTransfer?.files?.[0];
         if (file) handleFileSelect(file);
     });
-}
-
-// ─────────────────────────────────────────────────────────────────────────
-// [용지 크기 레이블 동기화 — 여백 종이 아이콘 위 표시]
-// ─────────────────────────────────────────────────────────────────────────
-function initPaperSizeLabel() {
-    const sel   = document.getElementById('paper-size');
-    const label = document.getElementById('margin-paper-label');
-    if (!sel || !label) return;
-    sel.addEventListener('change', () => { label.textContent = sel.value; });
 }
 
 // ─────────────────────────────────────────────────────────────────────────

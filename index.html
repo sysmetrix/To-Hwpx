@@ -34,7 +34,7 @@
     <title>To HWPX - ｢BWYF｣ AX Challenger</title>
     <meta name="description" content="Markdown, HTML, DOCX, CSV, JSON 등 다양한 포맷을 한글(HWPX) 파일로 변환합니다. 브라우저에서 직접 처리 — 파일이 서버에 업로드되지 않습니다.">
     <meta property="og:title" content="To HWPX - ｢BWYF｣ AX Challenger">
-    <meta property="og:description" content="다양한 문서 포맷을 HWPX로 변환하는 무료 브라우저 도구">
+    <meta property="og:description" content="다양한 문서 포맷을 HWPX로 변환하는 브라우저 도구">
     <meta property="og:type" content="website">
 
     <!-- 파비콘 (텍스트 기반 SVG) -->
@@ -90,7 +90,7 @@
         <div class="container">
             <span>｢BWYF｣ AX Challenger 2026</span>
             <button class="util-changelog-btn" id="open-changelog" aria-label="업데이트 내역 보기">
-                📋 v3.7.0 업데이트 내역
+                📋 v3.8.0 업데이트 내역
             </button>
         </div>
     </div>
@@ -199,19 +199,17 @@
             <div class="options-panel">
                 <h3>⚙️ 변환 옵션</h3>
 
-                <!-- 미니 드롭존 — 변환기 섹션에서 직접 파일 업로드 -->
-                <div id="mini-drop-zone" class="mini-drop-zone" role="button" tabindex="0"
+                <!-- 파일 드롭 영역 — 클릭하거나 드래그해서 바로 업로드
+                     [수정 시] 클릭·드롭 이벤트는 app.js initConverterDropArea()에서 처리 -->
+                <div id="converter-drop-area" class="converter-drop-area" role="button" tabindex="0"
                      aria-label="파일을 드래그하거나 클릭하여 선택">
-                    <span class="mini-drop-icon">📂</span>
-                    <span id="mini-drop-label">파일을 드래그하거나 클릭하여 선택</span>
-                    <span id="mini-drop-badge" class="detected-badge" hidden></span>
+                    <span class="cda-icon">📂</span>
+                    <div class="cda-body">
+                        <span id="cda-label">파일을 드래그하거나 클릭하여 선택</span>
+                        <span id="detected-format" aria-live="polite"></span>
+                    </div>
                 </div>
-
-                <!-- 감지된 포맷 표시 -->
-                <div class="detected-row">
-                    <span>감지된 포맷:</span>
-                    <span id="detected-format" aria-live="polite"></span>
-                </div>
+                <!-- 포맷 힌트 — 포맷 카드 → '이 포맷으로 변환하기' 클릭 시 노출 -->
                 <div id="format-hint" role="status" aria-live="polite"></div>
 
                 <!-- 문서 제목 (전체 폭 — 가장 먼저 설정) -->
@@ -237,15 +235,18 @@
                     </div>
                     <div class="form-row">
                         <label for="doc-font">한글 폰트</label>
+                        <!-- 가나다순: 굴림·나눔고딕·맑은고딕·바탕·함초롬바탕·함초롬돋움·휴먼명조
+                             abc순: KoPub돋움체·Noto Sans KR -->
                         <select id="doc-font" name="doc-font">
-                            <option value="휴먼명조" selected>휴먼명조</option>
+                            <option value="굴림">굴림</option>
+                            <option value="나눔고딕">나눔고딕</option>
+                            <option value="맑은 고딕">맑은 고딕</option>
                             <option value="바탕">바탕</option>
                             <option value="함초롬바탕">함초롬바탕</option>
                             <option value="함초롬돋움">함초롬돋움</option>
+                            <option value="휴먼명조" selected>휴먼명조</option>
                             <option value="KoPub돋움체 Medium">KoPub돋움체</option>
-                            <option value="맑은 고딕">맑은 고딕</option>
-                            <option value="나눔고딕">나눔고딕</option>
-                            <option value="굴림">굴림</option>
+                            <option value="Noto Sans KR">Noto Sans KR</option>
                         </select>
                     </div>
                     <div class="form-row">
@@ -271,57 +272,41 @@
                     </div>
                 </div>
 
-                <!-- 페이지 여백 — 실제 종이 모양으로 시각화
+                <!-- 페이지 여백 — 2열 배치
                      hwpx.js buildHwpx()에서 mm → HWPUNIT 변환 (1mm ≈ 283 HWPUNIT)
                      [수정 시] 기본값 변경은 app.js state.pageMargins 와 hwpx.js DEFAULT_MARGINS_MM 에서 -->
-                <div class="form-row margin-paper-wrap">
+                <div class="form-row">
                     <label>페이지 여백 (mm)</label>
-                    <div class="margin-visual">
-                        <!-- 위 여백 -->
-                        <div class="margin-row-top">
-                            <div class="margin-field">
-                                <label for="margin-top" class="margin-label">위</label>
-                                <input type="number" id="margin-top" class="margin-input"
-                                       value="10" min="0" max="60" step="1" aria-label="위 여백 mm">
-                            </div>
+                    <div class="margin-grid-2col">
+                        <div class="margin-item">
+                            <label for="margin-top">위</label>
+                            <input type="number" id="margin-top"
+                                   value="10" min="0" max="60" step="1" aria-label="위 여백 mm">
                         </div>
-                        <!-- 왼쪽 | 종이 | 오른쪽 -->
-                        <div class="margin-row-middle">
-                            <div class="margin-field margin-field--horiz">
-                                <label for="margin-left" class="margin-label">왼쪽</label>
-                                <input type="number" id="margin-left" class="margin-input"
-                                       value="20" min="0" max="60" step="1" aria-label="왼쪽 여백 mm">
-                            </div>
-                            <div class="margin-paper-icon" aria-hidden="true">
-                                <span>📄</span>
-                                <span id="margin-paper-label" class="margin-paper-label">A4</span>
-                            </div>
-                            <div class="margin-field margin-field--horiz">
-                                <input type="number" id="margin-right" class="margin-input"
-                                       value="20" min="0" max="60" step="1" aria-label="오른쪽 여백 mm">
-                                <label for="margin-right" class="margin-label">오른쪽</label>
-                            </div>
+                        <div class="margin-item">
+                            <label for="margin-bottom">아래</label>
+                            <input type="number" id="margin-bottom"
+                                   value="10" min="0" max="60" step="1" aria-label="아래 여백 mm">
                         </div>
-                        <!-- 아래 여백 -->
-                        <div class="margin-row-bottom">
-                            <div class="margin-field">
-                                <input type="number" id="margin-bottom" class="margin-input"
-                                       value="10" min="0" max="60" step="1" aria-label="아래 여백 mm">
-                                <label for="margin-bottom" class="margin-label">아래</label>
-                            </div>
+                        <div class="margin-item">
+                            <label for="margin-left">왼쪽</label>
+                            <input type="number" id="margin-left"
+                                   value="20" min="0" max="60" step="1" aria-label="왼쪽 여백 mm">
                         </div>
-                        <!-- 머리말 / 꼬리말 -->
-                        <div class="margin-row-hf">
-                            <div class="margin-field">
-                                <label for="margin-header" class="margin-label">머리말</label>
-                                <input type="number" id="margin-header" class="margin-input"
-                                       value="10" min="0" max="30" step="1" aria-label="머리말 여백 mm">
-                            </div>
-                            <div class="margin-field">
-                                <label for="margin-footer" class="margin-label">꼬리말</label>
-                                <input type="number" id="margin-footer" class="margin-input"
-                                       value="10" min="0" max="30" step="1" aria-label="꼬리말 여백 mm">
-                            </div>
+                        <div class="margin-item">
+                            <label for="margin-right">오른쪽</label>
+                            <input type="number" id="margin-right"
+                                   value="20" min="0" max="60" step="1" aria-label="오른쪽 여백 mm">
+                        </div>
+                        <div class="margin-item">
+                            <label for="margin-header">머리말</label>
+                            <input type="number" id="margin-header"
+                                   value="10" min="0" max="30" step="1" aria-label="머리말 여백 mm">
+                        </div>
+                        <div class="margin-item">
+                            <label for="margin-footer">꼬리말</label>
+                            <input type="number" id="margin-footer"
+                                   value="10" min="0" max="30" step="1" aria-label="꼬리말 여백 mm">
                         </div>
                     </div>
                 </div>
@@ -449,7 +434,7 @@
 
                 <!-- Markdown -->
                 <div class="format-card" data-ext="md" role="button" tabindex="0">
-                    <div class="card-icon">📝</div>
+                    <div class="card-icon"><img src="https://cdn.simpleicons.org/markdown/4a4a4a" alt="" class="format-brand-icon" loading="lazy" aria-hidden="true"></div>
                     <div class="card-ext">MD</div>
                     <div class="card-name">Markdown</div>
                     <div class="card-quality">★★★</div>
@@ -458,7 +443,7 @@
 
                 <!-- HTML -->
                 <div class="format-card" data-ext="html" role="button" tabindex="0">
-                    <div class="card-icon">🌐</div>
+                    <div class="card-icon"><img src="https://cdn.simpleicons.org/html5/e34f26" alt="" class="format-brand-icon" loading="lazy" aria-hidden="true"></div>
                     <div class="card-ext">HTML</div>
                     <div class="card-name">HTML 문서</div>
                     <div class="card-quality">★★☆</div>
@@ -467,14 +452,14 @@
 
                 <!-- DOCX -->
                 <div class="format-card" data-ext="docx" role="button" tabindex="0">
-                    <div class="card-icon">📘</div>
+                    <div class="card-icon"><img src="https://cdn.simpleicons.org/microsoftword/2b579a" alt="" class="format-brand-icon" loading="lazy" aria-hidden="true"></div>
                     <div class="card-ext">DOCX</div>
                     <div class="card-name">Word 문서</div>
                     <div class="card-quality">★★☆</div>
                     <span class="card-badge badge-available">지원됨</span>
                 </div>
 
-                <!-- HWP (Beta) -->
+                <!-- HWP (Beta) — 한글 전용 포맷이라 범용 브랜드 아이콘 없음 -->
                 <div class="format-card" data-ext="hwp" role="button" tabindex="0">
                     <div class="card-icon">🇰🇷</div>
                     <div class="card-ext">HWP</div>
@@ -494,7 +479,7 @@
 
                 <!-- CSV / XLSX -->
                 <div class="format-card" data-ext="csv" role="button" tabindex="0">
-                    <div class="card-icon">📊</div>
+                    <div class="card-icon"><img src="https://cdn.simpleicons.org/microsoftexcel/217346" alt="" class="format-brand-icon" loading="lazy" aria-hidden="true"></div>
                     <div class="card-ext">CSV / XLSX</div>
                     <div class="card-name">스프레드시트</div>
                     <div class="card-quality">★★★</div>
@@ -522,7 +507,7 @@
 
                 <!-- IPYNB -->
                 <div class="format-card" data-ext="ipynb" role="button" tabindex="0">
-                    <div class="card-icon">🔬</div>
+                    <div class="card-icon"><img src="https://cdn.simpleicons.org/jupyter/f37626" alt="" class="format-brand-icon" loading="lazy" aria-hidden="true"></div>
                     <div class="card-ext">IPYNB</div>
                     <div class="card-name">Jupyter Notebook</div>
                     <div class="card-quality">★★☆</div>
@@ -531,7 +516,7 @@
 
                 <!-- PDF (Coming Soon) -->
                 <div class="format-card coming-soon" data-ext="pdf" aria-disabled="true">
-                    <div class="card-icon">📕</div>
+                    <div class="card-icon"><img src="https://cdn.simpleicons.org/adobeacrobatreader/ff0000" alt="" class="format-brand-icon" loading="lazy" aria-hidden="true"></div>
                     <div class="card-ext">PDF</div>
                     <div class="card-name">PDF 문서</div>
                     <div class="card-quality">★★☆</div>
@@ -540,7 +525,7 @@
 
                 <!-- PPTX (Coming Soon) -->
                 <div class="format-card coming-soon" data-ext="pptx" aria-disabled="true">
-                    <div class="card-icon">📑</div>
+                    <div class="card-icon"><img src="https://cdn.simpleicons.org/microsoftpowerpoint/b7472a" alt="" class="format-brand-icon" loading="lazy" aria-hidden="true"></div>
                     <div class="card-ext">PPTX</div>
                     <div class="card-name">PowerPoint</div>
                     <div class="card-quality">★☆☆</div>

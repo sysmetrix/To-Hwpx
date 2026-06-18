@@ -1,6 +1,35 @@
 {
-  "current": "3.7.0",
+  "current": "3.8.0",
   "versions": [
+    {
+      "version": "3.8.0",
+      "date": "2026-06-18",
+      "user": [
+        "포맷 카드 아이콘을 실제 브랜드 아이콘으로 변경 (Markdown·HTML·Word·Excel·Jupyter·PDF·PowerPoint)",
+        "변환 옵션 영역에 파일 드롭 통합 — 기존 '감지된 포맷' 블록에서 직접 드래그·클릭 가능",
+        "페이지 여백 설정이 2열 그리드로 간결하게 재배치",
+        "글꼴 목록에 Noto Sans KR 추가, 가나다·abc 순 정렬",
+        "변환 진행 패널 글씨 굵기 강화 (단계명·상태 텍스트·진행률)",
+        "한글 파일 변환 팁: 이 사이트 불필요 — 한글에서 '다른 이름으로 저장' 후 HWPX 선택으로 충분",
+        "Ctrl+Enter (⌘+Enter) 단축키로 즉시 변환 시작",
+        "폰트·글꼴 크기·용지·자동 다운로드 설정이 재방문 시 자동 복원됨",
+        "서비스 소개에서 '무료'라는 표현 제거"
+      ],
+      "dev": [
+        "index.html: mini-drop-zone 제거 → #converter-drop-area로 통합 (클릭·드래그 모두 지원)",
+        "app.js initMiniDropZone/initPaperSizeLabel 제거 → initConverterDropArea() 신설",
+        "updateDropZoneUI(): mini-drop-zone 참조 제거, .cda-label 갱신으로 교체",
+        "initOptions(): localStorage(tohwpx_font/fontSize/paperSize/autoDownload) 저장·복원 추가",
+        "initConvertButton(): Ctrl+Enter / ⌘+Enter keydown 핸들러 추가",
+        "FORMAT_INFO.hwp.tip.steps[3]: 이 사이트 업로드 권고 문구 삭제",
+        "style.css: .mini-drop-zone → .converter-drop-area, .margin-visual → .margin-grid-2col 교체",
+        ".step-label font-weight: 700, .progress-meta font-weight: 600 / color: text-sub 강화",
+        ".card-icon flex 레이아웃, .format-brand-icon 36×36px (Simple Icons CDN)",
+        "hwpx.js buildHeaderXml JSDoc: charPr 7=본문bold, 8=본문italic 주석 추가",
+        "og:description '무료' 문구 삭제",
+        "sw.js CACHE_VERSION to-hwpx-v3.8.0"
+      ]
+    },
     {
       "version": "3.7.0",
       "date": "2026-06-18",
