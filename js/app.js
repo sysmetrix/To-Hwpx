@@ -64,6 +64,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initMobileMenu();        // 모바일 햄버거 메뉴
     initNavLinks();          // 부드러운 스크롤 네비게이션
     initModals();            // 미리보기·업데이트 내역 모달
+    initBookmarkButton();    // 즐겨찾기 안내 버튼
 });
 
 
@@ -586,6 +587,12 @@ async function runConversionPipeline() {
     hideAlert();
     updateConvertButton(false);
 
+    // 변환 시작 시 진행 패널이 보이도록 스크롤
+    const progressPanel = document.querySelector('.progress-panel');
+    if (progressPanel) {
+        progressPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
     try {
         // ═══ 1단계: Ingest (파일 읽기 준비) ═══
         setStepState('ingest', 'active');
@@ -1050,6 +1057,38 @@ function closePreview() {
 function closeChangelog() {
     document.getElementById('changelog-modal')?.classList.remove('open');
     document.body.style.overflow = '';
+}
+
+
+// ─────────────────────────────────────────────────────────────────────────
+// [즐겨찾기 안내 버튼]
+// ─────────────────────────────────────────────────────────────────────────
+function initBookmarkButton() {
+    const btn = document.getElementById('bookmark-btn');
+    if (!btn) return;
+
+    let _toastTimer = null;
+
+    btn.addEventListener('click', () => {
+        // 기존 토스트 제거
+        document.getElementById('bookmark-toast')?.remove();
+        clearTimeout(_toastTimer);
+
+        const isMac = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
+        const key   = isMac ? '⌘D' : 'Ctrl+D';
+
+        const toast = document.createElement('div');
+        toast.id        = 'bookmark-toast';
+        toast.className = 'bookmark-toast';
+        toast.innerHTML = `<strong>${key}</strong>를 눌러 즐겨찾기에 추가하세요<button class="bookmark-toast-close" aria-label="닫기">✕</button>`;
+        document.body.appendChild(toast);
+
+        toast.querySelector('.bookmark-toast-close').addEventListener('click', () => toast.remove());
+
+        // 4초 후 자동 제거
+        _toastTimer = setTimeout(() => toast.remove(), 4000);
+        requestAnimationFrame(() => toast.classList.add('bookmark-toast--show'));
+    });
 }
 
 

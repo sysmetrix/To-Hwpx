@@ -8,9 +8,12 @@
         "업데이트 내역 불러오기 오류 영구 수정 (매 배포 후 재발하던 문제 해결)",
         "HWPX 표 너비가 페이지 여백 기준 전체 폭에 맞게 출력",
         "미리보기 로딩이 길면 5초 후 '내장 미리보기로 바로 전환' 버튼 노출",
-        "변환 옵션 선택 항목 2열 배치로 공간 효율 개선",
+        "변환 옵션 선택 항목 2열 배치로 공간 효율 개선 (세로 스크롤 단축)",
         "변환 진행 단계가 가로 1행으로 정렬되어 한눈에 파악 가능",
-        "옵션 패널과 진행 패널 다시 나란히 배치 (화면 활용도 향상)"
+        "변환 시작 시 진행 패널로 자동 스크롤",
+        "상단 자매 서비스 링크에 마우스 올리면 서비스 설명 표시",
+        "★ 즐겨찾기 버튼 추가 (단축키 Ctrl+D / ⌘D 안내)",
+        "페이지 제목 변경: To HWPX - ｢BWYF｣ AX Challenger"
       ],
       "dev": [
         "sw.js APP_SHELL 경로 /→./ 전환 — GitHub Pages 서브경로(/To-Hwpx/)에서 절대경로 404 bug 원인",
@@ -19,10 +22,13 @@
         "showChangelog() res.ok 검사 추가 — 404 HTML이 JSON 파싱 예외 없이 에러 메시지로 표시",
         "openPreview() Promise.race([waitReady, skipPromise]) — 5초 후 btn-skip-rhwp 노출",
         "buildTable() Math.min(48000,...) 상한 제거 — A4 20mm 여백 실측값(≈48110 HWP단위) 사용",
-        ".converter-layout grid-template-columns: 3fr 2fr 복원",
-        "#pipeline-steps grid repeat(7,1fr) 가로 1행, .pipeline-step flex-direction:column",
-        ".form-group-row CSS + index.html 문서유형+폰트, 글꼴크기+용지크기 2열 그룹화",
-        ".btn-skip-rhwp 스타일 추가, CACHE_VERSION to-hwpx-v3.6.0"
+        ".converter-layout grid-template-columns: 1fr (세로 스택) + form-group-row 2열 내부 그룹화",
+        "#pipeline-steps grid repeat(7,1fr) 가로 1행 — 풀너비에서 step 카드 크기 확대",
+        "runConversionPipeline() 시작 시 .progress-panel scrollIntoView(smooth)",
+        ".nav-tooltip-wrap + .nav-tooltip CSS 커스텀 툴팁 (hover 시 표시)",
+        ".nav-bookmark-btn + initBookmarkButton() + .bookmark-toast 즐겨찾기 안내 토스트",
+        "<title> / og:title To HWPX - ｢BWYF｣ AX Challenger 변경",
+        "CACHE_VERSION to-hwpx-v3.6.0"
       ]
     },
     {
