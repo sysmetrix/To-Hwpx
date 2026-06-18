@@ -571,6 +571,12 @@ function showResult({ url, fileName, size, validation }) {
         if (validationEl && !validationEl.textContent.includes('다운로드됨')) {
             validationEl.textContent += ' (다운로드됨)';
         }
+        // 수동 다운로드 클릭 시에도 인디케이터 표시
+        const ind = document.getElementById('dl-indicator');
+        if (ind) {
+            ind.hidden = false;
+            setTimeout(() => { ind.hidden = true; }, 2800);
+        }
     });
     area.querySelector('#preview-result-btn')?.addEventListener('click', () => openPreview(state.hwpxBlob));
     area.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -586,6 +592,13 @@ function hideResult() {
 }
 
 function triggerDownload(url, fileName) {
+    // 다운로드 준비 인디케이터 표시 → 브라우저 다운로드 다이얼로그 나타나기 전 대기 시각화
+    const ind = document.getElementById('dl-indicator');
+    if (ind) {
+        ind.hidden = false;
+        setTimeout(() => { ind.hidden = true; }, 2800);
+    }
+
     const a = document.createElement('a');
     a.href = url;
     a.download = fileName;
