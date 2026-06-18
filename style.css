@@ -194,6 +194,23 @@ a:hover { text-decoration: underline; }
     text-decoration: none;
 }
 
+/* 자매 서비스 링크 (헤더 내 외부 링크 배지 스타일) */
+.nav-sister-link {
+    border: 1.5px solid var(--c-border) !important;
+    border-radius: 20px !important;
+    padding: 4px 12px !important;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--c-primary) !important;
+    background: transparent;
+    transition: background var(--trans), color var(--trans), border-color var(--trans) !important;
+}
+.nav-sister-link:hover {
+    background: var(--c-primary) !important;
+    color: #fff !important;
+    border-color: var(--c-primary) !important;
+}
+
 /* 모바일 햄버거 버튼 */
 #menu-toggle {
     display: none;
@@ -399,10 +416,18 @@ a:hover { text-decoration: underline; }
     transform: translateY(-2px);
 }
 
-/* "Coming Soon" 카드는 흐리게 표시 + 클릭 안 됨 */
+/* "Coming Soon" 카드는 흐리게 표시 + 팝업만 가능 */
 .format-card.coming-soon {
     opacity: 0.55;
-    cursor: default;
+    cursor: pointer;
+}
+
+/* 기본 서비스 7개 카드 강제 1행 배치 */
+#panel-basic .format-grid {
+    grid-template-columns: repeat(7, 1fr);
+}
+@media (max-width: 1050px) {
+    #panel-basic .format-grid { grid-template-columns: repeat(4, 1fr); }
 }
 
 .card-icon   { font-size: 2rem; margin-bottom: 8px; }
@@ -443,7 +468,7 @@ a:hover { text-decoration: underline; }
 
 .converter-layout {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
     gap: 32px;
     align-items: start;
 }
@@ -1496,4 +1521,88 @@ a:hover { text-decoration: underline; }
 @keyframes dl-scan {
     0%   { left: -45%; }
     100% { left: 100%; }
+}
+
+
+/* ─────────────────────────────────────────────────────────────────
+   [포맷 상세 모달]  카드 팝업 내 변환 정보 표시
+   ───────────────────────────────────────────────────────────────── */
+.fmt-modal-quality {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+.fmt-quality-stars { font-size: 18px; }
+
+.fmt-modal-desc {
+    color: var(--c-text-muted);
+    line-height: 1.6;
+    margin-bottom: 16px;
+}
+.fmt-modal-section { margin-bottom: 16px; }
+.fmt-modal-section h4 {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--c-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    margin-bottom: 6px;
+}
+.fmt-modal-section ul,
+.fmt-modal-section ol {
+    padding-left: 20px;
+    line-height: 1.8;
+    font-size: 14px;
+}
+.fmt-limits li { color: var(--c-text-muted); }
+.fmt-tech {
+    font-family: ui-monospace, 'Cascadia Code', 'Consolas', monospace;
+    font-size: 13px;
+    background: var(--c-surface-alt);
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+    line-height: 1.5;
+}
+.fmt-modal-tip {
+    background: rgba(37, 99, 235, 0.05);
+    border: 1px solid rgba(37, 99, 235, 0.18);
+    border-radius: var(--radius-md);
+    padding: 14px 16px;
+    margin-top: 16px;
+}
+.fmt-modal-tip strong {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--c-primary);
+    font-size: 14px;
+}
+.fmt-modal-tip ol {
+    padding-left: 20px;
+    line-height: 1.9;
+    font-size: 14px;
+}
+.fmt-modal-actions {
+    padding: 14px 20px;
+    border-top: 1px solid var(--c-border);
+    text-align: right;
+    background: var(--c-surface);
+    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+    flex-shrink: 0;
+}
+.btn-primary {
+    background: var(--c-primary);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-md);
+    padding: 10px 22px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background var(--trans), transform var(--trans), box-shadow var(--trans);
+}
+.btn-primary:hover {
+    background: var(--c-primary-dark, #1d4ed8);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
 }

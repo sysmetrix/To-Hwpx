@@ -1,19 +1,41 @@
 {
-  "current": "3.4.0",
+  "current": "3.5.0",
   "versions": [
+    {
+      "version": "3.5.0",
+      "date": "2026-06-18",
+      "user": [
+        "포맷 카드 클릭 시 변환 기술·지원 기능·제한사항 팝업 안내",
+        "HWP 카드: 한글에서 직접 HWPX로 저장하는 방법 안내 포함",
+        "변환기 옵션과 진행 패널 세로 배치로 가시성 개선",
+        "동작 원리·지원 현황이 포맷 탭 안으로 통합 (스크롤 단축)",
+        "자매 서비스 링크 (MD→HWPX, MD→HTML) 상단 고정",
+        "다운로드 준비 중 표시 위치 개선 (완료 카드 아래 고정)"
+      ],
+      "dev": [
+        "FORMAT_INFO 상수 추가 — 12개 포맷별 desc·tech·features·limits·tip 구조화 (app.js)",
+        "initFormatCards() 재작성 — scroll-to-converter 제거, openFormatModal(ext) 팝업으로 교체",
+        "openFormatModal(ext) / closeFormatModal() 함수 추가, coming-soon 카드도 팝업 지원",
+        "format-modal HTML + fmt-modal-* CSS 클래스 추가 (modal-box--md 재사용)",
+        "#panel-basic .format-grid { grid-template-columns: repeat(7, 1fr) } — 기본 서비스 7개 카드 1행 강제",
+        ".converter-layout { grid-template-columns: 1fr } — 데스크탑도 세로 배치",
+        "#dl-indicator를 #result-area 아래로 이동 — 완료 카드 표시 후 진행바 표시",
+        ".nav-sister-link 스타일 추가, nav 앵커 링크를 자매 서비스 외부 링크로 교체",
+        "footer 서비스 링크 → 자매 서비스 섹션으로 재구성, MD 직접 입력 변환기 netlify 링크 제거",
+        "changelog.json v3.4.0 사용자 항목 간결화, v3.5.0 신규 추가",
+        "서비스 워커 캐시 버전 v3.5.0"
+      ]
+    },
     {
       "version": "3.4.0",
       "date": "2026-06-18",
       "user": [
-        "페이지 여백 기본값 정리: 위/아래 10mm, 좌/우 20mm, 머리말/꼬리말 10mm",
-        "변환 완료 후 자동 다운로드 및 완료 카드 다시 다운로드 기능 개선",
-        "다운로드 준비 중 진행 표시줄 추가: 브라우저 다운로드 시작 전 대기 시간 시각화",
-        "HWPX 미리보기 안정화: 원격 rhwp 뷰어 응답 없을 때 내장 구조 미리보기로 자동 전환",
-        "표 자동 쪽 넘김, 제목 행 반복, 표 셀 가운데 정렬 등 표 변환 품질 개선",
-        "기본 글꼴·글자 크기·문서 유형 옵션과 빈 줄/이모지 처리 개선",
-        "한글 폰트에 KoPub돋움체 Medium 추가: 제목·표머리 등 볼드 구간은 KoPub돋움체 Bold로 자동 처리",
-        "페이지 레이아웃 개선: 변환 작업 공간과 서비스 안내 영역 시각적 구분",
-        "업데이트 내역 확인 기능과 Markdown 전용 변환 페이지 링크 추가"
+        "KoPub돋움체 Medium 폰트 추가 (볼드 구간 자동 처리)",
+        "표 변환 품질 개선: 자동 쪽 넘김, 제목 행 반복, 셀 정렬",
+        "다운로드 준비 중 진행 표시줄 추가",
+        "HWPX 미리보기 안정화 (외부 뷰어 오류 시 내장 미리보기 자동 전환)",
+        "변환 작업 공간과 서비스 안내 영역 시각적 구분",
+        "업데이트 내역 모달 추가"
       ],
       "dev": [
         "hp:secPr 문단 id, lineseg horzsize, page.width - margin 기반 본문 폭 검증 추가",

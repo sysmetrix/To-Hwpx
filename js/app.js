@@ -245,22 +245,223 @@ function initFormatTabs() {
     });
 }
 
-/** 포맷 카드 클릭 → 변환기 섹션으로 스크롤 + 힌트 표시 */
+// ─────────────────────────────────────────────────────────────────────────
+// [포맷 상세 데이터]  카드 팝업에 표시할 포맷별 변환 정보
+// ─────────────────────────────────────────────────────────────────────────
+const FORMAT_INFO = {
+    md: {
+        icon: '📝', name: 'Markdown',
+        quality: '★★★', available: true,
+        desc: 'Git, Notion 등 개발 문서 도구에서 널리 쓰이는 텍스트 기반 마크업 언어입니다.',
+        tech: 'marked.js → HTML 파싱 → IR(중간 표현) → HWPX',
+        features: [
+            '제목(H1~H6), 굵기, 기울임, 취소선 지원',
+            '표(GitHub Flavored Markdown) 지원',
+            '순서/비순서 목록, 인용문 지원',
+            '코드블록(펜스 코드·인라인 코드) 지원',
+            '이모지, 수평선 지원',
+        ],
+        limits: ['이미지 미지원', '인라인 HTML 일부 무시'],
+    },
+    html: {
+        icon: '🌐', name: 'HTML 문서',
+        quality: '★★☆', available: true,
+        desc: '웹 브라우저가 렌더링하는 마크업 언어 파일입니다.',
+        tech: 'DOMParser API → DOM 트리 순회 → IR → HWPX',
+        features: [
+            'h1~h6, p, table, ul, ol, strong, em 등 주요 태그 지원',
+            '중첩 구조(리스트·표) 처리',
+        ],
+        limits: ['CSS 스타일 무시 (클래스·인라인 모두)', '이미지·SVG 미지원', 'script·style 태그 무시'],
+    },
+    docx: {
+        icon: '📘', name: 'Word 문서 (DOCX)',
+        quality: '★★☆', available: true,
+        desc: 'Microsoft Word의 Office Open XML(.docx) 형식입니다.',
+        tech: 'JSZip으로 압축 해제 → word/document.xml 파싱 → IR → HWPX',
+        features: [
+            '본문 텍스트, 제목 스타일 변환',
+            '표(Table) 구조 변환',
+            '순서/비순서 목록 변환',
+        ],
+        limits: ['이미지 미지원', '머리글·바닥글 미지원', '각주·미주 미지원', '복잡한 서식(색상·폰트) 손실'],
+    },
+    hwp: {
+        icon: '🇰🇷', name: '한글 문서 (HWP)',
+        quality: '★☆☆', available: true, badge: '베타',
+        desc: '한컴 오피스 한글 파일입니다. HWP(바이너리)와 HWPX(XML) 두 종류가 있습니다.',
+        tech: 'ZIP 구조 시도 → 내부 XML/텍스트 추출 → IR',
+        features: ['HWPX 파일: 내부 XML 직접 파싱으로 본문 텍스트 추출'],
+        limits: ['HWP5(바이너리) 형식은 파싱이 대폭 제한됨', '서식·이미지·표 복원 불완전'],
+        tip: {
+            title: '💡 한글에서 HWPX로 직접 저장하는 더 쉬운 방법',
+            steps: [
+                '한글 프로그램에서 HWP 파일을 엽니다',
+                '[파일] → [다른 이름으로 저장] 선택 (단축키: F12)',
+                '"파일 형식" 드롭다운에서 <strong>HWPX(*.hwpx)</strong> 선택',
+                '저장한 .hwpx 파일을 이 사이트에 업로드하면 더 높은 품질로 변환됩니다',
+            ],
+        },
+    },
+    txt: {
+        icon: '📄', name: '일반 텍스트 (TXT)',
+        quality: '★★★', available: true,
+        desc: '서식 없는 순수 텍스트 파일입니다.',
+        tech: '줄바꿈 패턴 분석 → 문단 구분 → IR → HWPX',
+        features: [
+            '빈 줄로 문단 자동 구분',
+            'UTF-8 / EUC-KR 인코딩 자동 감지',
+            '이모지 지원',
+        ],
+        limits: ['서식 정보 없음 (모두 일반 문단으로 처리)'],
+    },
+    csv: {
+        icon: '📊', name: 'CSV / XLSX 스프레드시트',
+        quality: '★★★', available: true,
+        desc: '쉼표 구분 데이터(CSV) 또는 Excel 스프레드시트(XLSX)입니다.',
+        tech: 'CSV: RFC 4180 파서 / XLSX: SheetJS 라이브러리 → 표 IR → HWPX',
+        features: [
+            '전체 데이터를 한글 표로 변환',
+            '첫 행을 표 헤더(진한 배경)로 자동 처리',
+            '한글·특수문자 완전 지원',
+        ],
+        limits: ['XLSX는 첫 번째 시트만 변환', '셀 서식(색상·폰트) 무시', '수식은 결과값만 변환'],
+    },
+    json: {
+        icon: '{ }', name: 'JSON 데이터',
+        quality: '★★★', available: true,
+        desc: 'JavaScript 객체 표기법 데이터 파일입니다.',
+        tech: 'JSON.parse → 구조 분석 → IR → HWPX (IR 형식이면 직접 사용)',
+        features: [
+            '배열 → 표(Table)로 변환',
+            '중첩 객체 → 들여쓰기 목록으로 변환',
+            'IR 형식 JSON을 직접 HWPX로 변환 가능 (고급 사용)',
+        ],
+        limits: ['매우 큰 JSON(10MB+)은 처리 시간 증가'],
+    },
+    ipynb: {
+        icon: '🔬', name: 'Jupyter Notebook (IPYNB)',
+        quality: '★★☆', available: true,
+        desc: 'Python 등 데이터 과학에 쓰이는 노트북 파일 형식입니다.',
+        tech: 'JSON 파싱 → cell_type별 처리(markdown/code/output) → IR → HWPX',
+        features: [
+            '마크다운 셀: 제목·표·코드블록 변환',
+            '코드 셀: 등폭 코드블록으로 변환',
+            '텍스트 출력 셀: 그대로 포함',
+        ],
+        limits: ['이미지 출력 셀(PNG/JPEG) 미지원', 'LaTeX 수식 미지원'],
+    },
+    pdf: {
+        icon: '📕', name: 'PDF 문서',
+        quality: '★★☆', available: false, badge: '예정',
+        desc: '레이아웃 고정 문서 형식입니다. 클라이언트 단독 처리가 어렵습니다.',
+        tech: '백엔드 PDF 파싱 서비스 연동 예정',
+        features: ['텍스트 추출 후 변환 예정'],
+        limits: ['레이아웃 복원 불가', '이미지·표 추출 제한', '스캔 PDF 미지원'],
+    },
+    pptx: {
+        icon: '📑', name: 'PowerPoint (PPTX)',
+        quality: '★☆☆', available: false, badge: '예정',
+        desc: 'Microsoft PowerPoint 슬라이드 파일입니다.',
+        tech: 'OOXML 파싱 → 슬라이드 텍스트 추출 예정',
+        features: ['슬라이드별 텍스트 추출 예정'],
+        limits: ['슬라이드 레이아웃·디자인 재현 불가', '이미지 미지원'],
+    },
+    odt: {
+        icon: '📃', name: 'ODT / RTF 오픈 문서',
+        quality: '★★☆', available: false, badge: '예정',
+        desc: 'OpenDocument Text(ODT) 및 Rich Text Format(RTF)입니다.',
+        tech: 'XML/바이너리 파싱 예정',
+        features: ['기본 텍스트·표 변환 예정'],
+        limits: ['복잡한 구조 파싱 난이도 높음'],
+    },
+    epub: {
+        icon: '📚', name: '전자책 (EPUB)',
+        quality: '★★☆', available: false, badge: '예정',
+        desc: 'EPUB3 전자책 형식으로, ZIP + HTML 내부 구조입니다.',
+        tech: 'JSZip → EPUB 내부 HTML 파싱 예정',
+        features: ['챕터별 텍스트 추출 예정', '목차 보존 예정'],
+        limits: ['이미지·폰트 무시', 'EPUB2/3 호환성 필요'],
+    },
+};
+
+/** 포맷 카드 클릭 → 상세 정보 팝업 표시 */
 function initFormatCards() {
     document.querySelectorAll('.format-card').forEach(card => {
         card.addEventListener('click', () => {
-            if (card.classList.contains('coming-soon')) return;
+            const ext = card.dataset.ext || '';
+            if (ext) openFormatModal(ext);
+        });
+    });
 
-            const ext  = card.dataset.ext || '';
+    document.getElementById('close-format-modal')
+        ?.addEventListener('click', closeFormatModal);
+    document.getElementById('format-modal')
+        ?.addEventListener('click', e => {
+            if (e.target.id === 'format-modal') closeFormatModal();
+        });
+    document.getElementById('fmt-modal-use-btn')
+        ?.addEventListener('click', () => {
+            const ext = document.getElementById('fmt-modal-use-btn').dataset.ext || '';
+            closeFormatModal();
             const hint = document.getElementById('format-hint');
             if (hint && ext) {
                 hint.textContent = `.${ext.toUpperCase()} 파일을 업로드하세요`;
                 hint.style.display = 'block';
             }
-            // 변환기 섹션으로 스크롤
             document.getElementById('converter')?.scrollIntoView({ behavior: 'smooth' });
         });
-    });
+}
+
+function openFormatModal(ext) {
+    const info = FORMAT_INFO[ext];
+    if (!info) return;
+    const modal = document.getElementById('format-modal');
+    if (!modal) return;
+
+    document.getElementById('fmt-modal-title').textContent = `${info.icon} ${info.name}`;
+
+    const badgeClass = info.available ? (info.badge ? 'badge-beta' : 'badge-available') : 'badge-soon';
+    const badgeLabel = info.badge || '지원됨';
+
+    let html = `<div class="fmt-modal-quality">`;
+    html    += `<span class="fmt-quality-stars">${info.quality}</span>`;
+    html    += `<span class="card-badge ${badgeClass}">${badgeLabel}</span>`;
+    html    += `</div>`;
+    html    += `<p class="fmt-modal-desc">${info.desc}</p>`;
+    html    += `<div class="fmt-modal-section"><h4>변환 방식</h4>`;
+    html    += `<p class="fmt-tech">${info.tech}</p></div>`;
+
+    if (info.features?.length) {
+        html += `<div class="fmt-modal-section"><h4>지원 기능</h4><ul>`;
+        info.features.forEach(f => { html += `<li>${f}</li>`; });
+        html += `</ul></div>`;
+    }
+    if (info.limits?.length) {
+        html += `<div class="fmt-modal-section"><h4>제한사항</h4><ul class="fmt-limits">`;
+        info.limits.forEach(l => { html += `<li>${l}</li>`; });
+        html += `</ul></div>`;
+    }
+    if (info.tip) {
+        html += `<div class="fmt-modal-tip"><strong>${info.tip.title}</strong><ol>`;
+        info.tip.steps.forEach(s => { html += `<li>${s}</li>`; });
+        html += `</ol></div>`;
+    }
+
+    document.getElementById('fmt-modal-body').innerHTML = html;
+
+    const footer = document.getElementById('fmt-modal-footer');
+    if (footer) footer.hidden = !info.available;
+    const useBtn = document.getElementById('fmt-modal-use-btn');
+    if (useBtn) useBtn.dataset.ext = ext;
+
+    modal.classList.add('open');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeFormatModal() {
+    document.getElementById('format-modal')?.classList.remove('open');
+    document.body.style.overflow = '';
 }
 
 

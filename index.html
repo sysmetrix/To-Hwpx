@@ -90,7 +90,7 @@
         <div class="container">
             <span>｢BWYF｣ AX Challenger 2026</span>
             <button class="util-changelog-btn" id="open-changelog" aria-label="업데이트 내역 보기">
-                📋 v3.4.0 업데이트 내역
+                📋 v3.5.0 업데이트 내역
             </button>
         </div>
     </div>
@@ -109,8 +109,8 @@
             <!-- 주 내비게이션 -->
             <nav id="main-nav" role="navigation" aria-label="주 메뉴">
                 <ul class="main-nav">
-                    <li><a href="#converter">변환하기</a></li>
-                    <li><a href="#formats">지원 포맷</a></li>
+                    <li><a class="nav-sister-link" href="https://md-to-hwpx.vercel.app/" target="_blank" rel="noopener">MD→HWPX <span aria-hidden="true">↗</span></a></li>
+                    <li><a class="nav-sister-link" href="https://md-to-html-seven.vercel.app/" target="_blank" rel="noopener">MD→HTML <span aria-hidden="true">↗</span></a></li>
                 </ul>
             </nav>
 
@@ -344,15 +344,15 @@
                     <!-- JavaScript로 동적 생성 (app.js) -->
                 </div>
 
-                <!-- 다운로드 준비 중 표시 (triggerDownload 시 app.js에서 표시) -->
+                <!-- 변환 결과 + 다운로드 버튼
+                     app.js의 showResult()에서 내용 주입 -->
+                <div id="result-area" aria-label="변환 결과" aria-live="polite"></div>
+
+                <!-- 다운로드 준비 중 표시 — result-area 아래 고정 -->
                 <div id="dl-indicator" class="dl-indicator" hidden aria-live="polite">
                     <span class="dl-indicator-text">다운로드 준비 중...</span>
                     <div class="dl-indicator-bar" aria-hidden="true"></div>
                 </div>
-
-                <!-- 변환 결과 + 다운로드 버튼
-                     app.js의 showResult()에서 내용 주입 -->
-                <div id="result-area" aria-label="변환 결과" aria-live="polite"></div>
 
             </div><!-- /.progress-panel -->
 
@@ -711,15 +711,12 @@
                 </p>
             </div>
 
-            <!-- 서비스 링크 -->
-            <!-- [수정 시] href 값을 실제 GitHub Pages URL로 업데이트 -->
+            <!-- 자매 서비스 링크 -->
             <div class="footer-links">
-                <h4>서비스</h4>
+                <h4>자매 서비스</h4>
                 <ul>
-                    <li><a href="#formats">지원 포맷</a></li>
-                    <li><a href="#converter">변환하기</a></li>
-                    <li><a href="#how-it-works">동작 원리</a></li>
-                    <li><a href="#support">지원 현황</a></li>
+                    <li><a href="https://md-to-hwpx.vercel.app/" target="_blank" rel="noopener">MD→HWPX (직접 입력)</a></li>
+                    <li><a href="https://md-to-html-seven.vercel.app/" target="_blank" rel="noopener">MD→HTML 변환기</a></li>
                 </ul>
             </div>
 
@@ -727,7 +724,6 @@
             <div class="footer-links">
                 <h4>관련 링크</h4>
                 <ul>
-                    <li><a href="https://md-to-hwpx.netlify.app/" target="_blank" rel="noopener">MD 직접 입력 변환기</a></li>
                     <li><a href="https://github.com/sysmetrix/To-Hwpx" target="_blank" rel="noopener">GitHub</a></li>
                     <li><a href="https://github.com/sysmetrix/To-Hwpx/issues" target="_blank" rel="noopener">버그 신고</a></li>
                     <li><a href="https://github.com/sysmetrix/To-Hwpx/blob/main/hwpx-public-doc/" target="_blank" rel="noopener">HWPX 스킬 문서</a></li>
@@ -808,6 +804,26 @@
             <div class="changelog-content" id="changelog-content">
                 <p style="color:var(--c-text-muted);text-align:center;padding:20px">로드 중...</p>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     [포맷 상세 모달]  카드 클릭 시 변환 정보 팝업
+     app.js의 openFormatModal(ext)가 모달 내용을 동적으로 채움
+     ════════════════════════════════════════════════════════════════ -->
+<div id="format-modal" class="modal-overlay" role="dialog" aria-modal="true"
+     aria-labelledby="fmt-modal-title">
+    <div class="modal-box modal-box--md">
+        <div class="modal-header">
+            <span class="modal-title" id="fmt-modal-title">포맷 정보</span>
+            <button class="modal-close" id="close-format-modal" aria-label="닫기">✕</button>
+        </div>
+        <div class="modal-body" id="fmt-modal-body">
+            <!-- openFormatModal()이 채움 -->
+        </div>
+        <div class="fmt-modal-actions" id="fmt-modal-footer" hidden>
+            <button class="btn-primary" id="fmt-modal-use-btn">이 포맷으로 변환하기 →</button>
         </div>
     </div>
 </div>
