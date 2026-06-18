@@ -19,11 +19,12 @@
 //   [주의] 민감한 문서 내용은 state에 장기 저장하지 않음 (privacy)
 // ─────────────────────────────────────────────────────────────────────────
 const state = {
-    file:         null,     // 선택된 File 객체
-    ir:           null,     // 파싱 완료된 IR JSON
-    docType:      'plain',  // 문서 유형: "official" | "report" | "plain"
-    customTitle:  '',       // 사용자가 입력한 제목 (비어 있으면 파서가 자동 감지)
-    isConverting: false     // 변환 중 중복 실행 방지 플래그
+    file:         null,                // 선택된 File 객체
+    ir:           null,                // 파싱 완료된 IR JSON
+    docType:      'plain',             // 문서 유형: "official" | "report" | "plain"
+    customTitle:  '',                  // 사용자가 입력한 제목 (비어 있으면 파서가 자동 감지)
+    docFont:      'KoPubDotumMedium',  // 출력 폰트 (index.html #doc-font select 값)
+    isConverting: false                // 변환 중 중복 실행 방지 플래그
 };
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -266,6 +267,14 @@ function initOptions() {
         });
     }
 
+    // 폰트 선택 (<select id="doc-font">)
+    const fontEl = document.getElementById('doc-font');
+    if (fontEl) {
+        fontEl.addEventListener('change', () => {
+            state.docFont = fontEl.value;
+        });
+    }
+
     // IR 미리보기 접기/펼치기 버튼
     const irToggle  = document.getElementById('ir-toggle');
     const irPreview = document.getElementById('ir-preview');
@@ -356,8 +365,8 @@ async function runConversionPipeline() {
 
         let hwpxBlob;
         try {
-            // hwpx.js의 buildHwpx() 호출
-            hwpxBlob = await buildHwpx(ir);
+            // hwpx.js의 buildHwpx() 호출 (폰트 선택 전달)
+            hwpxBlob = await buildHwpx(ir, state.docFont);
         } catch (e) {
             throw new Error('HWPX 생성 실패: ' + e.message);
         }

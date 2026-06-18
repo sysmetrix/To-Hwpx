@@ -330,13 +330,22 @@ function buildSection(ir) {
 
 /**
  * IR → HWPX Blob 생성 (비동기)
- * @param {object} ir - IR 구조 ({ title, doc_type, blocks })
+ * @param {object} ir       - IR 구조 ({ title, doc_type, blocks })
+ * @param {string} fontName - 출력 폰트명 (기본: "KoPubDotumMedium")
+ *                            index.html의 #doc-font select 값이 전달됨
  * @returns {Promise<Blob>} HWPX 파일 Blob
  */
-async function buildHwpx(ir) {
+async function buildHwpx(ir, fontName = 'KoPubDotumMedium') {
     if (typeof JSZip === 'undefined') {
         throw new Error('JSZip 미로드: HWPX 생성 불가. 인터넷 연결을 확인하세요.');
     }
+
+    // 폰트명이 기본값이 아니면 HEADER_XML의 face 속성을 동적으로 교체
+    // [보안] xmlEsc를 통과해 특수문자가 XML을 깨지 않도록 처리
+    const safeFont = xmlEsc(fontName || 'KoPubDotumMedium');
+    const headerXml = (safeFont === 'KoPubDotumMedium')
+        ? HEADER_XML
+        : HEADER_XML.replace(/face="KoPubDotumMedium"/g, `face="${safeFont}"`);
 
     // IR → section0.xml XML 문자열 생성
     const section0Xml = buildSection(ir);
@@ -358,9 +367,9 @@ async function buildHwpx(ir) {
     zip.file('META-INF/manifest.xml',  MANIFEST_XML);
 
     // ─ 4) Contents 디렉토리 ─
-    //   header.xml: 글꼴·스타일 정의 (고정값, 변경 금지)
+    //   header.xml: 글꼴·스타일 정의 (폰트 선택 반영)
     //   section0.xml: 문서 본문 (유일한 동적 생성 파일)
-    zip.file('Contents/header.xml',   HEADER_XML);
+    zip.file('Contents/header.xml',   headerXml);
     zip.file('Contents/section0.xml', section0Xml);
     zip.file('Contents/content.hpf',  CONTENT_HPF);
 

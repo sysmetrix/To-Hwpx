@@ -1,0 +1,60 @@
+# ===================================================================
+# [pages.yml]  GitHub Pages 자동 배포 워크플로우
+# ===================================================================
+# 트리거: main 브랜치에 push 시 자동 실행
+# 결과:   https://sysmetrix.github.io/To-Hwpx/ 에 배포
+#
+# [수정 시]
+#   배포 브랜치 변경 → on.push.branches 값 수정
+#   커스텀 도메인 사용 → cname 단계 추가 및 CNAME 파일 루트에 배치
+# ===================================================================
+
+name: GitHub Pages 배포
+
+on:
+  push:
+    branches:
+      - main          # main 브랜치 push 시 자동 배포
+  workflow_dispatch:  # GitHub Actions UI에서 수동 실행도 가능
+
+# Pages 쓰기 + ID 토큰 읽기 권한
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 동시 배포 방지 (이전 실행 취소 후 최신 실행만 유지)
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: GitHub Pages 배포
+    runs-on: ubuntu-latest
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      # 1) 소스 코드 체크아웃
+      - name: 소스 코드 체크아웃
+        uses: actions/checkout@v4
+
+      # 2) GitHub Pages 설정
+      #    정적 HTML/CSS/JS 파일만 있으므로 별도 빌드 불필요
+      - name: GitHub Pages 설정
+        uses: actions/configure-pages@v4
+
+      # 3) 정적 파일 아티팩트 업로드
+      #    전체 저장소 루트를 업로드 (index.html이 루트에 있음)
+      - name: 정적 파일 업로드
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: "."       # 저장소 루트 전체 (index.html 위치)
+
+      # 4) Pages에 배포
+      - name: GitHub Pages 배포
+        id: deployment
+        uses: actions/deploy-pages@v4
