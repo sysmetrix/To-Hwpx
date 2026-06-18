@@ -703,6 +703,17 @@ a:hover { text-decoration: underline; }
 /* margin-grid — 레거시 선택자 (사용 안 함) */
 .margin-grid { display: none; }
 
+/* 옵션 패널 내부 2열 배치 — 왼쪽: 드롭·제목·옵션, 오른쪽: 페이지 여백 */
+.options-2col {
+    display: grid;
+    grid-template-columns: 1fr 220px;
+    gap: 0 20px;
+    align-items: start;
+    margin-bottom: 4px;
+}
+.options-left { display: flex; flex-direction: column; }
+.options-right .form-row { margin-bottom: 0; }
+
 .checkbox-row {
     display: flex;
     align-items: flex-start;
@@ -1169,6 +1180,7 @@ a:hover { text-decoration: underline; }
     /* 변환기 레이아웃 단일 컬럼 */
     .converter-layout { grid-template-columns: 1fr; }
     .form-group-row { grid-template-columns: 1fr; }
+    .options-2col { grid-template-columns: 1fr; }
     .options-grid-4col { grid-template-columns: repeat(2, 1fr); }
     #pipeline-steps { grid-template-columns: repeat(4, 1fr); }
 

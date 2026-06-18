@@ -1445,7 +1445,7 @@ function renderChangelogContent(tab) {
     el.innerHTML = _changelogData.versions.map(v => `
         <div class="changelog-version">
             <div class="changelog-version-header">
-                <span class="changelog-ver-badge">v${escHtml(v.version)}</span>
+                <span class="changelog-ver-badge">${v.range ? escHtml(v.range) : 'v' + escHtml(v.version)}</span>
                 <span class="changelog-date">${escHtml(v.date)}</span>
             </div>
             <ul class="changelog-list">

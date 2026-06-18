@@ -50,7 +50,11 @@ function parseMd(text, docType = 'plain') {
     // 3개 이상 연속 빈 줄 → 빈 단락 HTML 마커로 보존
     // (marked.js는 연속 빈 줄을 하나의 단락 구분으로 처리해서 정보가 손실됨)
     const preprocessed = text.replace(/\n{3,}/g, '\n\n<p></p>\n\n');
-    const html = marked.parse(preprocessed);
+    let html = marked.parse(preprocessed);
+    // CommonMark 엣지 케이스 폴백: **"텍스트"** 처럼 유니코드 구두점에 인접한 ** / * 를
+    // marked.js가 right-flanking delimiter로 인식하지 못해 변환 실패하는 경우 보정
+    html = html.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
+    html = html.replace(/(?<!\*)\*([^*\n]+)\*(?!\*)/g, '<em>$1</em>');
     return parseHtml(html, docType);
 }
 
@@ -124,6 +128,10 @@ function extractFromNode(node, blocks) {
             const hasText = runs.some(r => r.text && r.text.trim());
             if (hasText) {
                 blocks.push({ type: 'para', runs });
+                // 연속된 <p> 사이에 빈 줄 삽입 — MD 단락 구분(엔터)을 HWPX에서 보존
+                let sib = child.nextSibling;
+                while (sib && sib.nodeType === 3 && !sib.textContent.trim()) sib = sib.nextSibling;
+                if (sib && (sib.tagName || '').toLowerCase() === 'p') blocks.push({ type: 'blank' });
             } else {
                 blocks.push({ type: 'blank' });
             }

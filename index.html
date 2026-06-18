@@ -90,7 +90,7 @@
         <div class="container">
             <span>｢BWYF｣ AX Challenger 2026</span>
             <button class="util-changelog-btn" id="open-changelog" aria-label="업데이트 내역 보기">
-                📋 v3.8.0 업데이트 내역
+                📋 v3.9.0 업데이트 내역
             </button>
         </div>
     </div>
@@ -199,8 +199,11 @@
             <div class="options-panel">
                 <h3>⚙️ 변환 옵션</h3>
 
-                <!-- 파일 드롭 영역 — 클릭하거나 드래그해서 바로 업로드
-                     [수정 시] 클릭·드롭 이벤트는 app.js initConverterDropArea()에서 처리 -->
+                <!-- 옵션 패널 내부 2열 배치 — 왼쪽: 드롭·제목·옵션, 오른쪽: 페이지 여백
+                     [수정 시] 드롭·클릭 이벤트는 app.js initConverterDropArea()에서 처리 -->
+                <div class="options-2col">
+                <div class="options-left">
+                <!-- 파일 드롭 영역 — 클릭하거나 드래그해서 바로 업로드 -->
                 <div id="converter-drop-area" class="converter-drop-area" role="button" tabindex="0"
                      aria-label="파일을 드래그하거나 클릭하여 선택">
                     <span class="cda-icon">📂</span>
@@ -236,7 +239,7 @@
                     <div class="form-row">
                         <label for="doc-font">한글 폰트</label>
                         <!-- 가나다순: 굴림·나눔고딕·맑은고딕·바탕·함초롬바탕·함초롬돋움·휴먼명조
-                             abc순: KoPub돋움체·Noto Sans KR -->
+                             abc순: KoPub돋움체·Noto Sans KR·Pretendard GOV Variable Medium -->
                         <select id="doc-font" name="doc-font">
                             <option value="굴림">굴림</option>
                             <option value="나눔고딕">나눔고딕</option>
@@ -247,6 +250,7 @@
                             <option value="휴먼명조" selected>휴먼명조</option>
                             <option value="KoPub돋움체 Medium">KoPub돋움체</option>
                             <option value="Noto Sans KR">Noto Sans KR</option>
+                            <option value="Pretendard GOV Variable Medium">Pretendard GOV</option>
                         </select>
                     </div>
                     <div class="form-row">
@@ -272,6 +276,9 @@
                     </div>
                 </div>
 
+                </div><!-- /.options-left -->
+
+                <div class="options-right">
                 <!-- 페이지 여백 — 2열 배치
                      hwpx.js buildHwpx()에서 mm → HWPUNIT 변환 (1mm ≈ 283 HWPUNIT)
                      [수정 시] 기본값 변경은 app.js state.pageMargins 와 hwpx.js DEFAULT_MARGINS_MM 에서 -->
@@ -310,6 +317,9 @@
                         </div>
                     </div>
                 </div>
+
+                </div><!-- /.options-right -->
+                </div><!-- /.options-2col -->
 
                 <label class="checkbox-row" for="auto-download">
                     <input type="checkbox" id="auto-download" checked>

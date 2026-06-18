@@ -1,8 +1,29 @@
 {
-  "current": "3.8.0",
+  "current": "3.9.0",
   "versions": [
     {
+      "version": "3.9.0",
+      "date": "2026-06-18",
+      "user": [
+        "마크다운 볼드(**\"텍스트\"**) 변환 버그 수정 — 따옴표 등 유니코드 구두점 인접 시에도 굵게 표시",
+        "단락 사이 빈 줄(엔터)이 HWPX 결과물에도 보존됨",
+        "글꼴에 Pretendard GOV Variable Medium 추가",
+        "변환 옵션 패널이 2열로 재배치 — 왼쪽: 파일·제목·옵션, 오른쪽: 페이지 여백",
+        "업데이트 내역 오늘자 버전을 하나로 통합 정리"
+      ],
+      "dev": [
+        "parsers.js parseMd(): marked.parse() 후 **text** / *text* 정규식 폴백 추가 (CommonMark right-flanking delimiter 엣지 케이스)",
+        "parsers.js extractFromNode(): 연속 <p> 감지 시 {type:'blank'} 삽입 — nextSibling 화이트스페이스 노드 건너뜀",
+        "index.html: Pretendard GOV Variable Medium 옵션 추가 (abc순: Noto Sans KR 다음)",
+        "index.html/style.css: .options-2col 2열 레이아웃 추가 — grid-template-columns: 1fr 220px, 768px 미만 단일열",
+        "app.js renderChangelogContent(): range 필드 지원 — v.range 있으면 배지에 범위 표시",
+        "changelog.json: v3.4.0~v3.8.0 같은 날짜 항목 range 필드로 통합",
+        "sw.js CACHE_VERSION to-hwpx-v3.9.0"
+      ]
+    },
+    {
       "version": "3.8.0",
+      "range": "v3.4.0 – v3.8.0",
       "date": "2026-06-18",
       "user": [
         "포맷 카드 아이콘을 실제 브랜드 아이콘으로 변경 (Markdown·HTML·Word·Excel·Jupyter·PDF·PowerPoint)",
@@ -13,123 +34,64 @@
         "한글 파일 변환 팁: 이 사이트 불필요 — 한글에서 '다른 이름으로 저장' 후 HWPX 선택으로 충분",
         "Ctrl+Enter (⌘+Enter) 단축키로 즉시 변환 시작",
         "폰트·글꼴 크기·용지·자동 다운로드 설정이 재방문 시 자동 복원됨",
-        "서비스 소개에서 '무료'라는 표현 제거"
-      ],
-      "dev": [
-        "index.html: mini-drop-zone 제거 → #converter-drop-area로 통합 (클릭·드래그 모두 지원)",
-        "app.js initMiniDropZone/initPaperSizeLabel 제거 → initConverterDropArea() 신설",
-        "updateDropZoneUI(): mini-drop-zone 참조 제거, .cda-label 갱신으로 교체",
-        "initOptions(): localStorage(tohwpx_font/fontSize/paperSize/autoDownload) 저장·복원 추가",
-        "initConvertButton(): Ctrl+Enter / ⌘+Enter keydown 핸들러 추가",
-        "FORMAT_INFO.hwp.tip.steps[3]: 이 사이트 업로드 권고 문구 삭제",
-        "style.css: .mini-drop-zone → .converter-drop-area, .margin-visual → .margin-grid-2col 교체",
-        ".step-label font-weight: 700, .progress-meta font-weight: 600 / color: text-sub 강화",
-        ".card-icon flex 레이아웃, .format-brand-icon 36×36px (Simple Icons CDN)",
-        "hwpx.js buildHeaderXml JSDoc: charPr 7=본문bold, 8=본문italic 주석 추가",
-        "og:description '무료' 문구 삭제",
-        "sw.js CACHE_VERSION to-hwpx-v3.8.0"
-      ]
-    },
-    {
-      "version": "3.7.0",
-      "date": "2026-06-18",
-      "user": [
-        "마크다운 볼드(**텍스트**), 이탤릭(*텍스트*) 변환 시 한글 파일에도 서식 적용",
-        "변환 옵션: 문서 제목 최상단 배치, 4개 항목(문서유형·폰트·글꼴·용지) 한 줄 정렬",
-        "페이지 여백 설정이 실제 종이 모양으로 시각화",
-        "변환기 섹션에서도 직접 파일 드래그·업로드 가능 (미니 드롭존 추가)",
-        "'이 포맷으로 변환하기' 이동 후 파일 바로 업로드 가능",
-        "포맷 팝업 본문 내용 왼쪽 여백 추가 (가독성 개선)"
-      ],
-      "dev": [
-        "parsers.js extractInlineRuns() 추가 — DOM childNode 재귀 순회로 <strong>/<em>/<code> 서식 보존",
-        "extractFromNode <p> 처리: textContent → extractInlineRuns() runs 배열로 변경",
-        "hwpx.js charBase() italic 매개변수 추가, charPr 7(본문bold), 8(본문italic) 추가",
-        "charProperties itemCnt 7→9, buildParaRuns(runs) 함수 추가",
-        "buildSection para 블록: block.runs 존재 시 buildParaRuns 호출",
-        "index.html 옵션 패널 완전 재구성 — 미니드롭존·4열그리드·여백종이시각화",
-        "style.css .options-grid-4col, .margin-visual, .mini-drop-zone 추가",
-        ".modal-body padding: 20px 24px 추가 (포맷 팝업 여백)",
-        "initMiniDropZone(), initPaperSizeLabel() 추가 (app.js)",
-        "updateDropZoneUI(): 파일 선택 시 미니드롭존 has-file 상태 동기화",
-        "sw.js CACHE_VERSION to-hwpx-v3.7.0"
-      ]
-    },
-    {
-      "version": "3.6.0",
-      "date": "2026-06-18",
-      "user": [
+        "서비스 소개에서 '무료'라는 표현 제거",
         "업데이트 내역 불러오기 오류 영구 수정 (매 배포 후 재발하던 문제 해결)",
         "HWPX 표 너비가 페이지 여백 기준 전체 폭에 맞게 출력",
         "미리보기 로딩이 길면 5초 후 '내장 미리보기로 바로 전환' 버튼 노출",
-        "변환 옵션 선택 항목 2열 배치로 공간 효율 개선 (세로 스크롤 단축)",
         "변환 진행 단계가 가로 1행으로 정렬되어 한눈에 파악 가능",
         "변환 시작 시 진행 패널로 자동 스크롤",
         "상단 자매 서비스 링크에 마우스 올리면 서비스 설명 표시",
         "★ 즐겨찾기 버튼 추가 (단축키 Ctrl+D / ⌘D 안내)",
-        "페이지 제목 변경: To HWPX - ｢BWYF｣ AX Challenger"
-      ],
-      "dev": [
-        "sw.js APP_SHELL 경로 /→./ 전환 — GitHub Pages 서브경로(/To-Hwpx/)에서 절대경로 404 bug 원인",
-        "cache.addAll() → Promise.allSettled() 로 교체 — 개별 리소스 실패가 SW 설치 전체를 중단시키지 않음",
-        "SPA 폴백도 caches.match('./index.html')로 통일",
-        "showChangelog() res.ok 검사 추가 — 404 HTML이 JSON 파싱 예외 없이 에러 메시지로 표시",
-        "openPreview() Promise.race([waitReady, skipPromise]) — 5초 후 btn-skip-rhwp 노출",
-        "buildTable() Math.min(48000,...) 상한 제거 — A4 20mm 여백 실측값(≈48110 HWP단위) 사용",
-        ".converter-layout grid-template-columns: 1fr (세로 스택) + form-group-row 2열 내부 그룹화",
-        "#pipeline-steps grid repeat(7,1fr) 가로 1행 — 풀너비에서 step 카드 크기 확대",
-        "runConversionPipeline() 시작 시 .progress-panel scrollIntoView(smooth)",
-        ".nav-tooltip-wrap + .nav-tooltip CSS 커스텀 툴팁 (hover 시 표시)",
-        ".nav-bookmark-btn + initBookmarkButton() + .bookmark-toast 즐겨찾기 안내 토스트",
-        "<title> / og:title To HWPX - ｢BWYF｣ AX Challenger 변경",
-        "CACHE_VERSION to-hwpx-v3.6.0"
-      ]
-    },
-    {
-      "version": "3.5.0",
-      "date": "2026-06-18",
-      "user": [
+        "페이지 제목 변경: To HWPX - ｢BWYF｣ AX Challenger",
         "포맷 카드 클릭 시 변환 기술·지원 기능·제한사항 팝업 안내",
         "HWP 카드: 한글에서 직접 HWPX로 저장하는 방법 안내 포함",
-        "변환기 옵션과 진행 패널 세로 배치로 가시성 개선",
-        "동작 원리·지원 현황이 포맷 탭 안으로 통합 (스크롤 단축)",
         "자매 서비스 링크 (MD→HWPX, MD→HTML) 상단 고정",
-        "다운로드 준비 중 표시 위치 개선 (완료 카드 아래 고정)"
-      ],
-      "dev": [
-        "FORMAT_INFO 상수 추가 — 12개 포맷별 desc·tech·features·limits·tip 구조화 (app.js)",
-        "initFormatCards() 재작성 — scroll-to-converter 제거, openFormatModal(ext) 팝업으로 교체",
-        "openFormatModal(ext) / closeFormatModal() 함수 추가, coming-soon 카드도 팝업 지원",
-        "format-modal HTML + fmt-modal-* CSS 클래스 추가 (modal-box--md 재사용)",
-        "#panel-basic .format-grid { grid-template-columns: repeat(7, 1fr) } — 기본 서비스 7개 카드 1행 강제",
-        ".converter-layout { grid-template-columns: 1fr } — 데스크탑도 세로 배치",
-        "#dl-indicator를 #result-area 아래로 이동 — 완료 카드 표시 후 진행바 표시",
-        ".nav-sister-link 스타일 추가, nav 앵커 링크를 자매 서비스 외부 링크로 교체",
-        "footer 서비스 링크 → 자매 서비스 섹션으로 재구성, MD 직접 입력 변환기 netlify 링크 제거",
-        "changelog.json v3.4.0 사용자 항목 간결화, v3.5.0 신규 추가",
-        "서비스 워커 캐시 버전 v3.5.0"
-      ]
-    },
-    {
-      "version": "3.4.0",
-      "date": "2026-06-18",
-      "user": [
+        "다운로드 준비 중 표시 위치 개선 (완료 카드 아래 고정)",
         "KoPub돋움체 Medium 폰트 추가 (볼드 구간 자동 처리)",
         "표 변환 품질 개선: 자동 쪽 넘김, 제목 행 반복, 셀 정렬",
         "다운로드 준비 중 진행 표시줄 추가",
         "HWPX 미리보기 안정화 (외부 뷰어 오류 시 내장 미리보기 자동 전환)",
         "변환 작업 공간과 서비스 안내 영역 시각적 구분",
-        "업데이트 내역 모달 추가"
+        "업데이트 내역 모달 추가",
+        "마크다운 볼드(**텍스트**), 이탤릭(*텍스트*) 변환 시 한글 파일에도 서식 적용",
+        "변환 옵션: 문서 제목 최상단 배치, 4개 항목(문서유형·폰트·글꼴·용지) 한 줄 정렬"
       ],
       "dev": [
-        "hp:secPr 문단 id, lineseg horzsize, page.width - margin 기반 본문 폭 검증 추가",
-        "buildHwpx(ir, fontName, fontSize, marginsMm, paperSize) 시그니처와 DEFAULT_MARGINS_MM 정리",
-        "buildTable pageBreak, repeatHeader, contentWidth 계산 및 paraPr/charPr 참조 안정화",
-        "RhwpEditorClient timeout 분리 및 HWPX ZIP 내부 XML 기반 fallback preview 추가",
-        "getBoldFontName() 추가 — KoPub돋움체 Medium처럼 Bold가 별도 파일인 폰트 감지, fontRef='1' 참조",
-        "dl-indicator — dl-scan 키프레임 스캐닝 애니메이션 (triggerDownload 및 수동 클릭 시 2.8초 표시)",
-        "zone-divider CSS — 작업 공간(--work)과 안내 공간(--info) 라벨 구분자",
-        "changelog.json 기반 업데이트 모달 도입, 서비스 워커 캐시 버전 v3.4.0"
+        "[v3.8] index.html: mini-drop-zone 제거 → #converter-drop-area로 통합 (클릭·드래그 모두 지원)",
+        "[v3.8] app.js initMiniDropZone/initPaperSizeLabel 제거 → initConverterDropArea() 신설",
+        "[v3.8] updateDropZoneUI(): mini-drop-zone 참조 제거, .cda-label 갱신으로 교체",
+        "[v3.8] initOptions(): localStorage(tohwpx_font/fontSize/paperSize/autoDownload) 저장·복원 추가",
+        "[v3.8] initConvertButton(): Ctrl+Enter / ⌘+Enter keydown 핸들러 추가",
+        "[v3.8] FORMAT_INFO.hwp.tip.steps[3]: 이 사이트 업로드 권고 문구 삭제",
+        "[v3.8] style.css: .mini-drop-zone → .converter-drop-area, .margin-visual → .margin-grid-2col 교체",
+        "[v3.8] .step-label font-weight: 700, .progress-meta font-weight: 600 / color: text-sub 강화",
+        "[v3.8] .card-icon flex 레이아웃, .format-brand-icon 36×36px (Simple Icons CDN)",
+        "[v3.8] hwpx.js buildHeaderXml JSDoc: charPr 7=본문bold, 8=본문italic 주석 추가",
+        "[v3.8] og:description '무료' 문구 삭제",
+        "[v3.7] parsers.js extractInlineRuns() 추가 — DOM childNode 재귀 순회로 <strong>/<em>/<code> 서식 보존",
+        "[v3.7] extractFromNode <p> 처리: textContent → extractInlineRuns() runs 배열로 변경",
+        "[v3.7] hwpx.js charBase() italic 매개변수 추가, charPr 7(본문bold), 8(본문italic) 추가",
+        "[v3.7] charProperties itemCnt 7→9, buildParaRuns(runs) 함수 추가",
+        "[v3.7] buildSection para 블록: block.runs 존재 시 buildParaRuns 호출",
+        "[v3.7] index.html 옵션 패널 완전 재구성 — 미니드롭존·4열그리드·여백종이시각화",
+        "[v3.6] sw.js APP_SHELL 경로 /→./ 전환 — GitHub Pages 서브경로(/To-Hwpx/)에서 절대경로 404 bug 원인",
+        "[v3.6] cache.addAll() → Promise.allSettled() 로 교체 — 개별 리소스 실패가 SW 설치 전체를 중단시키지 않음",
+        "[v3.6] showChangelog() res.ok 검사 추가 — 404 HTML이 JSON 파싱 예외 없이 에러 메시지로 표시",
+        "[v3.6] openPreview() Promise.race([waitReady, skipPromise]) — 5초 후 btn-skip-rhwp 노출",
+        "[v3.6] buildTable() Math.min(48000,...) 상한 제거 — A4 20mm 여백 실측값(≈48110 HWP단위) 사용",
+        "[v3.6] #pipeline-steps grid repeat(7,1fr) 가로 1행 — 풀너비에서 step 카드 크기 확대",
+        "[v3.6] runConversionPipeline() 시작 시 .progress-panel scrollIntoView(smooth)",
+        "[v3.6] .nav-bookmark-btn + initBookmarkButton() + .bookmark-toast 즐겨찾기 안내 토스트",
+        "[v3.5] FORMAT_INFO 상수 추가 — 12개 포맷별 desc·tech·features·limits·tip 구조화 (app.js)",
+        "[v3.5] initFormatCards() 재작성 — scroll-to-converter 제거, openFormatModal(ext) 팝업으로 교체",
+        "[v3.5] format-modal HTML + fmt-modal-* CSS 클래스 추가 (modal-box--md 재사용)",
+        "[v3.5] .nav-sister-link 스타일 추가, nav 앵커 링크를 자매 서비스 외부 링크로 교체",
+        "[v3.4] hp:secPr 문단 id, lineseg horzsize, page.width - margin 기반 본문 폭 검증 추가",
+        "[v3.4] buildTable pageBreak, repeatHeader, contentWidth 계산 및 paraPr/charPr 참조 안정화",
+        "[v3.4] RhwpEditorClient timeout 분리 및 HWPX ZIP 내부 XML 기반 fallback preview 추가",
+        "[v3.4] getBoldFontName() 추가 — KoPub돋움체 Medium처럼 Bold가 별도 파일인 폰트 감지",
+        "[v3.4] dl-indicator — dl-scan 키프레임 스캐닝 애니메이션 (triggerDownload 및 수동 클릭 시 2.8초 표시)",
+        "[v3.4] changelog.json 기반 업데이트 모달 도입"
       ]
     },
     {
