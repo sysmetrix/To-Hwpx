@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<!--
+  [index.html]  To HWPX 서비스 메인 페이지
+  ====================================================================
+  서비스: 다양한 문서 포맷을 한글(HWPX)로 변환 — 브라우저 전용, 서버 불필요
+  도메인: to-hwpx
+
+  [파일 구성]
+    index.html  ← 이 파일 (마크업 + 섹션 구조)
+    style.css   ← 전체 스타일 (색상·레이아웃·컴포넌트)
+    js/
+      parsers.js ← 포맷별 파서 (MD/HTML/TXT/CSV/JSON 등)
+      hwpx.js    ← HWPX 빌더 + 검증기
+      app.js     ← UI 이벤트 제어
+
+  [CDN 의존성]
+    JSZip   — HWPX(ZIP+XML) 패키징
+    marked  — Markdown → HTML 변환
+    XLSX    — CSV/XLSX 파싱 (SheetJS)
+    Noto Sans KR — 한글 웹 폰트
+
+  [수정 가이드]
+    포맷 카드 추가 → .format-grid 안에 .format-card 항목 추가
+    내비게이션 링크 → .main-nav ul 안에 <li><a> 추가
+    푸터 링크 → .footer-links ul 안에 추가
+  ====================================================================
+-->
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- SEO + SNS 공유용 메타 태그 -->
+    <title>To HWPX — 문서를 한글로 변환</title>
+    <meta name="description" content="Markdown, HTML, DOCX, CSV, JSON 등 다양한 포맷을 한글(HWPX) 파일로 변환합니다. 브라우저에서 직접 처리 — 파일이 서버에 업로드되지 않습니다.">
+    <meta property="og:title" content="To HWPX — 문서를 한글로 변환">
+    <meta property="og:description" content="다양한 문서 포맷을 HWPX로 변환하는 무료 브라우저 도구">
+    <meta property="og:type" content="website">
+
+    <!-- 파비콘 (텍스트 기반 SVG) -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📄</text></svg>">
+
+    <!-- 한글 웹 폰트 (Google Fonts) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- 서비스 스타일시트 -->
+    <link rel="stylesheet" href="style.css">
+
+    <!-- ─── CDN 라이브러리 ─────────────────────────────────────────
+         [보안 주의] 프로덕션 배포 시 아래 각 태그에 integrity 속성을 추가할 것
+         예: integrity="sha384-..." crossorigin="anonymous"
+         CDN URL에서 SRI 해시를 확인: https://www.srihash.org/
+         ──────────────────────────────────────────────────────────── -->
+
+    <!-- JSZip 3.10.1 — HWPX(ZIP+XML) 컨테이너 생성에 사용 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" defer></script>
+
+    <!-- marked 9.1.6 — Markdown → HTML 변환 (parsers.js의 parseMd에서 사용) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js" defer></script>
+
+    <!-- SheetJS (XLSX) 0.18.5 — CSV/XLSX 파싱 (parsers.js의 parseXlsx에서 사용) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" defer></script>
+
+    <!-- 숨겨진 파일 입력 (드롭존 클릭 시 트리거) -->
+    <!-- [수정 시] accept 속성으로 허용 확장자 제한 가능 -->
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════════════════════════
+     [헤더] — 유틸리티 바(상단) + 메인 네비게이션(하단) 2단 구조
+     재단 홈페이지(bwyf.or.kr) 헤더 레이아웃 참조
+     ════════════════════════════════════════════════════════════════ -->
+<header class="site-header">
+    <!-- 유틸리티 바: 깃허브 링크 등 부가 정보 -->
+    <div class="utility-bar">
+        <div class="container">
+            <span>무료 · 브라우저 전용 · 파일 업로드 없음</span>
+            <a href="https://github.com/seowonha/to-hwpx" target="_blank" rel="noopener">GitHub ↗</a>
+        </div>
+    </div>
+
+    <!-- 메인 헤더: 로고 + 내비게이션 -->
+    <div class="container">
+        <div class="header-inner">
+            <!-- 로고 -->
+            <a href="#" class="site-logo" aria-label="To HWPX 홈">
+                To <span class="logo-badge">HWPX</span>
+            </a>
+
+            <!-- 모바일 햄버거 버튼 (app.js의 initMobileMenu에서 제어) -->
+            <button id="menu-toggle" aria-label="메뉴 열기" aria-expanded="false">☰</button>
+
+            <!-- 주 내비게이션 -->
+            <nav id="main-nav" role="navigation" aria-label="주 메뉴">
+                <ul class="main-nav">
+                    <li><a href="#formats">지원 포맷</a></li>
+                    <li><a href="#converter">변환하기</a></li>
+                    <li><a href="#how-it-works">동작 원리</a></li>
+                    <li><a href="#support">지원 표</a></li>
+                </ul>
+            </nav>
+
+            <!-- GitHub 버튼 (데스크톱) -->
+            <a href="https://github.com/seowonha/to-hwpx"
+               class="btn-github"
+               target="_blank"
+               rel="noopener"
+               aria-label="GitHub 저장소 열기">
+                ⭐ GitHub
+            </a>
+        </div>
+    </div>
+</header>
+
+<!-- 전역 알림 박스 (오류 발생 시 app.js에서 표시) -->
+<div id="alert-box" class="alert-box" role="alert" aria-live="polite">
+    <span id="alert-msg">오류 메시지</span>
+    <button class="alert-close" aria-label="알림 닫기">✕</button>
+</div>
+
+
+<!-- ════════════════════════════════════════════════════════════════
+     [히어로 섹션]  메인 드롭존 + 서비스 소개
+     ════════════════════════════════════════════════════════════════ -->
+<section class="hero" aria-labelledby="hero-title">
+    <div class="container">
+        <!-- 강조 문구 태그 -->
+        <div class="hero-eyebrow">무료 · 브라우저 전용 · 한글 호환 검증</div>
+
+        <!-- 메인 제목 -->
+        <h1 id="hero-title">문서를 한글(HWPX)로,<br>지금 바로 변환</h1>
+
+        <!-- 서브 설명 -->
+        <p class="hero-sub">
+            Markdown, HTML, DOCX, CSV, JSON 등 다양한 포맷을<br>
+            한컴 오피스 없이 .hwpx 파일로 변환합니다.
+        </p>
+
+        <!-- 파일 드롭존 (app.js의 initDropZone에서 이벤트 연결) -->
+        <div id="drop-zone" class="drop-zone" role="button" tabindex="0"
+             aria-label="파일을 드래그하거나 클릭하여 선택">
+            <div class="drop-icon">📂</div>
+            <div class="drop-title">파일을 여기에 드래그하거나 클릭하세요</div>
+            <div class="drop-sub">MD · HTML · TXT · CSV · XLSX · JSON · IPYNB · DOCX 지원 · 최대 20MB</div>
+        </div>
+
+        <!-- 숨겨진 파일 인풋 (드롭존 클릭 시 트리거됨) -->
+        <input type="file" id="file-input" hidden
+               accept=".md,.markdown,.html,.htm,.txt,.csv,.xlsx,.xls,.json,.ipynb,.docx">
+
+        <p class="hero-note">파일은 브라우저에서만 처리됩니다. 서버에 전송되지 않습니다.</p>
+    </div>
+</section>
+
+
+<!-- ════════════════════════════════════════════════════════════════
+     [포맷 그리드]  지원 포맷 카드 목록
+     재단 홈페이지의 관련기관 카드 패턴 참조
+     ════════════════════════════════════════════════════════════════ -->
+<section class="formats-section" id="formats" aria-labelledby="formats-title">
+    <div class="container">
+        <h2 class="section-title" id="formats-title">지원 포맷</h2>
+        <p class="section-sub">클릭하면 해당 포맷 변환기로 이동합니다</p>
+
+        <!-- 탭: 기본 서비스 / 확장 서비스 (재단 홈페이지 탭 패턴 참조) -->
+        <!-- app.js의 initFormatTabs에서 탭 전환 로직 처리 -->
+        <div class="format-tabs" role="tablist">
+            <button class="format-tab active"
+                    data-target="panel-basic"
+                    role="tab"
+                    aria-selected="true"
+                    aria-controls="panel-basic">
+                🟦 기본 서비스 (7종)
+            </button>
+            <button class="format-tab"
+                    data-target="panel-ext"
+                    role="tab"
+                    aria-selected="false"
+                    aria-controls="panel-ext">
+                🔜 확장 서비스 (5종)
+            </button>
+        </div>
+
+        <!-- ── 기본 서비스 패널 ─────────────────────────────────────
+             [수정 시] 새 포맷 카드 추가 → .format-card 복사 후 data-ext/내용 수정
+             ─────────────────────────────────────────────────────── -->
+        <div class="format-panel active" id="panel-basic" role="tabpanel">
+            <div class="format-grid">
+
+                <!-- Markdown -->
+                <div class="format-card" data-ext="md" role="button" tabindex="0">
+                    <div class="card-icon">📝</div>
+                    <div class="card-ext">MD</div>
+                    <div class="card-name">Markdown</div>
+                    <div class="card-quality">★★★</div>
+                    <span class="card-badge badge-available">지원됨</span>
+                </div>
+
+                <!-- HTML -->
+                <div class="format-card" data-ext="html" role="button" tabindex="0">
+                    <div class="card-icon">🌐</div>
+                    <div class="card-ext">HTML</div>
+                    <div class="card-name">HTML 문서</div>
+                    <div class="card-quality">★★☆</div>
+                    <span class="card-badge badge-available">지원됨</span>
+                </div>
+
+                <!-- DOCX -->
+                <div class="format-card" data-ext="docx" role="button" tabindex="0">
+                    <div class="card-icon">📘</div>
+                    <div class="card-ext">DOCX</div>
+                    <div class="card-name">Word 문서</div>
+                    <div class="card-quality">★★☆</div>
+                    <span class="card-badge badge-available">지원됨</span>
+                </div>
+
+                <!-- HWP (Beta) -->
+                <div class="format-card" data-ext="hwp" role="button" tabindex="0">
+                    <div class="card-icon">🇰🇷</div>
+                    <div class="card-ext">HWP</div>
+                    <div class="card-name">한글 문서</div>
+                    <div class="card-quality">★☆☆</div>
+                    <span class="card-badge badge-beta">베타</span>
+                </div>
+
+                <!-- TXT -->
+                <div class="format-card" data-ext="txt" role="button" tabindex="0">
+                    <div class="card-icon">📄</div>
+                    <div class="card-ext">TXT</div>
+                    <div class="card-name">일반 텍스트</div>
+                    <div class="card-quality">★★★</div>
+                    <span class="card-badge badge-available">지원됨</span>
+                </div>
+
+                <!-- CSV / XLSX -->
+                <div class="format-card" data-ext="csv" role="button" tabindex="0">
+                    <div class="card-icon">📊</div>
+                    <div class="card-ext">CSV / XLSX</div>
+                    <div class="card-name">스프레드시트</div>
+                    <div class="card-quality">★★★</div>
+                    <span class="card-badge badge-available">지원됨</span>
+                </div>
+
+                <!-- JSON -->
+                <div class="format-card" data-ext="json" role="button" tabindex="0">
+                    <div class="card-icon">{ }</div>
+                    <div class="card-ext">JSON</div>
+                    <div class="card-name">JSON 데이터</div>
+                    <div class="card-quality">★★★</div>
+                    <span class="card-badge badge-available">지원됨</span>
+                </div>
+
+            </div><!-- /.format-grid -->
+        </div><!-- /#panel-basic -->
+
+        <!-- ── 확장 서비스 패널 ─────────────────────────────────────
+             IPYNB는 JSON 기반이라 클라이언트에서 처리 가능
+             나머지는 향후 백엔드 연동 예정
+             ─────────────────────────────────────────────────────── -->
+        <div class="format-panel" id="panel-ext" role="tabpanel">
+            <div class="format-grid">
+
+                <!-- IPYNB -->
+                <div class="format-card" data-ext="ipynb" role="button" tabindex="0">
+                    <div class="card-icon">🔬</div>
+                    <div class="card-ext">IPYNB</div>
+                    <div class="card-name">Jupyter Notebook</div>
+                    <div class="card-quality">★★☆</div>
+                    <span class="card-badge badge-available">지원됨</span>
+                </div>
+
+                <!-- PDF (Coming Soon) -->
+                <div class="format-card coming-soon" data-ext="pdf" aria-disabled="true">
+                    <div class="card-icon">📕</div>
+                    <div class="card-ext">PDF</div>
+                    <div class="card-name">PDF 문서</div>
+                    <div class="card-quality">★★☆</div>
+                    <span class="card-badge badge-soon">예정</span>
+                </div>
+
+                <!-- PPTX (Coming Soon) -->
+                <div class="format-card coming-soon" data-ext="pptx" aria-disabled="true">
+                    <div class="card-icon">📑</div>
+                    <div class="card-ext">PPTX</div>
+                    <div class="card-name">PowerPoint</div>
+                    <div class="card-quality">★☆☆</div>
+                    <span class="card-badge badge-soon">예정</span>
+                </div>
+
+                <!-- ODT/RTF (Coming Soon) -->
+                <div class="format-card coming-soon" data-ext="odt" aria-disabled="true">
+                    <div class="card-icon">📃</div>
+                    <div class="card-ext">ODT / RTF</div>
+                    <div class="card-name">오픈 문서</div>
+                    <div class="card-quality">★★☆</div>
+                    <span class="card-badge badge-soon">예정</span>
+                </div>
+
+                <!-- EPUB (Coming Soon) -->
+                <div class="format-card coming-soon" data-ext="epub" aria-disabled="true">
+                    <div class="card-icon">📚</div>
+                    <div class="card-ext">EPUB</div>
+                    <div class="card-name">전자책</div>
+                    <div class="card-quality">★★☆</div>
+                    <span class="card-badge badge-soon">예정</span>
+                </div>
+
+            </div><!-- /.format-grid -->
+        </div><!-- /#panel-ext -->
+
+    </div><!-- /.container -->
+</section>
+
+
+<!-- ════════════════════════════════════════════════════════════════
+     [변환기 패널]  실제 변환 조작 영역
+     ════════════════════════════════════════════════════════════════ -->
+<section class="converter-section" id="converter" aria-labelledby="converter-title">
+    <div class="container">
+        <h2 class="section-title" id="converter-title">변환하기</h2>
+        <p class="section-sub">파일을 업로드하고 옵션을 설정한 뒤 변환 시작을 누르세요</p>
+
+        <div class="converter-layout">
+
+            <!-- ── 왼쪽: 옵션 패널 ──────────────────────────────── -->
+            <div class="options-panel">
+                <h3>⚙️ 변환 옵션</h3>
+
+                <!-- 감지된 포맷 표시 -->
+                <div class="detected-row">
+                    <span>감지된 포맷:</span>
+                    <!-- app.js의 updateFormatBadge에서 내용 업데이트 -->
+                    <span id="detected-format" aria-live="polite"></span>
+                </div>
+
+                <!-- 포맷 카드 클릭 시 표시되는 힌트 -->
+                <div id="format-hint" role="status" aria-live="polite"></div>
+
+                <!-- 문서 유형 선택 -->
+                <!-- [수정 시] 옵션 값은 parsers.js의 emptyIR docType과 맞춰야 함 -->
+                <div class="form-row">
+                    <label for="doc-type">문서 유형</label>
+                    <select id="doc-type" name="doc-type">
+                        <option value="plain" selected>일반 문서</option>
+                        <option value="official">공문 (명사형 종결체)</option>
+                        <option value="report">보고서</option>
+                    </select>
+                </div>
+
+                <!-- 사용자 지정 제목 입력 -->
+                <div class="form-row">
+                    <label for="doc-title">문서 제목 (선택 — 비우면 자동 감지)</label>
+                    <input type="text"
+                           id="doc-title"
+                           name="doc-title"
+                           placeholder="예: 2026년 업무 계획서"
+                           maxlength="200">
+                </div>
+
+                <!-- IR 미리보기 토글 -->
+                <!-- [이유] IR 확인으로 변환 품질 사전 검토 가능 -->
+                <button id="ir-toggle"
+                        class="ir-toggle-btn"
+                        aria-expanded="false"
+                        aria-controls="ir-preview">
+                    ▶ IR 미리보기 보기
+                </button>
+
+                <!-- IR JSON 미리보기 (숨김 상태) -->
+                <!-- [보안] app.js에서 textContent로만 업데이트 (innerHTML 금지) -->
+                <pre id="ir-preview" hidden aria-label="IR 미리보기"><code id="ir-content">파일을 업로드하면 중간 표현(IR)이 여기에 표시됩니다.</code></pre>
+
+                <!-- 변환 시작 버튼 -->
+                <button id="convert-btn"
+                        class="btn-convert"
+                        disabled
+                        aria-label="HWPX 변환 시작">
+                    파일을 먼저 선택하세요
+                </button>
+            </div><!-- /.options-panel -->
+
+            <!-- ── 오른쪽: 변환 진행 패널 ──────────────────────── -->
+            <div class="progress-panel" aria-live="polite" aria-label="변환 진행 상황">
+                <h3>📊 변환 진행</h3>
+
+                <!-- 전체 진행률 바 -->
+                <div class="progress-wrap" role="progressbar"
+                     aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                    <div id="progress-bar"></div>
+                </div>
+                <div class="progress-meta">
+                    <!-- [수정 시] 상태 메시지 텍스트는 app.js의 setStatusText에서 업데이트 -->
+                    <span id="status-text">대기 중</span>
+                    <span id="progress-pct">0%</span>
+                </div>
+
+                <!-- 7단계 파이프라인 시각화
+                     app.js의 renderPipelineSteps()로 동적 생성됨
+                     [수정 시] app.js의 PIPELINE_STEPS 배열을 수정 -->
+                <div id="pipeline-steps" aria-label="변환 단계">
+                    <!-- JavaScript로 동적 생성 (app.js) -->
+                </div>
+
+                <!-- 변환 결과 + 다운로드 버튼
+                     app.js의 showResult()에서 내용 주입 -->
+                <div id="result-area" aria-label="변환 결과" aria-live="polite"></div>
+
+            </div><!-- /.progress-panel -->
+
+        </div><!-- /.converter-layout -->
+    </div><!-- /.container -->
+</section>
+
+
+<!-- ════════════════════════════════════════════════════════════════
+     [동작 원리]  5단계 시각적 설명
+     ════════════════════════════════════════════════════════════════ -->
+<section class="how-section" id="how-it-works" aria-labelledby="how-title">
+    <div class="container">
+        <h2 class="section-title" id="how-title">동작 원리</h2>
+        <p class="section-sub">브라우저 안에서 5단계로 완전히 처리됩니다</p>
+
+        <!-- [수정 시] 단계 추가/변경 시 .how-step 블록 복사 -->
+        <div class="steps-grid">
+
+            <div class="how-step">
+                <div class="how-step-icon" aria-hidden="true">📥</div>
+                <h4>1. 파일 선택</h4>
+                <p>드래그앤드롭 또는 클릭으로 변환할 파일을 선택합니다.</p>
+            </div>
+
+            <div class="how-step">
+                <div class="how-step-icon" aria-hidden="true">🔄</div>
+                <h4>2. 포맷 파싱</h4>
+                <p>확장자를 자동으로 감지하고 포맷별 파서로 IR(중간 표현)으로 변환합니다.</p>
+            </div>
+
+            <div class="how-step">
+                <div class="how-step-icon" aria-hidden="true">⚙️</div>
+                <h4>3. HWPX 생성</h4>
+                <p>IR → section0.xml → JSZip 패키징으로 HWPX 파일을 생성합니다.</p>
+            </div>
+
+            <div class="how-step">
+                <div class="how-step-icon" aria-hidden="true">✅</div>
+                <h4>4. 구조 검증</h4>
+                <p>ZIP_STORED 규칙, 네임스페이스, 참조 무결성 등 4개 영역을 자동 검증합니다.</p>
+            </div>
+
+            <div class="how-step">
+                <div class="how-step-icon" aria-hidden="true">📦</div>
+                <h4>5. 다운로드</h4>
+                <p>검증을 통과한 .hwpx 파일을 즉시 다운로드합니다.</p>
+            </div>
+
+        </div><!-- /.steps-grid -->
+    </div><!-- /.container -->
+</section>
+
+
+<!-- ════════════════════════════════════════════════════════════════
+     [포맷 지원 표]  상세 품질/특이사항 표
+     ════════════════════════════════════════════════════════════════ -->
+<section class="support-section" id="support" aria-labelledby="support-title">
+    <div class="container">
+        <h2 class="section-title" id="support-title">포맷 지원 현황</h2>
+        <p class="section-sub">★★★: 고품질 / ★★☆: 주요 내용 보존 / ★☆☆: 텍스트 추출만</p>
+
+        <div class="support-table-wrap">
+            <!-- [수정 시] 포맷 추가 시 <tbody>에 <tr> 행 추가 -->
+            <table class="support-table">
+                <thead>
+                    <tr>
+                        <th scope="col">포맷</th>
+                        <th scope="col">품질</th>
+                        <th scope="col">상태</th>
+                        <th scope="col">파싱 방식</th>
+                        <th scope="col">주요 제한사항</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>MD (Markdown)</strong></td>
+                        <td>★★★</td>
+                        <td><span class="card-badge badge-available">지원됨</span></td>
+                        <td>marked.js → HTML → IR</td>
+                        <td>이미지 미지원</td>
+                    </tr>
+                    <tr>
+                        <td><strong>HTML</strong></td>
+                        <td>★★☆</td>
+                        <td><span class="card-badge badge-available">지원됨</span></td>
+                        <td>DOMParser → IR</td>
+                        <td>CSS 스타일 손실, 이미지 미지원</td>
+                    </tr>
+                    <tr>
+                        <td><strong>DOCX</strong></td>
+                        <td>★★☆</td>
+                        <td><span class="card-badge badge-available">지원됨</span></td>
+                        <td>JSZip → word/document.xml → IR</td>
+                        <td>이미지·머리글·바닥글 미지원</td>
+                    </tr>
+                    <tr>
+                        <td><strong>HWP</strong></td>
+                        <td>★☆☆</td>
+                        <td><span class="card-badge badge-beta">베타</span></td>
+                        <td>ZIP 시도 → 텍스트 추출</td>
+                        <td>HWP5(바이너리) 파싱 제한적</td>
+                    </tr>
+                    <tr>
+                        <td><strong>TXT</strong></td>
+                        <td>★★★</td>
+                        <td><span class="card-badge badge-available">지원됨</span></td>
+                        <td>줄바꿈 분석 → IR</td>
+                        <td>없음</td>
+                    </tr>
+                    <tr>
+                        <td><strong>CSV</strong></td>
+                        <td>★★★</td>
+                        <td><span class="card-badge badge-available">지원됨</span></td>
+                        <td>RFC 4180 파서 → 표 IR</td>
+                        <td>없음</td>
+                    </tr>
+                    <tr>
+                        <td><strong>XLSX</strong></td>
+                        <td>★★★</td>
+                        <td><span class="card-badge badge-available">지원됨</span></td>
+                        <td>SheetJS → 첫 시트 → IR</td>
+                        <td>첫 번째 시트만 변환</td>
+                    </tr>
+                    <tr>
+                        <td><strong>JSON</strong></td>
+                        <td>★★★</td>
+                        <td><span class="card-badge badge-available">지원됨</span></td>
+                        <td>JSON.parse → 구조 분석 → IR</td>
+                        <td>IR 형식이면 직접 사용</td>
+                    </tr>
+                    <tr>
+                        <td><strong>IPYNB</strong></td>
+                        <td>★★☆</td>
+                        <td><span class="card-badge badge-available">지원됨</span></td>
+                        <td>JSON 파싱 → cell_type별 처리</td>
+                        <td>이미지 출력 셀 미지원</td>
+                    </tr>
+                    <tr>
+                        <td><strong>PDF</strong></td>
+                        <td>★★☆</td>
+                        <td><span class="card-badge badge-soon">예정</span></td>
+                        <td>—</td>
+                        <td>레이아웃 추출 복잡도로 백엔드 필요</td>
+                    </tr>
+                    <tr>
+                        <td><strong>PPTX</strong></td>
+                        <td>★☆☆</td>
+                        <td><span class="card-badge badge-soon">예정</span></td>
+                        <td>—</td>
+                        <td>슬라이드→문서 변환 시 정보 손실 큼</td>
+                    </tr>
+                    <tr>
+                        <td><strong>ODT / RTF</strong></td>
+                        <td>★★☆</td>
+                        <td><span class="card-badge badge-soon">예정</span></td>
+                        <td>—</td>
+                        <td>복잡한 바이너리/XML 파싱</td>
+                    </tr>
+                    <tr>
+                        <td><strong>EPUB</strong></td>
+                        <td>★★☆</td>
+                        <td><span class="card-badge badge-soon">예정</span></td>
+                        <td>—</td>
+                        <td>EPUB3 구조 파싱 복잡도</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div><!-- /.support-table-wrap -->
+    </div><!-- /.container -->
+</section>
+
+
+<!-- ════════════════════════════════════════════════════════════════
+     [푸터]
+     ════════════════════════════════════════════════════════════════ -->
+<footer class="site-footer">
+    <div class="container">
+        <div class="footer-inner">
+
+            <!-- 브랜드 소개 -->
+            <div class="footer-brand">
+                <span class="footer-logo">To HWPX</span>
+                <p>
+                    다양한 문서 포맷을 한글(HWPX)로 변환하는<br>
+                    오픈소스 브라우저 기반 도구입니다.<br>
+                    파일은 서버에 전송되지 않으며<br>
+                    브라우저 안에서 완전히 처리됩니다.
+                </p>
+            </div>
+
+            <!-- 서비스 링크 -->
+            <!-- [수정 시] href 값을 실제 GitHub Pages URL로 업데이트 -->
+            <div class="footer-links">
+                <h4>서비스</h4>
+                <ul>
+                    <li><a href="#formats">지원 포맷</a></li>
+                    <li><a href="#converter">변환하기</a></li>
+                    <li><a href="#how-it-works">동작 원리</a></li>
+                    <li><a href="#support">지원 현황</a></li>
+                </ul>
+            </div>
+
+            <!-- 외부 링크 -->
+            <div class="footer-links">
+                <h4>관련 링크</h4>
+                <ul>
+                    <li><a href="https://github.com/seowonha/to-hwpx" target="_blank" rel="noopener">GitHub</a></li>
+                    <li><a href="https://github.com/seowonha/to-hwpx/issues" target="_blank" rel="noopener">버그 신고</a></li>
+                    <li><a href="https://github.com/seowonha/to-hwpx/blob/main/hwpx-public-doc/SKILL.md" target="_blank" rel="noopener">HWPX 스킬 문서</a></li>
+                    <li><a href="https://www.bwyf.or.kr" target="_blank" rel="noopener">부천여성청소년재단</a></li>
+                </ul>
+            </div>
+
+        </div><!-- /.footer-inner -->
+
+        <!-- 하단 저작권 -->
+        <div class="footer-bottom">
+            <span>© 2026 To HWPX. MIT License.</span>
+            <span>
+                기술 스택:
+                <a href="https://stuk.github.io/jszip/" target="_blank" rel="noopener">JSZip</a> ·
+                <a href="https://marked.js.org/" target="_blank" rel="noopener">marked.js</a> ·
+                <a href="https://sheetjs.com/" target="_blank" rel="noopener">SheetJS</a>
+            </span>
+        </div>
+    </div><!-- /.container -->
+</footer>
+
+
+<!-- ─── JS 로드 (defer 스크립트보다 뒤에 위치) ─────────────────────
+     실행 순서: parsers.js → hwpx.js → app.js
+     parsers.js와 hwpx.js의 함수가 app.js에서 사용되므로 순서 중요
+     ─────────────────────────────────────────────────────────────── -->
+<script src="js/parsers.js"></script>
+<script src="js/hwpx.js"></script>
+<script src="js/app.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,543 @@
+/* ===================================================================
+ * [parsers.js]  포맷별 입력 파일 → IR(중간 표현 JSON) 변환 파서 모음
+ * ===================================================================
+ * IR 구조 예시:
+ *   {
+ *     title: "문서 제목",
+ *     doc_type: "official" | "report" | "plain",
+ *     blocks: [
+ *       { type: "heading", level: 1, text: "제목" },
+ *       { type: "para",    text: "본문 단락" },
+ *       { type: "list",    items: ["항목 1", "항목 2"] },
+ *       { type: "table",   header: ["열1","열2"], rows: [["값1","값2"]] }
+ *     ]
+ *   }
+ *
+ * [수정 가이드]
+ *   새 포맷 추가 → 이 파일에 parseXxx() 함수 추가 후
+ *                  맨 아래 PARSERS 맵에 "확장자" → { fn, ... } 항목 추가
+ * ===================================================================*/
+
+'use strict';
+
+// ─────────────────────────────────────────────────────────────────────────
+// [공통 유틸] 파서 전반에서 재사용하는 보조 함수들
+// ─────────────────────────────────────────────────────────────────────────
+
+/** 텍스트에서 제어 문자(비표시 문자) 제거 — XML 생성 시 오류 방지 */
+function sanitize(s) {
+    // \x00-\x08 등 XML에서 허용되지 않는 제어 문자를 공백으로 치환
+    return String(s || '').replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
+}
+
+/** 빈 IR 기본 객체 반환 */
+function emptyIR(title = '제목 없음', docType = 'plain') {
+    return { title: sanitize(title), doc_type: docType, blocks: [] };
+}
+
+
+// ─────────────────────────────────────────────────────────────────────────
+// [1] Markdown 파서
+//     방법: marked.js(CDN)로 MD→HTML 변환 후, HTML 파서 재사용
+//     장점: marked.js가 CommonMark 표준을 처리하므로 별도 MD 파싱 불필요
+// ─────────────────────────────────────────────────────────────────────────
+function parseMd(text, docType = 'plain') {
+    // marked.js가 index.html CDN으로 로드되지 않았으면 TXT 파서로 폴백
+    if (typeof marked === 'undefined') {
+        console.warn('[parsers] marked.js 미로드 — TXT 파서로 폴백');
+        return parseTxt(text, docType);
+    }
+    // marked.parse()는 MD 문자열을 HTML 문자열로 변환
+    const html = marked.parse(text);
+    // HTML 파서로 IR 변환 (코드 재사용)
+    return parseHtml(html, docType);
+}
+
+
+// ─────────────────────────────────────────────────────────────────────────
+// [2] HTML 파서
+//     방법: DOMParser API로 HTML DOM을 생성하고 요소 순회하며 IR 블록 추출
+//     보안: 파싱 결과를 textContent로만 읽어 XSS 실행 불가
+// ─────────────────────────────────────────────────────────────────────────
+function parseHtml(htmlText, docType = 'plain') {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(htmlText, 'text/html');
+
+    // <title> 태그가 있으면 문서 제목으로 사용
+    const titleEl = doc.querySelector('title');
+    const ir = emptyIR(
+        titleEl ? sanitize(titleEl.textContent.trim()) : '제목 없음',
+        docType
+    );
+
+    // body 요소가 없는 경우(단편 HTML) documentElement 전체 탐색
+    extractFromNode(doc.body || doc.documentElement, ir.blocks);
+    return ir;
+}
+
+/** HTML 노드 재귀 순회 → 의미 있는 요소를 IR 블록으로 추출 */
+function extractFromNode(node, blocks) {
+    for (const child of node.childNodes) {
+        const tag = (child.tagName || '').toLowerCase();
+
+        if (/^h[1-6]$/.test(tag)) {
+            // h1~h6 → heading 블록 (level = 숫자 부분)
+            const text = sanitize(child.textContent.trim());
+            if (text) blocks.push({ type: 'heading', level: parseInt(tag[1], 10), text });
+
+        } else if (tag === 'p') {
+            // <p> → para 블록
+            const text = sanitize(child.textContent.trim());
+            if (text) blocks.push({ type: 'para', text });
+
+        } else if (tag === 'ul' || tag === 'ol') {
+            // <ul>/<ol> → list 블록
+            const items = Array.from(child.querySelectorAll(':scope > li'))
+                .map(li => sanitize(li.textContent.trim()))
+                .filter(Boolean);
+            if (items.length) blocks.push({ type: 'list', items });
+
+        } else if (tag === 'table') {
+            // <table> → table 블록
+            const tb = extractHtmlTable(child);
+            if (tb) blocks.push(tb);
+
+        } else if (tag === 'pre' || tag === 'code') {
+            // 코드 블록 → para로 처리 (HWPX에 코드 블록 스타일 없음)
+            const text = sanitize(child.textContent.trim());
+            if (text) blocks.push({ type: 'para', text: '[코드] ' + text });
+
+        } else if (tag === 'blockquote') {
+            // 인용 → para (▶ 접두어)
+            const text = sanitize(child.textContent.trim());
+            if (text) blocks.push({ type: 'para', text: '▶ ' + text });
+
+        } else if (tag === 'hr') {
+            // 수평선 → 빈 단락으로 구분 표시
+            blocks.push({ type: 'para', text: '─────────────────' });
+
+        } else if (child.childNodes && child.childNodes.length > 0
+            && !['script', 'style', 'head', 'nav', 'footer', 'aside'].includes(tag)) {
+            // div, section, article 등 컨테이너는 재귀 탐색
+            // script/style/nav/footer 등 비콘텐츠 요소는 건너뜀
+            extractFromNode(child, blocks);
+        }
+    }
+}
+
+/** <table> DOM 요소 → IR table 블록 변환 */
+function extractHtmlTable(tableEl) {
+    const rows = tableEl.querySelectorAll('tr');
+    if (!rows.length) return null;
+
+    const allRows = Array.from(rows).map(tr =>
+        Array.from(tr.querySelectorAll('th, td'))
+            .map(td => sanitize(td.textContent.trim()))
+    );
+
+    // 첫 행에 <th> 요소가 하나 이상 있으면 헤더 행으로 분리
+    const hasThInFirstRow = rows[0].querySelector('th') !== null;
+    if (hasThInFirstRow && allRows.length > 1) {
+        return { type: 'table', header: allRows[0], rows: allRows.slice(1) };
+    }
+    return { type: 'table', header: null, rows: allRows };
+}
+
+
+// ─────────────────────────────────────────────────────────────────────────
+// [3] 일반 텍스트(TXT) 파서
+//     방법: 빈 줄로 단락 구분, '#' 접두어로 제목 인식
+// ─────────────────────────────────────────────────────────────────────────
+function parseTxt(text, docType = 'plain') {
+    const ir = emptyIR('텍스트 문서', docType);
+    // 2개 이상 연속 줄바꿈을 단락 구분자로 사용
+    const paragraphs = text.split(/\n{2,}/);
+
+    for (const para of paragraphs) {
+        const trimmed = sanitize(para.trim());
+        if (!trimmed) continue;
+
+        // 간이 Markdown 제목 인식 (# / ## / ###)
+        if (trimmed.startsWith('### ')) {
+            ir.blocks.push({ type: 'heading', level: 3, text: trimmed.slice(4) });
+        } else if (trimmed.startsWith('## ')) {
+            ir.blocks.push({ type: 'heading', level: 2, text: trimmed.slice(3) });
+        } else if (trimmed.startsWith('# ')) {
+            ir.blocks.push({ type: 'heading', level: 1, text: trimmed.slice(2) });
+        } else {
+            ir.blocks.push({ type: 'para', text: trimmed });
+        }
+    }
+
+    return ir;
+}
+
+
+// ─────────────────────────────────────────────────────────────────────────
+// [4] CSV 파서
+//     방법: RFC 4180 표준 CSV 파싱, 첫 행을 헤더로 사용
+//     의존성 없음 — 순수 JS 구현
+// ─────────────────────────────────────────────────────────────────────────
+function parseCsv(text, docType = 'plain') {
+    const ir = emptyIR('스프레드시트', docType);
+    const rows = csvToRows(text);
+    if (!rows.length) return ir;
+
+    const header = rows[0].map(sanitize);
+    const dataRows = rows.slice(1).map(r => r.map(sanitize));
+
+    if (dataRows.length) {
+        // 데이터가 있으면 table 블록
+        ir.blocks.push({ type: 'table', header, rows: dataRows });
+    } else {
+        // 1행만 있으면 목록으로 처리
+        ir.blocks.push({ type: 'list', items: header });
+    }
+    return ir;
+}
+
+/**
+ * CSV 문자열 → 2차원 배열
+ * 따옴표 안 쉼표, 이중 따옴표 이스케이프(""), CRLF/LF 모두 처리
+ */
+function csvToRows(text) {
+    const rows = [];
+    let row = [], field = '', inQuote = false;
+
+    for (let i = 0; i < text.length; i++) {
+        const c = text[i];
+
+        if (inQuote) {
+            if (c === '"' && text[i + 1] === '"') {
+                // 이중 따옴표("") → 따옴표 문자 하나로 처리
+                field += '"';
+                i++;
+            } else if (c === '"') {
+                inQuote = false;
+            } else {
+                field += c;
+            }
+        } else if (c === '"') {
+            inQuote = true;
+        } else if (c === ',') {
+            row.push(field);
+            field = '';
+        } else if (c === '\r' && text[i + 1] === '\n') {
+            // CRLF 줄바꿈
+            row.push(field); field = '';
+            if (row.some(v => v.trim())) rows.push(row);
+            row = []; i++;
+        } else if (c === '\n') {
+            row.push(field); field = '';
+            if (row.some(v => v.trim())) rows.push(row);
+            row = [];
+        } else {
+            field += c;
+        }
+    }
+    // 마지막 행 처리 (줄바꿈 없이 끝나는 경우)
+    row.push(field);
+    if (row.some(v => v.trim())) rows.push(row);
+    return rows;
+}
+
+
+// ─────────────────────────────────────────────────────────────────────────
+// [5] XLSX 파서
+//     방법: SheetJS(CDN) 라이브러리로 첫 번째 시트 → CSV 변환 후 parseCsv() 재사용
+//     [주의] SheetJS가 CDN에서 로드되어 있어야 함 (index.html 스크립트 태그 참조)
+// ─────────────────────────────────────────────────────────────────────────
+function parseXlsx(arrayBuffer, docType = 'plain') {
+    if (typeof XLSX === 'undefined') {
+        // SheetJS 미로드 시 오류 블록으로 폴백
+        const ir = emptyIR('XLSX 문서', docType);
+        ir.blocks.push({ type: 'para', text: 'SheetJS 라이브러리 미로드: XLSX 처리 불가. 인터넷 연결을 확인하세요.' });
+        return ir;
+    }
+
+    const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+    const firstSheetName = workbook.SheetNames[0];
+    // sheet_to_csv로 CSV 문자열 생성 후 파서 재사용
+    const csvText = XLSX.utils.sheet_to_csv(workbook.Sheets[firstSheetName]);
+    const ir = parseCsv(csvText, docType);
+    ir.title = sanitize(firstSheetName) || 'XLSX 문서';
+    return ir;
+}
+
+
+// ─────────────────────────────────────────────────────────────────────────
+// [6] JSON 파서
+//     방법: IR 형식이면 직접 사용; 아니면 key-value 구조를 표/목록으로 변환
+// ─────────────────────────────────────────────────────────────────────────
+function parseJson(text, docType = 'plain') {
+    let obj;
+    try {
+        obj = JSON.parse(text);
+    } catch (e) {
+        const ir = emptyIR('JSON 문서', docType);
+        ir.blocks.push({ type: 'para', text: 'JSON 파싱 오류: ' + e.message });
+        return ir;
+    }
+
+    // IR 형식 판별: { blocks: [...] } 구조면 직접 사용
+    if (obj && typeof obj === 'object' && Array.isArray(obj.blocks)) {
+        return {
+            title: sanitize(obj.title || 'JSON 문서'),
+            doc_type: obj.doc_type || docType,
+            // 중첩 객체 내 텍스트도 sanitize 적용
+            blocks: (obj.blocks || []).map(b => ({
+                ...b,
+                text:  b.text  ? sanitize(b.text)  : b.text,
+                items: b.items ? b.items.map(sanitize) : b.items,
+            }))
+        };
+    }
+
+    // 일반 JSON → key-value 표/목록으로 변환
+    const ir = emptyIR('JSON 문서', docType);
+    jsonToBlocks(obj, ir.blocks, 0);
+    return ir;
+}
+
+/** JSON 값을 재귀적으로 IR 블록으로 변환 */
+function jsonToBlocks(value, blocks, depth) {
+    if (Array.isArray(value)) {
+        // 모든 항목이 단순값(문자열/숫자)이면 list 블록
+        const allSimple = value.every(v => typeof v !== 'object' || v === null);
+        if (allSimple) {
+            blocks.push({ type: 'list', items: value.map(v => sanitize(String(v))) });
+        } else {
+            // 복잡한 배열: 인덱스 제목 + 재귀
+            value.forEach((v, i) => {
+                blocks.push({ type: 'heading', level: Math.min(depth + 2, 6), text: `[${i}]` });
+                jsonToBlocks(v, blocks, depth + 1);
+            });
+        }
+    } else if (value && typeof value === 'object') {
+        // 객체 → 키/값 2열 표
+        const rows = Object.entries(value).map(([k, v]) => [
+            sanitize(k),
+            typeof v === 'object' ? JSON.stringify(v) : sanitize(String(v))
+        ]);
+        if (rows.length) blocks.push({ type: 'table', header: ['키', '값'], rows });
+    } else {
+        blocks.push({ type: 'para', text: sanitize(String(value)) });
+    }
+}
+
+
+// ─────────────────────────────────────────────────────────────────────────
+// [7] IPYNB 파서 (Jupyter Notebook)
+//     방법: IPYNB는 JSON 구조. cell_type에 따라 markdown/code/raw 처리
+//     지원: nbformat 3(worksheets) / 4(cells) 모두 처리
+//     한계: base64 이미지 출력 셀은 "[그림]" 안내 텍스트로 대체
+// ─────────────────────────────────────────────────────────────────────────
+function parseIpynb(text, docType = 'plain') {
+    let nb;
+    try {
+        nb = JSON.parse(text);
+    } catch {
+        return { ...emptyIR('Notebook', docType), blocks: [{ type: 'para', text: 'IPYNB 파싱 오류: JSON 형식이 아님' }] };
+    }
+
+    const ir = emptyIR('Jupyter Notebook', docType);
+    // nbformat 3: nb.worksheets[0].cells / nbformat 4: nb.cells
+    const cells = nb.cells || (nb.worksheets && nb.worksheets[0] && nb.worksheets[0].cells) || [];
+
+    for (const cell of cells) {
+        // source는 문자열 배열 또는 단일 문자열로 올 수 있음
+        const source = Array.isArray(cell.source) ? cell.source.join('') : (cell.source || '');
+
+        if (cell.cell_type === 'markdown') {
+            // 마크다운 셀 → MD 파서 재사용
+            const mdIR = parseMd(source, docType);
+            ir.blocks.push(...mdIR.blocks);
+
+        } else if (cell.cell_type === 'code') {
+            // 코드 셀: 코드 내용 표시
+            if (source.trim()) {
+                ir.blocks.push({ type: 'para', text: '[코드]\n' + sanitize(source) });
+            }
+            // 실행 출력 처리
+            for (const out of (cell.outputs || [])) {
+                const otype = out.output_type;
+                if (otype === 'stream' || otype === 'execute_result' || otype === 'display_data') {
+                    // text 출력만 처리
+                    const txt = Array.isArray(out.text) ? out.text.join('') : (out.text || '');
+                    if (txt.trim()) {
+                        ir.blocks.push({ type: 'para', text: '[출력] ' + sanitize(txt) });
+                    }
+                    // 이미지 출력은 안내 텍스트로 대체
+                    if (out.data && out.data['image/png']) {
+                        ir.blocks.push({ type: 'para', text: '[그림 — HWPX에서 이미지 삽입 미지원]' });
+                    }
+                }
+            }
+
+        } else if (cell.cell_type === 'raw') {
+            if (source.trim()) ir.blocks.push({ type: 'para', text: sanitize(source) });
+        }
+    }
+
+    return ir;
+}
+
+
+// ─────────────────────────────────────────────────────────────────────────
+// [8] DOCX 파서
+//     방법: DOCX(ZIP+XML)를 JSZip으로 열고 word/document.xml을 DOMParser로 파싱
+//     네임스페이스: http://schemas.openxmlformats.org/wordprocessingml/2006/main
+//     한계: 이미지·복잡 스타일·주석·머리글/바닥글 미지원 (텍스트 추출만)
+//     [주의] ArrayBuffer를 받는 비동기 함수 (async)
+// ─────────────────────────────────────────────────────────────────────────
+const DOCX_NS = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
+
+async function parseDocx(arrayBuffer, docType = 'plain') {
+    if (typeof JSZip === 'undefined') {
+        return { ...emptyIR('DOCX 문서', docType), blocks: [{ type: 'para', text: 'JSZip 미로드: DOCX 처리 불가' }] };
+    }
+
+    let zip;
+    try {
+        zip = await JSZip.loadAsync(arrayBuffer);
+    } catch (e) {
+        return { ...emptyIR('DOCX 문서', docType), blocks: [{ type: 'para', text: 'DOCX ZIP 열기 실패: ' + e.message }] };
+    }
+
+    // [보안] Zip Bomb 방지: 압축 해제 예상 크기 합산
+    let totalUncompressed = 0;
+    zip.forEach((_, entry) => {
+        totalUncompressed += entry._data ? (entry._data.uncompressedSize || 0) : 0;
+    });
+    if (totalUncompressed > 50 * 1024 * 1024) {
+        return { ...emptyIR('DOCX 문서', docType), blocks: [{ type: 'para', text: '압축 해제 크기 초과 (50MB): 처리 거부' }] };
+    }
+
+    // word/document.xml이 DOCX의 본문 파일
+    const docFile = zip.file('word/document.xml');
+    if (!docFile) {
+        return { ...emptyIR('DOCX 문서', docType), blocks: [{ type: 'para', text: 'word/document.xml 없음: 유효한 DOCX 파일이 아닙니다.' }] };
+    }
+
+    const xmlText = await docFile.async('string');
+    const xmlDoc = new DOMParser().parseFromString(xmlText, 'application/xml');
+    const ir = emptyIR('DOCX 문서', docType);
+
+    // w:body 직계 자식 순회 (단락: w:p, 표: w:tbl)
+    const body = xmlDoc.getElementsByTagNameNS(DOCX_NS, 'body')[0];
+    if (!body) return ir;
+
+    for (const node of body.childNodes) {
+        const localName = node.localName || '';
+
+        if (localName === 'p') {
+            const block = extractDocxParagraph(node);
+            if (block) ir.blocks.push(block);
+        } else if (localName === 'tbl') {
+            const block = extractDocxTable(node);
+            if (block) ir.blocks.push(block);
+        }
+    }
+
+    return ir;
+}
+
+/** w:p 단락 노드 → IR 블록 (텍스트 추출 + 스타일 판별) */
+function extractDocxParagraph(pNode) {
+    // w:pPr/w:pStyle/@w:val 로 스타일 ID 확인
+    const pStyles = pNode.getElementsByTagNameNS(DOCX_NS, 'pStyle');
+    const styleId = pStyles.length ? (pStyles[0].getAttribute('w:val') || '') : '';
+
+    // w:t 요소들의 텍스트를 모두 합쳐서 단락 텍스트 생성
+    const tEls = pNode.getElementsByTagNameNS(DOCX_NS, 't');
+    const text = sanitize(Array.from(tEls).map(t => t.textContent).join('').trim());
+    if (!text) return null;
+
+    // 스타일 이름에 'heading'/'제목'/'title' 포함 시 heading 블록
+    if (/heading|제목|title/i.test(styleId)) {
+        const level = parseInt(styleId.replace(/\D/g, '') || '1', 10) || 1;
+        return { type: 'heading', level: Math.min(level, 6), text };
+    }
+    return { type: 'para', text };
+}
+
+/** w:tbl 표 노드 → IR table 블록 */
+function extractDocxTable(tblNode) {
+    const rowEls = tblNode.getElementsByTagNameNS(DOCX_NS, 'tr');
+    if (!rowEls.length) return null;
+
+    const rows = Array.from(rowEls).map(tr => {
+        const cells = tr.getElementsByTagNameNS(DOCX_NS, 'tc');
+        return Array.from(cells).map(tc => {
+            const tEls = tc.getElementsByTagNameNS(DOCX_NS, 't');
+            return sanitize(Array.from(tEls).map(t => t.textContent).join('').trim());
+        });
+    });
+
+    // 첫 행을 헤더로 사용
+    return { type: 'table', header: rows[0] || [], rows: rows.slice(1) };
+}
+
+
+// ─────────────────────────────────────────────────────────────────────────
+// [포맷 레지스트리]
+//   확장자 → 파서 정보 맵
+//   [수정 시] 새 포맷 추가는 여기에 항목만 추가하면 됨
+//   accept: 'text'(텍스트 읽기) | 'buffer'(ArrayBuffer 읽기)
+//   async:  true = parseXxx가 async 함수
+// ─────────────────────────────────────────────────────────────────────────
+const PARSERS = {
+    'md':       { fn: parseMd,    async: false, label: 'Markdown', accept: 'text'   },
+    'markdown': { fn: parseMd,    async: false, label: 'Markdown', accept: 'text'   },
+    'html':     { fn: parseHtml,  async: false, label: 'HTML',     accept: 'text'   },
+    'htm':      { fn: parseHtml,  async: false, label: 'HTML',     accept: 'text'   },
+    'txt':      { fn: parseTxt,   async: false, label: 'TXT',      accept: 'text'   },
+    'text':     { fn: parseTxt,   async: false, label: 'TXT',      accept: 'text'   },
+    'csv':      { fn: parseCsv,   async: false, label: 'CSV',      accept: 'text'   },
+    'xlsx':     { fn: parseXlsx,  async: false, label: 'XLSX',     accept: 'buffer' },
+    'xls':      { fn: parseXlsx,  async: false, label: 'XLS',      accept: 'buffer' },
+    'json':     { fn: parseJson,  async: false, label: 'JSON',     accept: 'text'   },
+    'ipynb':    { fn: parseIpynb, async: false, label: 'IPYNB',    accept: 'text'   },
+    'docx':     { fn: parseDocx,  async: true,  label: 'DOCX',     accept: 'buffer' },
+};
+
+/**
+ * 파일명에서 소문자 확장자 추출
+ * 예) "report.v2.DOCX" → "docx"
+ */
+function getExtension(filename) {
+    return filename.split('.').pop().toLowerCase().trim();
+}
+
+/**
+ * File 객체를 IR로 변환하는 통합 진입점
+ * [보안] 파일 크기 20MB 제한 적용
+ * [수정 시] 지원 포맷 추가 후에는 이 함수 수정 불필요 (PARSERS 맵만 수정)
+ */
+async function fileToIR(file, docType = 'plain') {
+    const ext = getExtension(file.name);
+    const parser = PARSERS[ext];
+
+    if (!parser) {
+        const ir = emptyIR(file.name, docType);
+        ir.blocks.push({ type: 'para', text: `지원하지 않는 형식: .${ext}` });
+        return ir;
+    }
+
+    // [보안] 클라이언트 사이드 파일 크기 제한 (20MB)
+    const MAX_BYTES = 20 * 1024 * 1024;
+    if (file.size > MAX_BYTES) {
+        const ir = emptyIR(file.name, docType);
+        ir.blocks.push({ type: 'para', text: `파일 크기 초과: ${(file.size / 1024 / 1024).toFixed(1)}MB (최대 20MB)` });
+        return ir;
+    }
+
+    // accept 타입에 따라 파일 읽기 방법 선택
+    if (parser.accept === 'text') {
+        const text = await file.text();
+        return parser.async ? await parser.fn(text, docType) : parser.fn(text, docType);
+    } else {
+        const buffer = await file.arrayBuffer();
+        return parser.async ? await parser.fn(buffer, docType) : parser.fn(buffer, docType);
+    }
+}

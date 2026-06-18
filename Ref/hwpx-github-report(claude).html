@@ -1,0 +1,1301 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GitHub HWPX 저장소 전수 조사 — 바이브 코딩 활용 가이드</title>
+<style>
+  @import url('https://cdn.jsdelivr.net/gh/sunn-us/KOPUB/fonts/dotum/OTF/KoPubDotum.css');
+
+  :root {
+    --bg: #0a0e13;
+    --surface: #121820;
+    --surface2: #1a2332;
+    --border: #1e2d3d;
+    --border-bright: #2d4a6b;
+    --text: #cdd9e5;
+    --text-dim: #768390;
+    --text-bright: #e6edf3;
+    --accent: #2f81f7;
+    --accent-glow: rgba(47,129,247,0.15);
+    --green: #3fb950;
+    --green-glow: rgba(63,185,80,0.12);
+    --orange: #d29922;
+    --red: #f85149;
+    --purple: #bc8cff;
+    --teal: #39c5cf;
+    --font: 'KoPubDotumMedium', 'Malgun Gothic', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 14px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* ── HEADER ── */
+  .hero {
+    background: linear-gradient(160deg, #0a0e13 0%, #0d1b2a 50%, #0a1628 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 48px 40px 40px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 60% 50% at 80% 50%, rgba(47,129,247,0.06) 0%, transparent 70%);
+  }
+  .hero-grid {
+    max-width: 1200px;
+    margin: 0 auto;
+    position: relative;
+  }
+  .hero-eyebrow {
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .hero-eyebrow::before {
+    content: '';
+    display: inline-block;
+    width: 24px;
+    height: 1px;
+    background: var(--accent);
+  }
+  h1 {
+    font-size: 32px;
+    font-weight: 800;
+    color: var(--text-bright);
+    line-height: 1.25;
+    margin-bottom: 12px;
+  }
+  h1 span { color: var(--accent); }
+  .hero-sub {
+    color: var(--text-dim);
+    font-size: 14px;
+    max-width: 680px;
+    margin-bottom: 28px;
+  }
+  .hero-meta {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+  .meta-pill {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 5px 14px;
+    font-size: 12px;
+    color: var(--text-dim);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .meta-pill strong { color: var(--text-bright); }
+  .dot-green { width: 7px; height: 7px; border-radius: 50%; background: var(--green); display: inline-block; }
+  .dot-blue { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); display: inline-block; }
+
+  /* ── FILTER TABS ── */
+  .filter-bar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 40px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(10px);
+  }
+  .filter-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    gap: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .filter-inner::-webkit-scrollbar { display: none; }
+  .tab {
+    padding: 14px 20px;
+    font-size: 13px;
+    color: var(--text-dim);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+    transition: all 0.2s;
+    border: none;
+    background: none;
+    font-family: var(--font);
+  }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--accent); border-bottom: 2px solid var(--accent); }
+
+  /* ── MAIN ── */
+  .main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 32px 40px 60px;
+  }
+
+  /* ── SECTION ── */
+  .section { margin-bottom: 48px; }
+  .section-header {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .section-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-bright);
+  }
+  .section-count {
+    font-size: 12px;
+    color: var(--text-dim);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 2px 8px;
+  }
+  .section-desc {
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-left: auto;
+  }
+
+  /* ── REPO CARD ── */
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+    gap: 16px;
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    text-decoration: none;
+    color: inherit;
+    transition: border-color 0.2s, background 0.2s, transform 0.15s;
+    cursor: pointer;
+  }
+  .card:hover {
+    border-color: var(--border-bright);
+    background: var(--surface2);
+    transform: translateY(-2px);
+  }
+  .card-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .card-name {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .card-name .owner {
+    color: var(--text-dim);
+    font-weight: 400;
+  }
+  .card-name .slash { color: var(--border-bright); }
+  .stars {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    color: var(--orange);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .stars svg { width: 13px; height: 13px; fill: var(--orange); }
+  .card-desc {
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.55;
+    flex: 1;
+  }
+  .card-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .tag {
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    border: 1px solid transparent;
+  }
+  .tag-lang { background: rgba(47,129,247,0.1); border-color: rgba(47,129,247,0.25); color: #79c0ff; }
+  .tag-python { background: rgba(53,179,219,0.1); border-color: rgba(53,179,219,0.25); color: #56d3eb; }
+  .tag-rust { background: rgba(210,88,47,0.1); border-color: rgba(210,88,47,0.25); color: #f0875a; }
+  .tag-java { background: rgba(195,149,8,0.1); border-color: rgba(195,149,8,0.25); color: #e3b341; }
+  .tag-ts { background: rgba(47,129,247,0.1); border-color: rgba(47,129,247,0.3); color: #79c0ff; }
+  .tag-js { background: rgba(230,205,60,0.1); border-color: rgba(230,205,60,0.25); color: #f0d060; }
+  .tag-cpp { background: rgba(188,140,255,0.1); border-color: rgba(188,140,255,0.25); color: var(--purple); }
+  .tag-mcp { background: rgba(63,185,80,0.1); border-color: rgba(63,185,80,0.3); color: #3fb950; }
+  .tag-skill { background: rgba(57,197,207,0.1); border-color: rgba(57,197,207,0.3); color: var(--teal); }
+  .tag-official { background: rgba(248,81,73,0.1); border-color: rgba(248,81,73,0.3); color: #ffa198; }
+  .tag-wasm { background: rgba(188,140,255,0.1); border-color: rgba(188,140,255,0.3); color: var(--purple); }
+
+  .card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--text-dim);
+    border-top: 1px solid var(--border);
+    padding-top: 10px;
+    margin-top: 2px;
+  }
+  .update-badge { display: flex; align-items: center; gap: 4px; }
+  .use-badge {
+    font-size: 11px;
+    padding: 3px 9px;
+    border-radius: 4px;
+    background: var(--accent-glow);
+    border: 1px solid rgba(47,129,247,0.3);
+    color: var(--accent);
+  }
+
+  /* ── VIBE RECIPE ── */
+  .recipe-section {
+    background: linear-gradient(135deg, rgba(47,129,247,0.05) 0%, rgba(63,185,80,0.04) 100%);
+    border: 1px solid var(--border-bright);
+    border-radius: 12px;
+    padding: 32px;
+    margin-bottom: 48px;
+  }
+  .recipe-title {
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--text-bright);
+    margin-bottom: 6px;
+  }
+  .recipe-sub { color: var(--text-dim); font-size: 13px; margin-bottom: 28px; }
+  .recipes {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 16px;
+  }
+  .recipe-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+  }
+  .recipe-card-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--green);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .recipe-number {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--green-glow);
+    border: 1px solid rgba(63,185,80,0.4);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px;
+    color: var(--green);
+    flex-shrink: 0;
+  }
+  .recipe-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+  .stack-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+  }
+  .stack-arrow {
+    color: var(--text-dim);
+    font-size: 10px;
+  }
+  .stack-repo {
+    color: var(--accent);
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .stack-role { color: var(--text-dim); font-size: 11px; }
+  .recipe-note {
+    font-size: 12px;
+    color: var(--text-dim);
+    line-height: 1.5;
+    border-top: 1px solid var(--border);
+    padding-top: 10px;
+    margin-top: 8px;
+  }
+
+  /* ── SUMMARY TABLE ── */
+  .summary-section { margin-bottom: 48px; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  th {
+    text-align: left;
+    padding: 10px 14px;
+    background: var(--surface2);
+    color: var(--text-dim);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    border-bottom: 1px solid var(--border);
+    font-weight: 600;
+  }
+  td {
+    padding: 11px 14px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+  tr:hover td { background: var(--surface2); }
+  .tr-link { cursor: pointer; }
+  .td-name { color: var(--accent); font-weight: 600; }
+  .td-stars { color: var(--orange); }
+  .td-lang-badge {
+    font-size: 11px; padding: 2px 7px; border-radius: 4px;
+    background: var(--surface2); border: 1px solid var(--border);
+    color: var(--text-dim);
+  }
+  .td-cat {
+    font-size: 11px; color: var(--text-dim);
+  }
+
+  /* ── STAT BAR ── */
+  .stat-bar-wrap { display: flex; align-items: center; gap: 8px; }
+  .stat-bar {
+    height: 4px; border-radius: 2px; background: var(--border);
+    flex: 1; max-width: 80px; overflow: hidden;
+  }
+  .stat-bar-fill { height: 100%; border-radius: 2px; background: var(--orange); }
+
+  /* ── FOOTER ── */
+  .footer {
+    border-top: 1px solid var(--border);
+    padding: 24px 40px;
+    max-width: 1200px;
+    margin: 0 auto;
+    color: var(--text-dim);
+    font-size: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  /* ── HIDDEN ── */
+  .section[data-cat]:not(.visible) { display: none; }
+  .section.visible { display: block; }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<header class="hero">
+  <div class="hero-grid">
+    <div class="hero-eyebrow">GitHub 전수 조사 · 2026.06 기준</div>
+    <h1>GitHub <span>HWPX</span> 저장소 완전 가이드</h1>
+    <p class="hero-sub">전 세계 공개 저장소 49개 중 핵심 24개를 범주화 정리. 바이브 코딩 맥락에서 즉시 활용 가능한 조합 레시피 포함.</p>
+    <div class="hero-meta">
+      <div class="meta-pill"><span class="dot-green"></span> 핵심 저장소 <strong>24개</strong></div>
+      <div class="meta-pill"><span class="dot-blue"></span> MCP 서버 <strong>6개</strong></div>
+      <div class="meta-pill"><span class="dot-green"></span> Claude Code 스킬 <strong>4개</strong></div>
+      <div class="meta-pill"><span class="dot-blue"></span> 최고 스타 <strong>rhwp 3.2k★</strong></div>
+    </div>
+  </div>
+</header>
+
+<!-- FILTER -->
+<nav class="filter-bar">
+  <div class="filter-inner">
+    <button class="tab active" data-filter="all">전체</button>
+    <button class="tab" data-filter="engine">핵심 엔진</button>
+    <button class="tab" data-filter="mcp">MCP 서버</button>
+    <button class="tab" data-filter="skill">Claude 스킬</button>
+    <button class="tab" data-filter="python">Python</button>
+    <button class="tab" data-filter="multi">멀티포맷 파서</button>
+    <button class="tab" data-filter="official">한컴 공식</button>
+    <button class="tab" data-filter="util">유틸/기타</button>
+    <button class="tab" data-filter="recipe">⚡ 바이브 레시피</button>
+  </div>
+</nav>
+
+<main class="main">
+
+<!-- ── VIBE RECIPE ── -->
+<div class="recipe-section" data-cat="recipe">
+  <div class="recipe-title">⚡ 바이브 코딩 레시피</div>
+  <div class="recipe-sub">목적별 즉시 조합 가능한 스택. 각 카드는 복붙 가능한 패키지 조합 단위.</div>
+  <div class="recipes">
+
+    <div class="recipe-card">
+      <div class="recipe-card-title"><span class="recipe-number">1</span> Claude Code 자동 공문 생성</div>
+      <div class="recipe-stack">
+        <div class="stack-item"><span class="stack-repo">airmang/hwpx-skill</span> <span class="stack-arrow">→</span> <span class="stack-role">스킬 등록</span></div>
+        <div class="stack-item"><span class="stack-repo">airmang/python-hwpx</span> <span class="stack-arrow">→</span> <span class="stack-role">문서 생성 엔진</span></div>
+        <div class="stack-item"><span class="stack-repo">Canine89/hwpxskill</span> <span class="stack-arrow">→</span> <span class="stack-role">베이스 템플릿</span></div>
+      </div>
+      <div class="recipe-note">한컴 없이 Python만으로 공문 HWPX 자동 생성. Claude Code에 스킬 등록 후 프롬프트 한 줄로 서식 완성. ZIP+XML 구조 직접 조작.</div>
+    </div>
+
+    <div class="recipe-card">
+      <div class="recipe-card-title"><span class="recipe-number">2</span> Claude Desktop MCP 문서 편집</div>
+      <div class="recipe-stack">
+        <div class="stack-item"><span class="stack-repo">treesoop/hwp-mcp</span> <span class="stack-arrow">→</span> <span class="stack-role">MCP 서버 (34 tools)</span></div>
+        <div class="stack-item"><span class="stack-repo">edwardkim/rhwp</span> <span class="stack-arrow">→</span> <span class="stack-role">기반 Rust 엔진</span></div>
+      </div>
+      <div class="recipe-note">claude_desktop_config.json에 등록만 하면 "이 문서 3장 표 수정해줘" 같은 자연어 명령으로 HWPX 편집. Claude/Cursor/ChatGPT 모두 호환.</div>
+    </div>
+
+    <div class="recipe-card">
+      <div class="recipe-card-title"><span class="recipe-number">3</span> 대량 HWP 문서 Markdown 변환</div>
+      <div class="recipe-stack">
+        <div class="stack-item"><span class="stack-repo">chrisryugj/kordoc</span> <span class="stack-arrow">→</span> <span class="stack-role">멀티포맷 파서 CLI</span></div>
+        <div class="stack-item"><span class="stack-repo">iyulab/unhwp</span> <span class="stack-arrow">→</span> <span class="stack-role">고성능 변환 대안</span></div>
+      </div>
+      <div class="recipe-note">HWP3·HWP·HWPX·PDF·Office 전부 Markdown으로 일괄 변환. RAG 파이프라인 전처리, LLM 입력 준비에 최적. CLI + MCP 이중 지원.</div>
+    </div>
+
+    <div class="recipe-card">
+      <div class="recipe-card-title"><span class="recipe-number">4</span> Docx/MD → HWPX 자동 변환 MCP</div>
+      <div class="recipe-stack">
+        <div class="stack-item"><span class="stack-repo">aliencube/mcp-pypandoc-hwpx</span> <span class="stack-arrow">→</span> <span class="stack-role">변환 MCP 서버</span></div>
+        <div class="stack-item"><span class="stack-repo">Dayoooun/hwpx-mcp</span> <span class="stack-arrow">→</span> <span class="stack-role">편집 MCP 서버</span></div>
+      </div>
+      <div class="recipe-note">Markdown·HTML·DOCX로 초안 작성 후 MCP 한 줄로 HWPX 변환. Azure Container Apps 배포로 서버리스 운영 가능.</div>
+    </div>
+
+    <div class="recipe-card">
+      <div class="recipe-card-title"><span class="recipe-number">5</span> 로컬 HWP 문서 AI RAG 검색</div>
+      <div class="recipe-stack">
+        <div class="stack-item"><span class="stack-repo">chrisryugj/Docufinder</span> <span class="stack-arrow">→</span> <span class="stack-role">로컬 검색 앱</span></div>
+        <div class="stack-item"><span class="stack-repo">showjihyun/agentrag-v1</span> <span class="stack-arrow">→</span> <span class="stack-role">에이전트 RAG</span></div>
+      </div>
+      <div class="recipe-note">수천 건 HWPX를 오프라인으로 1초 내 전문 검색. ONNX 기반 AI Q&A 옵션 포함. Tauri 데스크탑 앱으로 배포.</div>
+    </div>
+
+    <div class="recipe-card">
+      <div class="recipe-card-title"><span class="recipe-number">6</span> Java 백엔드 HWPX 읽기/쓰기</div>
+      <div class="recipe-stack">
+        <div class="stack-item"><span class="stack-repo">neolord0/hwpxlib</span> <span class="stack-arrow">→</span> <span class="stack-role">Read/Write 라이브러리</span></div>
+        <div class="stack-item"><span class="stack-repo">neolord0/hwp2hwpx</span> <span class="stack-arrow">→</span> <span class="stack-role">HWP 변환</span></div>
+        <div class="stack-item"><span class="stack-repo">hancom-io/hwpx-owpml-model</span> <span class="stack-arrow">→</span> <span class="stack-role">공식 모델 참조</span></div>
+      </div>
+      <div class="recipe-note">Spring Boot 등 Java 백엔드에서 HWPX 서식 생성. 공식 OWPML 스펙 참조로 안정적 구현. Maven Central 배포.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── SECTION 1: 핵심 엔진 ── -->
+<section class="section visible" data-cat="engine">
+  <div class="section-header">
+    <span class="section-title">🔧 핵심 엔진 / 파서 라이브러리</span>
+    <span class="section-count">5개</span>
+    <span class="section-desc">파서·렌더러·변환기 기반 라이브러리. 다른 도구들이 이 위에 구축됨.</span>
+  </div>
+  <div class="card-grid">
+
+    <a class="card" href="https://github.com/edwardkim/rhwp" target="_blank" rel="noopener">
+      <div class="card-top">
+        <div class="card-name"><span class="owner">edwardkim</span><span class="slash">/</span>rhwp</div>
+        <div class="stars"><svg viewBox="0 0 16 16"><path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.75.75 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z"/></svg> 3.2k</div>
+      </div>
+      <div class="card-desc">아래한글 HWP/HWPX 뷰어·에디터. <strong>Rust + WASM</strong> 기반으로 브라우저에서 직접 실행 가능. 생태계 내 가장 많은 star 보유. hwp-mcp, claw-hwp 등 다수 프로젝트의 기반 엔진으로 활용됨.</div>
+      <div class="card-tags">
+        <span class="tag tag-rust">Rust</span>
+        <span class="tag tag-wasm">WASM</span>
+        <span class="tag tag-lang">HWP·HWPX</span>
+      </div>
+      <div class="card-footer">
+        <span class="update-badge">🕐 2026.05 업데이트</span>
+        <span class="use-badge">기반 엔진</span>
+      </div>
+    </a>
+
+    <a class="card" href="https://github.com/openhwp/openhwp" target="_blank" rel="noopener">
+      <div class="card-top">
+        <div class="card-name"><span class="owner">openhwp</span><span class="slash">/</span>openhwp</div>
+        <div class="stars"><svg viewBox="0 0 16 16"><path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.75.75 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z"/></svg> 93</div>
+      </div>
+      <div class="card-desc">HWP 문서용 라이브러리·뷰어·에디터 올인원 프로젝트. <strong>KS X 6101:2024 표준</strong> 기반 HWPX 읽기/쓰기 모두 지원. hwp(읽기)·hwpx(읽기/쓰기)·ir(중간표현)·document(에디터 모델) 모듈 분리 설계.</div>
+      <div class="card-tags">
+        <span class="tag tag-rust">Rust</span>
+        <span class="tag tag-lang">KS X 6101:2024</span>
+      </div>
+      <div class="card-footer">
+        <span class="update-badge">🕐 2025.12 업데이트</span>
+        <span class="use-badge">표준 준수</span>
+      </div>
+    </a>
+
+    <a class="card" href="https://github.com/iyulab/unhwp" target="_blank" rel="noopener">
+      <div class="card-top">
+        <div class="card-name"><span class="owner">iyulab</span><span class="slash">/</span>unhwp</div>
+        <div class="stars"><svg viewBox="0 0 16 16"><path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.75.75 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z"/></svg> 10</div>
+      </div>
+      <div class="card-desc">HWP/HWPX → Markdown·평문·JSON 고성능 변환. <strong>스트리밍 API</strong>와 **.NET·Python 바인딩</strong> 제공. 대용량 문서 처리에 최적화된 Rust 구현체.</div>
+      <div class="card-tags">
+        <span class="tag tag-rust">Rust</span>
+        <span class="tag tag-lang">.NET·Python FFI</span>
+      </div>
+      <div class="card-footer">
+        <span class="update-badge">🕐 2026.05 업데이트</span>
+        <span class="use-badge">RAG 전처리</span>
+      </div>
+    </a>
+
+    <a class="card" href="https://github.com/neolord0/hwpxlib" target="_blank" rel="noopener">
+      <div class="card-top">
+        <div class="card-name"><span class="owner">neolord0</span><span class="slash">/</span>hwpxlib</div>
+        <div class="stars"><svg viewBox="0 0 16 16"><path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.75.75 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z"/></svg> —</div>
+      </div>
+      <div class="card-desc">HWPX 파일 읽기·쓰기 <strong>Java 라이브러리</strong>. Apache-2.0 라이선스. Maven Central 배포. hwpxlib_ext(암호화 파일 처리)·hwplib(HWP 5.0)·hwp2hwpx와 연동. 상용 제품 기반으로 사용 중인 검증된 구현체.</div>
+      <div class="card-tags">
+        <span class="tag tag-java">Java</span>
+        <span class="tag tag-lang">Apache-2.0</span>
+        <span class="tag tag-lang">Maven</span>
+      </div>
+      <div class="card-footer">
+        <span class="update-badge">🕐 장기 운영</span>
+        <span class="use-badge">Java 백엔드</span>
+      </div>
+    </a>
+
+    <a class="card" href="https://github.com/neolord0/hwp2hwpx" target="_blank" rel="noopener">
+      <div class="card-top">
+        <div class="card-name"><span class="owner">neolord0</span><span class="slash">/</span>hwp2hwpx</div>
+        <div class="stars"><svg viewBox="0 0 16 16"><path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.75.75 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z"/></svg> —</div>
+      </div>
+      <div class="card-desc">구형 <strong>HWP → HWPX 변환</strong> Java 라이브러리. hwplib + hwpxlib 조합 기반. 코드 3줄로 변환 완료. 표 셀 배경색·ShadowInfo null 처리 등 엣지케이스 패치 적용됨.</div>
+      <div class="card-tags">
+        <span class="tag tag-java">Java</span>
+        <span class="tag tag-lang">HWP→HWPX</span>
+      </div>
+      <div class="card-footer">
+        <span class="update-badge">🕐 안정 버전</span>
+        <span class="use-badge">레거시 변환</span>
+      </div>
+    </a>
+
+  </div>
+</section>
+
+<!-- ── SECTION 2: MCP 서버 ── -->
+<section class="section visible" data-cat="mcp">
+  <div class="section-header">
+    <span class="section-title">🤖 MCP 서버 — AI 에이전트 연동</span>
+    <span class="section-count">6개</span>
+    <span class="section-desc">Claude·Cursor·ChatGPT 등과 직접 연동. 자연어로 HWPX 편집·생성.</span>
+  </div>
+  <div class="card-grid">
+
+    <a class="card" href="https://github.com/treesoop/hwp-mcp" target="_blank" rel="noopener">
+      <div class="card-top">
+        <div class="card-name"><span class="owner">treesoop</span><span class="slash">/</span>hwp-mcp</div>
+        <div class="stars"><svg viewBox="0 0 16 16"><path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.75.75 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z"/></svg> 28</div>
+      </div>
+      <div class="card-desc">rhwp 기반 HWP/HWPX MCP 서버. <strong>34가지 tool</strong> 제공. Claude·Cursor·ChatGPT 모두 호환. TypeScript 구현, npm 설치. 문서 읽기·텍스트 치환·표 조작·섹션 XML 직접 편집 포함.</div>
+      <div class="card-tags">
+        <span class="tag tag-ts">TypeScript</span>
+        <span class="tag tag-mcp">MCP</span>
+        <span class="tag tag-lang">34 tools</span>
+      </div>
+      <div class="card-footer">
+        <span class="update-badge">🕐 2026.04 업데이트</span>
+        <span class="use-badge">🔥 최다 도구</span>
+      </div>
+    </a>
+
+    <a class="card" href="https://github.com/airmang/hwpx-mcp-server" target="_blank" rel="noopener">
+      <div class="card-top">
+        <div class="card-name"><span class="owner">airmang</span><span class="slash">/</span>hwpx-mcp-server</div>
+        <div class="stars"><svg viewBox="0 0 16 16"><path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.75.75 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z"/></svg> 57</div>
+      </div>
+      <div class="card-desc">AI 에이전트가 로컬 HWPX 문서를 읽기·편집·검사·유효성 검증하는 MCP 서버. <strong>Python 기반</strong>, VSCode·Claude Desktop 연동. python-hwpx 라이브러리 위에 구축됨. local-first 설계.</div>
+      <div class="card-tags">
+        <span class="tag tag-python">Python</span>
+        <span class="tag tag-mcp">MCP</span>
+        <span class="tag tag-skill">local-first</span>
+      </div>
+      <div class="card-footer">
+        <span class="update-badge">🕐 2026.05 업데이트</span>
+        <span class="use-badge">Python 연동</span>
+      </div>
+    </a>
+
+    <a class="card" href="https://github.com/Dayoooun/hwpx-mcp" target="_blank" rel="noopener">
+      <div class="card-top">
+        <div class="card-name"><span class="owner">Dayoooun</span><span class="slash">/</span>hwpx-mcp</div>
+        <div class="stars"><svg viewBox="0 0 16 16"><path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.75.75 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z"/></svg> —</div>
+      </div>
+      <div class="card-desc">Claude 연동 HWPX 자동 편집 MCP 서버. Node.js 기반. Mermaid 다이어그램 → 이미지 삽입, 테이블 셀 정밀 치환, 섹션 Raw XML 직접 조작 등 <strong>고급 기능</strong> 포함. HWP 바이너리 미지원(HWPX 전용).</div>
+      <div class="card-tags">
+        <span class="tag tag-lang">Node.js</span>
+        <span class="tag tag-mcp">MCP</span>
+        <span class="tag tag-lang">Mermaid 지원</span>
+      </div>
+      <div class="card-footer">
+        <span class="update-badge">🕐 활성 개발</span>
+        <span class="use-badge">Mermaid 삽입</span>
+      </div>
+    </a>
+
+    <a class="card" href="https://github.com/ai-screams/HwpForge" target="_blank" rel="noopener">
+      <div class="card-top">
+        <div class="card-name"><span class="owner">ai-screams</span><span class="slash">/</span>HwpForge</div>
+        <div class="stars"><svg viewBox="0 0 16 16"><path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.75.75 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z"/></svg> 10</div>
+      </div>
+      <div class="card-desc"><strong>Markdown → HWPX</strong> 변환 + JSON 왕복 편집 + MCP 서버. Rust CLI 기반. AI 에이전트가 HWPX 문서를 프로그래밍 방식으로 제어 가능. 바이브 코딩에서 Markdown 작성 후 즉시 HWPX 변환 워크플로에 최적.</div>
+      <div class="card-tags">
+        <span class="tag tag-rust">Rust</span>
+        <span class="tag tag-mcp">MCP</span>
+        <span class="tag tag-lang">MD→HWPX</span>
+      </div>
+      <div class="card-footer">
+        <span class="update-badge">🕐 2026.05 업데이트</span>
+        <span class="use-badge">MD 변환</span>
+      </div>
+    </a>
+
+    <a class="card" href="https://github.com/aliencube/mcp-pypandoc-hwpx" target="_blank" rel="noopener">
+      <div class="card-top">
+        <div class="card-name"><span class="owner">aliencube</span><span class="slash">/</span>mcp-pypandoc-hwpx</div>
+        <div class="stars"><svg viewBox="0 0 16 16"><path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.75.75 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z"/></svg> 12</div>
+      </div>
+      <div class="card-desc">pypandoc-hwpx 기반 MCP 서버. <strong>.docx·.html·.md → .hwpx</strong> 변환. Azure Container Apps 배포 지원. uv 패키지 매니저 활용. 서버리스 환경에서 HWPX 변환 서비스 구축 가능.</div>
+      <div class="card-tags">
+        <span class="tag tag-python">Python</span>
+        <span class="tag tag-mcp">MCP</span>
+        <span class="tag tag-lang">Azure 배포</span>
+      </div>
+      <div class="card-footer">
+        <span class="update-badge">🕐 2026.03 업데이트</span>
+        <span class="use-badge">포맷 변환</span>
+      </div>
+    </a>
+
+    <a class="card" href="https://github.com/chrisryugj/kordoc" target="_blank" rel="noopener">
+      <div class="card-top">
+        <div class="card-name"><span class="owner">chrisryugj</span><span class="slash">/</span>kordoc</div>
+        <div class="stars"><svg viewBox="0 0 16 16"><path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.75.75 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z"/></svg> 963</div>
+      </div>
+      <div class="card-desc">HWP3·HWP·HWPX·HWPML·PDF·XLS·XLSX·DOCX → Markdown 전방위 파서. CLI + <strong>MCP Server</strong> 이중 지원. 신구대조·양식 자동 채우기 기능 내장. TypeScript 구현으로 Node.js 환경 즉시 통합.</div>
+      <div class="card-tags">
+        <span class="tag tag-ts">TypeScript</span>
+        <span class="tag tag-mcp">MCP</span>
+        <span class="tag tag-lang">멀티포맷</span>
+      </div>
+      <div class="card-footer">
+        <span class="update-badge">🕐 2026.05 업데이트</span>
+        <span class="use-badge">🔥 963★ 추천</span>
+      </div>
+    </a>
+
+  </div>
+</section>
+
+<!-- ── SECTION 3: Claude 스킬 ── -->
+<section class="section visible" data-cat="skill">
+  <div class="section-header">
+    <span class="section-title">✨ Claude Code 스킬 / 에이전트 통합</span>
+    <span class="section-count">4개</span>
+    <span class="section-desc">Claude Code에 직접 등록하여 HWPX 자동화를 에이전트 능력으로 추가.</span>
+  </div>
+  <div class="card-grid">
+
+    <a class="card" href="https://github.com/airmang/hwpx-skill" target="_blank" rel="noopener">
+      <div class="card-top">
+        <div class="card-name"><span class="owner">airmang</span><span class="slash">/</span>hwpx-skill</div>
+        <div class="stars"><svg viewBox="0 0 16 16"><path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.75.75 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z"/></svg> 14</div>
+      </div>
+      <div class="card-desc">HWPX 문서 자동화 <strong>공식 온보딩 스킬</strong>. python-hwpx 위에 구축. 텍스트 추출·문서 자동화·AI 에이전트 연동 온보딩 템플릿. Claude Code에 스킬로 등록하면 에이전트가 HWPX 능력 즉시 획득.</div>
+      <div class="card-tags">
+        <span class="tag tag-python">Python</span>
+        <span class="tag tag-skill">Claude Skill</span>
+        <span class="tag tag-lang">공식 온보딩</span>
+      </div>
+      <div class="card-footer">
+        <span class="update-badge">🕐 2026.05 업데이트</span>
+        <span class="use-badge">공식 스킬</span>
+      </div>
+    </a>
+
+    <a class="card" href="https://github.com/DoHyun468/claw-hwp" target="_blank" rel="noopener">
+      <div class="card-top">
+        <div class="card-name"><span class="owner">DoHyun468</span><span class="slash">/</span>claw-hwp</div>
+        <div class="stars"><svg viewBox="0 0 16 16"><path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.75.75 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z"/></svg> 14</div>
+      </div>
+      <div class="card-desc">Claude 전용 HWP/HWPX 읽기·생성·편집 에이전트 스킬. rhwp <strong>WASM</strong> 기반, 브라우저 내 미리보기 내장. 로컬 실행, 한컴 오피스·클라우드 불필요. Cowork 데스크탑 통합 지원.</div>
+      <div class="card-tags">
+        <span class="tag tag-js">JavaScript</span>
+        <span class="tag tag-skill">Claude Skill</span>
+        <span class="tag tag-wasm">WASM</span>
+      </div>
+      <div class="card-footer">
+        <span class="update-badge">🕐 2026.05 업데이트</span>
+        <span class="use-badge">브라우저 프리뷰</span>
+      </div>
+    </a>
+
+    <a class="card" href="https://github.com/nathankim0/easy-hwp" target="_blank" rel="noopener">
+      <div class="card-top">
+        <div class="card-name"><span class="owner">nathankim0</span><span class="slash">/</span>easy-hwp</div>
+        <div class="stars"><svg viewBox="0 0 16 16"><path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.75.75 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z"/></svg> 7</div>
+      </div>
+      <div class="card-desc">Claude Code 스킬: 한글 파일(.hwpx) <strong>자동 분석 및 작성 도구</strong>. 경량 설계로 빠른 온보딩. claude-code-skill 태그 기반 표준 스킬 패키지 구조.</div>
+      <div class="card-tags">
+        <span class="tag tag-lang">Korean</span>
+        <span class="tag tag-skill">Claude Code</span>
+      </div>
+      <div class="card-footer">
+        <span class="update-badge">🕐 2026.02 업데이트</span>
+        <span class="use-badge">경량 스킬</span>
+      </div>
+    </a>
+
+    <a class="card" href="https://github.com/Yoojin-nam/hwp-pipeline" target="_blank" rel="noopener">
+      <div class="card-top">
+        <div class="card-name"><span class="owner">Yoojin-nam</span><span class="slash">/</span>hwp-pipeline</div>
+        <div class="stars"><svg viewBox="0 0 16 16"><path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.75.75 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z"/></svg> 16</div>
+      </div>
+      <div class="card-desc">HWP 문서 처리 <strong>파이프라인 자동화</strong> Claude Code 스킬. 한글·한컴 문서 일괄 처리 워크플로. document-automation + claude-code 조합으로 반복 업무 배치 자동화.</div>
+      <div class="card-tags">
+        <span class="tag tag-python">Python</span>
+        <span class="tag tag-skill">Claude Code</span>
+        <span class="tag tag-lang">파이프라인</span>
+      </div>
+      <div class="card-footer">
+        <span class="update-badge">🕐 2026.04 업데이트</span>
+        <span class="use-badge">배치 자동화</span>
+      </div>
+    </a>
+
+  </div>
+</section>
+
+<!-- ── SECTION 4: Python ── -->
+<section class="section visible" data-cat="python">
+  <div class="section-header">
+    <span class="section-title">🐍 Python 생태계</span>
+    <span class="section-count">3개</span>
+    <span class="section-desc">pip 설치 즉시 사용. 한컴 오피스 없이 순수 Python으로 HWPX 처리.</span>
+  </div>
+  <div class="card-grid">
+
+    <a class="card" href="https://github.com/airmang/python-hwpx" target="_blank" rel="noopener">
+      <div class="card-top">
+        <div class="card-name"><span class="owner">airmang</span><span class="slash">/</span>python-hwpx</div>
+        <div class="stars"><svg viewBox="0 0 16 16"><path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.75.75 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z"/></svg> 77</div>
+      </div>
+      <div class="card-desc"><strong>순수 Python</strong> HWPX 자동화. 읽기·편집·생성·유효성 검증 모두 지원. 한컴 오피스 불필요. OPC(ZIP+XML) 직접 조작. 템플릿 기반 문서 생성 패턴 지원. hwpx-mcp-server·hwpx-skill의 기반 라이브러리.</div>
+      <div class="card-tags">
+        <span class="tag tag-python">Python</span>
+        <span class="tag tag-lang">OPC·OWPML</span>
+        <span class="tag tag-lang">pip 설치</span>
+      </div>
+      <div class="card-footer">
+        <span class="update-badge">🕐 2026.05 업데이트</span>
+        <span class="use-badge">🔥 Python 1순위</span>
+      </div>
+    </a>
+
+    <a class="card" href="https://github.com/DanMeon/rhwp-python" target="_blank" rel="noopener">
+      <div class="card-top">
+        <div class="card-name"><span class="owner">DanMeon</span><span class="slash">/</span>rhwp-python</div>
+        <div class="stars"><svg viewBox="0 0 16 16"><path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.75.75 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z"/></svg> 6</div>
+      </div>
+      <div class="card-desc">rhwp용 <strong>PyO3 Python 바인딩</strong>. Rust 성능을 Python에서 그대로 활용. HWP/HWPX 파서 + PDF 렌더러. maturin 기반 빌드. 고성능 처리가 필요한 대규모 문서 배치 작업에 적합.</div>
+      <div class="card-tags">
+        <span class="tag tag-python">Python</span>
+        <span class="tag tag-rust">Rust</span>
+        <span class="tag tag-lang">PyO3·maturin</span>
+      </div>
+      <div class="card-footer">
+        <span class="update-badge">🕐 2026.05 업데이트</span>
+        <span class="use-badge">Rust 성능</span>
+      </div>
+    </a>
+
+    <a class="card" href="https://pypi.org/project/hwpx/" target="_blank" rel="noopener">
+      <div class="card-top">
+        <div class="card-name"><span class="owner">PyPI</span><span class="slash">/</span>hwpx</div>
+        <div class="stars"><svg viewBox="0 0 16 16"><path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.75.75 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z"/></svg> PyPI</div>
+      </div>
+      <div class="card-desc"><code>pip install hwpx</code> 경량 HWP 자동화 모듈. 2025.08 v1.1.1 배포. 의존성 최소화로 서버·함수·스크립트 환경 모두 적합. 빠른 프로토타이핑·스크립팅 용도.</div>
+      <div class="card-tags">
+        <span class="tag tag-python">Python</span>
+        <span class="tag tag-lang">경량</span>
+        <span class="tag tag-lang">pip install</span>
+      </div>
+      <div class="card-footer">
+        <span class="update-badge">🕐 2025.08 배포</span>
+        <span class="use-badge">즉시 설치</span>
+      </div>
+    </a>
+
+  </div>
+</section>
+
+<!-- ── SECTION 5: 멀티포맷 파서 ── -->
+<section class="section visible" data-cat="multi">
+  <div class="section-header">
+    <span class="section-title">📄 멀티포맷 파서 / 검색·뷰어</span>
+    <span class="section-count">3개</span>
+    <span class="section-desc">HWPX를 포함한 다양한 포맷 통합 처리. 검색·변환·오프라인 활용.</span>
+  </div>
+  <div class="card-grid">
+
+    <a class="card" href="https://github.com/chrisryugj/Docufinder" target="_blank" rel="noopener">
+      <div class="card-top">
+        <div class="card-name"><span class="owner">chrisryugj</span><span class="slash">/</span>Docufinder</div>
+        <div class="stars"><svg viewBox="0 0 16 16"><path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.75.75 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z"/></svg> 334</div>
+      </div>
+      <div class="card-desc">HWPX·PDF·Office 수천 건 본문을 <strong>1초 내 검색</strong>. 100% 로컬·완전 오프라인. ONNX 기반 AI Q&A 옵션. Tauri + React + Rust 데스크탑 앱. FTS5 전문 검색 엔진 내장.</div>
+      <div class="card-tags">
+        <span class="tag tag-rust">Rust</span>
+        <span class="tag tag-lang">Tauri·React</span>
+        <span class="tag tag-skill">오프라인</span>
+      </div>
+      <div class="card-footer">
+        <span class="update-badge">🕐 2026.05 업데이트</span>
+        <span class="use-badge">🔥 334★</span>
+      </div>
+    </a>
+
+    <a class="card" href="https://github.com/showjihyun/agentrag-v1" target="_blank" rel="noopener">
+      <div class="card-top">
+        <div class="card-name"><span class="owner">showjihyun</span><span class="slash">/</span>agentrag-v1</div>
+        <div class="stars"><svg viewBox="0 0 16 16"><path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.75.75 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z"/></svg> 9</div>
+      </div>
+      <div class="card-desc">HWPX 포함 <strong>에이전트 RAG 워크플로</strong>. PaddleOCR + 멀티모달 + 하이브리드 RAG 파이프라인. 한국어 공공문서 기반 에이전트 빌더. workflow-automation + AI 에이전트 통합 아키텍처.</div>
+      <div class="card-tags">
+        <span class="tag tag-python">Python</span>
+        <span class="tag tag-lang">RAG·OCR</span>
+        <span class="tag tag-lang">멀티모달</span>
+      </div>
+      <div class="card-footer">
+        <span class="update-badge">🕐 2026.02 업데이트</span>
+        <span class="use-badge">RAG 파이프라인</span>
+      </div>
+    </a>
+
+    <a class="card" href="https://github.com/ny0510/HWPPreview" target="_blank" rel="noopener">
+      <div class="card-top">
+        <div class="card-name"><span class="owner">ny0510</span><span class="slash">/</span>HWPPreview</div>
+        <div class="stars"><svg viewBox="0 0 16 16"><path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.75.75 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z"/></svg> 5</div>
+      </div>
+      <div class="card-desc">macOS Finder에서 .hwp·.hwpx 파일 <strong>Quick Look 미리보기</strong>. rhwp WASM 기반. 한컴 오피스 없이 macOS 기본 미리보기 지원. 개발 환경에서 HWPX 파일 즉시 확인 용도.</div>
+      <div class="card-tags">
+        <span class="tag tag-js">JavaScript</span>
+        <span class="tag tag-lang">macOS</span>
+        <span class="tag tag-wasm">WASM</span>
+      </div>
+      <div class="card-footer">
+        <span class="update-badge">🕐 2026.05 업데이트</span>
+        <span class="use-badge">macOS 전용</span>
+      </div>
+    </a>
+
+  </div>
+</section>
+
+<!-- ── SECTION 6: 한컴 공식 ── -->
+<section class="section visible" data-cat="official">
+  <div class="section-header">
+    <span class="section-title">🏢 한컴 공식 저장소</span>
+    <span class="section-count">2개</span>
+    <span class="section-desc">한글과컴퓨터 공식 GitHub. OWPML 표준 참조 구현체.</span>
+  </div>
+  <div class="card-grid">
+
+    <a class="card" href="https://github.com/hancom-io/hwpx-owpml-model" target="_blank" rel="noopener">
+      <div class="card-top">
+        <div class="card-name"><span class="owner">hancom-io</span><span class="slash">/</span>hwpx-owpml-model</div>
+        <div class="stars"><svg viewBox="0 0 16 16"><path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.75.75 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z"/></svg> 34</div>
+      </div>
+      <div class="card-desc">한컴 공식 <strong>OWPML 필터 모델</strong>. C++ 구현체. HWPX 표준 XML 스키마 참조 구현. 자체 파서 개발 시 스펙 확인 1순위 참조처. 공식 스펙 기반 구현 검증에 활용.</div>
+      <div class="card-tags">
+        <span class="tag tag-cpp">C++</span>
+        <span class="tag tag-official">공식</span>
+        <span class="tag tag-lang">OWPML</span>
+      </div>
+      <div class="card-footer">
+        <span class="update-badge">🕐 2023.10 업데이트</span>
+        <span class="use-badge">표준 참조</span>
+      </div>
+    </a>
+
+    <a class="card" href="https://github.com/hancom-io/metatag-ex" target="_blank" rel="noopener">
+      <div class="card-top">
+        <div class="card-name"><span class="owner">hancom-io</span><span class="slash">/</span>metatag-ex</div>
+        <div class="stars"><svg viewBox="0 0 16 16"><path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.75.75 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z"/></svg> 8</div>
+      </div>
+      <div class="card-desc">OWPML 모델 활용 <strong>메타태그 추출</strong> 예제. C++ 구현. 문서 작성자·날짜·제목 등 메타데이터 추출 패턴 참조. 공식 OWPML 모델과 함께 사용.</div>
+      <div class="card-tags">
+        <span class="tag tag-cpp">C++</span>
+        <span class="tag tag-official">공식</span>
+        <span class="tag tag-lang">메타태그</span>
+      </div>
+      <div class="card-footer">
+        <span class="update-badge">🕐 2023.01 업데이트</span>
+        <span class="use-badge">메타데이터</span>
+      </div>
+    </a>
+
+  </div>
+</section>
+
+<!-- ── SECTION 7: 유틸/기타 ── -->
+<section class="section visible" data-cat="util">
+  <div class="section-header">
+    <span class="section-title">🔩 TypeScript/JS 라이브러리 · 기타</span>
+    <span class="section-count">3개</span>
+    <span class="section-desc">npm 생태계 통합, 프론트엔드 활용, 특수 목적 도구.</span>
+  </div>
+  <div class="card-grid">
+
+    <a class="card" href="https://github.com/muin-company/handoc" target="_blank" rel="noopener">
+      <div class="card-top">
+        <div class="card-name"><span class="owner">muin-company</span><span class="slash">/</span>handoc</div>
+        <div class="stars"><svg viewBox="0 0 16 16"><path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.75.75 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z"/></svg> 5</div>
+      </div>
+      <div class="card-desc">TypeScript용 HWP/HWPX 문서 <strong>파서·라이터 npm 패키지</strong>. Node.js 환경에서 npm install 즉시 사용. 프론트엔드·풀스택 TypeScript 프로젝트 직접 통합 가능.</div>
+      <div class="card-tags">
+        <span class="tag tag-ts">TypeScript</span>
+        <span class="tag tag-lang">npm</span>
+        <span class="tag tag-lang">파서·라이터</span>
+      </div>
+      <div class="card-footer">
+        <span class="update-badge">🕐 2026.03 업데이트</span>
+        <span class="use-badge">npm 패키지</span>
+      </div>
+    </a>
+
+    <a class="card" href="https://www.npmjs.com/package/hwpx-ts" target="_blank" rel="noopener">
+      <div class="card-top">
+        <div class="card-name"><span class="owner">npm</span><span class="slash">/</span>hwpx-ts</div>
+        <div class="stars"><svg viewBox="0 0 16 16"><path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.75.75 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z"/></svg> npm</div>
+      </div>
+      <div class="card-desc">HWPX 읽기(Reader)·생성(Exporter)·편집(Editor) 도구 모음 TypeScript 라이브러리. AGPL-3.0. <code>npm install hwpx-ts</code>로 설치. section XML 편집 지원.</div>
+      <div class="card-tags">
+        <span class="tag tag-ts">TypeScript</span>
+        <span class="tag tag-lang">AGPL-3.0</span>
+        <span class="tag tag-lang">Reader·Exporter</span>
+      </div>
+      <div class="card-footer">
+        <span class="update-badge">🕐 2026.01 배포</span>
+        <span class="use-badge">npm 설치</span>
+      </div>
+    </a>
+
+    <a class="card" href="https://github.com/Canine89/hwpxskill" target="_blank" rel="noopener">
+      <div class="card-top">
+        <div class="card-name"><span class="owner">Canine89</span><span class="slash">/</span>hwpxskill</div>
+        <div class="stars"><svg viewBox="0 0 16 16"><path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.75.75 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z"/></svg> —</div>
+      </div>
+      <div class="card-desc">HWPX 생성 <strong>검증 베이스 템플릿</strong>. ocf:container·hv:HCFVersion·opf:package 루트, META-INF/·Preview/ 구조 포함. mimetype ZIP_STORED 첫 배치 준수. section0.xml만 동적 생성하는 안정적 패턴의 기준 저장소.</div>
+      <div class="card-tags">
+        <span class="tag tag-lang">베이스 템플릿</span>
+        <span class="tag tag-skill">ZIP+XML</span>
+      </div>
+      <div class="card-footer">
+        <span class="update-badge">🕐 현재 사용 중</span>
+        <span class="use-badge">서원하 사용</span>
+      </div>
+    </a>
+
+  </div>
+</section>
+
+<!-- ── 전체 요약 테이블 ── -->
+<section class="summary-section">
+  <div class="section-header">
+    <span class="section-title">📊 전체 저장소 요약 비교표</span>
+  </div>
+  <div style="overflow-x:auto;">
+  <table>
+    <thead>
+      <tr>
+        <th>저장소</th>
+        <th>언어</th>
+        <th>⭐</th>
+        <th>범주</th>
+        <th>바이브 코딩 활용</th>
+        <th>최종 업데이트</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="tr-link" onclick="window.open('https://github.com/edwardkim/rhwp','_blank')">
+        <td class="td-name">edwardkim/rhwp</td>
+        <td><span class="td-lang-badge">Rust</span></td>
+        <td class="td-stars">3,200</td>
+        <td class="td-cat">핵심 엔진</td>
+        <td>WASM 기반 라이브러리. 다수 프로젝트 기반.</td>
+        <td class="td-cat">2026.05</td>
+      </tr>
+      <tr class="tr-link" onclick="window.open('https://github.com/chrisryugj/kordoc','_blank')">
+        <td class="td-name">chrisryugj/kordoc</td>
+        <td><span class="td-lang-badge">TypeScript</span></td>
+        <td class="td-stars">963</td>
+        <td class="td-cat">멀티파서·MCP</td>
+        <td>8개 포맷 → MD 변환. CLI + MCP 이중 지원.</td>
+        <td class="td-cat">2026.05</td>
+      </tr>
+      <tr class="tr-link" onclick="window.open('https://github.com/chrisryugj/Docufinder','_blank')">
+        <td class="td-name">chrisryugj/Docufinder</td>
+        <td><span class="td-lang-badge">Rust</span></td>
+        <td class="td-stars">334</td>
+        <td class="td-cat">로컬 검색</td>
+        <td>수천 건 HWPX 1초 내 오프라인 검색.</td>
+        <td class="td-cat">2026.05</td>
+      </tr>
+      <tr class="tr-link" onclick="window.open('https://github.com/openhwp/openhwp','_blank')">
+        <td class="td-name">openhwp/openhwp</td>
+        <td><span class="td-lang-badge">Rust</span></td>
+        <td class="td-stars">93</td>
+        <td class="td-cat">핵심 엔진</td>
+        <td>KS X 6101:2024 표준. 읽기·쓰기 모두.</td>
+        <td class="td-cat">2025.12</td>
+      </tr>
+      <tr class="tr-link" onclick="window.open('https://github.com/airmang/python-hwpx','_blank')">
+        <td class="td-name">airmang/python-hwpx</td>
+        <td><span class="td-lang-badge">Python</span></td>
+        <td class="td-stars">77</td>
+        <td class="td-cat">Python</td>
+        <td>순수 Python. 한컴 없이 자동화.</td>
+        <td class="td-cat">2026.05</td>
+      </tr>
+      <tr class="tr-link" onclick="window.open('https://github.com/airmang/hwpx-mcp-server','_blank')">
+        <td class="td-name">airmang/hwpx-mcp-server</td>
+        <td><span class="td-lang-badge">Python</span></td>
+        <td class="td-stars">57</td>
+        <td class="td-cat">MCP 서버</td>
+        <td>로컬 HWPX AI 에이전트 편집.</td>
+        <td class="td-cat">2026.05</td>
+      </tr>
+      <tr class="tr-link" onclick="window.open('https://github.com/hancom-io/hwpx-owpml-model','_blank')">
+        <td class="td-name">hancom-io/hwpx-owpml-model</td>
+        <td><span class="td-lang-badge">C++</span></td>
+        <td class="td-stars">34</td>
+        <td class="td-cat">공식</td>
+        <td>OWPML 표준 스펙 참조.</td>
+        <td class="td-cat">2023.10</td>
+      </tr>
+      <tr class="tr-link" onclick="window.open('https://github.com/treesoop/hwp-mcp','_blank')">
+        <td class="td-name">treesoop/hwp-mcp</td>
+        <td><span class="td-lang-badge">TypeScript</span></td>
+        <td class="td-stars">28</td>
+        <td class="td-cat">MCP 서버</td>
+        <td>34 tools. Claude/Cursor/ChatGPT 호환.</td>
+        <td class="td-cat">2026.04</td>
+      </tr>
+      <tr class="tr-link" onclick="window.open('https://github.com/Yoojin-nam/hwp-pipeline','_blank')">
+        <td class="td-name">Yoojin-nam/hwp-pipeline</td>
+        <td><span class="td-lang-badge">Python</span></td>
+        <td class="td-stars">16</td>
+        <td class="td-cat">Claude 스킬</td>
+        <td>배치 자동화 파이프라인 스킬.</td>
+        <td class="td-cat">2026.04</td>
+      </tr>
+      <tr class="tr-link" onclick="window.open('https://github.com/DoHyun468/claw-hwp','_blank')">
+        <td class="td-name">DoHyun468/claw-hwp</td>
+        <td><span class="td-lang-badge">JavaScript</span></td>
+        <td class="td-stars">14</td>
+        <td class="td-cat">Claude 스킬</td>
+        <td>WASM + 브라우저 미리보기 스킬.</td>
+        <td class="td-cat">2026.05</td>
+      </tr>
+      <tr class="tr-link" onclick="window.open('https://github.com/airmang/hwpx-skill','_blank')">
+        <td class="td-name">airmang/hwpx-skill</td>
+        <td><span class="td-lang-badge">Python</span></td>
+        <td class="td-stars">14</td>
+        <td class="td-cat">Claude 스킬</td>
+        <td>공식 온보딩 스킬.</td>
+        <td class="td-cat">2026.05</td>
+      </tr>
+      <tr class="tr-link" onclick="window.open('https://github.com/aliencube/mcp-pypandoc-hwpx','_blank')">
+        <td class="td-name">aliencube/mcp-pypandoc-hwpx</td>
+        <td><span class="td-lang-badge">Python</span></td>
+        <td class="td-stars">12</td>
+        <td class="td-cat">MCP 서버</td>
+        <td>docx·html·md → hwpx 변환 MCP.</td>
+        <td class="td-cat">2026.03</td>
+      </tr>
+      <tr class="tr-link" onclick="window.open('https://github.com/iyulab/unhwp','_blank')">
+        <td class="td-name">iyulab/unhwp</td>
+        <td><span class="td-lang-badge">Rust</span></td>
+        <td class="td-stars">10</td>
+        <td class="td-cat">핵심 엔진</td>
+        <td>HWP/HWPX → MD/JSON 고성능 변환.</td>
+        <td class="td-cat">2026.05</td>
+      </tr>
+      <tr class="tr-link" onclick="window.open('https://github.com/ai-screams/HwpForge','_blank')">
+        <td class="td-name">ai-screams/HwpForge</td>
+        <td><span class="td-lang-badge">Rust</span></td>
+        <td class="td-stars">10</td>
+        <td class="td-cat">MCP 서버</td>
+        <td>MD → HWPX + MCP. CLI 도구.</td>
+        <td class="td-cat">2026.05</td>
+      </tr>
+      <tr class="tr-link" onclick="window.open('https://github.com/showjihyun/agentrag-v1','_blank')">
+        <td class="td-name">showjihyun/agentrag-v1</td>
+        <td><span class="td-lang-badge">Python</span></td>
+        <td class="td-stars">9</td>
+        <td class="td-cat">멀티포맷</td>
+        <td>HWPX 포함 에이전트 RAG 파이프라인.</td>
+        <td class="td-cat">2026.02</td>
+      </tr>
+      <tr class="tr-link" onclick="window.open('https://github.com/hancom-io/metatag-ex','_blank')">
+        <td class="td-name">hancom-io/metatag-ex</td>
+        <td><span class="td-lang-badge">C++</span></td>
+        <td class="td-stars">8</td>
+        <td class="td-cat">공식</td>
+        <td>OWPML 메타태그 추출 예제.</td>
+        <td class="td-cat">2023.01</td>
+      </tr>
+      <tr class="tr-link" onclick="window.open('https://github.com/nathankim0/easy-hwp','_blank')">
+        <td class="td-name">nathankim0/easy-hwp</td>
+        <td><span class="td-lang-badge">—</span></td>
+        <td class="td-stars">7</td>
+        <td class="td-cat">Claude 스킬</td>
+        <td>경량 자동 분석·작성 스킬.</td>
+        <td class="td-cat">2026.02</td>
+      </tr>
+      <tr class="tr-link" onclick="window.open('https://github.com/DanMeon/rhwp-python','_blank')">
+        <td class="td-name">DanMeon/rhwp-python</td>
+        <td><span class="td-lang-badge">Python</span></td>
+        <td class="td-stars">6</td>
+        <td class="td-cat">Python</td>
+        <td>PyO3 바인딩. Rust 성능 Python 활용.</td>
+        <td class="td-cat">2026.05</td>
+      </tr>
+      <tr class="tr-link" onclick="window.open('https://github.com/muin-company/handoc','_blank')">
+        <td class="td-name">muin-company/handoc</td>
+        <td><span class="td-lang-badge">TypeScript</span></td>
+        <td class="td-stars">5</td>
+        <td class="td-cat">TypeScript</td>
+        <td>npm 패키지. TS 프로젝트 직접 통합.</td>
+        <td class="td-cat">2026.03</td>
+      </tr>
+      <tr class="tr-link" onclick="window.open('https://github.com/ny0510/HWPPreview','_blank')">
+        <td class="td-name">ny0510/HWPPreview</td>
+        <td><span class="td-lang-badge">JavaScript</span></td>
+        <td class="td-stars">5</td>
+        <td class="td-cat">유틸</td>
+        <td>macOS Quick Look 미리보기.</td>
+        <td class="td-cat">2026.05</td>
+      </tr>
+      <tr class="tr-link" onclick="window.open('https://github.com/neolord0/hwpxlib','_blank')">
+        <td class="td-name">neolord0/hwpxlib</td>
+        <td><span class="td-lang-badge">Java</span></td>
+        <td class="td-stars">—</td>
+        <td class="td-cat">핵심 엔진</td>
+        <td>Java 백엔드 Read/Write. Maven 배포.</td>
+        <td class="td-cat">장기 운영</td>
+      </tr>
+      <tr class="tr-link" onclick="window.open('https://github.com/neolord0/hwp2hwpx','_blank')">
+        <td class="td-name">neolord0/hwp2hwpx</td>
+        <td><span class="td-lang-badge">Java</span></td>
+        <td class="td-stars">—</td>
+        <td class="td-cat">핵심 엔진</td>
+        <td>HWP → HWPX 변환 3줄 코드.</td>
+        <td class="td-cat">안정 버전</td>
+      </tr>
+      <tr class="tr-link" onclick="window.open('https://github.com/Dayoooun/hwpx-mcp','_blank')">
+        <td class="td-name">Dayoooun/hwpx-mcp</td>
+        <td><span class="td-lang-badge">Node.js</span></td>
+        <td class="td-stars">—</td>
+        <td class="td-cat">MCP 서버</td>
+        <td>Mermaid 삽입, 섹션 XML 직접 조작.</td>
+        <td class="td-cat">활성 개발</td>
+      </tr>
+      <tr class="tr-link" onclick="window.open('https://github.com/Canine89/hwpxskill','_blank')">
+        <td class="td-name">Canine89/hwpxskill</td>
+        <td><span class="td-lang-badge">—</span></td>
+        <td class="td-stars">—</td>
+        <td class="td-cat">베이스 템플릿</td>
+        <td>검증된 HWPX 생성 기준 구조.</td>
+        <td class="td-cat">현재 사용</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+</main>
+
+<footer class="footer">
+  <span>GitHub topics/hwpx 기준 전수 조사 — 2026.06.16 서원하 작성</span>
+  <a href="https://github.com/topics/hwpx" target="_blank" style="color: var(--accent); text-decoration: none; font-size: 12px;">→ GitHub hwpx 토픽 바로가기</a>
+</footer>
+
+<script>
+  // Filter tabs
+  const tabs = document.querySelectorAll('.tab');
+  const sections = document.querySelectorAll('.section[data-cat]');
+  const recipeSection = document.querySelector('.recipe-section');
+
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      tabs.forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      const filter = tab.dataset.filter;
+
+      if (filter === 'recipe') {
+        sections.forEach(s => s.style.display = 'none');
+        recipeSection.style.display = 'block';
+        document.querySelector('.summary-section').style.display = 'none';
+      } else if (filter === 'all') {
+        sections.forEach(s => s.style.display = 'block');
+        recipeSection.style.display = 'block';
+        document.querySelector('.summary-section').style.display = 'block';
+      } else {
+        recipeSection.style.display = 'none';
+        document.querySelector('.summary-section').style.display = 'none';
+        sections.forEach(s => {
+          s.style.display = s.dataset.cat === filter ? 'block' : 'none';
+        });
+      }
+    });
+  });
+</script>
+</body>
+</html>
