@@ -90,7 +90,7 @@
         <div class="container">
             <span>｢BWYF｣ AX Challenger 2026</span>
             <button class="util-changelog-btn" id="open-changelog" aria-label="업데이트 내역 보기">
-                📋 v3.5.0 업데이트 내역
+                📋 v3.6.0 업데이트 내역
             </button>
         </div>
     </div>
@@ -192,18 +192,33 @@
                 <!-- 포맷 카드 클릭 시 표시되는 힌트 -->
                 <div id="format-hint" role="status" aria-live="polite"></div>
 
-                <!-- 문서 유형 선택 -->
-                <!-- [수정 시] 옵션 값은 parsers.js의 emptyIR docType과 맞춰야 함 -->
-                <div class="form-row">
-                    <label for="doc-type">문서 유형</label>
-                    <select id="doc-type" name="doc-type">
-                        <option value="plain" selected>일반 문서</option>
-                        <option value="official">공문 (명사형 종결체)</option>
-                        <option value="report">보고서</option>
-                    </select>
+                <!-- 문서 유형 + 한글 폰트 (2열) -->
+                <div class="form-group-row">
+                    <!-- [수정 시] 옵션 값은 parsers.js의 emptyIR docType과 맞춰야 함 -->
+                    <div class="form-row">
+                        <label for="doc-type">문서 유형</label>
+                        <select id="doc-type" name="doc-type">
+                            <option value="plain" selected>일반 문서</option>
+                            <option value="official">공문 (명사형 종결체)</option>
+                            <option value="report">보고서</option>
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <label for="doc-font">한글 폰트</label>
+                        <select id="doc-font" name="doc-font">
+                            <option value="휴먼명조" selected>휴먼명조 (기본)</option>
+                            <option value="바탕">바탕</option>
+                            <option value="함초롬바탕">함초롬바탕</option>
+                            <option value="함초롬돋움">함초롬돋움</option>
+                            <option value="KoPub돋움체 Medium">KoPub돋움체 Medium</option>
+                            <option value="맑은 고딕">맑은 고딕</option>
+                            <option value="나눔고딕">나눔고딕</option>
+                            <option value="굴림">굴림</option>
+                        </select>
+                    </div>
                 </div>
 
-                <!-- 사용자 지정 제목 입력 -->
+                <!-- 사용자 지정 제목 입력 (전체 폭) -->
                 <div class="form-row">
                     <label for="doc-title">문서 제목 (선택 — 비우면 자동 감지)</label>
                     <input type="text"
@@ -213,44 +228,29 @@
                            maxlength="200">
                 </div>
 
-                <!-- HWPX 출력 폰트 선택 -->
-                <div class="form-row">
-                    <label for="doc-font">한글 폰트</label>
-                    <select id="doc-font" name="doc-font">
-                        <option value="휴먼명조" selected>휴먼명조 (기본)</option>
-                        <option value="바탕">바탕</option>
-                        <option value="함초롬바탕">함초롬바탕</option>
-                        <option value="함초롬돋움">함초롬돋움</option>
-                        <option value="KoPub돋움체 Medium">KoPub돋움체 Medium</option>
-                        <option value="맑은 고딕">맑은 고딕</option>
-                        <option value="나눔고딕">나눔고딕</option>
-                        <option value="굴림">굴림</option>
-                    </select>
-                </div>
-
-                <!-- 글꼴 크기 선택 -->
-                <div class="form-row">
-                    <label for="font-size">글꼴 크기</label>
-                    <select id="font-size" name="font-size">
-                        <option value="9">9pt</option>
-                        <option value="10">10pt</option>
-                        <option value="11">11pt</option>
-                        <option value="12" selected>12pt (기본)</option>
-                        <option value="13">13pt</option>
-                        <option value="14">14pt</option>
-                        <option value="16">16pt</option>
-                        <option value="18">18pt</option>
-                    </select>
-                </div>
-
-                <!-- 용지 크기 선택 -->
-                <div class="form-row">
-                    <label for="paper-size">용지 크기</label>
-                    <select id="paper-size" name="paper-size">
-                        <option value="A4" selected>A4 (210×297mm)</option>
-                        <option value="B5">B5 (182×257mm)</option>
-                        <option value="Letter">Letter (8.5×11")</option>
-                    </select>
+                <!-- 글꼴 크기 + 용지 크기 (2열) -->
+                <div class="form-group-row">
+                    <div class="form-row">
+                        <label for="font-size">글꼴 크기</label>
+                        <select id="font-size" name="font-size">
+                            <option value="9">9pt</option>
+                            <option value="10">10pt</option>
+                            <option value="11">11pt</option>
+                            <option value="12" selected>12pt (기본)</option>
+                            <option value="13">13pt</option>
+                            <option value="14">14pt</option>
+                            <option value="16">16pt</option>
+                            <option value="18">18pt</option>
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <label for="paper-size">용지 크기</label>
+                        <select id="paper-size" name="paper-size">
+                            <option value="A4" selected>A4 (210×297mm)</option>
+                            <option value="B5">B5 (182×257mm)</option>
+                            <option value="Letter">Letter (8.5×11")</option>
+                        </select>
+                    </div>
                 </div>
 
                 <!-- 페이지 여백 (mm 단위)

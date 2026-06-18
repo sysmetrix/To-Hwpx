@@ -1,6 +1,30 @@
 {
-  "current": "3.5.0",
+  "current": "3.6.0",
   "versions": [
+    {
+      "version": "3.6.0",
+      "date": "2026-06-18",
+      "user": [
+        "업데이트 내역 불러오기 오류 영구 수정 (매 배포 후 재발하던 문제 해결)",
+        "HWPX 표 너비가 페이지 여백 기준 전체 폭에 맞게 출력",
+        "미리보기 로딩이 길면 5초 후 '내장 미리보기로 바로 전환' 버튼 노출",
+        "변환 옵션 선택 항목 2열 배치로 공간 효율 개선",
+        "변환 진행 단계가 가로 1행으로 정렬되어 한눈에 파악 가능",
+        "옵션 패널과 진행 패널 다시 나란히 배치 (화면 활용도 향상)"
+      ],
+      "dev": [
+        "sw.js APP_SHELL 경로 /→./ 전환 — GitHub Pages 서브경로(/To-Hwpx/)에서 절대경로 404 bug 원인",
+        "cache.addAll() → Promise.allSettled() 로 교체 — 개별 리소스 실패가 SW 설치 전체를 중단시키지 않음",
+        "SPA 폴백도 caches.match('./index.html')로 통일",
+        "showChangelog() res.ok 검사 추가 — 404 HTML이 JSON 파싱 예외 없이 에러 메시지로 표시",
+        "openPreview() Promise.race([waitReady, skipPromise]) — 5초 후 btn-skip-rhwp 노출",
+        "buildTable() Math.min(48000,...) 상한 제거 — A4 20mm 여백 실측값(≈48110 HWP단위) 사용",
+        ".converter-layout grid-template-columns: 3fr 2fr 복원",
+        "#pipeline-steps grid repeat(7,1fr) 가로 1행, .pipeline-step flex-direction:column",
+        ".form-group-row CSS + index.html 문서유형+폰트, 글꼴크기+용지크기 2열 그룹화",
+        ".btn-skip-rhwp 스타일 추가, CACHE_VERSION to-hwpx-v3.6.0"
+      ]
+    },
     {
       "version": "3.5.0",
       "date": "2026-06-18",

@@ -10,18 +10,21 @@
 
 'use strict';
 
-const CACHE_VERSION = 'to-hwpx-v3.5.0';
+const CACHE_VERSION = 'to-hwpx-v3.6.0';
 
 // 설치 시 미리 캐시할 파일 목록 (앱 셸)
+// [주의] 절대경로(/)가 아닌 상대경로(./)를 사용해야 함.
+//         GitHub Pages 서브경로(/To-Hwpx/) 배포 시 절대경로는
+//         origin root를 가리켜 404 → cache.addAll() 전체 실패.
 const APP_SHELL = [
-    '/',
-    '/index.html',
-    '/style.css',
-    '/js/parsers.js',
-    '/js/hwpx.js',
-    '/js/app.js',
-    '/manifest.json',
-    '/changelog.json',
+    './',
+    './index.html',
+    './style.css',
+    './js/parsers.js',
+    './js/hwpx.js',
+    './js/app.js',
+    './manifest.json',
+    './changelog.json',
     // CDN 라이브러리 (SRI 검증 통과한 것들)
     'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js',
     'https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js',
@@ -31,11 +34,16 @@ const APP_SHELL = [
 ];
 
 // ── 설치 이벤트: 앱 셸을 캐시에 미리 저장 ────────────────────────
+// Promise.allSettled: 개별 파일 실패(CDN 불가 등)가 전체 SW 설치를 중단시키지 않음.
 self.addEventListener('install', event => {
     event.waitUntil(
         caches.open(CACHE_VERSION)
-            .then(cache => cache.addAll(APP_SHELL))
-            .then(() => self.skipWaiting()) // 즉시 활성화
+            .then(cache => Promise.allSettled(
+                APP_SHELL.map(url => cache.add(url).catch(err =>
+                    console.warn('[SW] cache.add 실패:', url, err)
+                ))
+            ))
+            .then(() => self.skipWaiting())
     );
 });
 
@@ -76,7 +84,7 @@ self.addEventListener('fetch', event => {
             }).catch(() => {
                 // 오프라인 + 캐시 미스: index.html 폴백 (SPA용)
                 if (event.request.destination === 'document') {
-                    return caches.match('/index.html');
+                    return caches.match('./index.html');
                 }
             });
         })

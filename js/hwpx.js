@@ -356,7 +356,7 @@ function buildTable(header, rows, contentWidthHwp = 48000) {
 
     const nRows = allRows.length;
     const nCols = Math.max(...allRows.map(r => (r || []).length), 1);
-    const tableWidth = Math.min(48000, Math.max(12000, contentWidthHwp));
+    const tableWidth = Math.max(12000, contentWidthHwp);
     const cellWidth = Math.floor(tableWidth / nCols);
     const pid = _nextParaId();
 

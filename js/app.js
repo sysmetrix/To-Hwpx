@@ -1219,12 +1219,27 @@ async function openPreview(blob) {
     modal.classList.add('open');
     loading.classList.remove('preview-loading--fallback');
     loading.style.display = 'flex';
+
+    // 5초 후 건너뛰기 버튼 표시 — 사용자가 기다리다 닫는 상황 방지
+    let _skipResolve = null;
+    const skipPromise = new Promise(resolve => { _skipResolve = resolve; });
+
     loading.innerHTML = `
-        <div>
+        <div style="text-align:center">
             <div class="loading-spinner"></div>
             <p>rhwp 뷰어를 불러오는 중...</p>
             <p class="preview-loading-sub">최초 실행 시 WebAssembly 로드로 10~20초 소요될 수 있습니다</p>
+            <button id="skip-rhwp-btn" class="btn-skip-rhwp" style="display:none;margin-top:14px">
+                내장 미리보기로 바로 전환
+            </button>
         </div>`;
+
+    const skipBtn = document.getElementById('skip-rhwp-btn');
+    if (skipBtn) skipBtn.addEventListener('click', () => { if (_skipResolve) _skipResolve(); });
+    const skipTimer = setTimeout(() => {
+        if (skipBtn) skipBtn.style.display = 'inline-block';
+    }, 5000);
+
     if (countEl) countEl.textContent = '';
     document.body.style.overflow = 'hidden';
 
@@ -1232,8 +1247,14 @@ async function openPreview(blob) {
         // 클라이언트 최초 초기화 (iframe이 바뀌지 않으면 재사용)
         if (!_rhwpClient) _rhwpClient = new RhwpEditorClient(iframe);
 
-        // WASM 준비 대기
-        await _rhwpClient.waitReady();
+        // WASM 준비 대기 — 사용자 건너뛰기와 경쟁
+        const isReady = await Promise.race([
+            _rhwpClient.waitReady().then(() => true),
+            skipPromise.then(() => false),
+        ]);
+        clearTimeout(skipTimer);
+
+        if (!isReady) throw new Error('사용자가 내장 미리보기로 전환했습니다');
 
         // Blob → ArrayBuffer → rhwp 로드 (반환값: {pageCount: number})
         const buf      = await blob.arrayBuffer();
@@ -1245,6 +1266,7 @@ async function openPreview(blob) {
         }
         loading.style.display = 'none';
     } catch (err) {
+        clearTimeout(skipTimer);
         console.error('[rhwp]', err);
         try {
             await renderBuiltInPreview(blob, err, loading, countEl);
@@ -1282,7 +1304,8 @@ async function showChangelog() {
 
     if (!_changelogData) {
         try {
-            const res     = await fetch('changelog.json');
+            const res = await fetch('changelog.json');
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
             _changelogData = await res.json();
         } catch (e) {
             document.getElementById('changelog-content').innerHTML =
