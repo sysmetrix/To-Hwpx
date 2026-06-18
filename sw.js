@@ -10,7 +10,7 @@
 
 'use strict';
 
-const CACHE_VERSION = 'to-hwpx-v3.9.0';
+const CACHE_VERSION = 'to-hwpx-v3.9.1';
 
 // 설치 시 미리 캐시할 파일 목록 (앱 셸)
 // [주의] 절대경로(/)가 아닌 상대경로(./)를 사용해야 함.

@@ -347,7 +347,7 @@ a:hover { text-decoration: underline; }
 }
 
 .hero-eyebrow {
-    /* "무료 · 브라우저 전용 · 한글 호환" 등 짧은 강조 문구 */
+    /* "브라우저 전용 · 한글 호환 검증" 등 짧은 강조 문구 */
     display: inline-block;
     background: rgba(255,255,255,0.2);
     border: 1px solid rgba(255,255,255,0.3);

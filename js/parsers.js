@@ -128,10 +128,6 @@ function extractFromNode(node, blocks) {
             const hasText = runs.some(r => r.text && r.text.trim());
             if (hasText) {
                 blocks.push({ type: 'para', runs });
-                // 연속된 <p> 사이에 빈 줄 삽입 — MD 단락 구분(엔터)을 HWPX에서 보존
-                let sib = child.nextSibling;
-                while (sib && sib.nodeType === 3 && !sib.textContent.trim()) sib = sib.nextSibling;
-                if (sib && (sib.tagName || '').toLowerCase() === 'p') blocks.push({ type: 'blank' });
             } else {
                 blocks.push({ type: 'blank' });
             }

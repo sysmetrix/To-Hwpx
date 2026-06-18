@@ -261,7 +261,7 @@ ${charBase(8, sz.body, false, true)}
     </hh:charProperties>
     <hh:paraProperties itemCnt="8">
       <!-- id  정렬    행간  전    후   들여 -->
-${paraBase(0, 'JUSTIFY', 160,   0,  567,    0)}
+${paraBase(0, 'JUSTIFY', 160,   0,  850,    0)}
 ${paraBase(1, 'LEFT',    180, 850,  567,    0)}
 ${paraBase(2, 'LEFT',    170, 700,  425,    0)}
 ${paraBase(3, 'LEFT',    160, 567,  283,    0)}
