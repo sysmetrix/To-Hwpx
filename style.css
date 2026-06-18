@@ -466,16 +466,6 @@ a:hover { text-decoration: underline; }
 .form-row {
     margin-bottom: 18px;
 }
-.form-row-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    margin-bottom: 8px;
-}
-.form-row-head label {
-    margin-bottom: 0;
-}
 .form-row label {
     display: block;
     font-size: 0.88rem;
@@ -503,29 +493,6 @@ a:hover { text-decoration: underline; }
 }
 
 /* 페이지 여백 6칸 그리드 (본문 4방향 + 머리말/꼬리말) */
-.margin-presets {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    flex-shrink: 0;
-}
-.margin-presets button {
-    border: 1px solid var(--c-border);
-    border-radius: var(--radius-sm);
-    background: var(--c-surface);
-    color: var(--c-text-sub);
-    padding: 5px 9px;
-    font-family: var(--font-main);
-    font-size: 0.78rem;
-    font-weight: 700;
-    cursor: pointer;
-    transition: border-color var(--trans), background var(--trans), color var(--trans);
-}
-.margin-presets button:hover {
-    border-color: var(--c-primary);
-    background: var(--c-primary-light);
-    color: var(--c-primary-dark);
-}
 .margin-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -576,17 +543,6 @@ a:hover { text-decoration: underline; }
     font-size: 0.76rem;
     color: var(--c-text-muted);
 }
-.option-summary {
-    border-left: 3px solid var(--c-primary);
-    background: var(--c-primary-light);
-    color: var(--c-text-sub);
-    border-radius: var(--radius-sm);
-    padding: 9px 11px;
-    font-size: 0.8rem;
-    line-height: 1.45;
-    margin-bottom: 12px;
-}
-
 /* 감지된 포맷 배지 */
 .detected-row {
     display: flex;
@@ -1042,16 +998,6 @@ a:hover { text-decoration: underline; }
     .support-section { padding: 48px 0; }
     .format-grid { grid-template-columns: repeat(2, 1fr); }
     .steps-grid  { grid-template-columns: 1fr; }
-    .form-row-head {
-        align-items: flex-start;
-        flex-direction: column;
-    }
-    .margin-presets {
-        width: 100%;
-    }
-    .margin-presets button {
-        flex: 1;
-    }
     .margin-grid { grid-template-columns: 1fr 1fr; }
     .result-actions {
         flex-direction: column;

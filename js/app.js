@@ -303,10 +303,7 @@ function initOptions() {
     // 용지 크기 선택 (<select id="paper-size">)
     const paperEl = document.getElementById('paper-size');
     if (paperEl) {
-        paperEl.addEventListener('change', () => {
-            state.paperSize = paperEl.value;
-            updateOptionSummary();
-        });
+        paperEl.addEventListener('change', () => { state.paperSize = paperEl.value; });
     }
 
     // 페이지 여백 입력 (mm 단위, #margin-top/bottom/left/right/header/footer)
@@ -323,28 +320,11 @@ function initOptions() {
             const max = (side === 'header' || side === 'footer') ? 30 : 60;
             state.pageMargins[side] = Math.max(0, Math.min(max, val));
             el.value = state.pageMargins[side];
-            updateOptionSummary();
         };
         el.addEventListener('change', syncMargin);
         el.addEventListener('input', () => {
             const val = parseFloat(el.value);
             if (!isNaN(val)) state.pageMargins[side] = val;
-            updateOptionSummary();
-        });
-    });
-
-    document.querySelectorAll('[data-margin-preset]').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const preset = btn.dataset.marginPreset;
-            const next = preset === 'balanced'
-                ? { top: 20, bottom: 20, left: 20, right: 20, header: 10, footer: 10 }
-                : { top: 15, bottom: 15, left: 20, right: 20, header: 10, footer: 10 };
-            Object.assign(state.pageMargins, next);
-            marginIds.forEach(side => {
-                const el = document.getElementById(`margin-${side}`);
-                if (el) el.value = state.pageMargins[side];
-            });
-            updateOptionSummary();
         });
     });
 
@@ -353,11 +333,8 @@ function initOptions() {
         state.autoDownload = autoDownloadEl.checked;
         autoDownloadEl.addEventListener('change', () => {
             state.autoDownload = autoDownloadEl.checked;
-            updateOptionSummary();
         });
     }
-
-    updateOptionSummary();
 
     // IR 미리보기 접기/펼치기 버튼
     const irToggle  = document.getElementById('ir-toggle');
@@ -626,14 +603,6 @@ function revokeDownloadUrl() {
     }
 }
 
-function updateOptionSummary() {
-    const el = document.getElementById('option-summary');
-    if (!el) return;
-    const m = state.pageMargins;
-    const mode = state.autoDownload ? '자동 다운로드 켜짐' : '수동 다운로드';
-    el.textContent = `${state.paperSize} · 위/아래 ${m.top}/${m.bottom}mm · 좌/우 ${m.left}/${m.right}mm · 머리말/꼬리말 ${m.header}/${m.footer}mm · ${mode}`;
-}
-
 function syncMarginInputs() {
     for (const side of ['top', 'bottom', 'left', 'right', 'header', 'footer']) {
         const el = document.getElementById(`margin-${side}`);
@@ -647,7 +616,6 @@ function syncMarginInputs() {
         state.pageMargins[side] = Math.max(0, Math.min(max, val));
         el.value = state.pageMargins[side];
     }
-    updateOptionSummary();
 }
 
 

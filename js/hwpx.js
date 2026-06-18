@@ -367,30 +367,50 @@ function buildTable(header, rows) {
 
 /**
  * 페이지 설정(secPr) XML
- * [v3] 섹션 맨 앞에 배치, 호환성 위해 단순 구조 사용
+ * HWPX 스키마 기준 secPr는 paragraph 네임스페이스이며 hp:run 내부에 위치한다.
  */
 function buildSecPr(marginsHwp, paperKey) {
     const paper = PAPER_SIZES[paperKey] || PAPER_SIZES['A4'];
     const m = Object.assign({}, DEFAULT_MARGINS_HWP, marginsHwp || {});
-    // rhwp 기준: outlineShapeIDRef(정수), masterPageCnt만 사용
-    // outlineType/masterID/hideFirstHeader 등은 rhwp 파서가 처리하지 않는 비표준 속성
-    return `<hs:secPr textDirection="HORIZONTAL" spaceColumns="1134" tabStop="8000" ` +
-        `outlineShapeIDRef="0" masterPageCnt="0">` +
-        `<hs:page width="${paper.w}" height="${paper.h}" orientation="PORTRAIT" ` +
-        `gutterType="LEFT_ONLY" gutterPosition="LEFT_ONLY">` +
-        `<hs:margin left="${m.left}" right="${m.right}" top="${m.top}" bottom="${m.bottom}" ` +
-        `header="${m.header}" footer="${m.footer}" gutter="0"/>` +
-        `</hs:page>` +
-        `<hs:footnote numFormat="DIGIT" numType="CONTINUOUS" position="EACH_COLUMN" startNum="1"/>` +
-        `<hs:endnote numFormat="DIGIT" numType="CONTINUOUS" position="EACH_COLUMN" startNum="1"/>` +
-        `<hs:pageNumPos pageNumType="NONE" anchorType="PAPER" format="DIGIT" startNum="1" doubleNum="0"/>` +
-        `<hs:hide header="0" footer="0" masterpageBorder="0" emptyLine="0" pageNum="0" lineNum="0"/>` +
-        `</hs:secPr>`;
+    return `<hp:secPr id="" textDirection="HORIZONTAL" spaceColumns="1134" tabStop="8000" ` +
+        `tabStopVal="4000" tabStopUnit="HWPUNIT" outlineShapeIDRef="0" memoShapeIDRef="0" ` +
+        `textVerticalWidthHead="0" masterPageCnt="0">` +
+        `<hp:grid lineGrid="0" charGrid="0" wonggojiFormat="0"/>` +
+        `<hp:startNum pageStartsOn="BOTH" page="0" pic="0" tbl="0" equation="0"/>` +
+        `<hp:visibility hideFirstHeader="0" hideFirstFooter="0" hideFirstMasterPage="0" ` +
+        `border="SHOW_ALL" fill="SHOW_ALL" hideFirstPageNum="0" hideFirstEmptyLine="0" showLineNumber="0"/>` +
+        `<hp:lineNumberShape restartType="0" countBy="0" distance="0" startNumber="0"/>` +
+        `<hp:pagePr landscape="WIDELY" width="${paper.w}" height="${paper.h}" gutterType="LEFT_ONLY">` +
+        `<hp:margin header="${m.header}" footer="${m.footer}" gutter="0" ` +
+        `left="${m.left}" right="${m.right}" top="${m.top}" bottom="${m.bottom}"/>` +
+        `</hp:pagePr>` +
+        `<hp:footNotePr><hp:autoNumFormat type="DIGIT" userChar="" prefixChar="" suffixChar=")" supscript="0"/>` +
+        `<hp:noteLine length="-1" type="SOLID" width="0.12 mm" color="#000000"/>` +
+        `<hp:noteSpacing betweenNotes="283" belowLine="567" aboveLine="850"/>` +
+        `<hp:numbering type="CONTINUOUS" newNum="1"/>` +
+        `<hp:placement place="EACH_COLUMN" beneathText="0"/></hp:footNotePr>` +
+        `<hp:endNotePr><hp:autoNumFormat type="DIGIT" userChar="" prefixChar="" suffixChar=")" supscript="0"/>` +
+        `<hp:noteLine length="-1" type="SOLID" width="0.12 mm" color="#000000"/>` +
+        `<hp:noteSpacing betweenNotes="0" belowLine="567" aboveLine="850"/>` +
+        `<hp:numbering type="CONTINUOUS" newNum="1"/>` +
+        `<hp:placement place="END_OF_DOCUMENT" beneathText="0"/></hp:endNotePr>` +
+        `<hp:pageBorderFill type="BOTH" borderFillIDRef="1" textBorder="PAPER" ` +
+        `headerInside="0" footerInside="0" fillArea="PAPER">` +
+        `<hp:offset left="1417" right="1417" top="1417" bottom="1417"/></hp:pageBorderFill>` +
+        `</hp:secPr>`;
+}
+
+function injectSecPrIntoFirstRun(parts, secPrXml) {
+    if (!parts.length) return parts;
+    const idx = parts.findIndex(xml => xml.includes('<hp:run '));
+    if (idx < 0) return parts;
+    parts[idx] = parts[idx].replace(/(<hp:run\b[^>]*>)/, `$1${secPrXml}`);
+    return parts;
 }
 
 /**
  * IR → section0.xml 전체 문자열
- * [v3] secPr를 FIRST 위치로 이동, docType 분기 추가, 빈 블록 처리
+ * [v4] secPr를 첫 hp:run 내부로 주입, docType 분기, 빈 블록 처리
  */
 function buildSection(ir, marginsHwp, paperKey) {
     const NS_HS = 'http://www.hancom.co.kr/hwpml/2011/section';
@@ -472,12 +492,10 @@ function buildSection(ir, marginsHwp, paperKey) {
 
     if (!parts.length) parts.push(buildBlankPara());
 
-    // [v3] secPr를 섹션 맨 앞에 배치
-    const secPrXml = buildSecPr(marginsHwp, paperKey);
+    injectSecPrIntoFirstRun(parts, buildSecPr(marginsHwp, paperKey));
 
     return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n` +
         `<hs:sec xmlns:hs="${NS_HS}" xmlns:hp="${NS_HP}">` +
-        secPrXml +
         parts.join('') +
         `</hs:sec>`;
 }
@@ -561,9 +579,16 @@ async function validateHwpx(blob, expectedMarginsMm = null) {
         } catch { issues.push('section0.xml XML 파싱 예외'); }
 
         const expected = marginsMmToHwp(expectedMarginsMm || DEFAULT_MARGINS_MM);
-        const marginMatch = xml.match(/<hs:margin\s+([^>]+?)\/>/);
+        if (/<hs:secPr\b|<hs:page\b|<hs:margin\b/.test(xml)) {
+            issues.push('section0.xml: 섹션 설정 네임스페이스 오류(hs:* 대신 hp:* 필요)');
+        }
+        if (!/<hp:p\b[\s\S]*<hp:run\b[\s\S]*<hp:secPr\b/.test(xml)) {
+            issues.push('section0.xml: hp:secPr가 hp:run 내부에 없음');
+        }
+
+        const marginMatch = xml.match(/<hp:margin\s+([^>]+?)\/>/);
         if (!marginMatch) {
-            issues.push('section0.xml: hs:margin 없음');
+            issues.push('section0.xml: hp:margin 없음');
         } else {
             const attrs = {};
             marginMatch[1].replace(/(\w+)="([^"]+)"/g, (_, key, value) => {

@@ -90,7 +90,7 @@
         <div class="container">
             <span>로컬 처리 · 개인정보 보호 · 설치 불필요 · 완전 무료</span>
             <button class="util-changelog-btn" id="open-changelog" aria-label="업데이트 내역 보기">
-                📋 v3.2 업데이트 내역
+                📋 v3.2.1 업데이트 내역
             </button>
         </div>
     </div>
@@ -418,13 +418,7 @@
                      hwpx.js buildHwpx()에서 mm → HWPUNIT 변환 (1mm ≈ 283 HWPUNIT)
                      [수정 시] 기본값 변경은 app.js state.pageMargins 와 hwpx.js DEFAULT_MARGINS_MM 에서 -->
                 <div class="form-row">
-                    <div class="form-row-head">
-                        <label>페이지 여백 (mm)</label>
-                        <div class="margin-presets" aria-label="여백 빠른 설정">
-                            <button type="button" data-margin-preset="default">권장값</button>
-                            <button type="button" data-margin-preset="balanced">균등 20</button>
-                        </div>
-                    </div>
+                    <label>페이지 여백 (mm)</label>
                     <div class="margin-grid">
                         <div class="margin-field">
                             <label for="margin-top" class="margin-label">위</label>
@@ -466,8 +460,6 @@
                         <small>완료 카드에서도 다시 다운로드할 수 있습니다.</small>
                     </span>
                 </label>
-
-                <div id="option-summary" class="option-summary" aria-live="polite"></div>
 
                 <!-- IR 미리보기 토글 -->
                 <!-- [이유] IR 확인으로 변환 품질 사전 검토 가능 -->
