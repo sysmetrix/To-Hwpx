@@ -151,9 +151,13 @@ function replaceEmoji(s) {
  */
 function getFontMeta(name) {
     const myeongjo = /명조|바탕|궁서|Times|Batang|Gungsuh/i.test(name);
-    return myeongjo
-        ? { familyType: 'FCAT_MYEONGJO', weight: 5 }
-        : { familyType: 'FCAT_GOTHIC',   weight: 6 };
+    // 한글 기본 폰트들은 HWP에서 주로 HFT 타입으로 인식함
+    const isHft = /^(바탕|돋움|굴림|궁서|바탕체|돋움체|굴림체|궁서체)$/.test(name);
+    return {
+        familyType: myeongjo ? 'FCAT_MYEONGJO' : 'FCAT_GOTHIC',
+        weight: myeongjo ? 5 : 6,
+        type: isHft ? 'HFT' : 'TTF'
+    };
 }
 
 /**
@@ -168,7 +172,7 @@ function getFontMeta(name) {
 function buildHeaderXml(fontName, basePt) {
     const fn = xmlEsc(fontName || '휴먼명조');
     const bp = Math.max(6, Math.min(36, parseInt(basePt, 10) || 12));
-    const { familyType, weight } = getFontMeta(fn);
+    const { familyType, weight, type } = getFontMeta(fn);
 
     // 글자 크기 HWPUNIT (1pt = 100)
     const sz = {
@@ -183,7 +187,7 @@ function buildHeaderXml(fontName, basePt) {
 
     const fontFaceBlock = (lang) => `
       <hh:fontface lang="${lang}" fontCnt="1">
-        <hh:font id="0" face="${fn}" type="TTF" isEmbedded="0">
+        <hh:font id="0" face="${fn}" type="${type}" isEmbedded="0">
           <hh:typeInfo familyType="${familyType}" weight="${weight}" proportion="4" contrast="0" strokeVariation="1" armStyle="1" letterform="1" midline="1" xHeight="1"/>
         </hh:font>
       </hh:fontface>`;
@@ -212,9 +216,14 @@ function buildHeaderXml(fontName, basePt) {
 <hh:head xmlns:hh="http://www.hancom.co.kr/hwpml/2011/head" version="1.4" secCnt="1">
   <hh:beginNum page="1" footnote="1" endnote="1" pic="1" tbl="1" equation="1"/>
   <hh:refList>
-    <hh:fontfaces itemCnt="2">
+    <hh:fontfaces itemCnt="7">
 ${fontFaceBlock('HANGUL')}
 ${fontFaceBlock('LATIN')}
+${fontFaceBlock('HANJA')}
+${fontFaceBlock('JAPANESE')}
+${fontFaceBlock('OTHER')}
+${fontFaceBlock('SYMBOL')}
+${fontFaceBlock('USER')}
     </hh:fontfaces>
     <hh:charProperties itemCnt="7">
       <!-- 0=본문, 1=H1 bold, 2=H2 bold, 3=H3 bold, 4=H4 bold, 5=표머리 bold, 6=코드 -->
@@ -520,8 +529,9 @@ function buildSection(ir, marginsHwp, paperKey) {
  * @param {number} fontSize      기본 글자 크기 pt (기본: 12)
  * @param {object|null} marginsMm 여백 mm {left,right,top,bottom,header,footer} — null=기본값
  * @param {string} paperSize     용지 "A4"|"B5"|"Letter"
+ * @param {function} onProgress  진행률 콜백 함수 (0~100)
  */
-async function buildHwpx(ir, fontName = '휴먼명조', fontSize = 12, marginsMm = null, paperSize = 'A4') {
+async function buildHwpx(ir, fontName = '휴먼명조', fontSize = 12, marginsMm = null, paperSize = 'A4', onProgress = null) {
     if (typeof JSZip === 'undefined') throw new Error('JSZip 미로드: 인터넷 연결을 확인하세요.');
 
     const marginsHwp = marginsMmToHwp(marginsMm || DEFAULT_MARGINS_MM);
@@ -542,7 +552,14 @@ async function buildHwpx(ir, fontName = '휴먼명조', fontSize = 12, marginsMm
     zip.file('Preview/PrvText.txt',    ir.title || 'To HWPX 변환 문서');
     zip.file('Preview/PrvImage.png',   MIN_PNG_B64, { base64: true });
 
-    return zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
+    return zip.generateAsync(
+        { type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } },
+        function updateCallback(metadata) {
+            if (onProgress) {
+                onProgress(metadata.percent);
+            }
+        }
+    );
 }
 
 

@@ -428,7 +428,10 @@ async function runConversionPipeline() {
         let hwpxBlob;
         try {
             // hwpx.js의 buildHwpx() 호출 (폰트·크기·여백·용지 전달)
-            hwpxBlob = await buildHwpx(ir, state.docFont, state.fontSize, state.pageMargins, state.paperSize);
+            hwpxBlob = await buildHwpx(ir, state.docFont, state.fontSize, state.pageMargins, state.paperSize, (pct) => {
+                 setProgress(58 + (pct * 0.14)); // 58% ~ 72%
+                 setStatusText(`HWPX 파일을 압축하는 중... ${Math.round(pct)}%`);
+            });
         } catch (e) {
             throw new Error('HWPX 생성 실패: ' + e.message);
         }
