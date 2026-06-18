@@ -466,6 +466,16 @@ a:hover { text-decoration: underline; }
 .form-row {
     margin-bottom: 18px;
 }
+.form-row-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+.form-row-head label {
+    margin-bottom: 0;
+}
 .form-row label {
     display: block;
     font-size: 0.88rem;
@@ -492,10 +502,33 @@ a:hover { text-decoration: underline; }
     border-color: var(--c-primary);
 }
 
-/* 페이지 여백 4칸 그리드 (위/아래/왼쪽/오른쪽) */
+/* 페이지 여백 6칸 그리드 (본문 4방향 + 머리말/꼬리말) */
+.margin-presets {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+.margin-presets button {
+    border: 1px solid var(--c-border);
+    border-radius: var(--radius-sm);
+    background: var(--c-surface);
+    color: var(--c-text-sub);
+    padding: 5px 9px;
+    font-family: var(--font-main);
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: border-color var(--trans), background var(--trans), color var(--trans);
+}
+.margin-presets button:hover {
+    border-color: var(--c-primary);
+    background: var(--c-primary-light);
+    color: var(--c-primary-dark);
+}
 .margin-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(3, 1fr);
     gap: 10px;
 }
 .margin-field {
@@ -512,6 +545,46 @@ a:hover { text-decoration: underline; }
 .margin-input {
     padding: 7px 10px !important;
     text-align: center;
+}
+
+.checkbox-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    border: 1px solid var(--c-border);
+    border-radius: var(--radius-sm);
+    padding: 11px 12px;
+    margin: 4px 0 12px;
+    background: var(--c-surface-alt);
+    cursor: pointer;
+}
+.checkbox-row input {
+    width: 18px;
+    height: 18px;
+    margin-top: 2px;
+    accent-color: var(--c-primary);
+    flex-shrink: 0;
+}
+.checkbox-row strong {
+    display: block;
+    font-size: 0.88rem;
+    color: var(--c-text);
+}
+.checkbox-row small {
+    display: block;
+    margin-top: 2px;
+    font-size: 0.76rem;
+    color: var(--c-text-muted);
+}
+.option-summary {
+    border-left: 3px solid var(--c-primary);
+    background: var(--c-primary-light);
+    color: var(--c-text-sub);
+    border-radius: var(--radius-sm);
+    padding: 9px 11px;
+    font-size: 0.8rem;
+    line-height: 1.45;
+    margin-bottom: 12px;
 }
 
 /* 감지된 포맷 배지 */
@@ -708,7 +781,7 @@ a:hover { text-decoration: underline; }
     padding: 20px;
     background: var(--c-success-light);
 }
-.result-card.result-warn { border-color: var(--c-warning); background: var(--c-warning-light); }
+.result-card.result-card--warn { border-color: var(--c-warning); background: var(--c-warning-light); }
 
 .result-file-row {
     display: flex;
@@ -944,6 +1017,7 @@ a:hover { text-decoration: underline; }
 
     /* 변환기 레이아웃 단일 컬럼 */
     .converter-layout { grid-template-columns: 1fr; }
+    .margin-grid { grid-template-columns: repeat(2, 1fr); }
 
     /* 포맷 그리드 작은 카드 */
     .format-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
@@ -968,6 +1042,25 @@ a:hover { text-decoration: underline; }
     .support-section { padding: 48px 0; }
     .format-grid { grid-template-columns: repeat(2, 1fr); }
     .steps-grid  { grid-template-columns: 1fr; }
+    .form-row-head {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+    .margin-presets {
+        width: 100%;
+    }
+    .margin-presets button {
+        flex: 1;
+    }
+    .margin-grid { grid-template-columns: 1fr 1fr; }
+    .result-actions {
+        flex-direction: column;
+    }
+    .btn-download,
+    .btn-preview {
+        justify-content: center;
+        width: 100%;
+    }
 }
 
 /* ─────────────────────────────────────────────────────────────────

@@ -31,10 +31,47 @@ const PAPER_SIZES = {
     'Letter': { w: 61920, h: 80136 },
 };
 
-const DEFAULT_MARGINS_HWP = {
-    left: 5669, right: 5669, top: 5669, bottom: 5669,
-    header: 4252, footer: 4252,
+const DEFAULT_MARGINS_MM = {
+    top: 15,
+    bottom: 15,
+    left: 20,
+    right: 20,
+    header: 10,
+    footer: 10,
 };
+
+const DEFAULT_MARGINS_HWP = {
+    left: mmToHwp(DEFAULT_MARGINS_MM.left),
+    right: mmToHwp(DEFAULT_MARGINS_MM.right),
+    top: mmToHwp(DEFAULT_MARGINS_MM.top),
+    bottom: mmToHwp(DEFAULT_MARGINS_MM.bottom),
+    header: mmToHwp(DEFAULT_MARGINS_MM.header),
+    footer: mmToHwp(DEFAULT_MARGINS_MM.footer),
+};
+
+function normalizeMarginsMm(marginsMm = {}) {
+    const source = marginsMm || {};
+    return {
+        top: Number.isFinite(Number(source.top)) ? Number(source.top) : DEFAULT_MARGINS_MM.top,
+        bottom: Number.isFinite(Number(source.bottom)) ? Number(source.bottom) : DEFAULT_MARGINS_MM.bottom,
+        left: Number.isFinite(Number(source.left)) ? Number(source.left) : DEFAULT_MARGINS_MM.left,
+        right: Number.isFinite(Number(source.right)) ? Number(source.right) : DEFAULT_MARGINS_MM.right,
+        header: Number.isFinite(Number(source.header)) ? Number(source.header) : DEFAULT_MARGINS_MM.header,
+        footer: Number.isFinite(Number(source.footer)) ? Number(source.footer) : DEFAULT_MARGINS_MM.footer,
+    };
+}
+
+function marginsMmToHwp(marginsMm = {}) {
+    const m = normalizeMarginsMm(marginsMm);
+    return {
+        left: mmToHwp(m.left),
+        right: mmToHwp(m.right),
+        top: mmToHwp(m.top),
+        bottom: mmToHwp(m.bottom),
+        header: mmToHwp(m.header),
+        footer: mmToHwp(m.footer),
+    };
+}
 
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -455,24 +492,13 @@ function buildSection(ir, marginsHwp, paperKey) {
  * @param {object} ir            IR {title, doc_type, blocks}
  * @param {string} fontName      글꼴 (기본: 휴먼명조)
  * @param {number} fontSize      기본 글자 크기 pt (기본: 12)
- * @param {object|null} marginsMm 여백 mm {left,right,top,bottom} — null=기본값
+ * @param {object|null} marginsMm 여백 mm {left,right,top,bottom,header,footer} — null=기본값
  * @param {string} paperSize     용지 "A4"|"B5"|"Letter"
  */
 async function buildHwpx(ir, fontName = '휴먼명조', fontSize = 12, marginsMm = null, paperSize = 'A4') {
     if (typeof JSZip === 'undefined') throw new Error('JSZip 미로드: 인터넷 연결을 확인하세요.');
 
-    // mm → HWPUNIT 변환
-    let marginsHwp = null;
-    if (marginsMm) {
-        marginsHwp = {
-            left:   mmToHwp(marginsMm.left   || 20),
-            right:  mmToHwp(marginsMm.right  || 20),
-            top:    mmToHwp(marginsMm.top    || 20),
-            bottom: mmToHwp(marginsMm.bottom || 20),
-            header: DEFAULT_MARGINS_HWP.header,
-            footer: DEFAULT_MARGINS_HWP.footer,
-        };
-    }
+    const marginsHwp = marginsMmToHwp(marginsMm || DEFAULT_MARGINS_MM);
 
     const headerXml   = buildHeaderXml(fontName, fontSize);
     const section0Xml = buildSection(ir, marginsHwp, paperSize);
@@ -498,7 +524,7 @@ async function buildHwpx(ir, fontName = '휴먼명조', fontSize = 12, marginsMm
 // [검증기]
 // ─────────────────────────────────────────────────────────────────────────
 
-async function validateHwpx(blob) {
+async function validateHwpx(blob, expectedMarginsMm = null) {
     const issues = [];
     let zip;
     try {
@@ -533,6 +559,23 @@ async function validateHwpx(blob) {
             const err = parsed.querySelector('parsererror');
             if (err) issues.push('section0.xml XML 파싱 오류: ' + err.textContent.slice(0, 100).trim());
         } catch { issues.push('section0.xml XML 파싱 예외'); }
+
+        const expected = marginsMmToHwp(expectedMarginsMm || DEFAULT_MARGINS_MM);
+        const marginMatch = xml.match(/<hs:margin\s+([^>]+?)\/>/);
+        if (!marginMatch) {
+            issues.push('section0.xml: hs:margin 없음');
+        } else {
+            const attrs = {};
+            marginMatch[1].replace(/(\w+)="([^"]+)"/g, (_, key, value) => {
+                attrs[key] = Number(value);
+                return '';
+            });
+            for (const key of ['left', 'right', 'top', 'bottom', 'header', 'footer']) {
+                if (attrs[key] !== expected[key]) {
+                    issues.push(`section0.xml: ${key} 여백 불일치 (${attrs[key]} ≠ ${expected[key]})`);
+                }
+            }
+        }
     }
 
     if (files['Contents/header.xml'] && files['Contents/section0.xml']) {

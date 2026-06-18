@@ -26,9 +26,12 @@ const state = {
     docFont:      '휴먼명조',           // 출력 폰트 (기본: 휴먼명조)
     fontSize:     12,                  // 기본 글꼴 크기 (pt)
     paperSize:    'A4',                // 용지 크기: "A4" | "B5" | "Letter"
-    pageMargins:  { top: 20, bottom: 20, left: 20, right: 20 },  // 단위: mm (기본 20mm)
+    pageMargins:  { top: 15, bottom: 15, left: 20, right: 20, header: 10, footer: 10 },  // 단위: mm
+    autoDownload: true,                // 변환 완료 시 자동 다운로드
     isConverting: false,               // 변환 중 중복 실행 방지 플래그
-    hwpxBlob:    null                  // 미리보기용 마지막 변환 결과 Blob
+    hwpxBlob:    null,                 // 미리보기용 마지막 변환 결과 Blob
+    downloadUrl: null,                 // 마지막 변환 결과 Blob URL
+    downloadTimer: null                // Blob URL 해제 타이머
 };
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -100,6 +103,8 @@ function setStepState(stepId, status) {
 function resetPipeline() {
     PIPELINE_STEPS.forEach(s => setStepState(s.id, 'pending'));
     setProgress(0);
+    setProgressValue(0);
+    setStatusText('대기 중');
 }
 
 
@@ -171,6 +176,8 @@ function handleFileSelect(file) {
 
     state.file = file;
     state.ir   = null;
+    state.hwpxBlob = null;
+    revokeDownloadUrl();
 
     const ext = file.name.split('.').pop().toLowerCase();
     updateDropZoneUI(file, ext);     // 드롭존에 파일 정보 표시
@@ -296,23 +303,61 @@ function initOptions() {
     // 용지 크기 선택 (<select id="paper-size">)
     const paperEl = document.getElementById('paper-size');
     if (paperEl) {
-        paperEl.addEventListener('change', () => { state.paperSize = paperEl.value; });
+        paperEl.addEventListener('change', () => {
+            state.paperSize = paperEl.value;
+            updateOptionSummary();
+        });
     }
 
-    // 페이지 여백 입력 (mm 단위, #margin-top/bottom/left/right)
-    const marginIds = ['top', 'bottom', 'left', 'right'];
+    // 페이지 여백 입력 (mm 단위, #margin-top/bottom/left/right/header/footer)
+    const marginIds = ['top', 'bottom', 'left', 'right', 'header', 'footer'];
     marginIds.forEach(side => {
         const el = document.getElementById(`margin-${side}`);
         if (!el) return;
-        el.addEventListener('change', () => {
-            const val = parseInt(el.value, 10);
-            // 최소/최대 클램핑 (5mm ~ 60mm)
-            if (!isNaN(val)) {
-                state.pageMargins[side] = Math.max(5, Math.min(60, val));
+        const syncMargin = () => {
+            const val = parseFloat(el.value);
+            if (isNaN(val)) {
                 el.value = state.pageMargins[side];
+                return;
             }
+            const max = (side === 'header' || side === 'footer') ? 30 : 60;
+            state.pageMargins[side] = Math.max(0, Math.min(max, val));
+            el.value = state.pageMargins[side];
+            updateOptionSummary();
+        };
+        el.addEventListener('change', syncMargin);
+        el.addEventListener('input', () => {
+            const val = parseFloat(el.value);
+            if (!isNaN(val)) state.pageMargins[side] = val;
+            updateOptionSummary();
         });
     });
+
+    document.querySelectorAll('[data-margin-preset]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const preset = btn.dataset.marginPreset;
+            const next = preset === 'balanced'
+                ? { top: 20, bottom: 20, left: 20, right: 20, header: 10, footer: 10 }
+                : { top: 15, bottom: 15, left: 20, right: 20, header: 10, footer: 10 };
+            Object.assign(state.pageMargins, next);
+            marginIds.forEach(side => {
+                const el = document.getElementById(`margin-${side}`);
+                if (el) el.value = state.pageMargins[side];
+            });
+            updateOptionSummary();
+        });
+    });
+
+    const autoDownloadEl = document.getElementById('auto-download');
+    if (autoDownloadEl) {
+        state.autoDownload = autoDownloadEl.checked;
+        autoDownloadEl.addEventListener('change', () => {
+            state.autoDownload = autoDownloadEl.checked;
+            updateOptionSummary();
+        });
+    }
+
+    updateOptionSummary();
 
     // IR 미리보기 접기/펼치기 버튼
     const irToggle  = document.getElementById('ir-toggle');
@@ -336,6 +381,7 @@ function initConvertButton() {
     if (!btn) return;
     btn.addEventListener('click', () => {
         if (!state.file || state.isConverting) return;
+        syncMarginInputs();
         runConversionPipeline();
     });
 }
@@ -419,7 +465,7 @@ async function runConversionPipeline() {
         let validation;
         try {
             // hwpx.js의 validateHwpx() 호출
-            validation = await validateHwpx(hwpxBlob);
+            validation = await validateHwpx(hwpxBlob, state.pageMargins);
         } catch (e) {
             validation = { pass: false, issues: ['검증 실행 오류: ' + e.message] };
         }
@@ -452,9 +498,11 @@ async function runConversionPipeline() {
         const baseName = state.file.name.replace(/\.[^.]+$/, '');
         const fileName = `${baseName}.hwpx`;
 
-        // [보안] Blob URL 생성 → 60초 후 자동 해제 (메모리 누수 및 개인정보 보호)
+        // [보안] Blob URL 생성 → 5분 후 자동 해제 (메모리 누수 및 개인정보 보호)
+        revokeDownloadUrl();
         const downloadUrl = URL.createObjectURL(finalBlob);
-        setTimeout(() => URL.revokeObjectURL(downloadUrl), 60_000);
+        state.downloadUrl = downloadUrl;
+        state.downloadTimer = setTimeout(revokeDownloadUrl, 300_000);
 
         setStepState('ship', 'done');
         setProgress(100);
@@ -462,6 +510,10 @@ async function runConversionPipeline() {
 
         // 결과 카드 표시
         showResult({ url: downloadUrl, fileName, size: finalBlob.size, validation });
+        if (state.autoDownload) {
+            triggerDownload(downloadUrl, fileName);
+            setStatusText('완료! 다운로드를 시작했습니다.');
+        }
 
     } catch (err) {
         showAlert('변환 중 오류가 발생했습니다: ' + err.message);
@@ -500,11 +552,15 @@ function showResult({ url, fileName, size, validation }) {
         ? '✓ 4개 검증 영역 모두 PASS — 한글 호환 구조 충족'
         : '⚠ 검증 경고: ' + validation.issues.join(' | ');
     const validClass = validation.pass ? 'result-valid' : 'result-warn';
+    const cardClass = validation.pass ? '' : ' result-card--warn';
+    const autoText = state.autoDownload
+        ? '자동 다운로드가 시작되었습니다. 필요하면 다시 다운로드하거나 미리보기를 여세요.'
+        : '자동 다운로드가 꺼져 있습니다. 아래 버튼으로 내려받으세요.';
 
     // [보안] URL은 blob: 스킴만 가능 (직접 생성했으므로 안전)
     //         escHtml()로 fileName을 이스케이프하여 XSS 방지
     area.innerHTML = `
-        <div class="result-card">
+        <div class="result-card${cardClass}">
             <div class="result-file-row">
                 <span class="result-file-icon">📄</span>
                 <div class="result-file-info">
@@ -516,20 +572,27 @@ function showResult({ url, fileName, size, validation }) {
                 ${escHtml(validText)}
             </div>
             <div class="result-actions">
-                <a href="${url}"
+                <a id="download-link"
+                   href="${url}"
                    download="${escHtml(fileName)}"
-                   class="btn-download"
-                   onclick="this.closest('.result-card').querySelector('.result-validation').textContent += ' (다운로드됨)'">
+                   class="btn-download">
                     ⬇ HWPX 다운로드
                 </a>
-                <button class="btn-preview" onclick="openPreview(state.hwpxBlob)">
+                <button class="btn-preview" id="preview-result-btn">
                     👁 미리보기
                 </button>
             </div>
-            <p class="result-note">다운로드 링크는 60초 후 만료됩니다. 바로 다운로드하세요.</p>
+            <p class="result-note">${escHtml(autoText)} 다운로드 링크는 5분 후 만료됩니다.</p>
         </div>
     `;
     area.style.display = 'block';
+    area.querySelector('#download-link')?.addEventListener('click', () => {
+        const validationEl = area.querySelector('.result-validation');
+        if (validationEl && !validationEl.textContent.includes('다운로드됨')) {
+            validationEl.textContent += ' (다운로드됨)';
+        }
+    });
+    area.querySelector('#preview-result-btn')?.addEventListener('click', () => openPreview(state.hwpxBlob));
     area.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
@@ -540,6 +603,51 @@ function hideResult() {
         area.style.display = 'none';
         area.innerHTML = '';
     }
+}
+
+function triggerDownload(url, fileName) {
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+}
+
+function revokeDownloadUrl() {
+    if (state.downloadTimer) {
+        clearTimeout(state.downloadTimer);
+        state.downloadTimer = null;
+    }
+    if (state.downloadUrl) {
+        URL.revokeObjectURL(state.downloadUrl);
+        state.downloadUrl = null;
+    }
+}
+
+function updateOptionSummary() {
+    const el = document.getElementById('option-summary');
+    if (!el) return;
+    const m = state.pageMargins;
+    const mode = state.autoDownload ? '자동 다운로드 켜짐' : '수동 다운로드';
+    el.textContent = `${state.paperSize} · 위/아래 ${m.top}/${m.bottom}mm · 좌/우 ${m.left}/${m.right}mm · 머리말/꼬리말 ${m.header}/${m.footer}mm · ${mode}`;
+}
+
+function syncMarginInputs() {
+    for (const side of ['top', 'bottom', 'left', 'right', 'header', 'footer']) {
+        const el = document.getElementById(`margin-${side}`);
+        if (!el) continue;
+        const val = parseFloat(el.value);
+        if (isNaN(val)) {
+            el.value = state.pageMargins[side];
+            continue;
+        }
+        const max = (side === 'header' || side === 'footer') ? 30 : 60;
+        state.pageMargins[side] = Math.max(0, Math.min(max, val));
+        el.value = state.pageMargins[side];
+    }
+    updateOptionSummary();
 }
 
 
@@ -553,6 +661,12 @@ function setProgress(pct) {
     const text = document.getElementById('progress-pct');
     if (bar)  bar.style.width = Math.min(100, pct) + '%';
     if (text) text.textContent = Math.min(100, pct) + '%';
+    setProgressValue(pct);
+}
+
+function setProgressValue(pct) {
+    const wrap = document.querySelector('.progress-wrap');
+    if (wrap) wrap.setAttribute('aria-valuenow', String(Math.min(100, pct)));
 }
 
 /** 상태 텍스트 업데이트 */
