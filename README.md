@@ -1,6 +1,6 @@
 # To HWPX
 
-브라우저에서 바로 실행되는 무료 문서 변환기입니다. Markdown, DOCX, HTML 등 다양한 포맷을 한글 오피스(.hwpx) 파일로 변환합니다.
+｢BWYF｣ AX Challenger 2026 프로젝트로 제작된 브라우저에서 바로 실행되는 문서 변환기입니다. Markdown, DOCX, HTML 등 다양한 포맷을 한글 오피스(.hwpx) 파일로 변환합니다.
 
 **GitHub Pages 배포:** https://sysmetrix.github.io/To-Hwpx/
 
