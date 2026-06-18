@@ -241,18 +241,29 @@ ${paraBase(7, 'CENTER',  160,   0,    0,    0)}
 // ─────────────────────────────────────────────────────────────────────────
 
 /**
+ * 전역 문단 ID 카운터
+ * rhwp 기준: <hp:p id>는 섹션 전체에서 0부터 순번 부여
+ * (한컴 OWPML 스펙: PARA_HEADER instance_id 매핑)
+ */
+let _paraIdCounter = 0;
+function _nextParaId() { return _paraIdCounter++; }
+function _resetParaId() { _paraIdCounter = 0; }
+
+/**
  * 단락(hp:p) XML 생성
  * replaceEmoji → xmlEsc 순서로 처리하여 이모지 □ 치환 후 XML 안전 처리
  */
 function buildPara(text, charId = '0', paraId = '0') {
     const safe = xmlEsc(replaceEmoji(text));
-    return `<hp:p paraPrIDRef="${paraId}" styleIDRef="0" pageBreak="0" columnBreak="0">` +
+    const pid  = _nextParaId();
+    return `<hp:p id="${pid}" paraPrIDRef="${paraId}" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0">` +
         `<hp:run charPrIDRef="${charId}"><hp:t>${safe}</hp:t></hp:run></hp:p>`;
 }
 
 /** 빈 단락 (빈 줄 표현용) — 공백 문자 하나 포함 */
 function buildBlankPara() {
-    return `<hp:p paraPrIDRef="0" styleIDRef="0" pageBreak="0" columnBreak="0">` +
+    const pid = _nextParaId();
+    return `<hp:p id="${pid}" paraPrIDRef="0" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0">` +
         `<hp:run charPrIDRef="0"><hp:t> </hp:t></hp:run></hp:p>`;
 }
 
@@ -284,19 +295,22 @@ function buildTable(header, rows) {
 
         for (let c = 0; c < nCols; c++) {
             const val = (row[c] !== undefined && row[c] !== null) ? String(row[c]) : '';
+            // 자식 순서: subList → cellAddr → cellSpan → cellSz → cellMargin
+            // (rhwp serializer/hwpx/table.rs 기준 OWPML 공식 순서)
             cellsXml +=
                 `<hp:tc name="" header="${isHd ? '1' : '0'}" hasMargin="0" protect="0" editable="0" dirty="0" borderFillIDRef="${bfId}">` +
+                `<hp:subList id="" textDirection="HORIZONTAL" lineWrap="BREAK" vertAlign="CENTER" ` +
+                    `linkListIDRef="0" linkListNextIDRef="0" textWidth="0" textHeight="0" hasTextRef="0" hasNumRef="0">` +
+                buildPara(val, cId, '7') +  // paraPr=7: CENTER 정렬
+                `</hp:subList>` +
                 `<hp:cellAddr colAddr="${c}" rowAddr="${r}"/>` +
                 `<hp:cellSpan colSpan="1" rowSpan="1"/>` +
                 `<hp:cellSz width="${cellWidth}" height="1000"/>` +
                 `<hp:cellMargin left="510" right="510" top="141" bottom="141"/>` +
-                `<hp:subList id="" textDirection="HORIZONTAL" lineWrap="BREAK" vertAlign="CENTER" ` +
-                    `linkListIDRef="0" linkListNextIDRef="0" textWidth="0" textHeight="0" hasTextRef="0" hasNumRef="0">` +
-                buildPara(val, cId, '7') +  // paraPr=7: CENTER 정렬
-                `</hp:subList></hp:tc>`;
+                `</hp:tc>`;
         }
-        // [v4] 제목 행에 header="1" 속성 추가 — repeatHeader와 함께 쪽 반복 출력
-        rowsXml += `<hp:tr header="${isHd ? '1' : '0'}">${cellsXml}</hp:tr>`;
+        // <hp:tr>은 속성 없음 (rhwp 기준); header 마킹은 <hp:tc>에만 적용
+        rowsXml += `<hp:tr>${cellsXml}</hp:tr>`;
     }
 
     // [v4] pageBreak="TABLE" → 행 단위로 쪽 넘김 허용 (rhwp TablePageBreak::RowBreak 기준)
@@ -321,9 +335,10 @@ function buildTable(header, rows) {
 function buildSecPr(marginsHwp, paperKey) {
     const paper = PAPER_SIZES[paperKey] || PAPER_SIZES['A4'];
     const m = Object.assign({}, DEFAULT_MARGINS_HWP, marginsHwp || {});
+    // rhwp 기준: outlineShapeIDRef(정수), masterPageCnt만 사용
+    // outlineType/masterID/hideFirstHeader 등은 rhwp 파서가 처리하지 않는 비표준 속성
     return `<hs:secPr textDirection="HORIZONTAL" spaceColumns="1134" tabStop="8000" ` +
-        `outlineType="OUTLINE_TYPE_NONE" masterID="0" hideFirstHeader="0" hideFirstFooter="0" ` +
-        `isBreak="0" breakType="SECTION">` +
+        `outlineShapeIDRef="0" masterPageCnt="0">` +
         `<hs:page width="${paper.w}" height="${paper.h}" orientation="PORTRAIT" ` +
         `gutterType="LEFT_ONLY" gutterPosition="LEFT_ONLY">` +
         `<hs:margin left="${m.left}" right="${m.right}" top="${m.top}" bottom="${m.bottom}" ` +
@@ -344,6 +359,9 @@ function buildSection(ir, marginsHwp, paperKey) {
     const NS_HS = 'http://www.hancom.co.kr/hwpml/2011/section';
     const NS_HP = 'http://www.hancom.co.kr/hwpml/2011/paragraph';
     const docType = ir.doc_type || 'plain';
+
+    // 섹션마다 문단 ID를 0부터 재시작 (HWPX 섹션 범위 기준)
+    _resetParaId();
 
     const parts = [];
 

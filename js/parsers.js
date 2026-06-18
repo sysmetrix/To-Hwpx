@@ -558,6 +558,33 @@ function extractDocxTable(tblNode) {
 // ─────────────────────────────────────────────────────────────────────────
 
 /**
+ * HWPX <hp:tbl> 요소 → IR table 블록 변환
+ * <hp:tr> → <hp:tc> → <hp:subList> → <hp:p> → <hp:t> 구조 탐색
+ */
+function extractHwpxTable(tblEl, NS_HP) {
+    const trEls = tblEl.getElementsByTagNameNS(NS_HP, 'tr');
+    if (!trEls.length) return null;
+
+    const rows = Array.from(trEls).map(tr => {
+        const tcEls = tr.getElementsByTagNameNS(NS_HP, 'tc');
+        return Array.from(tcEls).map(tc => {
+            const tEls = tc.getElementsByTagNameNS(NS_HP, 't');
+            return sanitize(Array.from(tEls).map(e => e.textContent).join('').trim());
+        });
+    });
+
+    if (!rows.length) return null;
+    // 첫 행 셀에 header="1" 속성이 있으면 헤더 행으로 분리
+    const firstTr = trEls[0];
+    const firstTc = firstTr.getElementsByTagNameNS(NS_HP, 'tc')[0];
+    const isHeader = firstTc && (firstTc.getAttribute('header') === '1');
+    if (isHeader && rows.length > 1) {
+        return { type: 'table', header: rows[0], rows: rows.slice(1) };
+    }
+    return { type: 'table', header: null, rows };
+}
+
+/**
  * ArrayBuffer의 첫 바이트들을 비교해 파일 시그니처(매직 바이트) 확인
  * OLE2 컴파운드 도큐먼트(HWP5): D0 CF 11 E0 A1 B1 1A E1
  * ZIP 기반(HWPX/HWP 신형):      50 4B 03 04 (PK header)
@@ -606,67 +633,78 @@ async function parseHwp(buffer, docType = 'plain') {
         }
         try {
             const zip = await JSZip.loadAsync(buffer);
-            let extracted = 0;
 
-            // HWPX 섹션 파일 패턴: Contents/section0.xml, section1.xml ...
-            // 구형 ZIP-HWP: BodyText/Section0 ...
+            // HWPX 섹션 파일 패턴 (Contents/section0.xml 등)
             const sectionPatterns = [
                 /^Contents\/section\d+\.xml$/i,
                 /^BodyText\/Section\d+$/i,
                 /^Section\d+\.xml$/i,
             ];
 
+            // HWPX 정식 네임스페이스 (2011 버전 — 2012가 아님)
+            const NS_HS = 'http://www.hancom.co.kr/hwpml/2011/section';
+            const NS_HP = 'http://www.hancom.co.kr/hwpml/2011/paragraph';
+
             const entries = Object.keys(zip.files).sort();
             for (const path of entries) {
                 if (!sectionPatterns.some(re => re.test(path))) continue;
 
                 const xmlText = await zip.files[path].async('string');
-                const xmlDoc = new DOMParser().parseFromString(xmlText, 'application/xml');
+                const xmlDoc  = new DOMParser().parseFromString(xmlText, 'application/xml');
+                const secEl   = xmlDoc.getElementsByTagNameNS(NS_HS, 'sec')[0]
+                              || xmlDoc.documentElement;
 
-                // hp:t 요소들(HWPX 텍스트 런)에서 텍스트 추출
-                const NS_HP = 'http://www.hancom.co.kr/hwpml/2012/paragraph';
-                const tEls = xmlDoc.getElementsByTagNameNS(NS_HP, 't');
-                if (tEls.length === 0) {
-                    // 네임스페이스 없이 로컬명으로 재시도
-                    const all = xmlDoc.querySelectorAll('t');
-                    if (all.length) {
-                        const text = sanitize(Array.from(all).map(e => e.textContent).join('').trim());
-                        if (text) {
-                            ir.blocks.push({ type: 'para', text });
-                            extracted++;
-                        }
-                    }
-                } else {
-                    // 단락(hp:p) 단위로 텍스트를 묶어 IR에 추가
-                    const NS_HS = 'http://www.hancom.co.kr/hwpml/2012/section';
-                    const paras = xmlDoc.getElementsByTagNameNS(NS_HS, 'p').length
-                        ? xmlDoc.getElementsByTagNameNS(NS_HS, 'p')
-                        : xmlDoc.querySelectorAll('p');
+                // 섹션 직계 <hp:p> 순회 (표 안의 셀 단락은 제외)
+                for (const child of secEl.childNodes) {
+                    const ln = (child.localName || '').toLowerCase();
 
-                    for (const p of paras) {
-                        const pTEls = p.getElementsByTagNameNS
-                            ? p.getElementsByTagNameNS(NS_HP, 't')
-                            : p.querySelectorAll('t');
-                        const text = sanitize(Array.from(pTEls).map(e => e.textContent).join('').trim());
-                        if (text) {
-                            ir.blocks.push({ type: 'para', text });
-                            extracted++;
+                    if (ln === 'p') {
+                        // 이 단락이 표를 포함하는지 확인
+                        const tblEl = child.getElementsByTagNameNS(NS_HP, 'tbl')[0];
+                        if (tblEl) {
+                            const tblBlock = extractHwpxTable(tblEl, NS_HP);
+                            if (tblBlock) ir.blocks.push(tblBlock);
+                            continue;
                         }
+                        // 일반 텍스트 단락 — <hp:t> 텍스트 합산
+                        const tEls = child.getElementsByTagNameNS(NS_HP, 't');
+                        const text = sanitize(Array.from(tEls).map(e => e.textContent).join('').trim());
+                        if (!text) { ir.blocks.push({ type: 'blank' }); continue; }
+                        // paraPrIDRef로 제목 레벨 추정 (우리 스키마: 1=H1, 2=H2, 3=H3, 4=H4)
+                        const pprId = parseInt(child.getAttribute('paraPrIDRef') || '0', 10);
+                        if (pprId >= 1 && pprId <= 4) {
+                            if (!ir.title) {
+                                ir.title = text;  // 첫 제목 → 문서 제목
+                            } else {
+                                ir.blocks.push({ type: 'heading', level: pprId, text });
+                            }
+                        } else {
+                            ir.blocks.push({ type: 'para', text });
+                        }
+
+                    } else if (ln === 'secpr') {
+                        // 섹션 설정 — 건너뜀
                     }
                 }
             }
 
-            if (extracted === 0) {
-                ir.blocks.push({ type: 'para', text: '[HWP] 텍스트를 추출하지 못했습니다. 파일 구조를 확인해 주세요.' });
-            } else {
-                // 제목은 첫 번째 단락에서 추정
-                const firstPara = ir.blocks.find(b => b.type === 'para');
-                if (firstPara && firstPara.text.length < 80) {
-                    ir.title = firstPara.text;
+            // 텍스트가 전혀 없으면 네임스페이스 폴백 (서드파티 HWPX 대응)
+            if (!ir.blocks.length && !ir.title) {
+                for (const path of entries) {
+                    if (!sectionPatterns.some(re => re.test(path))) continue;
+                    const xmlText = await zip.files[path].async('string');
+                    const xmlDoc  = new DOMParser().parseFromString(xmlText, 'application/xml');
+                    const allT    = xmlDoc.querySelectorAll('t');
+                    const text    = sanitize(Array.from(allT).map(e => e.textContent).join('\n').trim());
+                    if (text) { ir.blocks.push({ type: 'para', text }); break; }
                 }
+            }
+
+            if (!ir.blocks.length && !ir.title) {
+                ir.blocks.push({ type: 'para', text: '[HWPX] 텍스트를 추출하지 못했습니다. 파일 구조를 확인해 주세요.' });
             }
         } catch (err) {
-            ir.blocks.push({ type: 'para', text: `HWP ZIP 파싱 오류: ${err.message}` });
+            ir.blocks.push({ type: 'para', text: `HWP/HWPX 파싱 오류: ${err.message}` });
         }
         return ir;
     }
