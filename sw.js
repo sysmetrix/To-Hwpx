@@ -10,7 +10,7 @@
 
 'use strict';
 
-const CACHE_VERSION = 'to-hwpx-v3.2.3';
+const CACHE_VERSION = 'to-hwpx-v3.2.4';
 
 // 설치 시 미리 캐시할 파일 목록 (앱 셸)
 const APP_SHELL = [

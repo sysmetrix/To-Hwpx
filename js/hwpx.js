@@ -328,6 +328,7 @@ function buildTable(header, rows, contentWidthHwp = 48000) {
     const nCols = Math.max(...allRows.map(r => (r || []).length), 1);
     const tableWidth = Math.min(48000, Math.max(12000, contentWidthHwp));
     const cellWidth = Math.floor(tableWidth / nCols);
+    const pid = _nextParaId();
 
     let rowsXml = '';
     for (let r = 0; r < nRows; r++) {
@@ -359,7 +360,7 @@ function buildTable(header, rows, contentWidthHwp = 48000) {
 
     // [v4] pageBreak="TABLE" → 행 단위로 쪽 넘김 허용 (rhwp TablePageBreak::RowBreak 기준)
     //      height="0" → HWP이 셀 내용 기준으로 자동 계산 (고정값 제거)
-    return `<hp:p paraPrIDRef="0" styleIDRef="0" pageBreak="0" columnBreak="0"><hp:run charPrIDRef="0">` +
+    return `<hp:p id="${pid}" paraPrIDRef="0" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0"><hp:run charPrIDRef="0">` +
         `<hp:tbl id="0" zOrder="0" numberingType="TABLE" textWrap="TOP_AND_BOTTOM" ` +
         `textFlow="BOTH_SIDES" lock="0" dropcapstyle="None" pageBreak="TABLE" ` +
         `repeatHeader="1" rowCnt="${nRows}" colCnt="${nCols}" cellSpacing="0" borderFillIDRef="2">` +
@@ -369,7 +370,7 @@ function buildTable(header, rows, contentWidthHwp = 48000) {
         `<hp:outMargin left="0" right="0" top="0" bottom="0"/>` +
         `<hp:inMargin left="510" right="510" top="141" bottom="141"/>` +
         `${rowsXml}` +
-        `</hp:tbl></hp:run></hp:p>`;
+        `</hp:tbl><hp:t></hp:t></hp:run></hp:p>`;
 }
 
 /**
@@ -407,11 +408,14 @@ function buildSecPr(marginsHwp, paperKey) {
         `</hp:secPr>`;
 }
 
-function buildSectionBootstrap(secPrXml) {
-    return `<hp:p paraPrIDRef="0" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0">` +
+function buildSectionBootstrap(secPrXml, contentWidthHwp) {
+    const pid = _nextParaId();
+    return `<hp:p id="${pid}" paraPrIDRef="0" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0">` +
         `<hp:run charPrIDRef="0">${secPrXml}` +
         `<hp:ctrl><hp:colPr id="" type="NEWSPAPER" layout="LEFT" colCount="1" sameSz="1" sameGap="0"/></hp:ctrl>` +
-        `</hp:run><hp:run charPrIDRef="0"><hp:t></hp:t></hp:run></hp:p>`;
+        `</hp:run><hp:run charPrIDRef="0"><hp:t></hp:t></hp:run>` +
+        `<hp:linesegarray><hp:lineseg textpos="0" vertpos="0" vertsize="1000" textheight="1000" ` +
+        `baseline="850" spacing="600" horzpos="0" horzsize="${contentWidthHwp}" flags="393216"/></hp:linesegarray></hp:p>`;
 }
 
 /**
@@ -426,9 +430,9 @@ function buildSection(ir, marginsHwp, paperKey) {
     // 섹션마다 문단 ID를 0부터 재시작 (HWPX 섹션 범위 기준)
     _resetParaId();
 
-    const parts = [];
-    parts.push(buildSectionBootstrap(buildSecPr(marginsHwp, paperKey)));
     const contentWidthHwp = getContentWidthHwp(marginsHwp, paperKey);
+    const parts = [];
+    parts.push(buildSectionBootstrap(buildSecPr(marginsHwp, paperKey), contentWidthHwp));
 
     // ── 문서 유형별 머리글 ────────────────────────────────────────────
     if (docType === 'official') {
@@ -589,8 +593,13 @@ async function validateHwpx(blob, expectedMarginsMm = null) {
         if (!/<hp:p\b[\s\S]*<hp:run\b[\s\S]*<hp:secPr\b/.test(xml)) {
             issues.push('section0.xml: hp:secPr가 hp:run 내부에 없음');
         }
+        const secParaMatch = xml.match(/<hp:p\b([^>]*)>[\s\S]*?<hp:secPr\b/);
+        if (!secParaMatch || !/\bid="/.test(secParaMatch[1])) {
+            issues.push('section0.xml: hp:secPr를 담은 첫 문단에 id가 없음');
+        }
 
         const marginMatch = xml.match(/<hp:margin\s+([^>]+?)\/>/);
+        let marginAttrs = null;
         if (!marginMatch) {
             issues.push('section0.xml: hp:margin 없음');
         } else {
@@ -599,9 +608,33 @@ async function validateHwpx(blob, expectedMarginsMm = null) {
                 attrs[key] = Number(value);
                 return '';
             });
+            marginAttrs = attrs;
             for (const key of ['left', 'right', 'top', 'bottom', 'header', 'footer']) {
                 if (attrs[key] !== expected[key]) {
                     issues.push(`section0.xml: ${key} 여백 불일치 (${attrs[key]} ≠ ${expected[key]})`);
+                }
+            }
+        }
+
+        const pagePrMatch = xml.match(/<hp:pagePr\s+([^>]+?)>/);
+        if (pagePrMatch && marginAttrs) {
+            const pageAttrs = {};
+            pagePrMatch[1].replace(/(\w+)="([^"]+)"/g, (_, key, value) => {
+                pageAttrs[key] = Number(value);
+                return '';
+            });
+            const expectedContentWidth = pageAttrs.width - marginAttrs.left - marginAttrs.right;
+            const lineSegMatch = xml.match(/<hp:p\b[^>]*>[\s\S]*?<hp:secPr\b[\s\S]*?<hp:lineseg\b([^>]+?)\/>/);
+            if (!lineSegMatch) {
+                issues.push('section0.xml: hp:secPr 문단에 linesegarray가 없음');
+            } else {
+                const lineAttrs = {};
+                lineSegMatch[1].replace(/(\w+)="([^"]+)"/g, (_, key, value) => {
+                    lineAttrs[key] = Number(value);
+                    return '';
+                });
+                if (lineAttrs.horzsize !== expectedContentWidth) {
+                    issues.push(`section0.xml: 본문 폭 불일치 (${lineAttrs.horzsize} ≠ ${expectedContentWidth})`);
                 }
             }
         }
