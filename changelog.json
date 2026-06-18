@@ -5,26 +5,14 @@
       "version": "3.4.0",
       "date": "2026-06-18",
       "user": [
-        "다운로드 준비 중 진행 표시줄 추가: 변환 완료 후 브라우저 다운로드가 시작될 때까지의 대기 시간을 시각적으로 안내합니다",
-        "한글 폰트에 KoPubWorld Dotum Medium 추가: 제목·표머리·볼드 구간은 KoPubWorld Dotum Bold로 자동 처리됩니다",
-        "페이지 레이아웃 개선: 변환 작업 공간과 서비스 안내 영역이 시각적으로 구분됩니다"
-      ],
-      "dev": [
-        "getBoldFontName() 추가 — KoPubWorld Dotum Medium처럼 Bold가 별도 파일인 폰트 감지",
-        "buildHeaderXml() 개선 — boldFn 설정 시 fontFaceBlock에 id=1 Bold 폰트 face 추가, charPr 볼드 항목은 fontRef='1' 참조 (hh:bold/ 태그 대신)",
-        "dl-indicator UI — progress-panel 내 dl-scan 키프레임 스캐닝 애니메이션 (triggerDownload 및 수동 다운로드 클릭 시 2.8초 표시)",
-        "zone-divider CSS — 작업 공간(--work, 파란 배경)과 안내 공간(--info, 회색 배경) 라벨 구분자"
-      ]
-    },
-    {
-      "version": "3.3.0",
-      "date": "2026-06-18",
-      "user": [
-        "페이지 여백 기본값과 반영 로직 정리: 위/아래 10mm, 좌/우 20mm, 머리말/꼬리말 10mm",
-        "변환 완료 후 자동 다운로드와 완료 카드의 다시 다운로드 기능 개선",
-        "HWPX 미리보기 안정화: 원격 rhwp 뷰어가 응답하지 않을 때 내장 구조 미리보기로 자동 전환",
+        "페이지 여백 기본값 정리: 위/아래 10mm, 좌/우 20mm, 머리말/꼬리말 10mm",
+        "변환 완료 후 자동 다운로드 및 완료 카드 다시 다운로드 기능 개선",
+        "다운로드 준비 중 진행 표시줄 추가: 브라우저 다운로드 시작 전 대기 시간 시각화",
+        "HWPX 미리보기 안정화: 원격 rhwp 뷰어 응답 없을 때 내장 구조 미리보기로 자동 전환",
         "표 자동 쪽 넘김, 제목 행 반복, 표 셀 가운데 정렬 등 표 변환 품질 개선",
         "기본 글꼴·글자 크기·문서 유형 옵션과 빈 줄/이모지 처리 개선",
+        "한글 폰트에 KoPub돋움체 Medium 추가: 제목·표머리 등 볼드 구간은 KoPub돋움체 Bold로 자동 처리",
+        "페이지 레이아웃 개선: 변환 작업 공간과 서비스 안내 영역 시각적 구분",
         "업데이트 내역 확인 기능과 Markdown 전용 변환 페이지 링크 추가"
       ],
       "dev": [
@@ -32,8 +20,10 @@
         "buildHwpx(ir, fontName, fontSize, marginsMm, paperSize) 시그니처와 DEFAULT_MARGINS_MM 정리",
         "buildTable pageBreak, repeatHeader, contentWidth 계산 및 paraPr/charPr 참조 안정화",
         "RhwpEditorClient timeout 분리 및 HWPX ZIP 내부 XML 기반 fallback preview 추가",
-        "changelog.json 기반 업데이트 모달 도입 및 오늘자 릴리스 항목을 v3.3.0으로 통합",
-        "서비스 워커 캐시 버전 v3.2.4 → v3.3.0"
+        "getBoldFontName() 추가 — KoPub돋움체 Medium처럼 Bold가 별도 파일인 폰트 감지, fontRef='1' 참조",
+        "dl-indicator — dl-scan 키프레임 스캐닝 애니메이션 (triggerDownload 및 수동 클릭 시 2.8초 표시)",
+        "zone-divider CSS — 작업 공간(--work)과 안내 공간(--info) 라벨 구분자",
+        "changelog.json 기반 업데이트 모달 도입, 서비스 워커 캐시 버전 v3.4.0"
       ]
     },
     {
