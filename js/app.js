@@ -838,8 +838,8 @@ function closeChangelog() {
 
 // ─────────────────────────────────────────────────────────────────────────
 // [rhwp 뷰어 클라이언트]
-//   edwardkim.github.io/rhwp iframe과 postMessage로 통신
-//   API: {type:'rhwp-request', id, method, params} → {type:'rhwp-response', id, result/error}
+//   외부 rhwp iframe이 postMessage API에 응답하는 경우에만 사용한다.
+//   응답하지 않으면 openPreview()가 내장 HWPX 구조 미리보기로 전환한다.
 // ─────────────────────────────────────────────────────────────────────────
 class RhwpEditorClient {
     constructor(iframeEl) {
@@ -857,20 +857,19 @@ class RhwpEditorClient {
         e.data.error ? cb.reject(new Error(e.data.error)) : cb.resolve(e.data.result);
     }
 
-    _send(method, params = {}) {
+    _send(method, params = {}, timeoutMs = 10000) {
         const id = ++this._reqId;
         return new Promise((resolve, reject) => {
             this._pending.set(id, { resolve, reject });
             this._iframe.contentWindow.postMessage(
                 { type: 'rhwp-request', id, method, params }, '*'
             );
-            // 10초 타임아웃
             setTimeout(() => {
                 if (this._pending.has(id)) {
                     this._pending.delete(id);
                     reject(new Error(`rhwp timeout: ${method}`));
                 }
-            }, 10000);
+            }, timeoutMs);
         });
     }
 
@@ -879,7 +878,7 @@ class RhwpEditorClient {
     async waitReady() {
         for (let i = 0; i < 30; i++) {
             try {
-                const ok = await this._send('ready');
+                const ok = await this._send('ready', {}, 1500);
                 if (ok) return;
             } catch (_) {
                 await new Promise(r => setTimeout(r, 500));
@@ -893,11 +892,103 @@ class RhwpEditorClient {
         const bytes = buf instanceof ArrayBuffer
             ? Array.from(new Uint8Array(buf))
             : Array.from(buf);
-        return this._send('loadFile', { data: bytes, fileName });
+        return this._send('loadFile', { data: bytes, fileName }, 45000);
     }
 }
 
 let _rhwpClient = null;
+
+function getXmlNodesByName(root, localName) {
+    return [
+        ...Array.from(root.getElementsByTagNameNS('*', localName)),
+        ...Array.from(root.getElementsByTagName(localName)),
+        ...Array.from(root.getElementsByTagName(`hp:${localName}`)),
+    ].filter((node, index, arr) => arr.indexOf(node) === index);
+}
+
+function hwpUnitToMm(value) {
+    const n = Number(value);
+    return Number.isFinite(n) ? `${(n / 283.465).toFixed(1)}mm` : '-';
+}
+
+function buildFallbackParagraphs(sectionXml, previewText) {
+    const doc = new DOMParser().parseFromString(sectionXml || '', 'application/xml');
+    const parseError = getXmlNodesByName(doc, 'parsererror')[0];
+    if (parseError) {
+        return {
+            margins: null,
+            tableCount: 0,
+            paragraphs: previewText ? previewText.split(/\r?\n/).filter(Boolean) : [],
+        };
+    }
+
+    const margins = getXmlNodesByName(doc, 'margin')[0] || null;
+    const tableCount = getXmlNodesByName(doc, 'tbl').length;
+    const pNodes = getXmlNodesByName(doc, 'p');
+    const paragraphs = pNodes.map(p => {
+        const text = getXmlNodesByName(p, 't')
+            .map(node => node.textContent || '')
+            .join('')
+            .trim();
+        return text;
+    }).filter(Boolean);
+
+    if (!paragraphs.length && previewText) {
+        paragraphs.push(...previewText.split(/\r?\n/).map(s => s.trim()).filter(Boolean));
+    }
+
+    return { margins, tableCount, paragraphs };
+}
+
+async function renderBuiltInPreview(blob, sourceError, loading, countEl) {
+    if (typeof JSZip === 'undefined') throw new Error('JSZip이 로드되지 않았습니다.');
+
+    const zip = await JSZip.loadAsync(await blob.arrayBuffer());
+    const sectionFile = zip.file('Contents/section0.xml');
+    if (!sectionFile) throw new Error('Contents/section0.xml을 찾을 수 없습니다.');
+
+    const [sectionXml, previewText] = await Promise.all([
+        sectionFile.async('string'),
+        zip.file('Preview/PrvText.txt')?.async('string').catch(() => '') || '',
+    ]);
+    const { margins, tableCount, paragraphs } = buildFallbackParagraphs(sectionXml, previewText);
+    const fileName = (state.file?.name || 'document').replace(/\.[^.]+$/, '') + '.hwpx';
+    const shown = paragraphs.slice(0, 120);
+    const marginItems = margins ? [
+        ['위', 'top'], ['아래', 'bottom'], ['왼쪽', 'left'], ['오른쪽', 'right'],
+        ['머리말', 'header'], ['꼬리말', 'footer'],
+    ].map(([label, attr]) => `
+        <span><strong>${label}</strong>${hwpUnitToMm(margins.getAttribute(attr))}</span>
+    `).join('') : '<span>여백 정보를 찾지 못했습니다.</span>';
+
+    loading.classList.add('preview-loading--fallback');
+    loading.style.display = 'flex';
+    loading.innerHTML = `
+        <div class="fallback-preview">
+            <div class="fallback-preview-head">
+                <div>
+                    <strong>내장 HWPX 미리보기</strong>
+                    <p>원격 rhwp 뷰어가 응답하지 않아 생성된 HWPX 내부 내용을 직접 표시합니다.</p>
+                </div>
+                ${state.downloadUrl ? `<a class="fallback-download" href="${state.downloadUrl}" download="${escHtml(fileName)}">다운로드</a>` : ''}
+            </div>
+            <div class="fallback-notice">
+                <strong>rhwp 연결 상태:</strong> ${escHtml(sourceError?.message || '응답 없음')}
+            </div>
+            <div class="fallback-meta">
+                <span><strong>파일</strong>${escHtml(fileName)}</span>
+                <span><strong>표</strong>${tableCount}개</span>
+                ${marginItems}
+            </div>
+            <div class="fallback-doc">
+                ${shown.length
+                    ? shown.map(text => `<p>${escHtml(text)}</p>`).join('')
+                    : '<p class="fallback-empty">표시할 텍스트가 없습니다. 다운로드한 HWPX를 한컴오피스에서 확인해 주세요.</p>'}
+            </div>
+        </div>`;
+
+    if (countEl) countEl.textContent = `구조 미리보기 · ${paragraphs.length}문단`;
+}
 
 /** 미리보기 모달 열기 — HWPX Blob을 rhwp iframe에 로드 */
 async function openPreview(blob) {
@@ -909,6 +1000,7 @@ async function openPreview(blob) {
 
     // 모달 표시
     modal.classList.add('open');
+    loading.classList.remove('preview-loading--fallback');
     loading.style.display = 'flex';
     loading.innerHTML = `
         <div>
@@ -936,16 +1028,22 @@ async function openPreview(blob) {
         }
         loading.style.display = 'none';
     } catch (err) {
-        loading.innerHTML = `
-            <div style="text-align:center;padding:24px">
-                <p style="font-size:1.8rem;margin-bottom:10px">⚠</p>
-                <p style="font-weight:600;color:var(--c-error)">뷰어 로드 실패</p>
-                <p style="font-size:0.8rem;color:var(--c-text-muted);margin-top:6px">${escHtml(err.message)}</p>
-                <p style="font-size:0.78rem;color:var(--c-text-muted);margin-top:4px">
-                    팝업 차단, CORS, 또는 네트워크 문제일 수 있습니다
-                </p>
-            </div>`;
         console.error('[rhwp]', err);
+        try {
+            await renderBuiltInPreview(blob, err, loading, countEl);
+        } catch (fallbackErr) {
+            loading.classList.remove('preview-loading--fallback');
+            loading.innerHTML = `
+                <div style="text-align:center;padding:24px">
+                    <p style="font-size:1.8rem;margin-bottom:10px">⚠</p>
+                    <p style="font-weight:600;color:var(--c-error)">미리보기 로드 실패</p>
+                    <p style="font-size:0.8rem;color:var(--c-text-muted);margin-top:6px">${escHtml(fallbackErr.message)}</p>
+                    <p style="font-size:0.78rem;color:var(--c-text-muted);margin-top:4px">
+                        생성된 HWPX는 다운로드 후 한컴오피스에서 확인할 수 있습니다.
+                    </p>
+                </div>`;
+            console.error('[preview fallback]', fallbackErr);
+        }
     }
 }
 

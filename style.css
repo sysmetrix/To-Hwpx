@@ -1218,6 +1218,100 @@ a:hover { text-decoration: underline; }
     color: var(--c-text-muted);
     margin-top: 6px;
 }
+.preview-loading--fallback {
+    align-items: stretch;
+    justify-content: stretch;
+    background: #f8fafc;
+    text-align: left;
+    color: var(--c-text);
+}
+.fallback-preview {
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    padding: 22px;
+}
+.fallback-preview-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 14px;
+}
+.fallback-preview-head strong {
+    display: block;
+    font-size: 1rem;
+    color: var(--c-text);
+}
+.fallback-preview-head p {
+    margin-top: 4px;
+    font-size: 0.82rem;
+    color: var(--c-text-sub);
+}
+.fallback-download {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 34px;
+    padding: 0 14px;
+    border-radius: 6px;
+    background: var(--c-primary);
+    color: #fff;
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-decoration: none;
+}
+.fallback-notice {
+    padding: 10px 12px;
+    border: 1px solid #fed7aa;
+    border-radius: 6px;
+    background: #fff7ed;
+    color: #9a3412;
+    font-size: 0.8rem;
+    margin-bottom: 12px;
+}
+.fallback-meta {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 8px;
+    margin-bottom: 16px;
+}
+.fallback-meta span {
+    min-height: 48px;
+    padding: 9px 10px;
+    border: 1px solid var(--c-border);
+    border-radius: 6px;
+    background: #fff;
+    color: var(--c-text);
+    font-size: 0.86rem;
+}
+.fallback-meta strong {
+    display: block;
+    color: var(--c-text-muted);
+    font-size: 0.72rem;
+    margin-bottom: 3px;
+}
+.fallback-doc {
+    max-width: 720px;
+    min-height: 480px;
+    margin: 0 auto;
+    padding: 34px 40px;
+    border: 1px solid var(--c-border);
+    background: #fff;
+    box-shadow: var(--shadow-md);
+    color: #111827;
+    line-height: 1.72;
+}
+.fallback-doc p {
+    margin: 0 0 0.72em;
+    word-break: keep-all;
+    overflow-wrap: anywhere;
+}
+.fallback-empty {
+    color: var(--c-text-muted);
+    text-align: center;
+}
 .loading-spinner {
     width: 40px;
     height: 40px;
