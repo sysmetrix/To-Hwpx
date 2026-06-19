@@ -168,8 +168,8 @@ function extractFromNode(node, blocks) {
             if (text) blocks.push({ type: 'para', text: '▶ ' + text });
 
         } else if (tag === 'hr') {
-            // 수평선 → 빈 단락으로 구분 표시
-            blocks.push({ type: 'para', text: '─────────────────' });
+            // 수평선 → HR 블록 (hwpx.js buildHrPara()에서 단락 하단 테두리 선으로 렌더링)
+            blocks.push({ type: 'hr' });
 
         } else if (child.childNodes && child.childNodes.length > 0
             && !['script', 'style', 'head', 'nav', 'footer', 'aside'].includes(tag)) {
@@ -190,12 +190,9 @@ function extractHtmlTable(tableEl) {
             .map(td => sanitize(td.textContent.trim()))
     );
 
-    // 첫 행에 <th> 요소가 하나 이상 있으면 헤더 행으로 분리
-    const hasThInFirstRow = rows[0].querySelector('th') !== null;
-    if (hasThInFirstRow && allRows.length > 1) {
-        return { type: 'table', header: allRows[0], rows: allRows.slice(1) };
-    }
-    return { type: 'table', header: null, rows: allRows };
+    if (!allRows.length) return null;
+    // 첫 행을 항상 헤더 행으로 처리 (D9D9D9 배경색 적용)
+    return { type: 'table', header: allRows[0], rows: allRows.slice(1) };
 }
 
 

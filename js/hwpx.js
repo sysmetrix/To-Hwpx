@@ -225,14 +225,14 @@ function buildHeaderXml(fontName, basePt) {
       </hh:charPr>`;
     };
 
-    const paraBase = (id, align, spacing, prev, next, indentLeft = 0) =>
+    const paraBase = (id, align, spacing, prev, next, indentLeft = 0, borderRef = '1') =>
         `      <hh:paraPr id="${id}" tabPrIDRef="0" condense="0" fontLineHeight="0" snapToGrid="1" suppressLineNumbers="0" checked="0">
         <hh:align horizontal="${align}" vertical="BASELINE"/>
         <hh:heading type="NONE" idRef="0" level="0"/>
         <hh:breakSetting breakLatinWord="KEEP_WORD" breakNonLatinWord="KEEP_WORD" widowOrphan="0" keepWithNext="0" keepLines="0" pageBreakBefore="0" lineWrap="BREAK"/>
         <hh:margin><hh:intent value="0" unit="HWPUNIT"/><hh:left value="${indentLeft}" unit="HWPUNIT"/><hh:right value="0" unit="HWPUNIT"/><hh:prev value="${prev}" unit="HWPUNIT"/><hh:next value="${next}" unit="HWPUNIT"/></hh:margin>
         <hh:lineSpacing type="PERCENT" value="${spacing}" unit="HWPUNIT"/>
-        <hh:border borderFillIDRef="1" offsetLeft="0" offsetRight="0" offsetTop="0" offsetBottom="0" connect="0" ignoreMargin="0"/>
+        <hh:border borderFillIDRef="${borderRef}" offsetLeft="0" offsetRight="0" offsetTop="0" offsetBottom="0" connect="0" ignoreMargin="0"/>
       </hh:paraPr>`;
 
     return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -248,8 +248,8 @@ ${fontFaceBlock('OTHER')}
 ${fontFaceBlock('SYMBOL')}
 ${fontFaceBlock('USER')}
     </hh:fontfaces>
-    <hh:charProperties itemCnt="9">
-      <!-- 0=본문, 1=H1 bold, 2=H2 bold, 3=H3 bold, 4=H4 bold, 5=표머리 bold, 6=코드, 7=본문bold, 8=본문italic -->
+    <hh:charProperties itemCnt="10">
+      <!-- 0=본문, 1=H1 bold, 2=H2 bold, 3=H3 bold, 4=H4 bold, 5=표머리 bold, 6=코드, 7=본문bold, 8=본문italic, 9=본문bold+italic -->
 ${charBase(0, sz.body,  false, false)}
 ${charBase(1, sz.h1,   true,  false)}
 ${charBase(2, sz.h2,   true,  false)}
@@ -259,9 +259,10 @@ ${charBase(5, sz.tblHd,true,  false)}
 ${charBase(6, sz.code, false, false).replace('"#000000"', '"#333333"')}
 ${charBase(7, sz.body, true,  false)}
 ${charBase(8, sz.body, false, true)}
+${charBase(9, sz.body, true,  true)}
     </hh:charProperties>
-    <hh:paraProperties itemCnt="8">
-      <!-- id  정렬    행간  전    후   들여 -->
+    <hh:paraProperties itemCnt="10">
+      <!-- id  정렬    행간  전    후   들여  테두리참조 -->
 ${paraBase(0, 'JUSTIFY', 160,   0,  850,    0)}
 ${paraBase(1, 'LEFT',    180, 850,  567,    0)}
 ${paraBase(2, 'LEFT',    170, 700,  425,    0)}
@@ -271,8 +272,12 @@ ${paraBase(5, 'LEFT',    160,   0,  100,  600)}
 ${paraBase(6, 'LEFT',    140, 200,  200,  400)}
       <!-- id=7  표 셀 가운데 정렬 -->
 ${paraBase(7, 'CENTER',  160,   0,    0,    0)}
+      <!-- id=8  구분선(HR): 단락 하단에 0.4mm 실선 테두리 -->
+${paraBase(8, 'LEFT',    100, 567,  567,    0, '10')}
+      <!-- id=9  빈 줄 간격 조절용: 추가 여백 없음 -->
+${paraBase(9, 'LEFT',    100,   0,    0,    0)}
     </hh:paraProperties>
-    <hh:borderFills itemCnt="9">
+    <hh:borderFills itemCnt="10">
       <!-- id=1 테두리 없음 -->
       <hh:borderFill id="1" threeD="0" shadow="0" centerLine="NONE" breakCellSeparateLine="0">
         <hh:slash type="NONE" Crooked="0" isCounter="0"/><hh:backSlash type="NONE" Crooked="0" isCounter="0"/>
@@ -358,6 +363,15 @@ ${paraBase(7, 'CENTER',  160,   0,    0,    0)}
         <hh:diagonal type="SOLID" width="0.1 mm" color="#000000"/>
         <hh:fillBrush><hh:winBrush faceColor="#D9D9D9" hatchColor="#000000" alpha="0"/></hh:fillBrush>
       </hh:borderFill>
+      <!-- id=10 구분선(HR)용: 하단 테두리만 실선 0.4mm 회색 -->
+      <hh:borderFill id="10" threeD="0" shadow="0" centerLine="NONE" breakCellSeparateLine="0">
+        <hh:slash type="NONE" Crooked="0" isCounter="0"/><hh:backSlash type="NONE" Crooked="0" isCounter="0"/>
+        <hh:leftBorder type="NONE" width="0.1 mm" color="#000000"/>
+        <hh:rightBorder type="NONE" width="0.1 mm" color="#000000"/>
+        <hh:topBorder type="NONE" width="0.1 mm" color="#000000"/>
+        <hh:bottomBorder type="SOLID" width="0.4 mm" color="#555555"/>
+        <hh:diagonal type="SOLID" width="0.1 mm" color="#000000"/>
+      </hh:borderFill>
     </hh:borderFills>
   </hh:refList>
 </hh:head>`;
@@ -391,7 +405,7 @@ function buildPara(text, charId = '0', paraId = '0') {
 /**
  * 인라인 runs 배열(bold/italic/code 플래그) → 단락 XML
  * parsers.js extractInlineRuns()가 생성한 runs 배열을 처리한다.
- * charPr ID: 0=본문, 6=코드, 7=본문bold, 8=본문italic
+ * charPr ID: 0=본문, 6=코드, 7=본문bold, 8=본문italic, 9=본문bold+italic
  */
 function buildParaRuns(runs, paraId = '0') {
     const pid = _nextParaId();
@@ -400,19 +414,30 @@ function buildParaRuns(runs, paraId = '0') {
         if (!run.text) continue;
         const safe = xmlEsc(replaceEmoji(run.text));
         let cId = '0';
-        if      (run.code)  cId = '6';
-        else if (run.bold)  cId = '7';
-        else if (run.italic) cId = '8';
+        if      (run.code)               cId = '6';
+        else if (run.bold && run.italic) cId = '9';
+        else if (run.bold)               cId = '7';
+        else if (run.italic)             cId = '8';
         runsXml += `<hp:run charPrIDRef="${cId}"><hp:t>${safe}</hp:t></hp:run>`;
     }
     if (!runsXml) return buildBlankPara();
     return `<hp:p id="${pid}" paraPrIDRef="${paraId}" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0">${runsXml}</hp:p>`;
 }
 
-/** 빈 단락 (빈 줄 표현용) — 공백 문자 하나 포함 */
+/**
+ * 빈 단락 (빈 줄 간격 표현용) — paraPr id=9(여백 없음) 사용
+ * 본문 paraPr(id=0)의 next=850 여백이 중복 적용되지 않도록 별도 스타일 사용
+ */
 function buildBlankPara() {
     const pid = _nextParaId();
-    return `<hp:p id="${pid}" paraPrIDRef="0" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0">` +
+    return `<hp:p id="${pid}" paraPrIDRef="9" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0">` +
+        `<hp:run charPrIDRef="0"><hp:t> </hp:t></hp:run></hp:p>`;
+}
+
+/** 구분선(HR) 단락 — paraPr id=8(하단 테두리 실선) 사용 */
+function buildHrPara() {
+    const pid = _nextParaId();
+    return `<hp:p id="${pid}" paraPrIDRef="8" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0">` +
         `<hp:run charPrIDRef="0"><hp:t> </hp:t></hp:run></hp:p>`;
 }
 
@@ -420,6 +445,41 @@ function buildBlankPara() {
 function headingIds(level) {
     const lv = Math.max(1, Math.min(level || 1, 4));
     return { charId: String(lv), paraId: String(lv) };
+}
+
+/**
+ * 표 열 너비를 셀 내용 길이에 비례하여 계산
+ * 한글 글자(2바이트)는 2배, 영문/숫자(1바이트)는 1로 환산
+ * 최소 열 너비 3000 HWPUNIT(≈10.6mm) 보장, 최대 40자로 상한
+ */
+function getColumnWidths(allRows, nCols, tableWidth) {
+    const MIN_COL = 3000;
+    if (nCols <= 1) return [tableWidth];
+
+    const maxLens = new Array(nCols).fill(1);
+    for (const row of allRows) {
+        for (let c = 0; c < nCols; c++) {
+            const cell = (row && row[c] !== undefined) ? String(row[c]) : '';
+            const len = Math.min(
+                Array.from(cell).reduce((s, ch) =>
+                    s + (/[ᄀ-퟿가-힯　-〿]/.test(ch) ? 2 : 1), 0),
+                40
+            );
+            maxLens[c] = Math.max(maxLens[c], len);
+        }
+    }
+
+    const totalLen = maxLens.reduce((a, b) => a + b, 0);
+    const usable = tableWidth - MIN_COL * nCols;
+    if (usable <= 0) {
+        const eq = Math.floor(tableWidth / nCols);
+        return new Array(nCols).fill(eq);
+    }
+
+    const widths = maxLens.map(len => Math.round(MIN_COL + (len / totalLen) * usable));
+    const diff = tableWidth - widths.reduce((a, b) => a + b, 0);
+    widths[widths.length - 1] += diff;
+    return widths;
 }
 
 /**
@@ -440,7 +500,7 @@ function buildTable(header, rows, contentWidthHwp = 48000) {
     const nRows = allRows.length;
     const nCols = Math.max(...allRows.map(r => (r || []).length), 1);
     const tableWidth = Math.max(12000, contentWidthHwp);
-    const cellWidth = Math.floor(tableWidth / nCols);
+    const colWidths = getColumnWidths(allRows, nCols, tableWidth);
     const pid = _nextParaId();
 
     let rowsXml = '';
@@ -470,7 +530,7 @@ function buildTable(header, rows, contentWidthHwp = 48000) {
                 `</hp:subList>` +
                 `<hp:cellAddr colAddr="${c}" rowAddr="${r}"/>` +
                 `<hp:cellSpan colSpan="1" rowSpan="1"/>` +
-                `<hp:cellSz width="${cellWidth}" height="1000"/>` +
+                `<hp:cellSz width="${colWidths[c]}" height="1000"/>` +
                 `<hp:cellMargin left="510" right="510" top="141" bottom="141"/>` +
                 `</hp:tc>`;
         }
@@ -607,6 +667,10 @@ function buildSection(ir, marginsHwp, paperKey, landscape = false) {
         } else if (bt === 'blank') {
             // 명시적 빈 줄 블록
             parts.push(buildBlankPara());
+
+        } else if (bt === 'hr') {
+            // 구분선 → 하단 테두리 실선 단락
+            parts.push(buildHrPara());
 
         } else if (bt === 'list') {
             (block.items || []).forEach((item, i) => {

@@ -1,6 +1,32 @@
 {
-  "current": "3.9.6",
+  "current": "4.0.0",
   "versions": [
+    {
+      "version": "4.0.0",
+      "date": "2026-06-19",
+      "user": [
+        "구분선(---) 변환 개선 — 텍스트 대신 실제 수평 실선으로 출력",
+        "문단 빈 줄 간격 개선 — 빈 줄이 본문 단락과 여백을 중복 추가하지 않도록 수정",
+        "표 첫 행 D9D9D9 배경색 — HTML 표처럼 th/td 구분 없이 첫 행을 항상 머리글로 처리",
+        "표 열 너비 자동 조정 — 셀 내용 길이에 비례해 열 너비를 배분 (최소 너비 보장)",
+        "볼드+이탤릭(***텍스트***) 동시 적용 지원"
+      ],
+      "dev": [
+        "[v4.0.0] parsers.js: <hr> 태그 → {type:'hr'} 블록으로 변경 (텍스트 대시 제거)",
+        "[v4.0.0] parsers.js: extractHtmlTable() th/td 분기 제거 → 첫 행 항상 header로 처리",
+        "[v4.0.0] hwpx.js: charPr id=9(bold+italic) 추가, charProperties itemCnt 9→10",
+        "[v4.0.0] hwpx.js: paraBase() borderRef 파라미터 추가 (기본값 '1')",
+        "[v4.0.0] hwpx.js: paraPr id=8(HR 구분선, borderFillIDRef='10'), id=9(빈 줄 spacer, 여백 0) 추가, itemCnt 8→10",
+        "[v4.0.0] hwpx.js: borderFill id=10(하단 0.4mm 실선 #555555) 추가, itemCnt 9→10",
+        "[v4.0.0] hwpx.js: buildBlankPara() paraPrIDRef 0→9 (여백 중복 방지)",
+        "[v4.0.0] hwpx.js: buildHrPara() 신설 — paraPrIDRef='8' 구분선 단락",
+        "[v4.0.0] hwpx.js: buildParaRuns() bold+italic 동시 → charPrIDRef='9'",
+        "[v4.0.0] hwpx.js: getColumnWidths() 신설 — 한글/영문 글자폭 비례 열 너비 계산",
+        "[v4.0.0] hwpx.js: buildTable() cellWidth → colWidths[] 적용",
+        "[v4.0.0] hwpx.js: buildSection() hr 블록 → buildHrPara() 호출",
+        "[v4.0.0] sw.js: CACHE_VERSION to-hwpx-v4.0.0"
+      ]
+    },
     {
       "version": "3.9.6",
       "date": "2026-06-19",
