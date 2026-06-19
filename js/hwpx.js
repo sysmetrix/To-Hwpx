@@ -178,6 +178,7 @@ function getBoldFontName(name) {
  * [charPr ID]  0=본문, 1=H1, 2=H2, 3=H3, 4=H4, 5=표머리, 6=코드, 7=본문bold, 8=본문italic
  * [paraPr ID]  0=본문, 1=H1, 2=H2, 3=H3, 4=H4, 5=목록, 6=코드블록, 7=표셀(CENTER)
  * [borderFill] 1=테두리없음, 2=실선(표셀), 3=실선+회색음영(표머리)
+ *              4~9=표 좌/우 바깥 테두리 제거 변형
  */
 function buildHeaderXml(fontName, basePt) {
     const fn = xmlEsc(fontName || '휴먼명조');
@@ -271,7 +272,7 @@ ${paraBase(6, 'LEFT',    140, 200,  200,  400)}
       <!-- id=7  표 셀 가운데 정렬 -->
 ${paraBase(7, 'CENTER',  160,   0,    0,    0)}
     </hh:paraProperties>
-    <hh:borderFills itemCnt="3">
+    <hh:borderFills itemCnt="9">
       <!-- id=1 테두리 없음 -->
       <hh:borderFill id="1" threeD="0" shadow="0" centerLine="NONE" breakCellSeparateLine="0">
         <hh:slash type="NONE" Crooked="0" isCounter="0"/><hh:backSlash type="NONE" Crooked="0" isCounter="0"/>
@@ -298,7 +299,64 @@ ${paraBase(7, 'CENTER',  160,   0,    0,    0)}
         <hh:topBorder type="SOLID" width="0.12 mm" color="#000000"/>
         <hh:bottomBorder type="SOLID" width="0.12 mm" color="#000000"/>
         <hh:diagonal type="SOLID" width="0.1 mm" color="#000000"/>
-        <hh:fillBrush><hh:winBrush faceColor="#E6E6E6" hatchColor="#000000" alpha="0"/></hh:fillBrush>
+        <hh:fillBrush><hh:winBrush faceColor="#D9D9D9" hatchColor="#000000" alpha="0"/></hh:fillBrush>
+      </hh:borderFill>
+      <!-- id=4 일반 셀: 왼쪽 바깥 테두리 없음 -->
+      <hh:borderFill id="4" threeD="0" shadow="0" centerLine="NONE" breakCellSeparateLine="0">
+        <hh:slash type="NONE" Crooked="0" isCounter="0"/><hh:backSlash type="NONE" Crooked="0" isCounter="0"/>
+        <hh:leftBorder type="NONE" width="0.1 mm" color="#000000"/>
+        <hh:rightBorder type="SOLID" width="0.12 mm" color="#000000"/>
+        <hh:topBorder type="SOLID" width="0.12 mm" color="#000000"/>
+        <hh:bottomBorder type="SOLID" width="0.12 mm" color="#000000"/>
+        <hh:diagonal type="SOLID" width="0.1 mm" color="#000000"/>
+      </hh:borderFill>
+      <!-- id=5 일반 셀: 오른쪽 바깥 테두리 없음 -->
+      <hh:borderFill id="5" threeD="0" shadow="0" centerLine="NONE" breakCellSeparateLine="0">
+        <hh:slash type="NONE" Crooked="0" isCounter="0"/><hh:backSlash type="NONE" Crooked="0" isCounter="0"/>
+        <hh:leftBorder type="SOLID" width="0.12 mm" color="#000000"/>
+        <hh:rightBorder type="NONE" width="0.1 mm" color="#000000"/>
+        <hh:topBorder type="SOLID" width="0.12 mm" color="#000000"/>
+        <hh:bottomBorder type="SOLID" width="0.12 mm" color="#000000"/>
+        <hh:diagonal type="SOLID" width="0.1 mm" color="#000000"/>
+      </hh:borderFill>
+      <!-- id=6 표 머리글: 왼쪽 바깥 테두리 없음 -->
+      <hh:borderFill id="6" threeD="0" shadow="0" centerLine="NONE" breakCellSeparateLine="0">
+        <hh:slash type="NONE" Crooked="0" isCounter="0"/><hh:backSlash type="NONE" Crooked="0" isCounter="0"/>
+        <hh:leftBorder type="NONE" width="0.1 mm" color="#000000"/>
+        <hh:rightBorder type="SOLID" width="0.12 mm" color="#000000"/>
+        <hh:topBorder type="SOLID" width="0.12 mm" color="#000000"/>
+        <hh:bottomBorder type="SOLID" width="0.12 mm" color="#000000"/>
+        <hh:diagonal type="SOLID" width="0.1 mm" color="#000000"/>
+        <hh:fillBrush><hh:winBrush faceColor="#D9D9D9" hatchColor="#000000" alpha="0"/></hh:fillBrush>
+      </hh:borderFill>
+      <!-- id=7 표 머리글: 오른쪽 바깥 테두리 없음 -->
+      <hh:borderFill id="7" threeD="0" shadow="0" centerLine="NONE" breakCellSeparateLine="0">
+        <hh:slash type="NONE" Crooked="0" isCounter="0"/><hh:backSlash type="NONE" Crooked="0" isCounter="0"/>
+        <hh:leftBorder type="SOLID" width="0.12 mm" color="#000000"/>
+        <hh:rightBorder type="NONE" width="0.1 mm" color="#000000"/>
+        <hh:topBorder type="SOLID" width="0.12 mm" color="#000000"/>
+        <hh:bottomBorder type="SOLID" width="0.12 mm" color="#000000"/>
+        <hh:diagonal type="SOLID" width="0.1 mm" color="#000000"/>
+        <hh:fillBrush><hh:winBrush faceColor="#D9D9D9" hatchColor="#000000" alpha="0"/></hh:fillBrush>
+      </hh:borderFill>
+      <!-- id=8 일반 셀: 좌우 바깥 테두리 없음 (1열 표) -->
+      <hh:borderFill id="8" threeD="0" shadow="0" centerLine="NONE" breakCellSeparateLine="0">
+        <hh:slash type="NONE" Crooked="0" isCounter="0"/><hh:backSlash type="NONE" Crooked="0" isCounter="0"/>
+        <hh:leftBorder type="NONE" width="0.1 mm" color="#000000"/>
+        <hh:rightBorder type="NONE" width="0.1 mm" color="#000000"/>
+        <hh:topBorder type="SOLID" width="0.12 mm" color="#000000"/>
+        <hh:bottomBorder type="SOLID" width="0.12 mm" color="#000000"/>
+        <hh:diagonal type="SOLID" width="0.1 mm" color="#000000"/>
+      </hh:borderFill>
+      <!-- id=9 표 머리글: 좌우 바깥 테두리 없음 (1열 표) -->
+      <hh:borderFill id="9" threeD="0" shadow="0" centerLine="NONE" breakCellSeparateLine="0">
+        <hh:slash type="NONE" Crooked="0" isCounter="0"/><hh:backSlash type="NONE" Crooked="0" isCounter="0"/>
+        <hh:leftBorder type="NONE" width="0.1 mm" color="#000000"/>
+        <hh:rightBorder type="NONE" width="0.1 mm" color="#000000"/>
+        <hh:topBorder type="SOLID" width="0.12 mm" color="#000000"/>
+        <hh:bottomBorder type="SOLID" width="0.12 mm" color="#000000"/>
+        <hh:diagonal type="SOLID" width="0.1 mm" color="#000000"/>
+        <hh:fillBrush><hh:winBrush faceColor="#D9D9D9" hatchColor="#000000" alpha="0"/></hh:fillBrush>
       </hh:borderFill>
     </hh:borderFills>
   </hh:refList>
@@ -390,11 +448,18 @@ function buildTable(header, rows, contentWidthHwp = 48000) {
         const row  = allRows[r] || [];
         const isHd = (header && header.length && r === 0);
         const cId  = isHd ? '5' : '0';   // 표머리=5(bold), 일반=0
-        const bfId = isHd ? '3' : '2';   // 머리음영=3, 일반셀=2
         let cellsXml = '';
 
         for (let c = 0; c < nCols; c++) {
             const val = (row[c] !== undefined && row[c] !== null) ? String(row[c]) : '';
+            let bfId = isHd ? '3' : '2';
+            if (nCols === 1) {
+                bfId = isHd ? '9' : '8';
+            } else if (c === 0) {
+                bfId = isHd ? '6' : '4';
+            } else if (c === nCols - 1) {
+                bfId = isHd ? '7' : '5';
+            }
             // 자식 순서: subList → cellAddr → cellSpan → cellSz → cellMargin
             // (rhwp serializer/hwpx/table.rs 기준 OWPML 공식 순서)
             cellsXml +=
@@ -418,7 +483,7 @@ function buildTable(header, rows, contentWidthHwp = 48000) {
     return `<hp:p id="${pid}" paraPrIDRef="0" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0"><hp:run charPrIDRef="0">` +
         `<hp:tbl id="0" zOrder="0" numberingType="TABLE" textWrap="TOP_AND_BOTTOM" ` +
         `textFlow="BOTH_SIDES" lock="0" dropcapstyle="None" pageBreak="ROW" ` +
-        `repeatHeader="1" rowCnt="${nRows}" colCnt="${nCols}" cellSpacing="0" borderFillIDRef="2">` +
+        `repeatHeader="1" rowCnt="${nRows}" colCnt="${nCols}" cellSpacing="0" borderFillIDRef="1">` +
         `<hp:sz width="${tableWidth}" widthRelTo="ABSOLUTE" height="0" heightRelTo="ABSOLUTE" protect="0"/>` +
         `<hp:pos treatAsChar="1" affectLSpacing="0" flowWithText="1" allowOverlap="0" holdAnchorAndSO="0" ` +
         `vertRelTo="PARA" horzRelTo="COLUMN" vertAlign="TOP" horzAlign="LEFT" vertOffset="0" horzOffset="0"/>` +
@@ -605,7 +670,7 @@ async function buildHwpx(ir, fontName = '휴먼명조', fontSize = 12, marginsMm
     zip.file('Preview/PrvImage.png',   MIN_PNG_B64, { base64: true });
 
     return zip.generateAsync(
-        { type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } },
+        { type: 'blob', mimeType: MIMETYPE, compression: 'DEFLATE', compressionOptions: { level: 6 } },
         function updateCallback(metadata) {
             if (onProgress) {
                 onProgress(metadata.percent);

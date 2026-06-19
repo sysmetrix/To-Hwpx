@@ -1,6 +1,25 @@
 {
-  "current": "3.9.2",
+  "current": "3.9.3",
   "versions": [
+    {
+      "version": "3.9.3",
+      "date": "2026-06-19",
+      "user": [
+        "한글 문서 포맷 카드의 태극기 이모지를 HWP 문서 아이콘으로 교체",
+        "모바일 상단 메뉴가 정상적으로 열리고 화면 안에 정렬되도록 수정",
+        "모바일 다운로드 시 HWPX 파일이 ZIP로 보이는 현상을 줄이도록 다운로드 MIME/확장자 처리 보강",
+        "표 첫 행 배경색을 #D9D9D9로 통일하고 표 좌우 바깥 테두리를 선 없음으로 설정",
+        "좁은 모바일 화면에서 옵션과 카드 텍스트가 넘치지 않도록 반응형 레이아웃 보강"
+      ],
+      "dev": [
+        "[v3.9.3] index.html/style.css: HWP 포맷 카드 아이콘을 이모지에서 .card-icon-hwp 문서형 아이콘으로 교체",
+        "[v3.9.3] style.css: 모바일 메뉴 표시 조건을 .main-nav.open → #main-nav.open 기준으로 수정하고 항목 폭/정렬 보강",
+        "[v3.9.3] app.js/hwpx.js: JSZip generateAsync mimeType 지정, ensureHwpxBlob()/normalizeHwpxFileName() 추가, 다운로드 링크 type 지정",
+        "[v3.9.3] hwpx.js: borderFills itemCnt 3→9 확장, 표 머리글 faceColor #D9D9D9 적용, 첫/마지막 열 좌우 바깥 테두리 NONE 적용",
+        "[v3.9.3] style.css: 480px 이하 옵션 그리드 1열 전환, 카드 텍스트 줄바꿈 및 헤더 간격 보강",
+        "[v3.9.3] sw.js: CACHE_VERSION to-hwpx-v3.9.3"
+      ]
+    },
     {
       "version": "3.9.2",
       "date": "2026-06-18",

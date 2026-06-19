@@ -746,7 +746,7 @@ async function runConversionPipeline() {
         setStepState('repair', 'active');
         setProgress(93);
 
-        const finalBlob = hwpxBlob;  // 클라이언트 사이드 복구 제한으로 현재는 원본 사용
+        const finalBlob = ensureHwpxBlob(hwpxBlob);  // 모바일 브라우저가 ZIP로 추론하지 않도록 MIME 고정
         state.hwpxBlob = finalBlob;  // 미리보기 버튼에서 참조
         setStepState('repair', 'done');
 
@@ -837,6 +837,7 @@ function showResult({ url, fileName, size, validation }) {
                 <a id="download-link"
                    href="${url}"
                    download="${escHtml(fileName)}"
+                   type="application/hwp+zip"
                    class="btn-download">
                     ⬇ HWPX 다운로드
                 </a>
@@ -883,11 +884,23 @@ function triggerDownload(url, fileName) {
 
     const a = document.createElement('a');
     a.href = url;
-    a.download = fileName;
+    a.download = normalizeHwpxFileName(fileName);
+    a.type = 'application/hwp+zip';
     a.style.display = 'none';
     document.body.appendChild(a);
     a.click();
     a.remove();
+}
+
+function normalizeHwpxFileName(fileName) {
+    const base = String(fileName || 'document.hwpx').trim() || 'document.hwpx';
+    return base.toLowerCase().endsWith('.hwpx') ? base : base.replace(/\.[^.]+$/, '') + '.hwpx';
+}
+
+function ensureHwpxBlob(blob) {
+    if (!blob) return blob;
+    if (blob.type === 'application/hwp+zip') return blob;
+    return new Blob([blob], { type: 'application/hwp+zip' });
 }
 
 function revokeDownloadUrl() {

@@ -495,6 +495,7 @@ a:hover { text-decoration: underline; }
     cursor: pointer;
     transition: border-color var(--trans), box-shadow var(--trans), transform var(--trans);
     position: relative;
+    min-width: 0;
 }
 .format-card:hover:not(.coming-soon) {
     border-color: var(--c-primary);
@@ -531,6 +532,29 @@ a:hover { text-decoration: underline; }
     object-fit: contain;
     display: block;
 }
+.card-icon-hwp {
+    width: 36px;
+    height: 36px;
+    margin: 0 auto 8px;
+    border: 2px solid var(--c-primary);
+    border-radius: 6px;
+    color: var(--c-primary);
+    background: #fff;
+    font-size: 0.68rem;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: 0;
+    position: relative;
+}
+.card-icon-hwp::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    border-top: 11px solid var(--c-primary-light);
+    border-left: 11px solid transparent;
+}
+.card-icon-hwp span { position: relative; z-index: 1; }
 .card-ext    {
     display: inline-block;
     background: var(--c-primary-light);
@@ -1195,7 +1219,7 @@ a:hover { text-decoration: underline; }
     /* 헤더 내비게이션 — 모바일 드롭다운 */
     #menu-toggle { display: block; }
 
-    .main-nav {
+    #main-nav {
         display: none;
         position: absolute;
         top: 100%;
@@ -1203,12 +1227,24 @@ a:hover { text-decoration: underline; }
         right: 0;
         background: var(--c-surface);
         border-top: 1px solid var(--c-border);
-        flex-direction: column;
         padding: 8px;
         box-shadow: var(--shadow-md);
         z-index: 999;
     }
-    .main-nav.open { display: flex; }
+    #main-nav.open { display: block; }
+    #main-nav .main-nav {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 6px;
+    }
+    #main-nav .main-nav a,
+    #main-nav .nav-bookmark-btn {
+        display: flex;
+        width: 100%;
+        text-align: center;
+        justify-content: center;
+    }
 
     /* 변환기 레이아웃 단일 컬럼 */
     .converter-layout { grid-template-columns: 1fr; }
@@ -1233,12 +1269,22 @@ a:hover { text-decoration: underline; }
    ───────────────────────────────────────────────────────────────── */
 @media (max-width: 480px) {
     .container { padding: 0 16px; }
+    .utility-bar .container { flex-direction: column; gap: 6px; }
+    .header-inner { height: 56px; gap: 12px; }
+    .site-logo { font-size: 1.15rem; min-width: 0; }
     .hero      { padding: 48px 0 40px; }
     .formats-section,
     .converter-section,
     .how-section,
     .support-section { padding: 48px 0; }
     .format-grid { grid-template-columns: repeat(2, 1fr); }
+    .format-card { padding: 16px 10px; }
+    .card-name,
+    .card-quality {
+        overflow-wrap: anywhere;
+        word-break: keep-all;
+    }
+    .options-grid-4col { grid-template-columns: 1fr; }
     .steps-grid  { grid-template-columns: 1fr; }
     .margin-grid { grid-template-columns: 1fr 1fr; }
     .result-actions {
