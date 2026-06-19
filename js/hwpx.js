@@ -714,11 +714,15 @@ async function validateHwpx(blob, expectedMarginsMm = null) {
         const xml = await files['Contents/section0.xml'].async('string');
         if (!xml.includes('hancom.co.kr/hwpml/2011/section'))   issues.push('section0.xml: section 네임스페이스 없음');
         if (!xml.includes('hancom.co.kr/hwpml/2011/paragraph')) issues.push('section0.xml: paragraph 네임스페이스 없음');
-        try {
-            const parsed = new DOMParser().parseFromString(xml, 'application/xml');
-            const err = parsed.querySelector('parsererror');
-            if (err) issues.push('section0.xml XML 파싱 오류: ' + err.textContent.slice(0, 100).trim());
-        } catch { issues.push('section0.xml XML 파싱 예외'); }
+        if (typeof DOMParser !== 'undefined') {
+            try {
+                const parsed = new DOMParser().parseFromString(xml, 'application/xml');
+                const err = parsed.querySelector('parsererror');
+                if (err) issues.push('section0.xml XML 파싱 오류: ' + err.textContent.slice(0, 100).trim());
+            } catch (e) {
+                issues.push('section0.xml XML 파싱 예외: ' + e.message);
+            }
+        }
 
         const expected = marginsMmToHwp(expectedMarginsMm || DEFAULT_MARGINS_MM);
         if (/<hs:secPr\b|<hs:page\b|<hs:margin\b/.test(xml)) {
@@ -783,6 +787,12 @@ async function validateHwpx(blob, expectedMarginsMm = null) {
         const defPara  = new Set([...header.matchAll(/paraPr\s+id="(\d+)"/g)].map(m => m[1]));
         const usedPara = new Set([...section.matchAll(/paraPrIDRef="(\d+)"/g)].map(m => m[1]));
         for (const id of usedPara) if (!defPara.has(id)) issues.push(`paraPrIDRef="${id}" 미정의`);
+        const defBorder = new Set([...header.matchAll(/borderFill\s+id="(\d+)"/g)].map(m => m[1]));
+        const usedBorder = new Set([
+            ...header.matchAll(/borderFillIDRef="(\d+)"/g),
+            ...section.matchAll(/borderFillIDRef="(\d+)"/g),
+        ].map(m => m[1]));
+        for (const id of usedBorder) if (!defBorder.has(id)) issues.push(`borderFillIDRef="${id}" 미정의`);
     }
 
     return { pass: issues.length === 0, issues };
