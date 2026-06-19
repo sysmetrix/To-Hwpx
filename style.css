@@ -369,10 +369,32 @@ a:hover { text-decoration: underline; }
 .hero-sub {
     font-size: clamp(1rem, 2.5vw, 1.2rem);
     opacity: 0.9;
-    margin-bottom: 40px;
+    margin-bottom: 18px;
     max-width: 540px;
     margin-left: auto;
     margin-right: auto;
+}
+
+.hero-badges {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: 0 auto 28px;
+}
+.hero-badges span {
+    display: inline-flex;
+    align-items: center;
+    min-height: 30px;
+    padding: 5px 10px;
+    border: 1px solid rgba(255,255,255,0.32);
+    border-radius: var(--radius-sm);
+    background: rgba(255,255,255,0.12);
+    color: #fff;
+    font-size: 0.82rem;
+    font-weight: 700;
+    line-height: 1.2;
+    white-space: nowrap;
 }
 
 /* 드롭존 — 히어로 영역 내 */
@@ -1273,6 +1295,14 @@ a:hover { text-decoration: underline; }
     .header-inner { height: 56px; gap: 12px; }
     .site-logo { font-size: 1.15rem; min-width: 0; }
     .hero      { padding: 48px 0 40px; }
+    .hero-sub br { display: none; }
+    .hero-badges { margin-bottom: 22px; }
+    .hero-badges span {
+        flex: 1 1 130px;
+        justify-content: center;
+        white-space: normal;
+        text-align: center;
+    }
     .formats-section,
     .converter-section,
     .how-section,

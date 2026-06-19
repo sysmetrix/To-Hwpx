@@ -90,7 +90,7 @@
         <div class="container">
             <span>｢BWYF｣ AX Challenger 2026</span>
             <button class="util-changelog-btn" id="open-changelog" aria-label="업데이트 내역 보기">
-                📋 v3.9.3 업데이트 내역
+                📋 v3.9.4 업데이트 내역
             </button>
         </div>
     </div>
@@ -159,6 +159,12 @@
             한컴 오피스 없이 .hwpx 파일로 변환합니다.
         </p>
 
+        <div class="hero-badges" aria-label="지원 실행 환경">
+            <span>PC 브라우저 지원</span>
+            <span>모바일 브라우저 지원</span>
+            <span>PWA 설치 가능</span>
+        </div>
+
         <!-- 파일 드롭존 (app.js의 initDropZone에서 이벤트 연결) -->
         <div id="drop-zone" class="drop-zone" role="button" tabindex="0"
              aria-label="파일을 드래그하거나 클릭하여 선택">
@@ -171,7 +177,7 @@
         <input type="file" id="file-input" hidden
                accept=".md,.markdown,.html,.htm,.txt,.csv,.xlsx,.xls,.json,.ipynb,.docx,.hwp,.hwpx">
 
-        <p class="hero-note">파일은 브라우저에서만 처리됩니다. 서버에 전송되지 않습니다.</p>
+        <p class="hero-note">파일은 PC와 모바일 브라우저에서만 처리됩니다. 서버에 전송되지 않습니다.</p>
     </div>
 </section>
 
@@ -572,7 +578,7 @@
         <!-- ── 동작 원리 패널 ────────────────────────────────────── -->
         <div class="format-panel" id="panel-how" role="tabpanel">
             <span id="how-it-works" aria-hidden="true"></span>
-            <p class="section-sub" style="margin:16px 0 32px">브라우저 안에서 5단계로 완전히 처리됩니다</p>
+            <p class="section-sub" style="margin:16px 0 32px">PC와 모바일 브라우저 안에서 7단계로 완전히 처리됩니다</p>
             <div class="steps-grid">
 
                 <div class="how-step">
@@ -686,6 +692,13 @@
                             <td><span class="card-badge badge-available">지원됨</span></td>
                             <td>JSON 파싱 → cell_type별 처리</td>
                             <td>이미지 출력 셀 미지원</td>
+                        </tr>
+                        <tr>
+                            <td><strong>PC / 모바일 브라우저</strong></td>
+                            <td>★★★</td>
+                            <td><span class="card-badge badge-available">지원됨</span></td>
+                            <td>브라우저 로컬 처리</td>
+                            <td>iOS/Android 저장 UI는 브라우저 정책을 따름</td>
                         </tr>
                         <tr>
                             <td><strong>PDF</strong></td>
