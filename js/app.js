@@ -307,8 +307,8 @@ const FORMAT_INFO = {
             title: '💡 한글에서 HWPX로 직접 저장하는 더 쉬운 방법',
             steps: [
                 '한글 프로그램에서 파일을 엽니다',
-                '[파일] → [다른 이름으로 저장] 선택 (단축키: F12)',
-                '"파일 형식" 드롭다운에서 <strong>HWPX(*.hwpx)</strong> 선택',
+                '[파일] → [다른 이름으로 저장] 선택 (단축키: alt + v)',
+                '"파일 형식" 드롭다운에서 HWPX(*.hwpx) 선택',
                 '저장하면 완료됩니다. 이 사이트에 업로드할 필요 없이 바로 사용할 수 있습니다.',
             ],
         },
@@ -1105,9 +1105,15 @@ function initModals() {
     // 닫기 버튼
     document.getElementById('close-preview')?.addEventListener('click', closePreview);
     document.getElementById('close-changelog')?.addEventListener('click', closeChangelog);
+    document.getElementById('close-pc-guide')?.addEventListener('click', closePcGuide);
+    document.getElementById('close-mobile-guide')?.addEventListener('click', closeMobileGuide);
+    document.getElementById('close-install-guide')?.addEventListener('click', closeInstallGuide);
 
     // 업데이트 내역 열기 버튼 (유틸리티 바)
     document.getElementById('open-changelog')?.addEventListener('click', showChangelog);
+    document.getElementById('open-pc-guide')?.addEventListener('click', showPcGuide);
+    document.getElementById('open-mobile-guide')?.addEventListener('click', showMobileGuide);
+    document.getElementById('open-install-guide')?.addEventListener('click', showInstallGuide);
 
     // 오버레이 바깥 클릭으로 닫기
     document.getElementById('preview-modal')?.addEventListener('click', (e) => {
@@ -1116,10 +1122,25 @@ function initModals() {
     document.getElementById('changelog-modal')?.addEventListener('click', (e) => {
         if (e.target === e.currentTarget) closeChangelog();
     });
+    document.getElementById('pc-guide-modal')?.addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) closePcGuide();
+    });
+    document.getElementById('mobile-guide-modal')?.addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) closeMobileGuide();
+    });
+    document.getElementById('install-guide-modal')?.addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) closeInstallGuide();
+    });
 
     // ESC 키로 닫기
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') { closePreview(); closeChangelog(); }
+        if (e.key === 'Escape') {
+            closePreview();
+            closeChangelog();
+            closePcGuide();
+            closeMobileGuide();
+            closeInstallGuide();
+        }
     });
 
     // 체인지로그 탭 전환
@@ -1143,6 +1164,36 @@ function closePreview() {
 
 function closeChangelog() {
     document.getElementById('changelog-modal')?.classList.remove('open');
+    document.body.style.overflow = '';
+}
+
+function showPcGuide() {
+    document.getElementById('pc-guide-modal')?.classList.add('open');
+    document.body.style.overflow = 'hidden';
+}
+
+function closePcGuide() {
+    document.getElementById('pc-guide-modal')?.classList.remove('open');
+    document.body.style.overflow = '';
+}
+
+function showMobileGuide() {
+    document.getElementById('mobile-guide-modal')?.classList.add('open');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeMobileGuide() {
+    document.getElementById('mobile-guide-modal')?.classList.remove('open');
+    document.body.style.overflow = '';
+}
+
+function showInstallGuide() {
+    document.getElementById('install-guide-modal')?.classList.add('open');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeInstallGuide() {
+    document.getElementById('install-guide-modal')?.classList.remove('open');
     document.body.style.overflow = '';
 }
 

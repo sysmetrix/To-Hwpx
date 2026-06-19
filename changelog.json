@@ -1,6 +1,24 @@
 {
-  "current": "3.9.4",
+  "current": "3.9.5",
   "versions": [
+    {
+      "version": "3.9.5",
+      "date": "2026-06-19",
+      "user": [
+        "PC 브라우저 지원 배지를 클릭하면 지원 범위와 다운로드 흐름 안내가 열리도록 추가",
+        "모바일 브라우저 지원 배지를 클릭하면 Android Chrome과 iPhone Safari 안내가 열리도록 추가",
+        "앱처럼 설치 가능 안내를 일반 사용자가 이해하기 쉬운 Chrome/Edge 설치 팝업으로 제공",
+        "한글 문서(HWP) 포맷 카드를 기본 포맷 목록의 마지막으로 이동",
+        "한글에서 HWPX로 저장하는 안내의 단축키와 파일 형식 문구를 한 줄로 정리"
+      ],
+      "dev": [
+        "[v3.9.5] index.html/js/app.js/style.css: PC/모바일 지원 안내 모달 추가 및 hero badge 버튼화",
+        "[v3.9.5] index.html/js/app.js/style.css: 앱처럼 설치 가능 버튼과 Chrome/Edge 설치 안내 모달 추가",
+        "[v3.9.5] index.html: HWP 포맷 카드를 기본 서비스 패널 마지막으로 이동",
+        "[v3.9.5] app.js: HWPX 저장 팁 단축키 F12 → alt + v, 파일 형식 안내 한 줄 문구로 변경",
+        "[v3.9.5] sw.js: CACHE_VERSION to-hwpx-v3.9.5"
+      ]
+    },
     {
       "version": "3.9.4",
       "date": "2026-06-19",

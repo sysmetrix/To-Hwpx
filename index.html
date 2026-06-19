@@ -90,7 +90,7 @@
         <div class="container">
             <span>｢BWYF｣ AX Challenger 2026</span>
             <button class="util-changelog-btn" id="open-changelog" aria-label="업데이트 내역 보기">
-                📋 v3.9.4 업데이트 내역
+                📋 v3.9.5 업데이트 내역
             </button>
         </div>
     </div>
@@ -160,9 +160,9 @@
         </p>
 
         <div class="hero-badges" aria-label="지원 실행 환경">
-            <span>PC 브라우저 지원</span>
-            <span>모바일 브라우저 지원</span>
-            <span>PWA 설치 가능</span>
+            <button type="button" id="open-pc-guide">PC 브라우저 지원</button>
+            <button type="button" id="open-mobile-guide">모바일 브라우저 지원</button>
+            <button type="button" id="open-install-guide">앱처럼 설치 가능</button>
         </div>
 
         <!-- 파일 드롭존 (app.js의 initDropZone에서 이벤트 연결) -->
@@ -481,15 +481,6 @@
                     <span class="card-badge badge-available">지원됨</span>
                 </div>
 
-                <!-- HWP (Beta) — 한글 전용 포맷이라 범용 브랜드 아이콘 없음 -->
-                <div class="format-card" data-ext="hwp" role="button" tabindex="0">
-                    <div class="card-icon card-icon-hwp" aria-hidden="true"><span>HWP</span></div>
-                    <div class="card-ext">HWP</div>
-                    <div class="card-name">한글 문서</div>
-                    <div class="card-quality">★☆☆</div>
-                    <span class="card-badge badge-beta">베타</span>
-                </div>
-
                 <!-- TXT -->
                 <div class="format-card" data-ext="txt" role="button" tabindex="0">
                     <div class="card-icon">📄</div>
@@ -515,6 +506,15 @@
                     <div class="card-name">JSON 데이터</div>
                     <div class="card-quality">★★★</div>
                     <span class="card-badge badge-available">지원됨</span>
+                </div>
+
+                <!-- HWP (Beta) — 한글 전용 포맷이라 범용 브랜드 아이콘 없음 -->
+                <div class="format-card" data-ext="hwp" role="button" tabindex="0">
+                    <div class="card-icon card-icon-hwp" aria-hidden="true"><span>HWP</span></div>
+                    <div class="card-ext">HWP</div>
+                    <div class="card-name">한글 문서</div>
+                    <div class="card-quality">★☆☆</div>
+                    <span class="card-badge badge-beta">베타</span>
                 </div>
 
             </div><!-- /.format-grid -->
@@ -823,6 +823,118 @@
             <div class="preview-footer">
                 미리보기는 <a href="https://github.com/edwardkim/rhwp" target="_blank" rel="noopener">rhwp</a>
                 (WebAssembly 기반 오픈소스 뷰어)를 사용합니다. 렌더링 결과는 한컴 오피스와 다소 다를 수 있습니다.
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     [PC 브라우저 지원 안내 모달]
+     ════════════════════════════════════════════════════════════════ -->
+<div id="pc-guide-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="pc-guide-title">
+    <div class="modal-box modal-box--md">
+        <div class="modal-header">
+            <span class="modal-title" id="pc-guide-title">PC 브라우저 지원</span>
+            <button class="modal-close" id="close-pc-guide" aria-label="PC 브라우저 안내 닫기">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="support-guide-visual" aria-hidden="true">
+                <div class="device-frame device-frame--desktop">
+                    <div class="device-screen">
+                        <span>파일 선택</span>
+                        <span>→</span>
+                        <span>HWPX 변환</span>
+                        <span>→</span>
+                        <span>다운로드</span>
+                    </div>
+                </div>
+            </div>
+            <p class="support-guide-lead">
+                Chrome, Edge, Safari, Firefox 등 최신 PC 브라우저에서 파일 선택, 변환, HWPX 다운로드 흐름을 지원합니다.
+            </p>
+            <ul class="support-guide-list">
+                <li>변환은 서버 업로드 없이 브라우저 안에서 처리됩니다.</li>
+                <li>드래그앤드롭과 클릭 파일 선택을 모두 사용할 수 있습니다.</li>
+                <li>자동 다운로드가 차단되면 완료 카드의 HWPX 다운로드 버튼으로 다시 받을 수 있습니다.</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     [모바일 브라우저 지원 안내 모달]
+     ════════════════════════════════════════════════════════════════ -->
+<div id="mobile-guide-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="mobile-guide-title">
+    <div class="modal-box modal-box--md">
+        <div class="modal-header">
+            <span class="modal-title" id="mobile-guide-title">모바일 브라우저 지원</span>
+            <button class="modal-close" id="close-mobile-guide" aria-label="모바일 브라우저 안내 닫기">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="support-guide-visual support-guide-visual--mobile" aria-hidden="true">
+                <div class="phone-frame">
+                    <div class="phone-notch"></div>
+                    <div class="phone-screen">Android<br>Chrome</div>
+                </div>
+                <span class="support-plus">+</span>
+                <div class="phone-frame">
+                    <div class="phone-notch"></div>
+                    <div class="phone-screen">iPhone<br>Safari</div>
+                </div>
+            </div>
+            <p class="support-guide-lead">
+                Android Chrome과 iPhone Safari에서 파일 선택, 변환, HWPX 다운로드 흐름을 지원하도록 구성되어 있습니다.
+            </p>
+            <ul class="support-guide-list">
+                <li>Android는 Chrome 다운로드 항목에 .hwpx 파일로 저장되는 흐름을 지원합니다.</li>
+                <li>iPhone은 Safari 다운로드 또는 파일 앱 저장 흐름을 사용합니다.</li>
+                <li>모바일 브라우저 정책에 따라 자동 다운로드가 막히면 완료 카드의 다운로드 버튼을 다시 누르면 됩니다.</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     [앱 설치 안내 모달]  Chrome/Edge에서 앱처럼 설치하는 방법
+     ════════════════════════════════════════════════════════════════ -->
+<div id="install-guide-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="install-guide-title">
+    <div class="modal-box modal-box--md">
+        <div class="modal-header">
+            <span class="modal-title" id="install-guide-title">앱처럼 설치하기</span>
+            <button class="modal-close" id="close-install-guide" aria-label="설치 안내 닫기">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="install-guide-visual" aria-hidden="true">
+                <div class="browser-frame">
+                    <div class="browser-bar">
+                        <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+                        <span class="address">to-hwpx</span>
+                        <span class="install-chip">설치</span>
+                    </div>
+                    <div class="browser-page">
+                        <span class="app-tile">HWPX</span>
+                        <span class="arrow-mark">→</span>
+                        <span class="home-tile">홈 화면</span>
+                    </div>
+                </div>
+            </div>
+            <div class="install-guide-grid">
+                <section>
+                    <h3>Chrome</h3>
+                    <ol>
+                        <li>주소창 오른쪽의 설치 아이콘을 누릅니다.</li>
+                        <li>아이콘이 없으면 메뉴 ⋮ 를 누릅니다.</li>
+                        <li>앱 설치 또는 홈 화면에 추가를 선택합니다.</li>
+                    </ol>
+                </section>
+                <section>
+                    <h3>Edge</h3>
+                    <ol>
+                        <li>주소창 오른쪽의 앱 설치 아이콘을 누릅니다.</li>
+                        <li>아이콘이 없으면 메뉴 ⋯ 를 누릅니다.</li>
+                        <li>앱 > 이 사이트를 앱으로 설치를 선택합니다.</li>
+                    </ol>
+                </section>
             </div>
         </div>
     </div>
