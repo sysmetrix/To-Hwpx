@@ -50,6 +50,13 @@ const PIPELINE_STEPS = [
     { id: 'ship',      label: '다운로드 준비',  icon: '📦'  },
 ];
 
+const SUPPORTED_EXTENSIONS = new Set([
+    'md', 'markdown', 'html', 'htm', 'txt', 'text',
+    'csv', 'xlsx', 'xls', 'json', 'ipynb', 'docx', 'hwp', 'hwpx',
+]);
+const BINARY_EXTENSIONS = new Set(['xlsx', 'xls', 'docx', 'hwp', 'hwpx']);
+const SUPPORTED_FORMAT_LABEL = 'MD, HTML, TXT, CSV, XLSX, JSON, IPYNB, DOCX, HWP, HWPX';
+
 // ─────────────────────────────────────────────────────────────────────────
 // [DOM 준비 후 초기화]
 //   모든 기능 초기화를 DOMContentLoaded 이후 실행
@@ -129,7 +136,7 @@ function initDropZone() {
     // <input> 파일 선택 완료 이벤트
     fileInput.addEventListener('change', (e) => {
         if (e.target.files && e.target.files[0]) {
-            handleFileSelect(e.target.files[0]);
+            handleFileList(e.target.files);
             // 같은 파일을 다시 선택할 수 있도록 value 초기화
             e.target.value = '';
         }
@@ -150,9 +157,9 @@ function initDropZone() {
     // 파일 드롭
     dropZone.addEventListener('drop', (e) => {
         e.preventDefault();
+        e.stopPropagation();
         dropZone.classList.remove('drag-over');
-        const file = e.dataTransfer.files[0];
-        if (file) handleFileSelect(file);
+        handleFileList(e.dataTransfer.files);
     });
 
     // 페이지 전체 드롭 방지 (드롭존 외부에 놓으면 브라우저가 파일을 열어버리는 것 방지)
@@ -161,8 +168,17 @@ function initDropZone() {
         e.preventDefault();
         const file = e.dataTransfer.files[0];
         // 드롭존 영역이 아닌 곳에 드롭해도 처리
-        if (file) handleFileSelect(file);
+        if (file) handleFileList(e.dataTransfer.files);
     });
+}
+
+function handleFileList(fileList) {
+    const files = Array.from(fileList || []);
+    if (!files.length) return;
+    if (files.length > 1) {
+        showAlert(`여러 파일이 선택되었습니다. 현재는 한 번에 1개 파일만 변환합니다. 첫 번째 파일 "${files[0].name}"만 사용합니다.`);
+    }
+    handleFileSelect(files[0]);
 }
 
 /**
@@ -170,13 +186,19 @@ function initDropZone() {
  * 상태 업데이트 → 포맷 감지 → UI 갱신 → 이전 결과 초기화
  */
 function handleFileSelect(file) {
-    const ext = file.name.split('.').pop().toLowerCase();
+    const ext = getFileExtension(file.name);
+    if (!SUPPORTED_EXTENSIONS.has(ext)) {
+        clearSelectedFile();
+        showAlert(`지원하지 않는 파일 형식입니다: ${ext ? '.' + ext : '확장자 없음'}\n지원 형식: ${SUPPORTED_FORMAT_LABEL}`);
+        return;
+    }
 
     // 포맷별 클라이언트 사이드 크기 사전 검사
-    const isBinary = ['xlsx', 'xls', 'docx', 'hwp', 'hwpx'].includes(ext);
+    const isBinary = BINARY_EXTENSIONS.has(ext);
     const MAX_MB   = isBinary ? 50 : 100;
     if (file.size > MAX_MB * 1024 * 1024) {
-        showAlert(`파일 크기 초과: ${(file.size / 1024 / 1024).toFixed(1)}MB (최대 ${MAX_MB}MB)`);
+        clearSelectedFile();
+        showAlert(`파일 크기 초과: ${(file.size / 1024 / 1024).toFixed(1)}MB\n최대 ${MAX_MB}MB까지 변환할 수 있습니다. 큰 문서는 나누어 변환해 주세요.`);
         return;
     }
 
@@ -198,6 +220,36 @@ function handleFileSelect(file) {
 
     // 변환기 패널로 부드럽게 스크롤
     document.getElementById('converter')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function clearSelectedFile() {
+    state.file = null;
+    state.ir = null;
+    state.hwpxBlob = null;
+    revokeDownloadUrl();
+    hideResult();
+    resetPipeline();
+    updateConvertButton(false);
+
+    const badge = document.getElementById('detected-format');
+    if (badge) {
+        badge.textContent = '';
+        badge.style.display = 'none';
+    }
+
+    const dz = document.getElementById('drop-zone');
+    if (dz) {
+        dz.innerHTML = `
+            <div class="drop-icon">📂</div>
+            <div class="drop-title">파일을 여기에 드래그하거나 클릭하세요</div>
+            <div class="drop-sub">MD · HTML · TXT · CSV · XLSX · JSON · IPYNB · DOCX · HWPX 지원</div>
+        `;
+    }
+
+    const cda = document.getElementById('converter-drop-area');
+    const cdaLabel = document.getElementById('cda-label');
+    if (cda) cda.classList.remove('has-file');
+    if (cdaLabel) cdaLabel.textContent = '파일을 드래그하거나 클릭하여 선택';
 }
 
 /** 드롭존 내부 UI를 파일 선택 상태로 업데이트 */
@@ -231,6 +283,11 @@ function updateFormatBadge(ext) {
     if (!badge) return;
     badge.textContent   = ext.toUpperCase();
     badge.style.display = 'inline-block';
+}
+
+function getFileExtension(fileName) {
+    const parts = String(fileName || '').split('.');
+    return parts.length > 1 ? parts.pop().toLowerCase().trim() : '';
 }
 
 
@@ -780,12 +837,7 @@ async function runConversionPipeline() {
             // parsers.js의 fileToIR() 호출 (포맷 자동 감지 + 변환)
             ir = await fileToIR(state.file, state.docType);
         } catch (e) {
-            // 파싱 오류 시 오류 메시지를 IR 블록에 담아 계속 진행
-            ir = {
-                title: state.file.name,
-                doc_type: state.docType,
-                blocks: [{ type: 'para', text: '파일 파싱 오류: ' + e.message }]
-            };
+            throw new Error('파일 파싱 실패: ' + e.message);
         }
 
         // 사용자가 제목을 직접 입력했으면 파서 감지 제목을 덮어씀
@@ -904,6 +956,7 @@ function updateIrPreview(ir) {
 function showResult({ url, fileName, size, validation }) {
     const area = document.getElementById('result-area');
     if (!area) return;
+    const summary = getConversionSummary();
 
     // 검증 결과에 따른 표시 텍스트
     const validText = validation.pass
@@ -928,6 +981,11 @@ function showResult({ url, fileName, size, validation }) {
             </div>
             <div class="result-validation ${validClass}">
                 ${escHtml(validText)}
+            </div>
+            <div class="result-summary">
+                <p><strong>보존된 요소</strong> ${escHtml(summary.preserved)}</p>
+                <p><strong>손실 가능 요소</strong> ${escHtml(summary.lossy)}</p>
+                <p><strong>확인 필요</strong> 미리보기는 참고용입니다. 최종 서식은 한컴오피스에서 열어 확인해 주세요.</p>
             </div>
             <div class="result-actions">
                 <a id="download-link"
@@ -959,6 +1017,64 @@ function showResult({ url, fileName, size, validation }) {
     });
     area.querySelector('#preview-result-btn')?.addEventListener('click', () => openPreview(state.hwpxBlob));
     area.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function getConversionSummary() {
+    const ext = state.file ? getFileExtension(state.file.name) : '';
+    const summaries = {
+        md: {
+            preserved: '제목, 본문, 목록, 표, 코드블록, 일부 굵게/기울임, 구분선',
+            lossy: '이미지, 복잡한 HTML, 사용자 정의 스타일, 정교한 페이지 레이아웃',
+        },
+        markdown: {
+            preserved: '제목, 본문, 목록, 표, 코드블록, 일부 굵게/기울임, 구분선',
+            lossy: '이미지, 복잡한 HTML, 사용자 정의 스타일, 정교한 페이지 레이아웃',
+        },
+        html: {
+            preserved: '텍스트 구조, 제목, 목록, 표, 일부 인라인 서식',
+            lossy: 'CSS 레이아웃, 이미지, 스크립트, 폼, 외부 리소스',
+        },
+        htm: {
+            preserved: '텍스트 구조, 제목, 목록, 표, 일부 인라인 서식',
+            lossy: 'CSS 레이아웃, 이미지, 스크립트, 폼, 외부 리소스',
+        },
+        docx: {
+            preserved: '본문 텍스트, 제목 추정, 표, 일부 굵게/기울임',
+            lossy: '이미지, 머리글/바닥글, 각주, 주석, 복잡한 스타일과 레이아웃',
+        },
+        csv: {
+            preserved: '첫 행 기준 표 머리글, 셀 텍스트, 숫자 셀 정렬',
+            lossy: '셀 병합, 수식, 색상, 시트 서식',
+        },
+        xlsx: {
+            preserved: '첫 번째 시트의 표 데이터, 첫 행 머리글, 셀 텍스트',
+            lossy: '여러 시트, 수식 결과 외 수식 자체, 차트, 이미지, 셀 병합과 세부 서식',
+        },
+        xls: {
+            preserved: '첫 번째 시트의 표 데이터, 첫 행 머리글, 셀 텍스트',
+            lossy: '여러 시트, 수식 결과 외 수식 자체, 차트, 이미지, 셀 병합과 세부 서식',
+        },
+        json: {
+            preserved: '제목, 배열 목록, 객체 표, 기본 텍스트 값',
+            lossy: '깊은 중첩 구조, 데이터 타입 의미, 원본 들여쓰기',
+        },
+        ipynb: {
+            preserved: '마크다운 셀, 코드 셀 텍스트, 텍스트 출력 일부',
+            lossy: '실행 상태, 이미지 출력, 위젯, 그래프, 노트북 메타데이터',
+        },
+        hwp: {
+            preserved: 'HWPX 계열 XML 텍스트 일부 또는 HWP5 안내 메시지',
+            lossy: 'HWP5 바이너리 본문, 이미지, 복잡한 한글 서식',
+        },
+        hwpx: {
+            preserved: 'HWPX 섹션 XML의 텍스트와 일부 표',
+            lossy: '원본 스타일, 이미지, 개체, 머리글/바닥글, 세밀한 레이아웃',
+        },
+    };
+    return summaries[ext] || {
+        preserved: '텍스트 중심 구조',
+        lossy: '이미지, 복잡한 서식, 외부 리소스, 정교한 레이아웃',
+    };
 }
 
 /** 결과 영역 숨기기 및 내용 초기화 */
@@ -1323,9 +1439,9 @@ function initConverterDropArea() {
     });
     area.addEventListener('drop', e => {
         e.preventDefault();
+        e.stopPropagation();
         area.classList.remove('drag-over');
-        const file = e.dataTransfer?.files?.[0];
-        if (file) handleFileSelect(file);
+        handleFileList(e.dataTransfer?.files);
     });
 }
 

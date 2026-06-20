@@ -470,14 +470,14 @@ const DOCX_NS = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
 
 async function parseDocx(arrayBuffer, docType = 'plain') {
     if (typeof JSZip === 'undefined') {
-        return { ...emptyIR('DOCX 문서', docType), blocks: [{ type: 'para', text: 'JSZip 미로드: DOCX 처리 불가' }] };
+        throw new Error('JSZip 미로드: DOCX 처리 불가');
     }
 
     let zip;
     try {
         zip = await JSZip.loadAsync(arrayBuffer);
     } catch (e) {
-        return { ...emptyIR('DOCX 문서', docType), blocks: [{ type: 'para', text: 'DOCX ZIP 열기 실패: ' + e.message }] };
+        throw new Error('DOCX ZIP 열기 실패: ' + e.message);
     }
 
     // [보안] Zip Bomb 방지: 압축 해제 예상 크기 합산
@@ -486,13 +486,13 @@ async function parseDocx(arrayBuffer, docType = 'plain') {
         totalUncompressed += entry._data ? (entry._data.uncompressedSize || 0) : 0;
     });
     if (totalUncompressed > 50 * 1024 * 1024) {
-        return { ...emptyIR('DOCX 문서', docType), blocks: [{ type: 'para', text: '압축 해제 크기 초과 (50MB): 처리 거부' }] };
+        throw new Error('DOCX 압축 해제 크기 초과 (50MB): 처리 거부');
     }
 
     // word/document.xml이 DOCX의 본문 파일
     const docFile = zip.file('word/document.xml');
     if (!docFile) {
-        return { ...emptyIR('DOCX 문서', docType), blocks: [{ type: 'para', text: 'word/document.xml 없음: 유효한 DOCX 파일이 아닙니다.' }] };
+        throw new Error('word/document.xml 없음: 유효한 DOCX 파일이 아닙니다.');
     }
 
     const xmlText = await docFile.async('string');
@@ -665,11 +665,18 @@ async function parseHwp(buffer, docType = 'plain') {
     if (fmt === 'zip') {
         // ZIP 기반 HWP/HWPX — 내부 XML에서 텍스트 추출 시도
         if (typeof JSZip === 'undefined') {
-            ir.blocks.push({ type: 'para', text: 'JSZip 라이브러리가 로드되지 않아 HWP 파싱 불가' });
-            return ir;
+            throw new Error('JSZip 라이브러리가 로드되지 않아 HWP/HWPX 파싱 불가');
         }
         try {
             const zip = await JSZip.loadAsync(buffer);
+
+            let totalUncompressed = 0;
+            zip.forEach((_, entry) => {
+                totalUncompressed += entry._data ? (entry._data.uncompressedSize || 0) : 0;
+            });
+            if (totalUncompressed > 50 * 1024 * 1024) {
+                throw new Error('압축 해제 크기 초과 (50MB): 처리 거부');
+            }
 
             // HWPX 섹션 파일 패턴 (Contents/section0.xml 등)
             const sectionPatterns = [
@@ -741,7 +748,7 @@ async function parseHwp(buffer, docType = 'plain') {
                 ir.blocks.push({ type: 'para', text: '[HWPX] 텍스트를 추출하지 못했습니다. 파일 구조를 확인해 주세요.' });
             }
         } catch (err) {
-            ir.blocks.push({ type: 'para', text: `HWP/HWPX 파싱 오류: ${err.message}` });
+            throw new Error(`HWP/HWPX 파싱 오류: ${err.message}`);
         }
         return ir;
     }
@@ -794,18 +801,14 @@ async function fileToIR(file, docType = 'plain') {
     const parser = PARSERS[ext];
 
     if (!parser) {
-        const ir = emptyIR(file.name, docType);
-        ir.blocks.push({ type: 'para', text: `지원하지 않는 형식: .${ext}` });
-        return ir;
+        throw new Error(`지원하지 않는 형식: .${ext}`);
     }
 
     // 포맷별 파일 크기 제한: 바이너리(buffer) 50MB, 텍스트 100MB
     const maxMb    = parser.accept === 'buffer' ? 50 : 100;
     const MAX_BYTES = maxMb * 1024 * 1024;
     if (file.size > MAX_BYTES) {
-        const ir = emptyIR(file.name, docType);
-        ir.blocks.push({ type: 'para', text: `파일 크기 초과: ${(file.size / 1024 / 1024).toFixed(1)}MB (최대 ${maxMb}MB)` });
-        return ir;
+        throw new Error(`파일 크기 초과: ${(file.size / 1024 / 1024).toFixed(1)}MB (최대 ${maxMb}MB)`);
     }
 
     // accept 타입에 따라 파일 읽기 방법 선택

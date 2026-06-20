@@ -1,6 +1,25 @@
 {
-  "current": "4.0.4",
+  "current": "4.0.5",
   "versions": [
+    {
+      "version": "4.0.5",
+      "date": "2026-06-20",
+      "user": [
+        "지원하지 않는 확장자와 대용량 파일을 변환 전에 명확히 차단",
+        "여러 파일을 드롭하면 첫 파일만 처리한다고 안내",
+        "변환 완료 카드에 보존된 요소와 손실 가능 요소 안내 추가",
+        "미리보기와 한컴오피스 실제 결과가 다를 수 있음을 더 명확히 고지"
+      ],
+      "dev": [
+        "[v4.0.5] app.js: SUPPORTED_EXTENSIONS/BINARY_EXTENSIONS 기반 선택 단계 검증 추가",
+        "[v4.0.5] app.js: handleFileList() 추가로 다중 파일 드롭 안내 및 중복 drop 처리 방지",
+        "[v4.0.5] app.js: 파싱 실패 시 오류 문서 생성 대신 변환 중단",
+        "[v4.0.5] app.js/style.css: 결과 카드에 포맷별 보존/손실 가능 요소 요약 추가",
+        "[v4.0.5] parsers.js: 미지원 형식, 크기 초과, 손상 DOCX/HWPX ZIP을 예외로 처리",
+        "[v4.0.5] qa/: 릴리스 QA 진단 문서와 회귀 테스트 fixture 추가",
+        "[v4.0.5] sw.js: CACHE_VERSION to-hwpx-v4.0.5"
+      ]
+    },
     {
       "version": "4.0.4",
       "date": "2026-06-20",
