@@ -1,6 +1,19 @@
 {
-  "current": "4.3.8",
+  "current": "4.3.9",
   "versions": [
+    {
+      "version": "4.3.9",
+      "date": "2026-06-21",
+      "user": [
+        "Markdown 코드 블록 가독성 긴급 보정 — 코드 배경 렌더링이 실패해도 코드가 흐리게 사라지지 않도록 검정 코드 글자와 연한 코드 박스로 변경했습니다"
+      ],
+      "dev": [
+        "[v4.3.9] hwpx.js: 코드 charPr 색상 #E6EDF3 → #111111",
+        "[v4.3.9] hwpx.js: 코드 블록 borderFill id=11을 #F6F8FA 배경 + #D0D7DE 테두리로 변경",
+        "[v4.3.9] index.html: 업데이트 내역 버튼 v4.3.9 반영",
+        "[v4.3.9] sw.js: CACHE_VERSION to-hwpx-v4.3.9"
+      ]
+    },
     {
       "version": "4.3.8",
       "date": "2026-06-21",
