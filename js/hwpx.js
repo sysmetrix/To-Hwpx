@@ -180,7 +180,7 @@ function getBoldFontName(name) {
  * [borderFill] 1=테두리없음, 2=실선(표셀), 3=실선+회색음영(표머리)
  *              4~9=표 좌/우 바깥 테두리 제거 변형
  */
-function buildHeaderXml(fontName, basePt) {
+function buildHeaderXml(fontName, basePt, customBfMap = new Map()) {
     const fn = xmlEsc(fontName || '휴먼명조');
     const bp = Math.max(6, Math.min(36, parseInt(basePt, 10) || 12));
     const { familyType, weight, type } = getFontMeta(fontName || '휴먼명조');
@@ -261,7 +261,7 @@ ${charBase(7, sz.body, true,  false)}
 ${charBase(8, sz.body, false, true)}
 ${charBase(9, sz.body, true,  true)}
     </hh:charProperties>
-    <hh:paraProperties itemCnt="12">
+    <hh:paraProperties itemCnt="14">
       <!-- id  정렬    행간  전    후   들여  테두리참조 -->
 ${paraBase(0, 'JUSTIFY', 160,   0,  850,    0)}
 ${paraBase(1, 'LEFT',    180, 850,  567,    0)}
@@ -279,8 +279,11 @@ ${paraBase(9, 'LEFT',    100,   0,    0,    0)}
       <!-- id=10/11  표 일반 셀: 텍스트 왼쪽, 숫자 오른쪽 정렬 -->
 ${paraBase(10, 'LEFT',   150,   0,    0,    0)}
 ${paraBase(11, 'RIGHT',  150,   0,    0,    0)}
+      <!-- id=12/13  DOCX 정렬 보존: 가운데/오른쪽 -->
+${paraBase(12, 'CENTER', 160,   0,  850,    0)}
+${paraBase(13, 'RIGHT',  160,   0,  850,    0)}
     </hh:paraProperties>
-    <hh:borderFills itemCnt="10">
+    <hh:borderFills itemCnt="${10 + customBfMap.size}">
       <!-- id=1 테두리 없음 -->
       <hh:borderFill id="1" threeD="0" shadow="0" centerLine="NONE" breakCellSeparateLine="0">
         <hh:slash type="NONE" Crooked="0" isCounter="0"/><hh:backSlash type="NONE" Crooked="0" isCounter="0"/>
@@ -375,6 +378,16 @@ ${paraBase(11, 'RIGHT',  150,   0,    0,    0)}
         <hh:bottomBorder type="SOLID" width="0.4 mm" color="#555555"/>
         <hh:diagonal type="SOLID" width="0.1 mm" color="#000000"/>
       </hh:borderFill>
+${[...customBfMap.entries()].map(([color, bfId]) => `      <!-- id=${bfId} DOCX 셀 배경색 #${color} -->
+      <hh:borderFill id="${bfId}" threeD="0" shadow="0" centerLine="NONE" breakCellSeparateLine="0">
+        <hh:slash type="NONE" Crooked="0" isCounter="0"/><hh:backSlash type="NONE" Crooked="0" isCounter="0"/>
+        <hh:leftBorder type="SOLID" width="0.12 mm" color="#000000"/>
+        <hh:rightBorder type="SOLID" width="0.12 mm" color="#000000"/>
+        <hh:topBorder type="SOLID" width="0.12 mm" color="#000000"/>
+        <hh:bottomBorder type="SOLID" width="0.12 mm" color="#000000"/>
+        <hh:diagonal type="SOLID" width="0.1 mm" color="#000000"/>
+        <hh:fillBrush><hh:winBrush faceColor="#${color}" hatchColor="#000000" alpha="0"/></hh:fillBrush>
+      </hh:borderFill>`).join('\n')}
     </hh:borderFills>
   </hh:refList>
 </hh:head>`;
@@ -455,6 +468,9 @@ function headingIds(level) {
  * 한글 글자(2바이트)는 2배, 영문/숫자(1바이트)는 1로 환산
  * 최소 열 너비 3000 HWPUNIT(≈10.6mm) 보장, 최대 40자로 상한
  */
+function cellText(cell) { return typeof cell === 'object' ? (cell?.text ?? '') : String(cell ?? ''); }
+function cellBg(cell)   { return typeof cell === 'object' ? (cell?.bg  || null) : null; }
+
 function getColumnWidths(allRows, nCols, tableWidth) {
     const MIN_COL = 3000;
     if (nCols <= 1) return [tableWidth];
@@ -462,9 +478,9 @@ function getColumnWidths(allRows, nCols, tableWidth) {
     const maxLens = new Array(nCols).fill(1);
     for (const row of allRows) {
         for (let c = 0; c < nCols; c++) {
-            const cell = (row && row[c] !== undefined) ? String(row[c]) : '';
+            const cellStr = cellText(row && row[c] !== undefined ? row[c] : '');
             const len = Math.min(
-                Array.from(cell).reduce((s, ch) =>
+                Array.from(cellStr).reduce((s, ch) =>
                     s + (/[ᄀ-퟿가-힯　-〿]/.test(ch) ? 2 : 1), 0),
                 40
             );
@@ -504,7 +520,7 @@ function getContentWidthHwp(marginsHwp, paperKey, landscape = false) {
     return Math.max(12000, paper.w - m.left - m.right);
 }
 
-function buildTable(header, rows, contentWidthHwp = 48000) {
+function buildTable(header, rows, contentWidthHwp = 48000, customBfMap = new Map()) {
     const allRows = (header && header.length ? [header] : []).concat(rows || []);
     if (!allRows.length) return buildBlankPara();
 
@@ -522,15 +538,21 @@ function buildTable(header, rows, contentWidthHwp = 48000) {
         let cellsXml = '';
 
         for (let c = 0; c < nCols; c++) {
-            const val = (row[c] !== undefined && row[c] !== null) ? String(row[c]) : '';
+            const cell = (row[c] !== undefined && row[c] !== null) ? row[c] : '';
+            const val  = cellText(cell);
+            const bg   = cellBg(cell);
             const paraId = isHd ? '7' : (isNumericCell(val) ? '11' : '10');
-            let bfId = isHd ? '3' : '2';
-            if (nCols === 1) {
+            let bfId;
+            if (bg && customBfMap.has(bg)) {
+                bfId = customBfMap.get(bg);
+            } else if (nCols === 1) {
                 bfId = isHd ? '9' : '8';
             } else if (c === 0) {
                 bfId = isHd ? '6' : '4';
             } else if (c === nCols - 1) {
                 bfId = isHd ? '7' : '5';
+            } else {
+                bfId = isHd ? '3' : '2';
             }
             // 자식 순서: subList → cellAddr → cellSpan → cellSz → cellMargin
             // (rhwp serializer/hwpx/table.rs 기준 OWPML 공식 순서)
@@ -615,7 +637,7 @@ function buildSectionBootstrap(secPrXml, contentWidthHwp) {
  * IR → section0.xml 전체 문자열
  * [v4] 참조 앱(md-to-hwpx)처럼 첫 bootstrap 문단에 secPr를 배치한다.
  */
-function buildSection(ir, marginsHwp, paperKey, landscape = false) {
+function buildSection(ir, marginsHwp, paperKey, landscape = false, customBfMap = new Map()) {
     const NS_HS = 'http://www.hancom.co.kr/hwpml/2011/section';
     const NS_HP = 'http://www.hancom.co.kr/hwpml/2011/paragraph';
     const docType = ir.doc_type || 'plain';
@@ -666,14 +688,15 @@ function buildSection(ir, marginsHwp, paperKey, landscape = false) {
             parts.push(buildPara(block.text || '', charId, paraId));
 
         } else if (bt === 'para') {
+            const alignParaId = block.align === 'center' ? '12' : block.align === 'right' ? '13' : '0';
             if (block.runs && block.runs.length > 0) {
                 // 인라인 서식(bold/italic/code) 보존 경로
                 const hasText = block.runs.some(r => r.text && r.text.trim());
-                parts.push(hasText ? buildParaRuns(block.runs, '0') : buildBlankPara());
+                parts.push(hasText ? buildParaRuns(block.runs, alignParaId) : buildBlankPara());
             } else if (!block.text || !block.text.trim()) {
                 parts.push(buildBlankPara());
             } else {
-                parts.push(buildPara(block.text, '0', '0'));
+                parts.push(buildPara(block.text, '0', alignParaId));
             }
 
         } else if (bt === 'blank') {
@@ -691,7 +714,7 @@ function buildSection(ir, marginsHwp, paperKey, landscape = false) {
             });
 
         } else if (bt === 'table') {
-            parts.push(buildTable(block.header, block.rows, contentWidthHwp));
+            parts.push(buildTable(block.header, block.rows, contentWidthHwp, customBfMap));
 
         } else if (bt === 'code') {
             const lines = (block.text || '').split('\n');
@@ -729,8 +752,24 @@ async function buildHwpx(ir, fontName = '휴먼명조', fontSize = 12, marginsMm
     const marginsHwp = marginsMmToHwp(marginsMm || DEFAULT_MARGINS_MM);
     const landscape  = orientation === 'landscape';
 
-    const headerXml   = buildHeaderXml(fontName, fontSize);
-    const section0Xml = buildSection(ir, marginsHwp, paperSize, landscape);
+    // 표 셀 배경색 수집 → 동적 borderFill 생성용
+    const customBfMap = new Map();
+    let nextBfId = 11;
+    for (const block of (ir.blocks || [])) {
+        if (block.type !== 'table') continue;
+        const allRows = (block.header && block.header.length ? [block.header] : []).concat(block.rows || []);
+        for (const row of allRows) {
+            for (const cell of (row || [])) {
+                const bg = cellBg(cell);
+                if (bg && !customBfMap.has(bg)) {
+                    customBfMap.set(bg, String(nextBfId++));
+                }
+            }
+        }
+    }
+
+    const headerXml   = buildHeaderXml(fontName, fontSize, customBfMap);
+    const section0Xml = buildSection(ir, marginsHwp, paperSize, landscape, customBfMap);
 
     const zip = new JSZip();
     zip.file('mimetype',              MIMETYPE,      { compression: 'STORE' });

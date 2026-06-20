@@ -463,21 +463,21 @@ const FONT_DOWNLOADS = [
     },
     {
         name: '나눔고딕',
-        systemNames: ['나눔고딕', 'NanumGothic', 'Nanum Gothic'],
+        systemNames: ['나눔고딕', '나눔고딕 보통', 'NanumGothic', 'Nanum Gothic'],
         desc: '네이버 배포 한글 고딕체입니다. 국내 사용자에게 익숙하고 일반 문서에 잘 맞습니다.',
         local: ['fonts/NanumGothic.ttf', 'Font/NanumGothic.ttf', 'Font/NanumGothic/NanumGothic.ttf'],
         official: 'https://hangeul.naver.com/font',
     },
     {
         name: 'KoPub돋움체',
-        systemNames: ['KoPub돋움체', 'KoPub World Dotum Medium', 'KoPubWorldDotum Medium', 'KoPubDotumMedium'],
+        systemNames: ['KoPub돋움체', 'KoPub돋움체 Medium', 'KoPub World Dotum Medium', 'KoPubWorldDotum Medium', 'KoPubDotumMedium'],
         desc: '출판/공공 배포 문서에 어울리는 돋움 계열 폰트입니다. 설치 후 한글에서 같은 이름으로 표시되어야 합니다.',
         local: ['fonts/KoPubWorldDotum-Medium.ttf', 'Font/KoPubDotumMedium.ttf', 'Font/kopub/KoPubDotumMedium.ttf'],
         official: 'https://www.kopus.org',
     },
     {
         name: 'Pretendard GOV',
-        systemNames: ['Pretendard GOV', 'PretendardGOV-Regular', 'Pretendard GOV Variable'],
+        systemNames: ['Pretendard GOV', 'Pretendard', 'Pretendard 보통', 'PretendardGOV-Regular'],
         desc: '디지털 행정 문서에 어울리는 현대적인 고딕체입니다. 설치 후 HWPX 폰트명과 일치해야 합니다.',
         local: ['fonts/PretendardGOV-Regular.ttf', 'Font/Pretendard-Regular.ttf', 'Font/Pretendard GOV-1.3.9/Pretendard-Regular.ttf'],
         official: 'https://github.com/orioncactus/pretendard',
@@ -579,27 +579,15 @@ async function findLocalFont(paths) {
     return '';
 }
 
-function isFontInstalledCanvas(fontName) {
-    try {
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        const testStr = '가나다라마바사 abcdefg 012345';
-        const size = 16;
-
-        ctx.font = `${size}px serif`;
-        const serifW = ctx.measureText(testStr).width;
-        ctx.font = `${size}px "${fontName}", serif`;
-        const testSerifW = ctx.measureText(testStr).width;
-
-        ctx.font = `${size}px sans-serif`;
-        const sansW = ctx.measureText(testStr).width;
-        ctx.font = `${size}px "${fontName}", sans-serif`;
-        const testSansW = ctx.measureText(testStr).width;
-
-        return testSerifW !== serifW || testSansW !== sansW;
-    } catch (_) {
-        return false;
+async function isSystemFontInstalled(names) {
+    for (const name of names) {
+        try {
+            const font = new FontFace('__detect__', `local("${name}")`);
+            await font.load();
+            return true;
+        } catch (_) {}
     }
+    return false;
 }
 
 function formatFontDescription(desc) {
@@ -632,7 +620,7 @@ async function renderFontGuide() {
         const box = el.querySelector(`[data-font-index="${i}"]`);
         if (!box) return;
         const [isInstalled, localPath] = await Promise.all([
-            Promise.resolve(isFontInstalledCanvas(font.name)),
+            isSystemFontInstalled(font.systemNames || [font.name]),
             findLocalFont(font.local),
         ]);
         const official = `<a class="font-official-link" href="${escHtml(font.official)}" target="_blank" rel="noopener">공식 사이트</a>`;

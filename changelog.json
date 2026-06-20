@@ -1,6 +1,29 @@
 {
-  "current": "4.0.8",
+  "current": "4.0.9",
   "versions": [
+    {
+      "version": "4.0.9",
+      "date": "2026-06-20",
+      "user": [
+        "폰트 감지 오류 수정 — KoPub돋움체 등 한글 폰트가 설치됨으로 표시되지 않던 문제 해결",
+        "DOCX 단락 정렬(가운데·오른쪽·양쪽)을 HWPX 변환 시 그대로 유지",
+        "DOCX 표 셀 배경색을 HWPX로 변환 시 반영"
+      ],
+      "dev": [
+        "[v4.0.9] app.js: isSystemFontInstalled() canvas 방식 → FontFace local() 복원 (canvas가 한글 폰트 오탐 유발)",
+        "[v4.0.9] app.js: systemNames 확장 — '나눔고딕 보통', 'Pretendard 보통', 'KoPub돋움체 Medium' 등 Windows 등록명 추가",
+        "[v4.0.9] parsers.js: parseDocx()에 styles.xml 로드 및 styleId→스타일명 매핑 추가",
+        "[v4.0.9] parsers.js: extractDocxParagraph()에 w:jc 정렬 읽기 추가 (center/right/both→IR align 필드)",
+        "[v4.0.9] parsers.js: extractDocxTable() 셀에 w:shd fill 읽어 {text, bg} 객체 반환",
+        "[v4.0.9] hwpx.js: cellText()/cellBg() 헬퍼 추가, getColumnWidths() cellText() 사용",
+        "[v4.0.9] hwpx.js: buildHeaderXml() paraPr 12(CENTER)/13(RIGHT) 추가, itemCnt 12→14",
+        "[v4.0.9] hwpx.js: buildHeaderXml() customBfMap 동적 borderFill 생성",
+        "[v4.0.9] hwpx.js: buildTable() cellText/cellBg 사용, customBfMap으로 배경색 bfId 적용",
+        "[v4.0.9] hwpx.js: buildSection() block.align → paraPr 12/13 매핑, customBfMap buildTable 전달",
+        "[v4.0.9] hwpx.js: buildHwpx() IR 스캔해 customBfMap 수집, buildHeaderXml/buildSection 전달",
+        "[v4.0.9] sw.js: CACHE_VERSION to-hwpx-v4.0.9"
+      ]
+    },
     {
       "version": "4.0.8",
       "date": "2026-06-20",

@@ -499,6 +499,28 @@ async function parseDocx(arrayBuffer, docType = 'plain') {
     const xmlDoc = new DOMParser().parseFromString(xmlText, 'application/xml');
     const ir = emptyIR('DOCX 문서', docType);
 
+    // word/styles.xml 로드 → 스타일 ID → 이름 맵 (제목 감지 정확도 향상)
+    const stylesMap = {};
+    const stylesFile = zip.file('word/styles.xml');
+    if (stylesFile) {
+        try {
+            const stylesXml = await stylesFile.async('string');
+            const stylesDoc = new DOMParser().parseFromString(stylesXml, 'application/xml');
+            for (const style of stylesDoc.getElementsByTagNameNS(DOCX_NS, 'style')) {
+                const sid = style.getAttributeNS(DOCX_NS, 'styleId')
+                         || style.getAttribute('w:styleId')
+                         || style.getAttribute('styleId') || '';
+                const nameEl = style.getElementsByTagNameNS(DOCX_NS, 'name')[0];
+                if (sid && nameEl) {
+                    const sval = nameEl.getAttributeNS(DOCX_NS, 'val')
+                              || nameEl.getAttribute('w:val')
+                              || nameEl.getAttribute('val') || '';
+                    if (sval) stylesMap[sid] = sval;
+                }
+            }
+        } catch (_) {}
+    }
+
     // w:body 직계 자식 순회 (단락: w:p, 표: w:tbl)
     const body = xmlDoc.getElementsByTagNameNS(DOCX_NS, 'body')[0];
     if (!body) return ir;
@@ -507,7 +529,7 @@ async function parseDocx(arrayBuffer, docType = 'plain') {
         const localName = node.localName || '';
 
         if (localName === 'p') {
-            const block = extractDocxParagraph(node);
+            const block = extractDocxParagraph(node, stylesMap);
             if (block) ir.blocks.push(block);
         } else if (localName === 'tbl') {
             const block = extractDocxTable(node);
@@ -519,18 +541,28 @@ async function parseDocx(arrayBuffer, docType = 'plain') {
 }
 
 /** w:p 단락 노드 → IR 블록 (텍스트 추출 + 스타일 판별) */
-function extractDocxParagraph(pNode) {
-    // [버그 수정] getAttribute('w:val')은 namespaced attribute를 못 읽음
-    //             DOMParser('application/xml')에서 네임스페이스 속성은
-    //             getAttributeNS(namespace, localName)으로 읽어야 함
+function extractDocxParagraph(pNode, stylesMap = {}) {
     const pStyles = pNode.getElementsByTagNameNS(DOCX_NS, 'pStyle');
     let styleId = '';
     if (pStyles.length) {
-        // 방법 1: 네임스페이스 인식 읽기 (표준)
         styleId = pStyles[0].getAttributeNS(DOCX_NS, 'val') || '';
-        // 방법 2: 일부 파서가 prefix 없이 저장하는 경우 폴백
         if (!styleId) styleId = pStyles[0].getAttribute('w:val') || '';
         if (!styleId) styleId = pStyles[0].getAttribute('val') || '';
+    }
+
+    // 단락 정렬 (w:pPr/w:jc)
+    const pPrEl = pNode.getElementsByTagNameNS(DOCX_NS, 'pPr')[0];
+    let align = null;
+    if (pPrEl) {
+        const jcEl = pPrEl.getElementsByTagNameNS(DOCX_NS, 'jc')[0];
+        if (jcEl) {
+            const v = jcEl.getAttributeNS(DOCX_NS, 'val')
+                   || jcEl.getAttribute('w:val')
+                   || jcEl.getAttribute('val') || '';
+            if (v === 'center')                    align = 'center';
+            else if (v === 'right')                align = 'right';
+            else if (v === 'both' || v === 'distribute') align = 'justify';
+        }
     }
 
     // w:r 단위로 텍스트를 읽어 bold/italic 같은 인라인 서식을 일부 보존
@@ -543,16 +575,17 @@ function extractDocxParagraph(pNode) {
         if (!text) continue;
         inlineRuns.push({
             text,
-            bold: r.getElementsByTagNameNS(DOCX_NS, 'b').length > 0,
+            bold:   r.getElementsByTagNameNS(DOCX_NS, 'b').length > 0,
             italic: r.getElementsByTagNameNS(DOCX_NS, 'i').length > 0,
         });
     }
     const text = sanitize(inlineRuns.map(r => r.text).join('').trim());
     if (!text) return null;
 
-    // 스타일 이름에 'heading'/'제목'/'title' 포함 시 heading 블록
-    if (/heading|제목|title/i.test(styleId)) {
-        const level = parseInt(styleId.replace(/\D/g, '') || '1', 10) || 1;
+    // styles.xml에서 해석한 스타일 이름 사용 (없으면 styleId 원본으로 폴백)
+    const resolvedStyle = stylesMap[styleId] || styleId;
+    if (/heading|제목|title/i.test(resolvedStyle)) {
+        const level = parseInt(resolvedStyle.replace(/\D/g, '') || styleId.replace(/\D/g, '') || '1', 10) || 1;
         return { type: 'heading', level: Math.min(level, 6), text };
     }
 
@@ -562,9 +595,8 @@ function extractDocxParagraph(pNode) {
         return { type: 'heading', level: 3, text };
     }
 
-    return inlineRuns.length
-        ? { type: 'para', runs: inlineRuns }
-        : { type: 'para', text };
+    const base = inlineRuns.length ? { type: 'para', runs: inlineRuns } : { type: 'para', text };
+    return align ? { ...base, align } : base;
 }
 
 /** w:tbl 표 노드 → IR table 블록 */
@@ -576,11 +608,25 @@ function extractDocxTable(tblNode) {
         const cells = tr.getElementsByTagNameNS(DOCX_NS, 'tc');
         return Array.from(cells).map(tc => {
             const tEls = tc.getElementsByTagNameNS(DOCX_NS, 't');
-            return sanitize(Array.from(tEls).map(t => t.textContent).join('').trim());
+            const text = sanitize(Array.from(tEls).map(t => t.textContent).join('').trim());
+
+            // 셀 배경색 (w:tcPr/w:shd@w:fill)
+            const tcPr = tc.getElementsByTagNameNS(DOCX_NS, 'tcPr')[0];
+            if (tcPr) {
+                const shd = tcPr.getElementsByTagNameNS(DOCX_NS, 'shd')[0];
+                if (shd) {
+                    const fill = shd.getAttributeNS(DOCX_NS, 'fill')
+                              || shd.getAttribute('w:fill')
+                              || shd.getAttribute('fill') || '';
+                    if (fill && !/^(auto|FFFFFF|ffffff|000000)$/.test(fill)) {
+                        return { text, bg: fill.replace(/^#/, '').toUpperCase().padStart(6, '0') };
+                    }
+                }
+            }
+            return text;
         });
     });
 
-    // 첫 행을 헤더로 사용
     return { type: 'table', header: rows[0] || [], rows: rows.slice(1) };
 }
 
