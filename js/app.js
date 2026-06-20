@@ -518,6 +518,14 @@ async function findLocalFont(paths) {
     return '';
 }
 
+function formatFontDescription(desc) {
+    const splitAt = desc.indexOf('. ');
+    if (splitAt === -1) return escHtml(desc);
+    const firstSentence = desc.slice(0, splitAt + 1);
+    const rest = desc.slice(splitAt + 2);
+    return `${escHtml(firstSentence)}<br>${escHtml(rest)}`;
+}
+
 async function renderFontGuide() {
     const el = document.getElementById('font-guide-list');
     if (!el) return;
@@ -526,7 +534,7 @@ async function renderFontGuide() {
         <section class="font-guide-item">
             <div>
                 <h3>${escHtml(font.name)}</h3>
-                <p>${escHtml(font.desc)}</p>
+                <p>${formatFontDescription(font.desc)}</p>
                 <p class="font-guide-sample" style="font-family:'${escHtml(font.name)}', var(--font-main)">문서를 한글(HWPX)로 변환합니다 123</p>
             </div>
             <div class="font-guide-actions" data-font-index="${index}">
