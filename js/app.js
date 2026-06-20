@@ -1746,15 +1746,30 @@ function renderChangelogContent(tab) {
     const el = document.getElementById('changelog-content');
     if (!el || !_changelogData) return;
 
-    el.innerHTML = _changelogData.versions.map(v => `
-        <div class="changelog-version">
-            <div class="changelog-version-header">
-                <span class="changelog-ver-badge">${v.range ? escHtml(v.range) : 'v' + escHtml(v.version)}</span>
-                <span class="changelog-date">${escHtml(v.date)}</span>
-            </div>
-            <ul class="changelog-list">
-                ${(v[tab] || []).map(item => `<li>${escHtml(item)}</li>`).join('')}
-            </ul>
-        </div>
+    const groups = [];
+    for (const version of _changelogData.versions || []) {
+        const date = version.date || '날짜 없음';
+        let group = groups.find(item => item.date === date);
+        if (!group) {
+            group = { date, versions: [] };
+            groups.push(group);
+        }
+        group.versions.push(version);
+    }
+
+    el.innerHTML = groups.map(group => `
+        <section class="changelog-date-group">
+            <div class="changelog-date-heading">${escHtml(group.date)}</div>
+            ${group.versions.map(v => `
+                <div class="changelog-version">
+                    <div class="changelog-version-header">
+                        <span class="changelog-ver-badge">${v.range ? escHtml(v.range) : 'v' + escHtml(v.version)}</span>
+                    </div>
+                    <ul class="changelog-list">
+                        ${(v[tab] || []).map(item => `<li>${escHtml(item)}</li>`).join('')}
+                    </ul>
+                </div>
+            `).join('')}
+        </section>
     `).join('');
 }

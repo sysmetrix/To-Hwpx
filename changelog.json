@@ -1,6 +1,20 @@
 {
-  "current": "4.0.5",
+  "current": "4.0.6",
   "versions": [
+    {
+      "version": "4.0.6",
+      "date": "2026-06-20",
+      "user": [
+        "업데이트 내역을 같은 날짜별로 묶어 보기 쉽게 정리",
+        "지원 포맷 카드의 아이콘과 텍스트 수직 정렬 개선"
+      ],
+      "dev": [
+        "[v4.0.6] app.js: changelog 렌더링을 version 단위에서 date group 단위로 변경",
+        "[v4.0.6] style.css: format-card/card-icon/card-ext/card-badge flex 정렬과 균일 높이 보정",
+        "[v4.0.6] style.css: changelog-date-group/changelog-date-heading 스타일 추가",
+        "[v4.0.6] sw.js: CACHE_VERSION to-hwpx-v4.0.6"
+      ]
+    },
     {
       "version": "4.0.5",
       "date": "2026-06-20",

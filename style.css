@@ -537,6 +537,9 @@ a:hover { text-decoration: underline; }
 
 /* 개별 포맷 카드 */
 .format-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     background: var(--c-surface);
     border: 1.5px solid var(--c-border);
     border-radius: var(--radius-md);
@@ -546,6 +549,7 @@ a:hover { text-decoration: underline; }
     transition: border-color var(--trans), box-shadow var(--trans), transform var(--trans);
     position: relative;
     min-width: 0;
+    min-height: 174px;
 }
 .format-card:hover:not(.coming-soon) {
     border-color: var(--c-primary);
@@ -569,11 +573,14 @@ a:hover { text-decoration: underline; }
 
 .card-icon {
     font-size: 2rem;
-    margin-bottom: 8px;
-    min-height: 2rem;
+    width: 40px;
+    height: 40px;
+    margin: 0 0 8px;
     display: flex;
     align-items: center;
     justify-content: center;
+    flex: 0 0 40px;
+    line-height: 1;
 }
 /* 브랜드 SVG 아이콘 (Simple Icons CDN) */
 .format-brand-icon {
@@ -585,7 +592,10 @@ a:hover { text-decoration: underline; }
 .card-icon-hwp {
     width: 36px;
     height: 36px;
-    margin: 0 auto 8px;
+    margin: 0 0 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     border: 2px solid var(--c-primary);
     border-radius: 6px;
     color: var(--c-primary);
@@ -606,7 +616,9 @@ a:hover { text-decoration: underline; }
 }
 .card-icon-hwp span { position: relative; z-index: 1; }
 .card-ext    {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     background: var(--c-primary-light);
     color: var(--c-primary);
     padding: 2px 8px;
@@ -615,6 +627,8 @@ a:hover { text-decoration: underline; }
     font-weight: 700;
     letter-spacing: 0.05em;
     margin-bottom: 6px;
+    min-height: 24px;
+    line-height: 1;
 }
 .card-name   { font-size: 0.88rem; font-weight: 600; color: var(--c-text); margin-bottom: 4px; }
 .card-quality { font-size: 0.82rem; color: #f59e0b; margin-bottom: 6px; }
@@ -625,7 +639,11 @@ a:hover { text-decoration: underline; }
     font-weight: 600;
     padding: 2px 8px;
     border-radius: 100px;
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 22px;
+    line-height: 1;
 }
 .badge-available { background: var(--c-success-light); color: var(--c-success); }
 .badge-beta      { background: var(--c-warning-light);  color: var(--c-warning); }
@@ -2050,15 +2068,35 @@ a:hover { text-decoration: underline; }
 .changelog-content {
     padding: 20px 24px;
 }
-.changelog-version {
-    margin-bottom: 28px;
-    padding-bottom: 28px;
+.changelog-date-group {
+    margin-bottom: 30px;
+    padding-bottom: 30px;
     border-bottom: 1px solid var(--c-border);
 }
-.changelog-version:last-child {
-    border-bottom: none;
+.changelog-date-group:last-child {
     margin-bottom: 0;
     padding-bottom: 0;
+    border-bottom: none;
+}
+.changelog-date-heading {
+    display: inline-flex;
+    align-items: center;
+    min-height: 28px;
+    margin-bottom: 16px;
+    padding: 4px 11px;
+    border-radius: 999px;
+    background: var(--c-surface-alt);
+    color: var(--c-text);
+    font-size: 0.86rem;
+    font-weight: 800;
+}
+.changelog-version {
+    margin-bottom: 22px;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+.changelog-version:last-child {
+    margin-bottom: 0;
 }
 .changelog-version-header {
     display: flex;
