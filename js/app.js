@@ -456,13 +456,15 @@ const FORMAT_INFO = {
 const FONT_DOWNLOADS = [
     {
         name: 'Noto Sans KR',
+        family: 'Noto Sans KR',
         systemNames: ['Noto Sans KR', 'NotoSansKR', 'Noto Sans KR Regular'],
         desc: 'Google/Adobe 계열의 넓은 문자 지원 고딕체입니다. 웹 UI 미리보기와 일반 문서용으로 무난합니다.',
         local: ['fonts/NotoSansKR-Regular.ttf', 'Font/NotoSansKR-Regular.ttf', 'Font/Noto_Sans_KR/NotoSansKR-Regular.ttf'],
-        official: 'https://fonts.google.com/specimen/Noto+Sans+KR',
+        official: 'https://fonts.google.com/selection?preview.script=Kore&preview.lang=ko_Kore',
     },
     {
         name: '나눔고딕',
+        family: 'NanumGothic',
         systemNames: ['나눔고딕', '나눔고딕 보통', 'NanumGothic', 'Nanum Gothic'],
         desc: '네이버 배포 한글 고딕체입니다. 국내 사용자에게 익숙하고 일반 문서에 잘 맞습니다.',
         local: ['fonts/NanumGothic.ttf', 'Font/NanumGothic.ttf', 'Font/NanumGothic/NanumGothic.ttf'],
@@ -470,17 +472,19 @@ const FONT_DOWNLOADS = [
     },
     {
         name: 'KoPub돋움체',
+        family: 'KoPub돋움체',
         systemNames: ['KoPub돋움체', 'KoPub돋움체 Medium', 'KoPub World Dotum Medium', 'KoPubWorldDotum Medium', 'KoPubDotumMedium'],
         desc: '출판/공공 배포 문서에 어울리는 돋움 계열 폰트입니다. 설치 후 한글에서 같은 이름으로 표시되어야 합니다.',
         local: ['fonts/KoPubWorldDotum-Medium.ttf', 'Font/KoPubDotumMedium.ttf', 'Font/kopub/KoPubDotumMedium.ttf'],
-        official: 'https://www.kopus.org',
+        official: 'https://www.kopus.org/biz-electronic-font2/',
     },
     {
         name: 'Pretendard GOV',
+        family: 'Pretendard',
         systemNames: ['Pretendard GOV', 'Pretendard', 'Pretendard 보통', 'PretendardGOV-Regular'],
         desc: '디지털 행정 문서에 어울리는 현대적인 고딕체입니다. 설치 후 HWPX 폰트명과 일치해야 합니다.',
         local: ['fonts/PretendardGOV-Regular.ttf', 'Font/Pretendard-Regular.ttf', 'Font/Pretendard GOV-1.3.9/Pretendard-Regular.ttf'],
-        official: 'https://github.com/orioncactus/pretendard',
+        official: 'https://github.com/orioncactus/pretendard/releases/tag/v1.3.9',
     },
 ];
 
@@ -618,7 +622,7 @@ async function renderFontGuide() {
             <div>
                 <h3>${escHtml(font.name)}</h3>
                 <p>${formatFontDescription(font.desc)}</p>
-                <p class="font-guide-sample" style="font-family:'${escHtml(font.name)}', var(--font-main)">문서를 한글(HWPX)로 변환합니다 123</p>
+                <p class="font-guide-sample" style="font-family:'${escHtml(font.family || font.name)}', var(--font-main)">문서를 한글(HWPX)로 변환합니다 123</p>
             </div>
             <div class="font-guide-actions" data-font-index="${index}">
                 <span class="font-guide-local-missing">확인 중...</span>

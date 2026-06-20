@@ -1,6 +1,22 @@
 {
-  "current": "4.1.1",
+  "current": "4.1.2",
   "versions": [
+    {
+      "version": "4.1.2",
+      "date": "2026-06-20",
+      "user": [
+        "폰트 설치 안내 — Shift 키 누르고 우클릭해야 '모든 사용자용으로 설치' 메뉴가 나타남을 명시",
+        "Pretendard GOV·KoPub돋움체·Noto Sans KR 공식 사이트 링크 최신화",
+        "폰트 안내 예시 글이 실제 해당 글꼴로 렌더링되도록 수정"
+      ],
+      "dev": [
+        "[v4.1.2] index.html: 설치 1단계 텍스트에 Shift 키 안내 추가",
+        "[v4.1.2] app.js: FONT_DOWNLOADS에 family 필드 추가 (CSS font-family용 실제 패밀리명 분리)",
+        "[v4.1.2] app.js: 예시 글 style을 font.name 대신 font.family로 변경 (Pretendard GOV 등 오탐 수정)",
+        "[v4.1.2] app.js: Noto Sans KR·KoPub돋움체·Pretendard GOV official URL 최신화",
+        "[v4.1.2] sw.js: CACHE_VERSION to-hwpx-v4.1.2"
+      ]
+    },
     {
       "version": "4.1.1",
       "date": "2026-06-20",
