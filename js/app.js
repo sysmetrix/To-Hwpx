@@ -1341,6 +1341,7 @@ function initModals() {
     document.getElementById('close-mobile-guide')?.addEventListener('click', closeMobileGuide);
     document.getElementById('close-install-guide')?.addEventListener('click', closeInstallGuide);
     document.getElementById('close-font-guide')?.addEventListener('click', closeFontGuide);
+    document.getElementById('recheck-fonts-btn')?.addEventListener('click', () => renderFontGuide());
 
     // 업데이트 내역 열기 버튼 (유틸리티 바)
     document.getElementById('open-changelog')?.addEventListener('click', showChangelog);
