@@ -1,6 +1,19 @@
 {
-  "current": "4.3.2",
+  "current": "4.3.3",
   "versions": [
+    {
+      "version": "4.3.3",
+      "date": "2026-06-21",
+      "user": [
+        "DOCX 표 테두리 균일화 — 배경색이 있는 셀도 표 좌우 끝 테두리 처리와 맞춰져 선이 들쭉날쭉 보이는 문제를 줄였습니다"
+      ],
+      "dev": [
+        "[v4.3.3] hwpx.js: DOCX 배경색 셀용 borderFill을 full/left/right/both 변형으로 생성",
+        "[v4.3.3] hwpx.js: 배경색 셀도 표 위치에 따라 좌우 바깥 테두리 제거 변형을 참조",
+        "[v4.3.3] index.html: 업데이트 내역 버튼 v4.3.3 반영",
+        "[v4.3.3] sw.js: CACHE_VERSION to-hwpx-v4.3.3"
+      ]
+    },
     {
       "version": "4.3.2",
       "date": "2026-06-21",

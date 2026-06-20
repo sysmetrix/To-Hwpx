@@ -446,16 +446,21 @@ ${paraBase(13, 'RIGHT',  160,   0,  850,    0)}
         <hh:bottomBorder type="SOLID" width="0.4 mm" color="#555555"/>
         <hh:diagonal type="SOLID" width="0.1 mm" color="#000000"/>
       </hh:borderFill>
-${[...customBfMap.entries()].map(([color, bfId]) => `      <!-- id=${bfId} DOCX 셀 배경색 #${color} -->
+${[...customBfMap.entries()].map(([key, bfId]) => {
+    const [color, variant = 'full'] = String(key).split(':');
+    const noLeft = variant === 'left' || variant === 'both';
+    const noRight = variant === 'right' || variant === 'both';
+    return `      <!-- id=${bfId} DOCX 셀 배경색 #${color}${variant === 'full' ? '' : ` (${variant})`} -->
       <hh:borderFill id="${bfId}" threeD="0" shadow="0" centerLine="NONE" breakCellSeparateLine="0">
         <hh:slash type="NONE" Crooked="0" isCounter="0"/><hh:backSlash type="NONE" Crooked="0" isCounter="0"/>
-        <hh:leftBorder type="SOLID" width="0.12 mm" color="#000000"/>
-        <hh:rightBorder type="SOLID" width="0.12 mm" color="#000000"/>
+        <hh:leftBorder type="${noLeft ? 'NONE' : 'SOLID'}" width="${noLeft ? '0.1' : '0.12'} mm" color="#000000"/>
+        <hh:rightBorder type="${noRight ? 'NONE' : 'SOLID'}" width="${noRight ? '0.1' : '0.12'} mm" color="#000000"/>
         <hh:topBorder type="SOLID" width="0.12 mm" color="#000000"/>
         <hh:bottomBorder type="SOLID" width="0.12 mm" color="#000000"/>
         <hh:diagonal type="SOLID" width="0.1 mm" color="#000000"/>
         <hh:fillBrush><hh:winBrush faceColor="#${color}" hatchColor="#000000" alpha="0"/></hh:fillBrush>
-      </hh:borderFill>`).join('\n')}
+      </hh:borderFill>`;
+}).join('\n')}
     </hh:borderFills>
 ${imageBlocks.length
     ? `    <hh:binDataList itemCnt="${imageBlocks.length}">
@@ -578,6 +583,27 @@ function cellBg(cell)     { return typeof cell === 'object' ? (cell?.bg  || null
 function cellColSpan(cell) { return typeof cell === 'object' ? (cell?.colSpan || 1) : 1; }
 function cellRowSpan(cell) { return typeof cell === 'object' ? (cell?.rowSpan || 1) : 1; }
 
+function tableSideVariant(nCols, logicalC, colSpan) {
+    if (nCols === 1) return 'both';
+    if (logicalC === 0) return 'left';
+    if (logicalC + colSpan >= nCols) return 'right';
+    return 'full';
+}
+
+function bgBorderKey(color, variant = 'full') {
+    return `${color}:${variant}`;
+}
+
+function addBgBorderFillVariants(customBfMap, color, nextId) {
+    for (const variant of ['full', 'left', 'right', 'both']) {
+        const key = bgBorderKey(color, variant);
+        if (!customBfMap.has(key)) {
+            customBfMap.set(key, String(nextId++));
+        }
+    }
+    return nextId;
+}
+
 function getColumnWidths(allRows, nCols, tableWidth) {
     const MIN_COL = 3000;
     if (nCols <= 1) return [tableWidth];
@@ -663,16 +689,21 @@ function buildTable(header, rows, contentWidthHwp = 48000, customBfMap = new Map
             const rs   = cellRowSpan(cell);
             const paraId = isHd ? '7' : (isNumericCell(val) ? '11' : '10');
             let bfId;
-            if (bg && customBfMap.has(bg)) {
-                bfId = customBfMap.get(bg);
-            } else if (nCols === 1) {
-                bfId = isHd ? '9' : '8';
-            } else if (logicalC === 0) {
-                bfId = isHd ? '6' : '4';
-            } else if (logicalC + cs >= nCols) {
-                bfId = isHd ? '7' : '5';
-            } else {
-                bfId = isHd ? '3' : '2';
+            if (bg) {
+                const variant = tableSideVariant(nCols, logicalC, cs);
+                bfId = customBfMap.get(bgBorderKey(bg, variant))
+                    || customBfMap.get(bgBorderKey(bg, 'full'));
+            }
+            if (!bfId) {
+                if (nCols === 1) {
+                    bfId = isHd ? '9' : '8';
+                } else if (logicalC === 0) {
+                    bfId = isHd ? '6' : '4';
+                } else if (logicalC + cs >= nCols) {
+                    bfId = isHd ? '7' : '5';
+                } else {
+                    bfId = isHd ? '3' : '2';
+                }
             }
             // 병합 셀 너비: 해당 논리 열부터 colSpan 열까지 합산
             const cellWidth = colWidths.slice(logicalC, logicalC + cs).reduce((a, b) => a + b, 0);
@@ -895,8 +926,8 @@ async function buildHwpx(ir, fontName = '휴먼명조', fontSize = 12, marginsMm
         for (const row of allRows) {
             for (const cell of (row || [])) {
                 const bg = cellBg(cell);
-                if (bg && !customBfMap.has(bg)) {
-                    customBfMap.set(bg, String(nextBfId++));
+                if (bg) {
+                    nextBfId = addBgBorderFillVariants(customBfMap, bg, nextBfId);
                 }
             }
         }
