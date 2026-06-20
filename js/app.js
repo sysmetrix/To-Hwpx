@@ -579,7 +579,18 @@ async function findLocalFont(paths) {
     return '';
 }
 
-async function isSystemFontInstalled(names) {
+async function isSystemFontInstalled(names, localFontsList = null) {
+    // queryLocalFonts() 결과 우선 사용 — 현재 사용자 설치 폰트까지 감지
+    if (localFontsList !== null) {
+        const lc = s => s.toLowerCase();
+        const sets = [
+            new Set(localFontsList.map(f => lc(f.family))),
+            new Set(localFontsList.map(f => lc(f.fullName))),
+            new Set(localFontsList.map(f => lc(f.postscriptName))),
+        ];
+        return names.some(name => sets.some(s => s.has(lc(name))));
+    }
+    // 폴백: FontFace local() — 시스템 전체 설치 폰트만 접근
     for (const name of names) {
         try {
             const font = new FontFace('__detect__', `local("${name}")`);
@@ -616,11 +627,17 @@ async function renderFontGuide() {
         </section>
     `).join('');
 
+    // queryLocalFonts() 한 번만 호출 — 현재 사용자 설치 폰트 포함, 권한 허용 시
+    let localFontsList = null;
+    if ('queryLocalFonts' in window) {
+        try { localFontsList = await window.queryLocalFonts(); } catch (_) {}
+    }
+
     await Promise.all(FONT_DOWNLOADS.map(async (font, i) => {
         const box = el.querySelector(`[data-font-index="${i}"]`);
         if (!box) return;
         const [isInstalled, localPath] = await Promise.all([
-            isSystemFontInstalled(font.systemNames || [font.name]),
+            isSystemFontInstalled(font.systemNames || [font.name], localFontsList),
             findLocalFont(font.local),
         ]);
         const official = `<a class="font-official-link" href="${escHtml(font.official)}" target="_blank" rel="noopener">공식 사이트</a>`;

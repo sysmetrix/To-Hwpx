@@ -1,6 +1,19 @@
 {
-  "current": "4.0.9",
+  "current": "4.1.0",
   "versions": [
+    {
+      "version": "4.1.0",
+      "date": "2026-06-20",
+      "user": [
+        "폰트 설치 감지 방식 개선 — '현재 사용자용으로 설치'한 폰트도 설치됨으로 표시"
+      ],
+      "dev": [
+        "[v4.1.0] app.js: isSystemFontInstalled()에 queryLocalFonts() 우선 시도 추가 (per-user 설치 폰트 감지)",
+        "[v4.1.0] app.js: renderFontGuide()에서 queryLocalFonts() 한 번 호출 후 각 폰트 검사에 공유",
+        "[v4.1.0] app.js: queryLocalFonts() 실패(권한 거부·미지원) 시 FontFace local() 폴백 유지",
+        "[v4.1.0] sw.js: CACHE_VERSION to-hwpx-v4.1.0"
+      ]
+    },
     {
       "version": "4.0.9",
       "date": "2026-06-20",
