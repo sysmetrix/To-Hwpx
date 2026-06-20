@@ -321,21 +321,20 @@ ${fontFaceBlock('OTHER')}
 ${fontFaceBlock('SYMBOL')}
 ${fontFaceBlock('USER')}
     </hh:fontfaces>
-    <hh:charProperties itemCnt="11">
-      <!-- 0=본문, 1=H1 bold, 2=H2 bold, 3=H3 bold, 4=H4 bold, 5=표머리 bold, 6=코드, 7=본문bold, 8=본문italic, 9=본문bold+italic, 10=코드 라벨 -->
+    <hh:charProperties itemCnt="10">
+      <!-- 0=본문, 1=H1 bold, 2=H2 bold, 3=H3 bold, 4=H4 bold, 5=표머리 bold, 6=코드, 7=본문bold, 8=본문italic, 9=본문bold+italic -->
 ${charBase(0, sz.body,  false, false)}
 ${charBase(1, sz.h1,   true,  false)}
 ${charBase(2, sz.h2,   true,  false)}
 ${charBase(3, sz.h3,   true,  false)}
 ${charBase(4, sz.h4,   true,  false)}
 ${charBase(5, sz.tblHd,true,  false)}
-${charBase(6, sz.code, false, false, codeFontId).replace('"#000000"', '"#333333"')}
+${charBase(6, sz.code, false, false, codeFontId).replace('"#000000"', '"#E6EDF3"')}
 ${charBase(7, sz.body, true,  false)}
 ${charBase(8, sz.body, false, true)}
 ${charBase(9, sz.body, true,  true)}
-${charBase(10, Math.max((bp - 2) * 100, 700), true, false, codeFontId).replace('"#000000"', '"#586069"')}
     </hh:charProperties>
-    <hh:paraProperties itemCnt="16">
+    <hh:paraProperties itemCnt="15">
       <!-- id  정렬    행간  전    후   들여  테두리참조 -->
 ${paraBase(0, 'JUSTIFY', 160,   0,  850,    0)}
 ${paraBase(1, 'LEFT',    180, 850,  567,    0)}
@@ -356,9 +355,8 @@ ${paraBase(11, 'RIGHT',  150,   0,    0,    0)}
       <!-- id=12/13  DOCX 정렬 보존: 가운데/오른쪽 -->
 ${paraBase(12, 'CENTER', 160,   0,  850,    0)}
 ${paraBase(13, 'RIGHT',  160,   0,  850,    0)}
-      <!-- id=14/15  코드 라벨/코드 라인: 고정폭 글꼴, 좌측 여백, 배경/테두리 -->
-${paraBase(14, 'LEFT',   120, 300,    0,  650, '11')}
-${paraBase(15, 'LEFT',   120,   0,    0,  650, '11')}
+      <!-- id=14  코드 라인: 고정폭 글꼴, 좌측 여백, 배경 -->
+${paraBase(14, 'LEFT',   120,   0,    0,  650, '11')}
     </hh:paraProperties>
     <hh:borderFills itemCnt="${11 + customBfMap.size}">
       <!-- id=1 테두리 없음 -->
@@ -455,15 +453,15 @@ ${paraBase(15, 'LEFT',   120,   0,    0,  650, '11')}
         <hh:bottomBorder type="SOLID" width="0.4 mm" color="#555555"/>
         <hh:diagonal type="SOLID" width="0.1 mm" color="#000000"/>
       </hh:borderFill>
-      <!-- id=11 코드 블록용: 연한 배경 + 얇은 테두리 -->
+      <!-- id=11 코드 블록용: 어두운 배경 -->
       <hh:borderFill id="11" threeD="0" shadow="0" centerLine="NONE" breakCellSeparateLine="0">
         <hh:slash type="NONE" Crooked="0" isCounter="0"/><hh:backSlash type="NONE" Crooked="0" isCounter="0"/>
-        <hh:leftBorder type="SOLID" width="0.1 mm" color="#D0D7DE"/>
-        <hh:rightBorder type="SOLID" width="0.1 mm" color="#D0D7DE"/>
-        <hh:topBorder type="SOLID" width="0.1 mm" color="#D0D7DE"/>
-        <hh:bottomBorder type="SOLID" width="0.1 mm" color="#D0D7DE"/>
+        <hh:leftBorder type="NONE" width="0.1 mm" color="#D0D7DE"/>
+        <hh:rightBorder type="NONE" width="0.1 mm" color="#D0D7DE"/>
+        <hh:topBorder type="NONE" width="0.1 mm" color="#D0D7DE"/>
+        <hh:bottomBorder type="NONE" width="0.1 mm" color="#D0D7DE"/>
         <hh:diagonal type="SOLID" width="0.1 mm" color="#D0D7DE"/>
-        <hh:fillBrush><hh:winBrush faceColor="#F6F8FA" hatchColor="#000000" alpha="0"/></hh:fillBrush>
+        <hh:fillBrush><hh:winBrush faceColor="#101915" hatchColor="#000000" alpha="0"/></hh:fillBrush>
       </hh:borderFill>
 ${[...customBfMap.entries()].map(([key, bfId]) => {
     const [color, variant = 'full'] = String(key).split(':');
@@ -563,7 +561,7 @@ function buildBlankPara() {
         `<hp:run charPrIDRef="0"><hp:t> </hp:t></hp:run></hp:p>`;
 }
 
-function buildCodePara(text, paraId = '15', charId = '6') {
+function buildCodePara(text, paraId = '14', charId = '6') {
     const pid = _nextParaId();
     const raw = String(text ?? '');
     const safe = xmlEsc(raw === '' ? ' ' : raw);
@@ -573,11 +571,9 @@ function buildCodePara(text, paraId = '15', charId = '6') {
 
 function buildCodeBlock(block, prefix = '') {
     const parts = [];
-    const lang = String(block.lang || '').trim();
-    if (lang) parts.push(buildCodePara(prefix + lang, '14', '10'));
     const text = String(block.text ?? '');
     const lines = text === '' ? [''] : text.split('\n');
-    for (const line of lines) parts.push(buildCodePara(prefix + line, '15', '6'));
+    for (const line of lines) parts.push(buildCodePara(prefix + line, '14', '6'));
     parts.push(buildBlankPara());
     return parts.join('');
 }
@@ -623,11 +619,27 @@ function validateCodeAudit(ir) {
     }
 }
 
-/** 구분선(HR) 단락 — paraPr id=8(하단 테두리 실선) 사용 */
-function buildHrPara() {
+/** 구분선(HR) — treatAsChar=1 표 객체로 생성해 한글에서 선택/삭제하기 쉽게 한다. */
+function buildHrPara(contentWidthHwp = 48000) {
     const pid = _nextParaId();
-    return `<hp:p id="${pid}" paraPrIDRef="8" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0">` +
-        `<hp:run charPrIDRef="0"><hp:t> </hp:t></hp:run></hp:p>` +
+    const cellPara = buildBlankPara();
+    return `<hp:p id="${pid}" paraPrIDRef="9" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0"><hp:run charPrIDRef="0">` +
+        `<hp:tbl id="0" zOrder="0" numberingType="TABLE" textWrap="TOP_AND_BOTTOM" ` +
+        `textFlow="BOTH_SIDES" lock="0" dropcapstyle="None" pageBreak="ROW" ` +
+        `repeatHeader="0" rowCnt="1" colCnt="1" cellSpacing="0" borderFillIDRef="1">` +
+        `<hp:sz width="${Math.max(12000, contentWidthHwp)}" widthRelTo="ABSOLUTE" height="0" heightRelTo="ABSOLUTE" protect="0"/>` +
+        `<hp:pos treatAsChar="1" affectLSpacing="0" flowWithText="1" allowOverlap="0" holdAnchorAndSO="0" ` +
+        `vertRelTo="PARA" horzRelTo="COLUMN" vertAlign="TOP" horzAlign="LEFT" vertOffset="0" horzOffset="0"/>` +
+        `<hp:outMargin left="0" right="0" top="0" bottom="0"/>` +
+        `<hp:inMargin left="0" right="0" top="0" bottom="0"/>` +
+        `<hp:tr><hp:tc name="" header="0" hasMargin="0" protect="0" editable="0" dirty="0" borderFillIDRef="10">` +
+        `<hp:subList id="" textDirection="HORIZONTAL" lineWrap="BREAK" vertAlign="CENTER" ` +
+        `linkListIDRef="0" linkListNextIDRef="0" textWidth="0" textHeight="0" hasTextRef="0" hasNumRef="0">` +
+        cellPara +
+        `</hp:subList><hp:cellAddr colAddr="0" rowAddr="0"/><hp:cellSpan colSpan="1" rowSpan="1"/>` +
+        `<hp:cellSz width="${Math.max(12000, contentWidthHwp)}" height="120"/>` +
+        `<hp:cellMargin left="0" right="0" top="0" bottom="0"/></hp:tc></hp:tr>` +
+        `</hp:tbl><hp:t></hp:t></hp:run></hp:p>` +
         buildBlankPara();
 }
 
@@ -943,8 +955,8 @@ function buildSection(ir, marginsHwp, paperKey, landscape = false, customBfMap =
             parts.push(buildBlankPara());
 
         } else if (bt === 'hr') {
-            // 구분선 → 하단 테두리 실선 단락
-            parts.push(buildHrPara());
+            // 구분선 → 글자처럼 취급되는 표 객체
+            parts.push(buildHrPara(contentWidthHwp));
 
         } else if (bt === 'list') {
             (block.items || []).forEach((rawItem, i) => {
