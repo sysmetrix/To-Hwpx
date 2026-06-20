@@ -282,19 +282,19 @@ const FORMAT_INFO = {
             'h1~h6, p, table, ul, ol, strong, em 등 주요 태그 지원',
             '중첩 구조(리스트·표) 처리',
         ],
-        limits: ['CSS 스타일 무시 (클래스·인라인 모두)', '이미지·SVG 미지원', 'script·style 태그 무시'],
+        limits: ['CSS 레이아웃·색상 대부분 무시', '이미지·SVG 미지원', 'script·style 태그 무시'],
     },
     docx: {
         icon: '📘', name: 'Word 문서 (DOCX)',
-        quality: '★★☆', available: true,
+        quality: '★☆☆', available: true,
         desc: 'Microsoft Word의 Office Open XML(.docx) 형식입니다.',
-        tech: 'JSZip으로 압축 해제 → word/document.xml 파싱 → IR → HWPX',
+        tech: 'JSZip으로 압축 해제 → word/document.xml 본문·표 추출 → IR → HWPX',
         features: [
-            '본문 텍스트, 제목 스타일 변환',
-            '표(Table) 구조 변환',
-            '순서/비순서 목록 변환',
+            '본문 텍스트와 기본 제목 스타일 추출',
+            '단순 표(Table) 구조 변환',
+            '일부 목록 텍스트 추출',
         ],
-        limits: ['이미지 미지원', '머리글·바닥글 미지원', '각주·미주 미지원', '복잡한 서식(색상·폰트) 손실'],
+        limits: ['이미지 미지원', '머리글·바닥글 미지원', '각주·미주 미지원', '정렬·색상·폰트·병합 셀 등 복잡한 서식 손실'],
     },
     hwp: {
         icon: '🇰🇷', name: '한글 문서 (HWP)',
@@ -327,15 +327,16 @@ const FORMAT_INFO = {
     },
     csv: {
         icon: '📊', name: 'CSV / XLSX 스프레드시트',
-        quality: '★★★', available: true,
+        quality: '★★☆', available: true,
         desc: '쉼표 구분 데이터(CSV) 또는 Excel 스프레드시트(XLSX)입니다.',
         tech: 'CSV: RFC 4180 파서 / XLSX: SheetJS 라이브러리 → 표 IR → HWPX',
         features: [
-            '전체 데이터를 한글 표로 변환',
+            'CSV 전체 데이터 또는 XLSX 첫 번째 시트를 한글 표로 변환',
             '첫 행을 표 헤더(진한 배경)로 자동 처리',
+            '텍스트/숫자 셀에 맞춘 기본 정렬 적용',
             '한글·특수문자 완전 지원',
         ],
-        limits: ['XLSX는 첫 번째 시트만 변환', '셀 서식(색상·폰트) 무시', '수식은 결과값만 변환'],
+        limits: ['XLSX는 첫 번째 시트만 변환', '셀 병합·색상·폰트·테두리 무시', '수식은 결과값만 변환'],
     },
     json: {
         icon: '{ }', name: 'JSON 데이터',
@@ -394,6 +395,33 @@ const FORMAT_INFO = {
         limits: ['이미지·폰트 무시', 'EPUB2/3 호환성 필요'],
     },
 };
+
+const FONT_DOWNLOADS = [
+    {
+        name: 'Noto Sans KR',
+        desc: 'Google/Adobe 계열의 넓은 문자 지원 고딕체입니다. 웹 UI 미리보기와 일반 문서용으로 무난합니다.',
+        local: ['fonts/NotoSansKR-Regular.ttf', 'Font/Noto_Sans_KR/NotoSansKR-Regular.ttf'],
+        official: 'https://fonts.google.com/specimen/Noto+Sans+KR',
+    },
+    {
+        name: '나눔고딕',
+        desc: '네이버 배포 한글 고딕체입니다. 국내 사용자에게 익숙하고 일반 문서에 잘 맞습니다.',
+        local: ['fonts/NanumGothic-Regular.ttf', 'Font/NanumGothic/NanumGothic-Regular.ttf'],
+        official: 'https://hangeul.naver.com/font',
+    },
+    {
+        name: 'KoPub돋움체',
+        desc: '출판/공공 배포 문서에 어울리는 돋움 계열 폰트입니다. 설치 후 한글에서 같은 이름으로 표시되어야 합니다.',
+        local: ['fonts/KoPubWorldDotum-Medium.ttf', 'Font/kopub/KoPubDotumMedium.ttf'],
+        official: 'https://www.kopus.org',
+    },
+    {
+        name: 'Pretendard GOV',
+        desc: '디지털 행정 문서에 어울리는 현대적인 고딕체입니다. 설치 후 HWPX 폰트명과 일치해야 합니다.',
+        local: ['fonts/PretendardGOV-Regular.ttf', 'Font/Pretendard GOV-1.3.9/Pretendard-Regular.ttf'],
+        official: 'https://github.com/orioncactus/pretendard',
+    },
+];
 
 /** 포맷 카드 클릭 → 상세 정보 팝업 표시 */
 function initFormatCards() {
@@ -471,6 +499,67 @@ function openFormatModal(ext) {
 
 function closeFormatModal() {
     document.getElementById('format-modal')?.classList.remove('open');
+    document.body.style.overflow = '';
+}
+
+async function hasLocalFont(path) {
+    try {
+        const res = await fetch(path, { method: 'HEAD', cache: 'no-store' });
+        return res.ok;
+    } catch (_) {
+        return false;
+    }
+}
+
+async function findLocalFont(paths) {
+    for (const path of paths) {
+        if (await hasLocalFont(path)) return path;
+    }
+    return '';
+}
+
+async function renderFontGuide() {
+    const el = document.getElementById('font-guide-list');
+    if (!el) return;
+
+    el.innerHTML = FONT_DOWNLOADS.map((font, index) => `
+        <section class="font-guide-item">
+            <div>
+                <h3>${escHtml(font.name)}</h3>
+                <p>${escHtml(font.desc)}</p>
+                <p class="font-guide-sample" style="font-family:'${escHtml(font.name)}', var(--font-main)">문서를 한글(HWPX)로 변환합니다 123</p>
+                <p>${font.local.map(path => `<code>${escHtml(path)}</code>`).join(' ')}</p>
+            </div>
+            <div class="font-guide-actions" data-font-index="${index}">
+                <span class="font-guide-local-missing">로컬 확인 중</span>
+                <a class="font-official-link" href="${escHtml(font.official)}" target="_blank" rel="noopener">공식</a>
+            </div>
+        </section>
+    `).join('');
+
+    for (let i = 0; i < FONT_DOWNLOADS.length; i++) {
+        const font = FONT_DOWNLOADS[i];
+        const selector = `[data-font-index="${i}"]`;
+        const box = el.querySelector(selector);
+        if (!box) continue;
+        const localPath = await findLocalFont(font.local);
+        const official = `<a class="font-official-link" href="${escHtml(font.official)}" target="_blank" rel="noopener">공식</a>`;
+        box.innerHTML = localPath
+            ? `<a href="${escHtml(localPath)}" download>로컬 TTF</a>${official}`
+            : `<span class="font-guide-local-missing">로컬 파일 없음</span>${official}`;
+    }
+}
+
+function showFontGuide() {
+    const modal = document.getElementById('font-guide-modal');
+    if (!modal) return;
+    modal.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    renderFontGuide();
+}
+
+function closeFontGuide() {
+    document.getElementById('font-guide-modal')?.classList.remove('open');
     document.body.style.overflow = '';
 }
 
@@ -1108,12 +1197,14 @@ function initModals() {
     document.getElementById('close-pc-guide')?.addEventListener('click', closePcGuide);
     document.getElementById('close-mobile-guide')?.addEventListener('click', closeMobileGuide);
     document.getElementById('close-install-guide')?.addEventListener('click', closeInstallGuide);
+    document.getElementById('close-font-guide')?.addEventListener('click', closeFontGuide);
 
     // 업데이트 내역 열기 버튼 (유틸리티 바)
     document.getElementById('open-changelog')?.addEventListener('click', showChangelog);
     document.getElementById('open-pc-guide')?.addEventListener('click', showPcGuide);
     document.getElementById('open-mobile-guide')?.addEventListener('click', showMobileGuide);
     document.getElementById('open-install-guide')?.addEventListener('click', showInstallGuide);
+    document.getElementById('open-font-guide')?.addEventListener('click', showFontGuide);
 
     // 오버레이 바깥 클릭으로 닫기
     document.getElementById('preview-modal')?.addEventListener('click', (e) => {
@@ -1131,6 +1222,9 @@ function initModals() {
     document.getElementById('install-guide-modal')?.addEventListener('click', (e) => {
         if (e.target === e.currentTarget) closeInstallGuide();
     });
+    document.getElementById('font-guide-modal')?.addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) closeFontGuide();
+    });
 
     // ESC 키로 닫기
     document.addEventListener('keydown', (e) => {
@@ -1140,6 +1234,7 @@ function initModals() {
             closePcGuide();
             closeMobileGuide();
             closeInstallGuide();
+            closeFontGuide();
         }
     });
 

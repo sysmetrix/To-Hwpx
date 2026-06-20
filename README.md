@@ -6,6 +6,37 @@
 
 ---
 
+## 코드를 몰라도 하는 빠른 수정 가이드
+
+이 프로젝트는 빌드 과정이 없는 정적 웹 앱입니다. 대부분의 문구, 링크, 색상은 아래 위치만 바꾸면 됩니다.
+
+| 하고 싶은 수정 | 수정할 파일 | 찾을 내용 | 주의할 점 |
+|---|---|---|---|
+| 첫 화면 제목/설명 변경 | `index.html` | `hero-title`, `hero-sub` | 태그 이름과 `id`는 그대로 두고 글자만 바꾸세요. |
+| 상단/푸터 링크 변경 | `index.html` | `main-nav`, `footer-links` | `href` 주소와 화면 글자만 바꾸면 됩니다. |
+| 지원 포맷 카드 문구 변경 | `index.html` | `.format-card` | `data-ext` 값은 JS와 연결되므로 함부로 바꾸지 마세요. |
+| 포맷 팝업 설명 변경 | `js/app.js` | `FORMAT_INFO` | 카드의 `data-ext`와 같은 키를 찾아 설명만 바꾸세요. |
+| 대표 색상 변경 | `style.css` | `:root`, `--c-primary`, `--c-accent` | 위쪽 CSS 변수만 바꾸면 전체 테마에 반영됩니다. |
+| 최대 화면 폭 변경 | `style.css` | `--max-w` | 너무 작게 바꾸면 표/옵션 영역이 답답해질 수 있습니다. |
+| 앱 이름/PWA 설명 변경 | `manifest.json` | `name`, `short_name`, `description` | JSON 파일이므로 쉼표와 따옴표 형식을 유지하세요. |
+| 설치형 폰트 제공 | `fonts/` | `fonts/README.md` | HWPX에는 폰트가 임베딩되지 않으므로 사용자가 PC에 설치해야 합니다. |
+| 캐시 버전 갱신 | `sw.js` | `CACHE_VERSION` | 배포할 때마다 버전을 올려야 이전 캐시가 사라집니다. |
+| 업데이트 내역 변경 | `changelog.json` | `versions` | JSON 형식을 깨뜨리지 않도록 마지막 항목 쉼표에 주의하세요. |
+
+### 절대 함부로 바꾸면 안 되는 것
+
+- `id="..."`: JavaScript가 화면 요소를 찾는 연결 이름입니다.
+- `class="..."`: CSS 스타일과 일부 JavaScript 동작이 연결됩니다.
+- `data-ext="..."`: 포맷 카드와 파서/팝업 설명을 연결합니다.
+- `<script src="js/parsers.js">`, `<script src="js/hwpx.js">`, `<script src="js/app.js">` 순서: 실행 순서가 중요합니다.
+- `integrity="..."`: CDN 파일 보안 검증값입니다. 라이브러리 버전을 바꿀 때만 같이 바꿉니다.
+
+### 파일 저장 인코딩
+
+모든 파일은 **UTF-8**로 열고 저장하세요. 한글 주석과 화면 문구가 깨져 보이면 편집기의 인코딩을 UTF-8로 바꾼 뒤 다시 열어야 합니다.
+
+---
+
 ## 주요 특징
 
 - **완전 로컬 처리** — 파일이 서버에 전송되지 않습니다. 모든 변환이 브라우저 안에서 이루어집니다.
@@ -23,12 +54,12 @@
 
 | 포맷 | 품질 | 특징 |
 |------|------|------|
-| **MD** (Markdown) | ★★★ | 제목·표·코드블록·목록 완전 지원. 가장 높은 변환 품질. |
-| **HTML** | ★★☆ | h1~h6, table, ul/ol 등 주요 태그 지원. CSS 스타일 무시. |
-| **DOCX** (Word) | ★★☆ | 본문·표·목록 변환. 이미지·머리글 미지원. |
+| **MD** (Markdown) | ★★★ | 제목·표·코드블록·목록 지원. 현재 가장 안정적인 변환 품질. |
+| **HTML** | ★★☆ | h1~h6, table, ul/ol 등 주요 태그 지원. CSS 레이아웃·이미지 무시. |
+| **DOCX** (Word) | ★☆☆ | 본문·단순 표·일부 굵게/기울임 추출. 복잡한 Word 서식은 손실. |
 | **HWP** (한글) | ★☆☆ | HWPX(XML) 파싱 가능. HWP5 바이너리는 제한적. |
 | **TXT** | ★★★ | 빈 줄 기반 문단 구분. EUC-KR 자동 감지. |
-| **CSV / XLSX** | ★★★ | 전체 데이터를 표로 변환. SheetJS 기반. |
+| **CSV / XLSX** | ★★☆ | CSV 전체 또는 XLSX 첫 시트를 표로 변환. 셀 서식·병합은 손실. |
 | **JSON** | ★★★ | 배열→표, 객체→목록 변환. IR 형식 직접 지원. |
 
 ### 확장 서비스
@@ -107,11 +138,11 @@
 ```json
 {
   "title": "문서 제목",
-  "docType": "plain",
+  "doc_type": "plain",
   "blocks": [
-    { "type": "heading", "level": 1, "runs": [{ "text": "제목" }] },
-    { "type": "paragraph", "runs": [{ "text": "본문 텍스트", "bold": true }] },
-    { "type": "table", "rows": [[...]] }
+    { "type": "heading", "level": 1, "text": "제목" },
+    { "type": "para", "runs": [{ "text": "본문 텍스트", "bold": true }] },
+    { "type": "table", "header": ["열1", "열2"], "rows": [["값1", "값2"]] }
   ]
 }
 ```
@@ -184,20 +215,27 @@ python -m http.server 8080
 
 ### 새 포맷 파서 추가
 
-1. `js/parsers.js`에 `parseXxx(file)` 함수 추가 (IR 구조 반환)
-2. `parsers.js`의 `dispatch(file)` 함수에 확장자 분기 추가
+1. `js/parsers.js`에 `parseXxx()` 함수 추가 (IR 구조 반환)
+2. `js/parsers.js` 맨 아래 `PARSERS` 맵에 확장자 항목 추가
 3. `index.html`에 `.format-card` 추가 (`data-ext="xxx"`)
-4. `js/app.js`의 `FORMAT_INFO`에 포맷 설명 객체 추가
+4. `js/app.js`의 `FORMAT_INFO`에 같은 키(`xxx`)로 포맷 설명 객체 추가
+5. 파일 선택창에서 바로 보이게 하려면 `index.html`의 `<input id="file-input" accept="...">`에 확장자 추가
 
 ### 서비스 워커 캐시 갱신
 
 `sw.js`의 `CACHE_VERSION`을 변경하면 이전 캐시가 자동 삭제됩니다:
 
 ```js
-const CACHE_VERSION = 'to-hwpx-v3.5.0';
+const CACHE_VERSION = 'to-hwpx-v4.1.0';
 ```
 
-배포 시마다 버전을 올려주세요.
+배포 시마다 버전을 올려주세요. 화면 상단 버전 문구, `changelog.json`, `CACHE_VERSION`을 함께 맞추면 사용자가 보는 버전과 실제 캐시 버전이 어긋나지 않습니다.
+
+### 폰트 파일 제공
+
+앱의 `fonts/` 폴더에 지정된 TTF 파일을 넣으면 화면의 **폰트 설치 안내** 팝업에 로컬 다운로드 버튼이 표시됩니다. 자세한 파일명은 [fonts/README.md](./fonts/README.md)를 확인하세요.
+
+단, 현재 HWPX 생성 로직은 폰트 파일을 문서 안에 임베딩하지 않고 폰트 이름만 기록합니다. 사용자가 한컴오피스에서 같은 모양으로 보려면 해당 폰트를 PC에 설치해야 합니다.
 
 ---
 

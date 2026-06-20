@@ -11,12 +11,26 @@
  *   색상 변경: 맨 위 :root 변수만 수정하면 전체 반영됨
  *   반응형 중단점: 하단 @media 섹션 참조 (768px, 480px)
  *   폰트 변경: --font-main 변수 + @import 교체
+ *
+ * [비개발자 빠른 수정]
+ *   대표 파란색 변경 → --c-primary, --c-primary-dark, --c-primary-light
+ *   보조 보라색 변경 → --c-accent, --c-accent-light
+ *   페이지 최대 폭 변경 → --max-w
+ *   둥근 모서리 변경 → --radius-sm/md/lg
+ *   모바일에서만 깨지는 경우 → 파일 아래쪽 @media (max-width: 768px/480px)
+ *
+ * [주의]
+ *   class 이름은 index.html과 app.js에서 함께 사용됩니다.
+ *   색상/숫자 값만 바꾸고 선택자 이름(.hero, .format-card 등)은 유지하세요.
  * ===================================================================*/
 
 /* ─────────────────────────────────────────────────────────────────
    [CSS 변수] 전체 디자인 토큰 — 여기만 수정하면 색상 테마 전체 변경
    ───────────────────────────────────────────────────────────────── */
 :root {
+    /* 아래 값들은 사이트 전체에 재사용되는 디자인 변수입니다.
+       비개발자는 이 영역의 색상/숫자 값만 바꾸는 것이 가장 안전합니다. */
+
     /* 주 색상 (파란 계열 — 한국 공공문서/서비스 톤) */
     --c-primary:        #2563eb;
     --c-primary-dark:   #1d4ed8;
@@ -777,6 +791,35 @@ a:hover { text-decoration: underline; }
     gap: 4px;
 }
 .paper-size-wrap > select { flex: 1; min-width: 0; }
+.font-select-wrap {
+    display: flex;
+    gap: 4px;
+}
+.font-select-wrap > select {
+    flex: 1;
+    min-width: 0;
+}
+.font-guide-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 46px;
+    padding: 0 9px;
+    border: 1px solid var(--c-border);
+    border-radius: var(--radius-sm);
+    background: var(--c-surface-alt);
+    color: var(--c-primary);
+    font-family: var(--font-main);
+    font-size: 0.78rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: background var(--trans), border-color var(--trans), color var(--trans);
+}
+.font-guide-btn:hover {
+    background: var(--c-primary-light);
+    border-color: var(--c-primary);
+    color: var(--c-primary-dark);
+}
 .paper-orient-btn {
     display: flex;
     align-items: center;
@@ -1686,6 +1729,103 @@ a:hover { text-decoration: underline; }
     font-size: 0.9rem;
 }
 
+.font-guide-lead {
+    margin-bottom: 16px;
+    color: var(--c-text);
+    font-size: 0.92rem;
+    line-height: 1.65;
+}
+.font-guide-list {
+    display: grid;
+    gap: 10px;
+}
+.font-guide-item {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 12px;
+    align-items: center;
+    border: 1px solid var(--c-border);
+    border-radius: var(--radius-md);
+    padding: 13px 14px;
+    background: var(--c-surface);
+}
+.font-guide-item h3 {
+    margin-bottom: 3px;
+    font-size: 0.96rem;
+}
+.font-guide-item p {
+    color: var(--c-text-sub);
+    font-size: 0.84rem;
+    line-height: 1.55;
+}
+.font-guide-sample {
+    margin: 6px 0;
+    padding: 8px 10px;
+    border-radius: var(--radius-sm);
+    background: var(--c-surface-alt);
+    color: var(--c-text) !important;
+    font-size: 1rem !important;
+    font-weight: 600;
+}
+.font-guide-actions {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+.font-guide-actions a,
+.font-guide-local-missing {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 30px;
+    padding: 0 10px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--c-border);
+    font-size: 0.78rem;
+    font-weight: 800;
+    white-space: nowrap;
+}
+.font-guide-actions a {
+    background: var(--c-primary);
+    color: #fff;
+}
+.font-guide-actions a:hover {
+    background: var(--c-primary-dark);
+    color: #fff;
+    text-decoration: none;
+}
+.font-guide-actions a.font-official-link {
+    background: var(--c-surface);
+    color: var(--c-primary);
+    border-color: var(--c-primary);
+}
+.font-guide-actions a.font-official-link:hover {
+    background: var(--c-primary-light);
+}
+.font-guide-local-missing {
+    color: var(--c-text-muted);
+    background: var(--c-surface-alt);
+}
+.font-guide-note {
+    margin-top: 14px;
+    padding: 12px 14px;
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(37,99,235,0.18);
+    background: rgba(37,99,235,0.05);
+}
+.font-guide-note strong {
+    display: block;
+    margin-bottom: 4px;
+    color: var(--c-primary);
+    font-size: 0.88rem;
+}
+.font-guide-note p {
+    color: var(--c-text-sub);
+    font-size: 0.82rem;
+    line-height: 1.55;
+}
+
 
 /* ─────────────────────────────────────────────────────────────────
    [미리보기 모달]
@@ -1957,6 +2097,8 @@ a:hover { text-decoration: underline; }
     .browser-page { gap: 8px; }
     .app-tile,
     .home-tile { width: 74px; }
+    .font-guide-item { grid-template-columns: 1fr; }
+    .font-guide-actions { justify-content: flex-start; }
     .hero-alt-link { flex-direction: column; gap: 6px; }
 }
 

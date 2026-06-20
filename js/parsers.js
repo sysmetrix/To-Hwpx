@@ -533,9 +533,21 @@ function extractDocxParagraph(pNode) {
         if (!styleId) styleId = pStyles[0].getAttribute('val') || '';
     }
 
-    // w:t 요소들의 텍스트를 합쳐서 단락 텍스트 생성
-    const tEls = pNode.getElementsByTagNameNS(DOCX_NS, 't');
-    const text = sanitize(Array.from(tEls).map(t => t.textContent).join('').trim());
+    // w:r 단위로 텍스트를 읽어 bold/italic 같은 인라인 서식을 일부 보존
+    const runEls = Array.from(pNode.getElementsByTagNameNS(DOCX_NS, 'r'));
+    const inlineRuns = [];
+    for (const r of runEls) {
+        const text = sanitize(Array.from(r.getElementsByTagNameNS(DOCX_NS, 't'))
+            .map(t => t.textContent || '')
+            .join(''));
+        if (!text) continue;
+        inlineRuns.push({
+            text,
+            bold: r.getElementsByTagNameNS(DOCX_NS, 'b').length > 0,
+            italic: r.getElementsByTagNameNS(DOCX_NS, 'i').length > 0,
+        });
+    }
+    const text = sanitize(inlineRuns.map(r => r.text).join('').trim());
     if (!text) return null;
 
     // 스타일 이름에 'heading'/'제목'/'title' 포함 시 heading 블록
@@ -545,15 +557,14 @@ function extractDocxParagraph(pNode) {
     }
 
     // bold 런(w:b)이 단락 전체를 덮고 있으면 소제목으로 처리
-    const runs = pNode.getElementsByTagNameNS(DOCX_NS, 'r');
-    const allBold = runs.length > 0 && Array.from(runs).every(r =>
-        r.getElementsByTagNameNS(DOCX_NS, 'b').length > 0
-    );
+    const allBold = inlineRuns.length > 0 && inlineRuns.every(r => r.bold);
     if (allBold) {
         return { type: 'heading', level: 3, text };
     }
 
-    return { type: 'para', text };
+    return inlineRuns.length
+        ? { type: 'para', runs: inlineRuns }
+        : { type: 'para', text };
 }
 
 /** w:tbl 표 노드 → IR table 블록 */

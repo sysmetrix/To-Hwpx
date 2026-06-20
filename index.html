@@ -23,6 +23,11 @@
     포맷 카드 추가 → .format-grid 안에 .format-card 항목 추가
     내비게이션 링크 → .main-nav ul 안에 <li><a> 추가
     푸터 링크 → .footer-links ul 안에 추가
+
+  [비개발자 수정 규칙]
+    화면 문구만 바꿀 때는 태그 안의 글자만 수정하세요.
+    id/class/data-* 값은 CSS·JavaScript와 연결되어 있으므로 이름을 바꾸지 마세요.
+    새 포맷을 추가할 때는 README의 "새 포맷 파서 추가" 순서를 먼저 확인하세요.
   ====================================================================
 -->
 <html lang="ko">
@@ -88,9 +93,11 @@
     <!-- 유틸리티 바: 서비스 안내 문구 -->
     <div class="utility-bar">
         <div class="container">
+            <!-- [문구 수정 가능] 행사명/서비스명을 바꾸려면 아래 글자만 수정 -->
             <span>｢BWYF｣ AX Challenger 2026</span>
+            <!-- [주의] id="open-changelog"는 app.js에서 업데이트 내역 모달을 여는 연결값 -->
             <button class="util-changelog-btn" id="open-changelog" aria-label="업데이트 내역 보기">
-                📋 v4.0.0 업데이트 내역
+                📋 v4.1.0 업데이트 내역
             </button>
         </div>
     </div>
@@ -99,6 +106,7 @@
     <div class="container">
         <div class="header-inner">
             <!-- 로고 -->
+            <!-- [문구 수정 가능] 로고 표시 문구만 변경 가능. class/id 구조는 유지 -->
             <a href="#" class="site-logo" aria-label="To HWPX 홈">
                 To <span class="logo-badge">HWPX</span>
             </a>
@@ -107,6 +115,7 @@
             <button id="menu-toggle" aria-label="메뉴 열기" aria-expanded="false">☰</button>
 
             <!-- 주 내비게이션 -->
+            <!-- [링크 수정 가능] href와 화면 글자만 바꾸세요. class는 스타일/툴팁에 사용됩니다. -->
             <nav id="main-nav" role="navigation" aria-label="주 메뉴">
                 <ul class="main-nav">
                     <li>
@@ -148,15 +157,18 @@
 <section class="hero" aria-labelledby="hero-title">
     <div class="container">
         <!-- 메인 제목 -->
+        <!-- [문구 수정 가능] h1 안의 글자와 줄바꿈(<br>)만 수정. id="hero-title"은 유지 -->
         <h1 id="hero-title">문서를 한글(HWPX)로,<br>지금 바로 변환</h1>
 
         <!-- 서브 설명 -->
+        <!-- [문구 수정 가능] 서비스 소개 문구만 수정 -->
         <p class="hero-sub">
             Markdown, HTML, DOCX, CSV, JSON 등 다양한 포맷을<br>
             한컴 오피스 없이 .hwpx 파일로 변환합니다.
         </p>
 
         <div class="hero-badges" aria-label="지원 실행 환경">
+            <!-- [주의] 아래 버튼 id는 app.js 모달 열기 기능과 연결됨. 글자만 수정 -->
             <button type="button" id="open-pc-guide">PC 브라우저 지원</button>
             <button type="button" id="open-mobile-guide">모바일 브라우저 지원</button>
             <button type="button" id="open-install-guide">앱처럼 설치 가능</button>
@@ -171,6 +183,7 @@
         </div>
 
         <!-- 숨겨진 파일 인풋 (드롭존 클릭 시 트리거됨) -->
+        <!-- [포맷 추가 시] accept에 새 확장자를 추가해야 파일 선택창에서 보입니다. -->
         <input type="file" id="file-input" hidden
                accept=".md,.markdown,.html,.htm,.txt,.csv,.xlsx,.xls,.json,.ipynb,.docx,.hwp,.hwpx">
 
@@ -241,20 +254,22 @@
                     </div>
                     <div class="form-row">
                         <label for="doc-font">한글 폰트</label>
-                        <!-- 가나다순: 굴림·나눔고딕·맑은고딕·바탕·함초롬바탕·함초롬돋움·휴먼명조
-                             abc순: KoPub돋움체·Noto Sans KR·Pretendard GOV Variable Medium -->
-                        <select id="doc-font" name="doc-font">
-                            <option value="굴림">굴림</option>
-                            <option value="나눔고딕">나눔고딕</option>
-                            <option value="맑은 고딕">맑은 고딕</option>
-                            <option value="바탕">바탕</option>
-                            <option value="함초롬바탕">함초롬바탕</option>
-                            <option value="함초롬돋움">함초롬돋움</option>
-                            <option value="휴먼명조" selected>휴먼명조</option>
-                            <option value="KoPub돋움체 Medium">KoPub돋움체</option>
-                            <option value="Noto Sans KR">Noto Sans KR</option>
-                            <option value="Pretendard GOV Variable Medium">Pretendard GOV</option>
-                        </select>
+                        <!-- [주의] HWPX에는 폰트 파일이 임베딩되지 않고 폰트 이름만 기록됩니다.
+                             선택한 폰트를 한글에서 그대로 보려면 사용자 PC에 TTF/OTF 설치가 필요합니다. -->
+                        <div class="font-select-wrap">
+                            <select id="doc-font" name="doc-font">
+                                <option value="휴먼명조" selected>휴먼명조</option>
+                                <option value="맑은 고딕">맑은 고딕</option>
+                                <option value="나눔고딕">나눔고딕</option>
+                                <option value="KoPub돋움체 Medium">KoPub돋움체</option>
+                                <option value="Noto Sans KR">Noto Sans KR</option>
+                                <option value="Pretendard GOV Variable Medium">Pretendard GOV</option>
+                            </select>
+                            <button type="button" id="open-font-guide" class="font-guide-btn"
+                                    aria-label="폰트 설치 안내 열기" title="선택 폰트 설치 안내">
+                                설치
+                            </button>
+                        </div>
                     </div>
                     <div class="form-row">
                         <label for="font-size">글꼴 크기</label>
@@ -447,6 +462,8 @@
 
         <!-- ── 기본 서비스 패널 ─────────────────────────────────────
              [수정 시] 새 포맷 카드 추가 → .format-card 복사 후 data-ext/내용 수정
+             [중요] data-ext 값은 js/app.js FORMAT_INFO, js/parsers.js PARSERS와 연결됨
+             비개발자는 카드 안의 표시 문구(card-ext/card-name/card-quality/badge)만 바꾸는 것이 안전합니다.
              ─────────────────────────────────────────────────────── -->
         <div class="format-panel active" id="panel-basic" role="tabpanel">
             <div class="format-grid">
@@ -474,7 +491,7 @@
                     <div class="card-icon"><img src="https://api.iconify.design/simple-icons/microsoftword.svg?color=%232b579a" alt="" class="format-brand-icon" loading="lazy" aria-hidden="true"></div>
                     <div class="card-ext">DOCX</div>
                     <div class="card-name">Word 문서</div>
-                    <div class="card-quality">★★☆</div>
+                    <div class="card-quality">★☆☆</div>
                     <span class="card-badge badge-available">지원됨</span>
                 </div>
 
@@ -492,7 +509,7 @@
                     <div class="card-icon"><img src="https://api.iconify.design/simple-icons/microsoftexcel.svg?color=%23217346" alt="" class="format-brand-icon" loading="lazy" aria-hidden="true"></div>
                     <div class="card-ext">CSV / XLSX</div>
                     <div class="card-name">스프레드시트</div>
-                    <div class="card-quality">★★★</div>
+                    <div class="card-quality">★★☆</div>
                     <span class="card-badge badge-available">지원됨</span>
                 </div>
 
@@ -614,7 +631,7 @@
         <!-- ── 지원 현황 패널 ────────────────────────────────────── -->
         <div class="format-panel" id="panel-support" role="tabpanel">
             <span id="support" aria-hidden="true"></span>
-            <p class="section-sub" style="margin:16px 0 24px">★★★: 고품질 / ★★☆: 주요 내용 보존 / ★☆☆: 텍스트 추출만</p>
+            <p class="section-sub" style="margin:16px 0 24px">★★★: 구조 보존 양호 / ★★☆: 기본 구조 변환 / ★☆☆: 내용 추출 중심</p>
             <div class="support-table-wrap">
                 <table class="support-table">
                     <thead>
@@ -643,10 +660,10 @@
                         </tr>
                         <tr>
                             <td><strong>DOCX</strong></td>
-                            <td>★★☆</td>
+                            <td>★☆☆</td>
                             <td><span class="card-badge badge-available">지원됨</span></td>
                             <td>JSZip → word/document.xml → IR</td>
-                            <td>이미지·머리글·바닥글 미지원</td>
+                            <td>이미지·머리글·바닥글·복잡한 서식 미지원</td>
                         </tr>
                         <tr>
                             <td><strong>HWP</strong></td>
@@ -664,17 +681,17 @@
                         </tr>
                         <tr>
                             <td><strong>CSV</strong></td>
-                            <td>★★★</td>
+                            <td>★★☆</td>
                             <td><span class="card-badge badge-available">지원됨</span></td>
                             <td>RFC 4180 파서 → 표 IR</td>
                             <td>없음</td>
                         </tr>
                         <tr>
                             <td><strong>XLSX</strong></td>
-                            <td>★★★</td>
+                            <td>★★☆</td>
                             <td><span class="card-badge badge-available">지원됨</span></td>
                             <td>SheetJS → 첫 시트 → IR</td>
-                            <td>첫 번째 시트만 변환</td>
+                            <td>첫 번째 시트만 변환, 셀 서식 대부분 손실</td>
                         </tr>
                         <tr>
                             <td><strong>JSON</strong></td>
@@ -753,15 +770,17 @@
             </div>
 
             <!-- 연계 서비스 링크 -->
+            <!-- [링크 수정 가능] href 주소와 글자만 수정. <a> 닫힘 태그를 유지하세요. -->
             <div class="footer-links">
                 <h4>연계 서비스</h4>
                 <ul>
-                    <li><a href="https://md-to-hwpx.vercel.app/" target="_blank" rel="noopener">MD→HWPX 변환기</li>
+                    <li><a href="https://md-to-hwpx.vercel.app/" target="_blank" rel="noopener">MD→HWPX 변환기</a></li>
                     <li><a href="https://md-to-html-seven.vercel.app/" target="_blank" rel="noopener">MD→HTML 변환기</a></li>
                 </ul>
             </div>
 
             <!-- 외부 링크 -->
+            <!-- [링크 수정 가능] 관련 링크를 추가하려면 <li><a ...>...</a></li> 형태를 복사하세요. -->
             <div class="footer-links">
                 <h4>관련 링크</h4>
                 <ul>
@@ -938,6 +957,33 @@
 </div>
 
 <!-- ════════════════════════════════════════════════════════════════
+     [폰트 설치 안내 모달]
+     HWPX에는 폰트 파일이 들어가지 않으므로, 한글에서 같은 폰트로 보려면
+     사용자의 PC에 TTF/OTF 폰트 설치가 필요합니다.
+     fonts/ 폴더에 지정 파일을 넣으면 app.js가 로컬 다운로드 링크를 표시합니다.
+     ════════════════════════════════════════════════════════════════ -->
+<div id="font-guide-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="font-guide-title">
+    <div class="modal-box modal-box--md">
+        <div class="modal-header">
+            <span class="modal-title" id="font-guide-title">폰트 설치 안내</span>
+            <button class="modal-close" id="close-font-guide" aria-label="폰트 설치 안내 닫기">✕</button>
+        </div>
+        <div class="modal-body">
+            <p class="font-guide-lead">
+                웹 화면의 글꼴 미리보기와 한글(HWPX) 출력은 별개입니다. 선택한 폰트를 한컴오피스에서 그대로 보려면 PC에 TTF/OTF 폰트를 설치해야 합니다.
+            </p>
+            <div class="font-guide-list" id="font-guide-list">
+                <!-- app.js의 renderFontGuide()가 채움 -->
+            </div>
+            <div class="font-guide-note">
+                <strong>직접 제공하려면</strong>
+                <p><code>fonts/</code> 폴더를 만들고 안내된 파일명으로 TTF/OTF 파일을 넣으면 로컬 다운로드 버튼이 표시됩니다. 폰트 재배포 가능 여부는 각 폰트 라이선스를 먼저 확인하세요.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════
      [업데이트 내역 모달]  사용자용·개발자용 탭 분리
      ════════════════════════════════════════════════════════════════ -->
 <div id="changelog-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-label="업데이트 내역">
@@ -984,6 +1030,7 @@
 <!-- ─── JS 로드 (defer 스크립트보다 뒤에 위치) ─────────────────────
      실행 순서: parsers.js → hwpx.js → app.js
      parsers.js와 hwpx.js의 함수가 app.js에서 사용되므로 순서 중요
+     [주의] 이 순서를 바꾸면 앱이 실행되지 않을 수 있음
      ─────────────────────────────────────────────────────────────── -->
 <script src="js/parsers.js"></script>
 <script src="js/hwpx.js"></script>

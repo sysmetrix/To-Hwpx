@@ -261,7 +261,7 @@ ${charBase(7, sz.body, true,  false)}
 ${charBase(8, sz.body, false, true)}
 ${charBase(9, sz.body, true,  true)}
     </hh:charProperties>
-    <hh:paraProperties itemCnt="10">
+    <hh:paraProperties itemCnt="12">
       <!-- id  정렬    행간  전    후   들여  테두리참조 -->
 ${paraBase(0, 'JUSTIFY', 160,   0,  850,    0)}
 ${paraBase(1, 'LEFT',    180, 850,  567,    0)}
@@ -271,11 +271,14 @@ ${paraBase(4, 'LEFT',    160, 425,  200,    0)}
 ${paraBase(5, 'LEFT',    160,   0,  100,  600)}
 ${paraBase(6, 'LEFT',    140, 200,  200,  400)}
       <!-- id=7  표 셀 가운데 정렬 -->
-${paraBase(7, 'CENTER',  160,   0,    0,    0)}
-      <!-- id=8  구분선(HR): 단락 하단에 0.4mm 실선 테두리 -->
-${paraBase(8, 'LEFT',    100, 567,  567,    0, '10')}
+${paraBase(7, 'CENTER',  150,   0,    0,    0)}
+      <!-- id=8  구분선(HR): 위아래 여백을 넉넉히 둔 하단 테두리 -->
+${paraBase(8, 'LEFT',    130, 850,  850,    0, '10')}
       <!-- id=9  빈 줄 간격 조절용: 추가 여백 없음 -->
 ${paraBase(9, 'LEFT',    100,   0,    0,    0)}
+      <!-- id=10/11  표 일반 셀: 텍스트 왼쪽, 숫자 오른쪽 정렬 -->
+${paraBase(10, 'LEFT',   150,   0,    0,    0)}
+${paraBase(11, 'RIGHT',  150,   0,    0,    0)}
     </hh:paraProperties>
     <hh:borderFills itemCnt="10">
       <!-- id=1 테두리 없음 -->
@@ -484,8 +487,16 @@ function getColumnWidths(allRows, nCols, tableWidth) {
 
 /**
  * 표(hp:tbl) XML 생성
- * [v3 변경] 셀 내용 paraPrIDRef="7" (CENTER 정렬)
+ * 헤더=가운데, 일반 텍스트=왼쪽, 숫자=오른쪽 정렬로 가독성을 높인다.
  */
+function isNumericCell(value) {
+    const s = String(value || '').trim();
+    if (!s) return false;
+    return /^[-+]?[\d,]+(\.\d+)?%?$/.test(s)
+        || /^[-+]?\d{1,3}(,\d{3})+(\.\d+)?$/.test(s)
+        || /^[₩$€¥]\s?[-+]?[\d,]+(\.\d+)?$/.test(s);
+}
+
 function getContentWidthHwp(marginsHwp, paperKey, landscape = false) {
     const paperBase = PAPER_SIZES[paperKey] || PAPER_SIZES['A4'];
     const paper = landscape ? { w: paperBase.h, h: paperBase.w } : paperBase;
@@ -512,6 +523,7 @@ function buildTable(header, rows, contentWidthHwp = 48000) {
 
         for (let c = 0; c < nCols; c++) {
             const val = (row[c] !== undefined && row[c] !== null) ? String(row[c]) : '';
+            const paraId = isHd ? '7' : (isNumericCell(val) ? '11' : '10');
             let bfId = isHd ? '3' : '2';
             if (nCols === 1) {
                 bfId = isHd ? '9' : '8';
@@ -523,15 +535,15 @@ function buildTable(header, rows, contentWidthHwp = 48000) {
             // 자식 순서: subList → cellAddr → cellSpan → cellSz → cellMargin
             // (rhwp serializer/hwpx/table.rs 기준 OWPML 공식 순서)
             cellsXml +=
-                `<hp:tc name="" header="${isHd ? '1' : '0'}" hasMargin="0" protect="0" editable="0" dirty="0" borderFillIDRef="${bfId}">` +
+                `<hp:tc name="" header="${isHd ? '1' : '0'}" hasMargin="1" protect="0" editable="0" dirty="0" borderFillIDRef="${bfId}">` +
                 `<hp:subList id="" textDirection="HORIZONTAL" lineWrap="BREAK" vertAlign="CENTER" ` +
                     `linkListIDRef="0" linkListNextIDRef="0" textWidth="0" textHeight="0" hasTextRef="0" hasNumRef="0">` +
-                buildPara(val, cId, '7') +  // paraPr=7: CENTER 정렬
+                buildPara(val, cId, paraId) +
                 `</hp:subList>` +
                 `<hp:cellAddr colAddr="${c}" rowAddr="${r}"/>` +
                 `<hp:cellSpan colSpan="1" rowSpan="1"/>` +
-                `<hp:cellSz width="${colWidths[c]}" height="1000"/>` +
-                `<hp:cellMargin left="510" right="510" top="141" bottom="141"/>` +
+                `<hp:cellSz width="${colWidths[c]}" height="1200"/>` +
+                `<hp:cellMargin left="650" right="650" top="220" bottom="220"/>` +
                 `</hp:tc>`;
         }
         // <hp:tr>은 속성 없음 (rhwp 기준); header 마킹은 <hp:tc>에만 적용
@@ -548,7 +560,7 @@ function buildTable(header, rows, contentWidthHwp = 48000) {
         `<hp:pos treatAsChar="1" affectLSpacing="0" flowWithText="1" allowOverlap="0" holdAnchorAndSO="0" ` +
         `vertRelTo="PARA" horzRelTo="COLUMN" vertAlign="TOP" horzAlign="LEFT" vertOffset="0" horzOffset="0"/>` +
         `<hp:outMargin left="0" right="0" top="0" bottom="0"/>` +
-        `<hp:inMargin left="510" right="510" top="141" bottom="141"/>` +
+        `<hp:inMargin left="650" right="650" top="220" bottom="220"/>` +
         `${rowsXml}` +
         `</hp:tbl><hp:t></hp:t></hp:run></hp:p>`;
 }
