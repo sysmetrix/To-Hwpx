@@ -329,7 +329,7 @@ ${charBase(2, sz.h2,   true,  false)}
 ${charBase(3, sz.h3,   true,  false)}
 ${charBase(4, sz.h4,   true,  false)}
 ${charBase(5, sz.tblHd,true,  false)}
-${charBase(6, sz.code, false, false, codeFontId).replace('"#000000"', '"#111111"')}
+${charBase(6, sz.code, false, false, codeFontId).replace('"#000000"', '"#FFFFFF"')}
 ${charBase(7, sz.body, true,  false)}
 ${charBase(8, sz.body, false, true)}
 ${charBase(9, sz.body, true,  true)}
@@ -453,15 +453,15 @@ ${paraBase(14, 'LEFT',   120,   0,    0,    0)}
         <hh:bottomBorder type="SOLID" width="0.4 mm" color="#555555"/>
         <hh:diagonal type="SOLID" width="0.1 mm" color="#000000"/>
       </hh:borderFill>
-      <!-- id=11 코드 블록 셀용: 읽기 가능한 연한 배경 -->
+      <!-- id=11 코드 블록 셀용: 기준 md-to-hwpx 방식의 어두운 배경 -->
       <hh:borderFill id="11" threeD="0" shadow="0" centerLine="NONE" breakCellSeparateLine="0">
         <hh:slash type="NONE" Crooked="0" isCounter="0"/><hh:backSlash type="NONE" Crooked="0" isCounter="0"/>
-        <hh:leftBorder type="SOLID" width="0.1 mm" color="#D0D7DE"/>
-        <hh:rightBorder type="SOLID" width="0.1 mm" color="#D0D7DE"/>
-        <hh:topBorder type="SOLID" width="0.1 mm" color="#D0D7DE"/>
-        <hh:bottomBorder type="SOLID" width="0.1 mm" color="#D0D7DE"/>
-        <hh:diagonal type="SOLID" width="0.1 mm" color="#D0D7DE"/>
-        <hh:fillBrush><hh:winBrush faceColor="#F6F8FA" hatchColor="#000000" alpha="0"/></hh:fillBrush>
+        <hh:leftBorder type="SOLID" width="0.2 mm" color="#17211D"/>
+        <hh:rightBorder type="SOLID" width="0.2 mm" color="#17211D"/>
+        <hh:topBorder type="SOLID" width="0.2 mm" color="#17211D"/>
+        <hh:bottomBorder type="SOLID" width="0.2 mm" color="#17211D"/>
+        <hh:diagonal type="NONE" width="0.1 mm" color="#000000"/>
+        <hh:fillBrush><hh:winBrush faceColor="#17211D" hatchColor="#000000" alpha="0"/></hh:fillBrush>
       </hh:borderFill>
 ${[...customBfMap.entries()].map(([key, bfId]) => {
     const [color, variant = 'full'] = String(key).split(':');
@@ -572,27 +572,28 @@ function buildCodePara(text, paraId = '14', charId = '6') {
 function buildCodeBlock(block, prefix = '', contentWidthHwp = 48000) {
     const text = String(block.text ?? '');
     const lines = text === '' ? [''] : text.split('\n');
-    const tableWidth = Math.max(12000, contentWidthHwp);
+    const tableWidth = Math.min(45000, Math.max(12000, contentWidthHwp));
+    const rowHeight = Math.max(1500, 720 + (lines.length * 520));
     const pid = _nextParaId();
     const codeParas = lines.map(line => buildCodePara(prefix + line, '14', '6')).join('');
-    return `<hp:p id="${pid}" paraPrIDRef="9" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0"><hp:run charPrIDRef="0">` +
+    return `<hp:p id="${pid}" paraPrIDRef="0" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0"><hp:run charPrIDRef="0">` +
         `<hp:tbl id="0" zOrder="0" numberingType="TABLE" textWrap="TOP_AND_BOTTOM" ` +
-        `textFlow="BOTH_SIDES" lock="0" dropcapstyle="None" pageBreak="ROW" ` +
-        `repeatHeader="0" rowCnt="1" colCnt="1" cellSpacing="0" borderFillIDRef="1">` +
-        `<hp:sz width="${tableWidth}" widthRelTo="ABSOLUTE" height="0" heightRelTo="ABSOLUTE" protect="0"/>` +
-        `<hp:pos treatAsChar="1" affectLSpacing="0" flowWithText="1" allowOverlap="0" holdAnchorAndSO="0" ` +
-        `vertRelTo="PARA" horzRelTo="COLUMN" vertAlign="TOP" horzAlign="LEFT" vertOffset="0" horzOffset="0"/>` +
-        `<hp:outMargin left="0" right="0" top="0" bottom="0"/>` +
+        `textFlow="BOTH_SIDES" lock="0" dropcapstyle="None" pageBreak="CELL" ` +
+        `repeatHeader="0" rowCnt="1" colCnt="1" cellSpacing="0" borderFillIDRef="11" noAdjust="0">` +
+        `<hp:sz width="${tableWidth}" widthRelTo="ABSOLUTE" height="${rowHeight}" heightRelTo="ABSOLUTE" protect="0"/>` +
+        `<hp:pos treatAsChar="0" affectLSpacing="0" flowWithText="1" allowOverlap="0" holdAnchorAndSO="0" ` +
+        `vertRelTo="PARA" horzRelTo="PARA" vertAlign="TOP" horzAlign="LEFT" vertOffset="0" horzOffset="0"/>` +
+        `<hp:outMargin left="0" right="0" top="0" bottom="850"/>` +
         `<hp:inMargin left="0" right="0" top="0" bottom="0"/>` +
-        `<hp:tr><hp:tc name="" header="0" hasMargin="1" protect="0" editable="0" dirty="0" borderFillIDRef="11">` +
+        `<hp:cellzoneList><hp:cellzone startRowAddr="0" startColAddr="0" endRowAddr="0" endColAddr="0" borderFillIDRef="11"/></hp:cellzoneList>` +
+        `<hp:tr><hp:tc name="" header="0" hasMargin="0" protect="0" editable="0" dirty="0" borderFillIDRef="11">` +
         `<hp:subList id="" textDirection="HORIZONTAL" lineWrap="BREAK" vertAlign="CENTER" ` +
         `linkListIDRef="0" linkListNextIDRef="0" textWidth="0" textHeight="0" hasTextRef="0" hasNumRef="0">` +
         codeParas +
         `</hp:subList><hp:cellAddr colAddr="0" rowAddr="0"/><hp:cellSpan colSpan="1" rowSpan="1"/>` +
-        `<hp:cellSz width="${tableWidth}" height="${Math.max(1200, lines.length * 650 + 500)}"/>` +
-        `<hp:cellMargin left="700" right="700" top="450" bottom="450"/></hp:tc></hp:tr>` +
-        `</hp:tbl><hp:t></hp:t></hp:run></hp:p>` +
-        buildBlankPara();
+        `<hp:cellSz width="${tableWidth}" height="${rowHeight}"/>` +
+        `<hp:cellMargin left="420" right="420" top="300" bottom="300"/></hp:tc></hp:tr>` +
+        `</hp:tbl><hp:t></hp:t></hp:run></hp:p>`;
 }
 
 function collectCodeAuditForHwpx(blocks) {
