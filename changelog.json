@@ -1,6 +1,27 @@
 {
-  "current": "4.2.0",
+  "current": "4.3.0",
   "versions": [
+    {
+      "version": "4.3.0",
+      "date": "2026-06-20",
+      "user": [
+        "DOCX 이미지 삽입 지원 — DOCX 문서의 인라인 이미지(JPG·PNG·GIF 등)가 HWPX에도 포함됩니다",
+        "DOCX 머리글/바닥글 변환 지원 — 첫 번째 머리글·바닥글 텍스트가 HWPX 마스터 페이지로 출력됩니다"
+      ],
+      "dev": [
+        "[v4.3.0] parsers.js: extractDocxImage() 추가 — wp:extent, a:blip localName 탐색, EMU→HWPUNIT 변환(÷127)",
+        "[v4.3.0] parsers.js: parseDocx() — word/_rels/document.xml.rels 로드로 relsMap 구성",
+        "[v4.3.0] parsers.js: parseDocx() — w:drawing 단락 감지 시 extractDocxImage() 호출, imageCounter 관리",
+        "[v4.3.0] parsers.js: parseDocx() — header/footer 관계 파일에서 텍스트 추출, ir.header/ir.footer 설정",
+        "[v4.3.0] hwpx.js: buildImageRun() 추가 — hp:pic/hp:instd 인라인 이미지 단락 XML 생성, 본문폭 초과 시 비율 유지 축소",
+        "[v4.3.0] hwpx.js: buildMasterPage() 추가 — hh:header·hh:footer 포함 masterPage XML 생성",
+        "[v4.3.0] hwpx.js: buildHeaderXml() — imageBlocks·docHeaderFooter 파라미터 추가, hh:binDataList·hh:masterPages 동적 삽입",
+        "[v4.3.0] hwpx.js: buildSecPr() — hasMasterPage 파라미터 추가, masterPageCnt 동적 설정",
+        "[v4.3.0] hwpx.js: buildSection() — imageBlocks 수집, image 블록 → buildImageRun() 처리",
+        "[v4.3.0] hwpx.js: buildHwpx() — imageBlocks 수집, BinData/ ZIP 추가, manifest.xml 동적 생성",
+        "[v4.3.0] sw.js: CACHE_VERSION to-hwpx-v4.3.0"
+      ]
+    },
     {
       "version": "4.2.0",
       "date": "2026-06-20",

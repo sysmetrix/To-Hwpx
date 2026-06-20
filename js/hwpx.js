@@ -141,6 +141,71 @@ function replaceEmoji(s) {
 
 
 // ─────────────────────────────────────────────────────────────────────────
+// [이미지 단락 생성]
+// ─────────────────────────────────────────────────────────────────────────
+
+/**
+ * image IR 블록 → hp:p (인라인 그림 컨트롤) XML
+ * @param {object} imgBlock        IR image 블록 ({widthHwp, heightHwp, binName, ...})
+ * @param {number} imgIndex        imageBlocks 배열 내 0-기반 인덱스
+ * @param {number} contentWidthHwp 본문 폭(HWPUNIT) — 초과 시 비율 유지 축소
+ */
+function buildImageRun(imgBlock, imgIndex, contentWidthHwp = 48000) {
+    const pid = _nextParaId();
+    let w = imgBlock.widthHwp  || 40000;
+    let h = imgBlock.heightHwp || 30000;
+    // 본문 폭보다 넓으면 비율 유지하면서 축소
+    if (w > contentWidthHwp) {
+        h = Math.round(h * contentWidthHwp / w);
+        w = contentWidthHwp;
+    }
+    const binId = imgIndex + 1; // 1-based
+    return `<hp:p id="${pid}" paraPrIDRef="0" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0">` +
+        `<hp:run charPrIDRef="0">` +
+        `<hp:pic id="P${String(binId).padStart(8, '0')}" pictureType="img" reverse="0" watermark="0" picSubType="0" zOrder="0">` +
+        `<hp:sz width="${w}" height="${h}"/>` +
+        `<hp:pos treatAsChar="1" affectLSpacing="0" flowWithText="1" allowOverlap="0" holdAnchorAndSO="0" ` +
+        `vertRelTo="PARA" horzRelTo="COLUMN" vertAlign="TOP" horzAlign="LEFT" vertOffset="0" horzOffset="0"/>` +
+        `<hp:outMargin left="0" right="0" top="0" bottom="0"/>` +
+        `<hp:picEffect effect="REAL_PIC" alpha="255">` +
+        `<hp:imgRectangle left="0" top="0" right="${w}" bottom="${h}"/>` +
+        `</hp:picEffect>` +
+        `<hp:instd binDataIDRef="${binId}"/>` +
+        `</hp:pic>` +
+        `</hp:run>` +
+        `</hp:p>`;
+}
+
+
+// ─────────────────────────────────────────────────────────────────────────
+// [머리글/바닥글 masterPage 생성]
+// ─────────────────────────────────────────────────────────────────────────
+
+/**
+ * masterPage XML 생성 (머리글/바닥글 포함)
+ * header.xml 내에 포함됨 — 단락 ID는 이 파일 내에서 0-based 독립 할당
+ */
+function buildMasterPage(header = '', footer = '') {
+    const NS_HP = 'http://www.hancom.co.kr/hwpml/2011/paragraph';
+    // masterPage 단락 ID는 header.xml 스코프에서 독립적으로 0부터 할당
+    let mpId = 0;
+    const headerXml = header
+        ? `<hh:header textDirection="HORIZONTAL" lineWrap="BREAK">` +
+          `<hp:p xmlns:hp="${NS_HP}" id="${mpId++}" paraPrIDRef="0" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0">` +
+          `<hp:run charPrIDRef="0"><hp:t>${xmlEsc(replaceEmoji(header))}</hp:t></hp:run>` +
+          `</hp:p></hh:header>`
+        : '';
+    const footerXml = footer
+        ? `<hh:footer textDirection="HORIZONTAL" lineWrap="BREAK">` +
+          `<hp:p xmlns:hp="${NS_HP}" id="${mpId++}" paraPrIDRef="0" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0">` +
+          `<hp:run charPrIDRef="0"><hp:t>${xmlEsc(replaceEmoji(footer))}</hp:t></hp:run>` +
+          `</hp:p></hh:footer>`
+        : '';
+    return `<hh:masterPage id="0" textDirection="HORIZONTAL" protect="0">${headerXml}${footerXml}</hh:masterPage>`;
+}
+
+
+// ─────────────────────────────────────────────────────────────────────────
 // [HEADER_XML 동적 생성]
 //   글꼴명·기본 크기에 따라 charPr 7종·paraPr 8종 자동 계산
 // ─────────────────────────────────────────────────────────────────────────
@@ -172,15 +237,18 @@ function getBoldFontName(name) {
 
 /**
  * HEADER_XML 동적 생성
- * @param {string} fontName  글꼴명 (기본: 휴먼명조)
- * @param {number} basePt    기본 본문 글꼴 크기 pt (기본: 12)
+ * @param {string}   fontName         글꼴명 (기본: 휴먼명조)
+ * @param {number}   basePt           기본 본문 글꼴 크기 pt (기본: 12)
+ * @param {Map}      customBfMap      표 셀 배경색 → borderFill id 맵
+ * @param {Array}    imageBlocks      IR image 블록 배열
+ * @param {object}   docHeaderFooter  {header?, footer?} 머리글/바닥글 텍스트
  *
  * [charPr ID]  0=본문, 1=H1, 2=H2, 3=H3, 4=H4, 5=표머리, 6=코드, 7=본문bold, 8=본문italic
  * [paraPr ID]  0=본문, 1=H1, 2=H2, 3=H3, 4=H4, 5=목록, 6=코드블록, 7=표셀(CENTER)
  * [borderFill] 1=테두리없음, 2=실선(표셀), 3=실선+회색음영(표머리)
  *              4~9=표 좌/우 바깥 테두리 제거 변형
  */
-function buildHeaderXml(fontName, basePt, customBfMap = new Map()) {
+function buildHeaderXml(fontName, basePt, customBfMap = new Map(), imageBlocks = [], docHeaderFooter = {}) {
     const fn = xmlEsc(fontName || '휴먼명조');
     const bp = Math.max(6, Math.min(36, parseInt(basePt, 10) || 12));
     const { familyType, weight, type } = getFontMeta(fontName || '휴먼명조');
@@ -389,7 +457,18 @@ ${[...customBfMap.entries()].map(([color, bfId]) => `      <!-- id=${bfId} DOCX 
         <hh:fillBrush><hh:winBrush faceColor="#${color}" hatchColor="#000000" alpha="0"/></hh:fillBrush>
       </hh:borderFill>`).join('\n')}
     </hh:borderFills>
+${imageBlocks.length
+    ? `    <hh:binDataList itemCnt="${imageBlocks.length}">
+${imageBlocks.map((img, i) => {
+        const fmt = img.binName.split('.').pop().toUpperCase();
+        return `      <hh:binData id="${i + 1}" type="EMBED" format="${fmt}" compress="COMPRESS" inAccessible="0">BinData/${img.binName}</hh:binData>`;
+    }).join('\n')}
+    </hh:binDataList>`
+    : ''}
   </hh:refList>
+${(docHeaderFooter.header || docHeaderFooter.footer)
+    ? `  <hh:masterPages itemCnt="1">${buildMasterPage(docHeaderFooter.header || '', docHeaderFooter.footer || '')}</hh:masterPages>`
+    : `  <hh:masterPages itemCnt="0"/>`}
 </hh:head>`;
 }
 
@@ -635,13 +714,13 @@ function buildTable(header, rows, contentWidthHwp = 48000, customBfMap = new Map
  * 페이지 설정(secPr) XML
  * HWPX 스키마 기준 secPr는 paragraph 네임스페이스이며 hp:run 내부에 위치한다.
  */
-function buildSecPr(marginsHwp, paperKey, landscape = false) {
+function buildSecPr(marginsHwp, paperKey, landscape = false, hasMasterPage = false) {
     const paperBase = PAPER_SIZES[paperKey] || PAPER_SIZES['A4'];
     const paper = landscape ? { w: paperBase.h, h: paperBase.w } : paperBase;
     const m = Object.assign({}, DEFAULT_MARGINS_HWP, marginsHwp || {});
     return `<hp:secPr id="" textDirection="HORIZONTAL" spaceColumns="1134" tabStop="8000" ` +
         `tabStopVal="4000" tabStopUnit="HWPUNIT" outlineShapeIDRef="0" memoShapeIDRef="0" ` +
-        `textVerticalWidthHead="0" masterPageCnt="0">` +
+        `textVerticalWidthHead="0" masterPageCnt="${hasMasterPage ? 1 : 0}">` +
         `<hp:grid lineGrid="0" charGrid="0" wonggojiFormat="0"/>` +
         `<hp:startNum pageStartsOn="BOTH" page="0" pic="0" tbl="0" equation="0"/>` +
         `<hp:visibility hideFirstHeader="0" hideFirstFooter="0" hideFirstMasterPage="0" ` +
@@ -690,9 +769,13 @@ function buildSection(ir, marginsHwp, paperKey, landscape = false, customBfMap =
     _resetParaId();
     _resetFootnoteId();
 
+    // 이미지 블록 목록 (빈 배열이면 이미지 없음)
+    const imageBlocks = (ir.blocks || []).filter(b => b.type === 'image');
+    const hasMasterPage = !!(ir.header || ir.footer);
+
     const contentWidthHwp = getContentWidthHwp(marginsHwp, paperKey, landscape);
     const parts = [];
-    parts.push(buildSectionBootstrap(buildSecPr(marginsHwp, paperKey, landscape), contentWidthHwp));
+    parts.push(buildSectionBootstrap(buildSecPr(marginsHwp, paperKey, landscape, hasMasterPage), contentWidthHwp));
 
     // ── 문서 유형별 머리글 ────────────────────────────────────────────
     if (docType === 'official') {
@@ -765,6 +848,12 @@ function buildSection(ir, marginsHwp, paperKey, landscape = false, customBfMap =
             const lines = (block.text || '').split('\n');
             lines.forEach(line => parts.push(buildPara(line === '' ? ' ' : line, '6', '6')));
 
+        } else if (bt === 'image') {
+            const imgIndex = imageBlocks.indexOf(block);
+            if (imgIndex >= 0) {
+                parts.push(buildImageRun(block, imgIndex, contentWidthHwp));
+            }
+
         } else if (block.text) {
             parts.push(buildPara(block.text, '0', '0'));
         }
@@ -813,8 +902,23 @@ async function buildHwpx(ir, fontName = '휴먼명조', fontSize = 12, marginsMm
         }
     }
 
-    const headerXml   = buildHeaderXml(fontName, fontSize, customBfMap);
+    // 이미지 블록 수집
+    const imageBlocks = (ir.blocks || []).filter(b => b.type === 'image');
+    const docHeaderFooter = { header: ir.header || '', footer: ir.footer || '' };
+
+    const headerXml   = buildHeaderXml(fontName, fontSize, customBfMap, imageBlocks, docHeaderFooter);
     const section0Xml = buildSection(ir, marginsHwp, paperSize, landscape, customBfMap);
+
+    // 이미지가 있을 때 manifest를 동적으로 생성하여 BinData 파일 선언
+    const manifestXml = imageBlocks.length
+        ? `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<odf:manifest xmlns:odf="urn:oasis:names:tc:opendocument:xmlns:manifest:1.0" version="1.2">
+  <odf:file-entry odf:full-path="/" odf:media-type="application/hwp+zip"/>
+  <odf:file-entry odf:full-path="Contents/header.xml" odf:media-type="application/xml"/>
+  <odf:file-entry odf:full-path="Contents/section0.xml" odf:media-type="application/xml"/>
+${imageBlocks.map(img => `  <odf:file-entry odf:full-path="BinData/${img.binName}" odf:media-type="${img.mimeType}"/>`).join('\n')}
+</odf:manifest>`
+        : MANIFEST_XML;
 
     const zip = new JSZip();
     zip.file('mimetype',              MIMETYPE,      { compression: 'STORE' });
@@ -822,12 +926,17 @@ async function buildHwpx(ir, fontName = '휴먼명조', fontSize = 12, marginsMm
     zip.file('settings.xml',          SETTINGS_XML);
     zip.file('META-INF/container.xml', CONTAINER_XML);
     zip.file('META-INF/container.rdf', CONTAINER_RDF);
-    zip.file('META-INF/manifest.xml',  MANIFEST_XML);
+    zip.file('META-INF/manifest.xml',  manifestXml);
     zip.file('Contents/header.xml',    headerXml);
     zip.file('Contents/section0.xml',  section0Xml);
     zip.file('Contents/content.hpf',   CONTENT_HPF);
     zip.file('Preview/PrvText.txt',    ir.title || 'To HWPX 변환 문서');
     zip.file('Preview/PrvImage.png',   MIN_PNG_B64, { base64: true });
+
+    // 이미지 바이너리를 BinData/ 폴더에 추가
+    imageBlocks.forEach(img => {
+        zip.file(`BinData/${img.binName}`, img.data);
+    });
 
     return zip.generateAsync(
         { type: 'blob', mimeType: MIMETYPE, compression: 'DEFLATE', compressionOptions: { level: 6 } },

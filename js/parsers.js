@@ -463,10 +463,66 @@ function parseIpynb(text, docType = 'plain') {
 // [8] DOCX 파서
 //     방법: DOCX(ZIP+XML)를 JSZip으로 열고 word/document.xml을 DOMParser로 파싱
 //     네임스페이스: http://schemas.openxmlformats.org/wordprocessingml/2006/main
-//     한계: 이미지·복잡 스타일·주석·머리글/바닥글 미지원 (텍스트 추출만)
+//     지원: 이미지(word/media/) 삽입, 머리글/바닥글 추출
 //     [주의] ArrayBuffer를 받는 비동기 함수 (async)
 // ─────────────────────────────────────────────────────────────────────────
 const DOCX_NS = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
+
+/**
+ * w:p 단락에서 이미지 블록 추출
+ * wp:extent(크기), a:blip(관계 ID)를 localName으로 탐색
+ * @param {Element} pNode   w:p 노드
+ * @param {object}  relsMap rId → {target, type} 맵
+ * @param {JSZip}   zip     열린 JSZip 인스턴스
+ * @param {number}  counter 이미지 카운터 (1부터)
+ * @returns {object|null}   image IR 블록 또는 null
+ */
+async function extractDocxImage(pNode, relsMap, zip, counter) {
+    const allEls = pNode.getElementsByTagName('*');
+    let extentEl = null, blipEl = null;
+    for (const el of allEls) {
+        if (el.localName === 'extent' && !extentEl) extentEl = el;
+        if (el.localName === 'blip'   && !blipEl)   blipEl   = el;
+    }
+    if (!blipEl) return null;
+
+    const NS_R = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+    const rId = blipEl.getAttribute('r:embed')
+             || blipEl.getAttributeNS(NS_R, 'embed')
+             || blipEl.getAttribute('embed')
+             || '';
+    if (!rId || !relsMap[rId]) return null;
+
+    const target = relsMap[rId].target; // e.g. "media/image1.png"
+    const ext    = target.split('.').pop().toLowerCase();
+
+    // WMF/EMF 벡터 이미지는 HWPX 삽입 미지원 → 건너뜀
+    if (ext === 'wmf' || ext === 'emf') return null;
+
+    const mimeTypes = {
+        jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png',
+        gif: 'image/gif',  bmp: 'image/bmp',   tiff: 'image/tiff',
+    };
+    const mimeType = mimeTypes[ext] || 'image/jpeg';
+
+    const imgFile = zip.file('word/' + target);
+    if (!imgFile) return null;
+    const imgData = await imgFile.async('uint8array');
+
+    // EMU → HWPX 단위: 1 inch = 914400 EMU = 7200 HWP units → divide EMU by 127
+    const cx = parseInt(extentEl ? (extentEl.getAttribute('cx') || '0') : '0', 10);
+    const cy = parseInt(extentEl ? (extentEl.getAttribute('cy') || '0') : '0', 10);
+
+    return {
+        type:      'image',
+        binName:   `image${counter}.${ext}`,
+        mimeType,
+        data:      imgData,
+        widthHwp:  Math.round(cx / 127),
+        heightHwp: Math.round(cy / 127),
+        alt:       '',
+    };
+}
 
 async function parseDocx(arrayBuffer, docType = 'plain') {
     if (typeof JSZip === 'undefined') {
@@ -498,6 +554,23 @@ async function parseDocx(arrayBuffer, docType = 'plain') {
     const xmlText = await docFile.async('string');
     const xmlDoc = new DOMParser().parseFromString(xmlText, 'application/xml');
     const ir = emptyIR('DOCX 문서', docType);
+
+    // word/_rels/document.xml.rels 로드 → rId → {target, type} 맵
+    // 이미지 관계(type ends /image)와 머리글/바닥글 관계(type ends /header, /footer) 모두 수집
+    const relsMap = {};
+    const relsFile = zip.file('word/_rels/document.xml.rels');
+    if (relsFile) {
+        try {
+            const relsXml = await relsFile.async('string');
+            const relsDoc = new DOMParser().parseFromString(relsXml, 'application/xml');
+            for (const rel of relsDoc.getElementsByTagName('Relationship')) {
+                const id     = rel.getAttribute('Id')     || '';
+                const type   = rel.getAttribute('Type')   || '';
+                const target = rel.getAttribute('Target') || '';
+                if (id) relsMap[id] = { target, type };
+            }
+        } catch (_) {}
+    }
 
     // word/styles.xml 로드 → 스타일 ID → 이름 맵 (제목 감지 정확도 향상)
     const stylesMap = {};
@@ -539,14 +612,53 @@ async function parseDocx(arrayBuffer, docType = 'plain') {
         } catch (_) {}
     }
 
+    // 머리글/바닥글 텍스트 추출 헬퍼
+    const extractFileText = async (relTarget) => {
+        const f = zip.file('word/' + relTarget);
+        if (!f) return '';
+        try {
+            const xml = await f.async('string');
+            const doc = new DOMParser().parseFromString(xml, 'application/xml');
+            const tEls = doc.getElementsByTagNameNS(DOCX_NS, 't');
+            return sanitize(Array.from(tEls).map(t => t.textContent).join(' ').trim());
+        } catch (_) { return ''; }
+    };
+
+    // relsMap에서 머리글/바닥글 파일 찾기 (첫 번째만 사용)
+    const headerTargets = [], footerTargets = [];
+    for (const rel of Object.values(relsMap)) {
+        if (rel.type.endsWith('/header')) headerTargets.push(rel.target);
+        if (rel.type.endsWith('/footer')) footerTargets.push(rel.target);
+    }
+    if (headerTargets.length) {
+        const text = await extractFileText(headerTargets[0]);
+        if (text) ir.header = text;
+    }
+    if (footerTargets.length) {
+        const text = await extractFileText(footerTargets[0]);
+        if (text) ir.footer = text;
+    }
+
     // w:body 직계 자식 순회 (단락: w:p, 표: w:tbl)
     const body = xmlDoc.getElementsByTagNameNS(DOCX_NS, 'body')[0];
     if (!body) return ir;
 
+    let imageCounter = 1;
     for (const node of body.childNodes) {
         const localName = node.localName || '';
 
         if (localName === 'p') {
+            // w:drawing이 있는 단락은 이미지 처리 시도 (localName으로 탐색, NS prefix 무관)
+            const hasDrawing = Array.from(node.getElementsByTagName('*'))
+                .some(el => el.localName === 'drawing');
+            if (hasDrawing) {
+                const imgBlock = await extractDocxImage(node, relsMap, zip, imageCounter);
+                if (imgBlock) {
+                    ir.blocks.push(imgBlock);
+                    imageCounter++;
+                    continue;
+                }
+            }
             const block = extractDocxParagraph(node, stylesMap, footnotesMap);
             if (block) ir.blocks.push(block);
         } else if (localName === 'tbl') {
