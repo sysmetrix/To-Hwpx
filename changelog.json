@@ -1,8 +1,8 @@
 {
-  "current": "4.1.0",
+  "current": "4.0.1",
   "versions": [
     {
-      "version": "4.1.0",
+      "version": "4.0.1",
       "date": "2026-06-20",
       "user": [
         "폰트 선택지를 정리하고, 설치형 폰트 다운로드 안내 팝업을 추가",
@@ -12,12 +12,12 @@
         "DOCX/CSV/XLSX 품질 표기를 실제 변환 수준에 맞게 조정"
       ],
       "dev": [
-        "[v4.1.0] index.html/style.css/app.js: 폰트 설치 안내 모달과 로컬 fonts/ TTF 감지 링크 추가",
-        "[v4.1.0] index.html: 굴림·바탕·함초롬 계열 옵션 제거, 휴먼명조 기본값 유지",
-        "[v4.1.0] hwpx.js: paraPr id=10/11 추가로 표 일반 셀 왼쪽/오른쪽 정렬 지원",
-        "[v4.1.0] hwpx.js: HR paraPr 간격 조정 및 표 셀 안쪽 여백 확대",
-        "[v4.1.0] parsers.js: DOCX 문단의 bold/italic run 일부 보존",
-        "[v4.1.0] sw.js: CACHE_VERSION to-hwpx-v4.1.0"
+        "[v4.0.1] index.html/style.css/app.js: 폰트 설치 안내 모달과 로컬 fonts/ TTF 감지 링크 추가",
+        "[v4.0.1] index.html: 굴림·바탕·함초롬 계열 옵션 제거, 휴먼명조 기본값 유지",
+        "[v4.0.1] hwpx.js: paraPr id=10/11 추가로 표 일반 셀 왼쪽/오른쪽 정렬 지원",
+        "[v4.0.1] hwpx.js: HR paraPr 간격 조정 및 표 셀 안쪽 여백 확대",
+        "[v4.0.1] parsers.js: DOCX 문단의 bold/italic run 일부 보존",
+        "[v4.0.1] sw.js: CACHE_VERSION to-hwpx-v4.0.1"
       ]
     },
     {
