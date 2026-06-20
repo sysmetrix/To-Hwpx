@@ -1,6 +1,23 @@
 {
-  "current": "4.3.4",
+  "current": "4.3.5",
   "versions": [
+    {
+      "version": "4.3.5",
+      "date": "2026-06-21",
+      "user": [
+        "Markdown 코드 변환 개선 — 코드 블록과 인라인 코드가 본문에 합쳐지지 않고 코드문단으로 분리됩니다",
+        "코드의 공백·들여쓰기·빈 줄·특수문자를 보존하고, 언어 라벨과 코드 블록 배경/테두리를 적용합니다"
+      ],
+      "dev": [
+        "[v4.3.5] parsers.js: Markdown 변환 시 marked.lexer() 토큰 기반 코드 블록/인라인 코드 IR 생성",
+        "[v4.3.5] parsers.js: 목록·인용문 내부 코드 블록을 상위 구조 안에 보존하고 codeAudit 수집",
+        "[v4.3.5] hwpx.js: 코드용 D2Coding fontRef, 코드 라벨/라인 paraPr, 코드 배경 borderFill 추가",
+        "[v4.3.5] hwpx.js: buildCodeBlock()/buildCodePara() 추가 — xml:space='preserve'와 XML 이스케이프 적용",
+        "[v4.3.5] hwpx.js: 코드 블록 수·줄 수·첫 줄·마지막 줄 자동 검증 추가",
+        "[v4.3.5] index.html: 업데이트 내역 버튼 v4.3.5 반영",
+        "[v4.3.5] sw.js: CACHE_VERSION to-hwpx-v4.3.5"
+      ]
+    },
     {
       "version": "4.3.4",
       "date": "2026-06-21",

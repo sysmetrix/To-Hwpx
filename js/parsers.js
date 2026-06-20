@@ -50,12 +50,137 @@ function parseMd(text, docType = 'plain') {
     // 3개 이상 연속 빈 줄 → 빈 단락 HTML 마커로 보존
     // (marked.js는 연속 빈 줄을 하나의 단락 구분으로 처리해서 정보가 손실됨)
     const preprocessed = text.replace(/\n{3,}/g, '\n\n<p></p>\n\n');
+    if (typeof marked.lexer === 'function') {
+        try {
+            const tokens = marked.lexer(preprocessed);
+            const ir = emptyIR('제목 없음', docType);
+            extractMarkdownTokens(tokens, ir.blocks);
+            const firstH1Idx = ir.blocks.findIndex(b => b.type === 'heading' && b.level === 1);
+            if (firstH1Idx !== -1) {
+                ir.title = ir.blocks[firstH1Idx].text;
+                ir.blocks.splice(firstH1Idx, 1);
+            }
+            ir.codeAudit = collectCodeAudit(ir.blocks);
+            return ir;
+        } catch (e) {
+            console.warn('[parsers] marked lexer 실패 — HTML 파서로 폴백', e);
+        }
+    }
     let html = marked.parse(preprocessed);
     // CommonMark 엣지 케이스 폴백: **"텍스트"** 처럼 유니코드 구두점에 인접한 ** / * 를
     // marked.js가 right-flanking delimiter로 인식하지 못해 변환 실패하는 경우 보정
     html = html.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
     html = html.replace(/(?<!\*)\*([^*\n]+)\*(?!\*)/g, '<em>$1</em>');
     return parseHtml(html, docType);
+}
+
+function plainMdText(token) {
+    if (!token) return '';
+    if (typeof token === 'string') return sanitize(token);
+    if (Array.isArray(token)) return sanitize(token.map(plainMdText).join(''));
+    if (token.type === 'codespan') return sanitize(token.text || token.raw || '');
+    if (token.type === 'br') return '\n';
+    if (token.tokens) return plainMdText(token.tokens);
+    return sanitize(token.text || token.raw || '');
+}
+
+function splitInlineCodeBlocks(tokens, blocks) {
+    const source = Array.isArray(tokens) ? tokens : [];
+    let paraRuns = [];
+    function flushPara() {
+        const hasText = paraRuns.some(r => r.text && r.text.trim());
+        if (hasText) blocks.push({ type: 'para', runs: paraRuns });
+        paraRuns = [];
+    }
+    for (const token of source) {
+        if (token.type === 'codespan') {
+            flushPara();
+            blocks.push({ type: 'code', text: sanitize(token.text || ''), inline: true });
+        } else if (token.type === 'strong' || token.type === 'em') {
+            const text = plainMdText(token.tokens || token.text);
+            if (text) paraRuns.push({ text, bold: token.type === 'strong', italic: token.type === 'em' });
+        } else if (token.type === 'br') {
+            paraRuns.push({ text: '\n' });
+        } else {
+            const text = plainMdText(token.tokens || token.text || token.raw);
+            if (text) paraRuns.push({ text });
+        }
+    }
+    flushPara();
+}
+
+function extractMarkdownTokens(tokens, blocks) {
+    for (const token of (tokens || [])) {
+        if (!token) continue;
+        if (token.type === 'heading') {
+            const text = sanitize(plainMdText(token.tokens || token.text).trim());
+            if (text) blocks.push({ type: 'heading', level: token.depth || 1, text });
+        } else if (token.type === 'paragraph') {
+            splitInlineCodeBlocks(token.tokens || [{ type: 'text', text: token.text || '' }], blocks);
+        } else if (token.type === 'code') {
+            blocks.push({ type: 'code', text: sanitize(token.text || ''), lang: sanitize(token.lang || '').trim() });
+        } else if (token.type === 'space') {
+            blocks.push({ type: 'blank' });
+        } else if (token.type === 'hr') {
+            blocks.push({ type: 'hr' });
+        } else if (token.type === 'list') {
+            const items = (token.items || []).map(item => {
+                const itemBlocks = [];
+                extractMarkdownTokens(item.tokens || [], itemBlocks);
+                const textParts = itemBlocks
+                    .filter(b => b.type === 'para' || b.type === 'heading')
+                    .map(b => b.text || plainMdText(b.runs || ''))
+                    .filter(Boolean);
+                const codeBlocks = itemBlocks.filter(b => b.type === 'code');
+                return { text: sanitize(textParts.join(' ').trim() || item.text || ''), codeBlocks };
+            }).filter(item => item.text || item.codeBlocks.length);
+            if (items.length) blocks.push({ type: 'list', ordered: !!token.ordered, items });
+        } else if (token.type === 'blockquote') {
+            const quoteBlocks = [];
+            extractMarkdownTokens(token.tokens || [], quoteBlocks);
+            blocks.push({ type: 'quote', blocks: quoteBlocks });
+        } else if (token.type === 'table') {
+            const header = (token.header || []).map(cell => sanitize(plainMdText(cell.tokens || cell.text || cell).trim()));
+            const rows = (token.rows || []).map(row =>
+                row.map(cell => sanitize(plainMdText(cell.tokens || cell.text || cell).trim()))
+            );
+            blocks.push({ type: 'table', header, rows });
+        } else if (token.type === 'html') {
+            const htmlIr = parseHtml(token.raw || token.text || '', 'plain');
+            blocks.push(...htmlIr.blocks);
+        } else if (token.tokens) {
+            extractMarkdownTokens(token.tokens, blocks);
+        } else if (token.text) {
+            blocks.push({ type: 'para', text: sanitize(token.text) });
+        }
+    }
+}
+
+function collectCodeAudit(blocks) {
+    const codeBlocks = [];
+    function walk(list) {
+        for (const block of (list || [])) {
+            if (block.type === 'code') {
+                const lines = String(block.text ?? '').split('\n');
+                codeBlocks.push({
+                    lang: block.lang || '',
+                    lineCount: lines.length,
+                    firstLine: lines[0] ?? '',
+                    lastLine: lines[lines.length - 1] ?? '',
+                });
+            } else if (block.type === 'quote') {
+                walk(block.blocks);
+            } else if (block.type === 'list') {
+                for (const item of (block.items || [])) walk(item.codeBlocks);
+            }
+        }
+    }
+    walk(blocks);
+    return {
+        blockCount: codeBlocks.length,
+        lineCount: codeBlocks.reduce((sum, b) => sum + b.lineCount, 0),
+        blocks: codeBlocks,
+    };
 }
 
 

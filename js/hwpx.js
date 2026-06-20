@@ -257,6 +257,8 @@ function buildHeaderXml(fontName, basePt, customBfMap = new Map(), imageBlocks =
     const boldFontName = getBoldFontName(fontName || '휴먼명조');
     const boldFn = boldFontName ? xmlEsc(boldFontName) : null;
     const fontCnt = boldFn ? 2 : 1;
+    const codeFontId = fontCnt;
+    const totalFontCnt = fontCnt + 1;
 
     // 글자 크기 HWPUNIT (1pt = 100)
     const sz = {
@@ -270,18 +272,21 @@ function buildHeaderXml(fontName, basePt, customBfMap = new Map(), imageBlocks =
     };
 
     const fontFaceBlock = (lang) => `
-      <hh:fontface lang="${lang}" fontCnt="${fontCnt}">
+      <hh:fontface lang="${lang}" fontCnt="${totalFontCnt}">
         <hh:font id="0" face="${fn}" type="${type}" isEmbedded="0">
           <hh:typeInfo familyType="${familyType}" weight="${weight}" proportion="4" contrast="0" strokeVariation="1" armStyle="1" letterform="1" midline="1" xHeight="1"/>
         </hh:font>${boldFn ? `
         <hh:font id="1" face="${boldFn}" type="TTF" isEmbedded="0">
           <hh:typeInfo familyType="FCAT_GOTHIC" weight="8" proportion="4" contrast="0" strokeVariation="1" armStyle="1" letterform="1" midline="1" xHeight="1"/>
         </hh:font>` : ''}
+        <hh:font id="${codeFontId}" face="D2Coding" type="TTF" isEmbedded="0">
+          <hh:typeInfo familyType="FCAT_GOTHIC" weight="4" proportion="0" contrast="0" strokeVariation="1" armStyle="1" letterform="1" midline="1" xHeight="1"/>
+        </hh:font>
       </hh:fontface>`;
 
     // bold=true 시: boldFn이 있으면 font face 1 참조(별도 Bold 폰트), 없으면 <hh:bold/> 태그
-    const charBase = (id, height, bold = false, italic = false) => {
-        const fi = (bold && boldFn) ? '1' : '0';
+    const charBase = (id, height, bold = false, italic = false, fontId = null) => {
+        const fi = fontId !== null ? String(fontId) : ((bold && boldFn) ? '1' : '0');
         const boldTag   = (bold   && !boldFn) ? '\n        <hh:bold/>'   : '';
         const italicTag = italic ? '\n        <hh:italic/>' : '';
         return `      <hh:charPr id="${id}" height="${height}" textColor="#000000" shadeColor="none" useFontSpace="0" useKerning="0" symMark="NONE" borderFillIDRef="1">
@@ -316,20 +321,21 @@ ${fontFaceBlock('OTHER')}
 ${fontFaceBlock('SYMBOL')}
 ${fontFaceBlock('USER')}
     </hh:fontfaces>
-    <hh:charProperties itemCnt="10">
-      <!-- 0=본문, 1=H1 bold, 2=H2 bold, 3=H3 bold, 4=H4 bold, 5=표머리 bold, 6=코드, 7=본문bold, 8=본문italic, 9=본문bold+italic -->
+    <hh:charProperties itemCnt="11">
+      <!-- 0=본문, 1=H1 bold, 2=H2 bold, 3=H3 bold, 4=H4 bold, 5=표머리 bold, 6=코드, 7=본문bold, 8=본문italic, 9=본문bold+italic, 10=코드 라벨 -->
 ${charBase(0, sz.body,  false, false)}
 ${charBase(1, sz.h1,   true,  false)}
 ${charBase(2, sz.h2,   true,  false)}
 ${charBase(3, sz.h3,   true,  false)}
 ${charBase(4, sz.h4,   true,  false)}
 ${charBase(5, sz.tblHd,true,  false)}
-${charBase(6, sz.code, false, false).replace('"#000000"', '"#333333"')}
+${charBase(6, sz.code, false, false, codeFontId).replace('"#000000"', '"#333333"')}
 ${charBase(7, sz.body, true,  false)}
 ${charBase(8, sz.body, false, true)}
 ${charBase(9, sz.body, true,  true)}
+${charBase(10, Math.max((bp - 2) * 100, 700), true, false, codeFontId).replace('"#000000"', '"#586069"')}
     </hh:charProperties>
-    <hh:paraProperties itemCnt="14">
+    <hh:paraProperties itemCnt="16">
       <!-- id  정렬    행간  전    후   들여  테두리참조 -->
 ${paraBase(0, 'JUSTIFY', 160,   0,  850,    0)}
 ${paraBase(1, 'LEFT',    180, 850,  567,    0)}
@@ -350,8 +356,11 @@ ${paraBase(11, 'RIGHT',  150,   0,    0,    0)}
       <!-- id=12/13  DOCX 정렬 보존: 가운데/오른쪽 -->
 ${paraBase(12, 'CENTER', 160,   0,  850,    0)}
 ${paraBase(13, 'RIGHT',  160,   0,  850,    0)}
+      <!-- id=14/15  코드 라벨/코드 라인: 고정폭 글꼴, 좌측 여백, 배경/테두리 -->
+${paraBase(14, 'LEFT',   120, 300,    0,  650, '11')}
+${paraBase(15, 'LEFT',   120,   0,    0,  650, '11')}
     </hh:paraProperties>
-    <hh:borderFills itemCnt="${10 + customBfMap.size}">
+    <hh:borderFills itemCnt="${11 + customBfMap.size}">
       <!-- id=1 테두리 없음 -->
       <hh:borderFill id="1" threeD="0" shadow="0" centerLine="NONE" breakCellSeparateLine="0">
         <hh:slash type="NONE" Crooked="0" isCounter="0"/><hh:backSlash type="NONE" Crooked="0" isCounter="0"/>
@@ -445,6 +454,16 @@ ${paraBase(13, 'RIGHT',  160,   0,  850,    0)}
         <hh:topBorder type="NONE" width="0.1 mm" color="#000000"/>
         <hh:bottomBorder type="SOLID" width="0.4 mm" color="#555555"/>
         <hh:diagonal type="SOLID" width="0.1 mm" color="#000000"/>
+      </hh:borderFill>
+      <!-- id=11 코드 블록용: 연한 배경 + 얇은 테두리 -->
+      <hh:borderFill id="11" threeD="0" shadow="0" centerLine="NONE" breakCellSeparateLine="0">
+        <hh:slash type="NONE" Crooked="0" isCounter="0"/><hh:backSlash type="NONE" Crooked="0" isCounter="0"/>
+        <hh:leftBorder type="SOLID" width="0.1 mm" color="#D0D7DE"/>
+        <hh:rightBorder type="SOLID" width="0.1 mm" color="#D0D7DE"/>
+        <hh:topBorder type="SOLID" width="0.1 mm" color="#D0D7DE"/>
+        <hh:bottomBorder type="SOLID" width="0.1 mm" color="#D0D7DE"/>
+        <hh:diagonal type="SOLID" width="0.1 mm" color="#D0D7DE"/>
+        <hh:fillBrush><hh:winBrush faceColor="#F6F8FA" hatchColor="#000000" alpha="0"/></hh:fillBrush>
       </hh:borderFill>
 ${[...customBfMap.entries()].map(([key, bfId]) => {
     const [color, variant = 'full'] = String(key).split(':');
@@ -542,6 +561,66 @@ function buildBlankPara() {
     const pid = _nextParaId();
     return `<hp:p id="${pid}" paraPrIDRef="9" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0">` +
         `<hp:run charPrIDRef="0"><hp:t> </hp:t></hp:run></hp:p>`;
+}
+
+function buildCodePara(text, paraId = '15', charId = '6') {
+    const pid = _nextParaId();
+    const raw = String(text ?? '');
+    const safe = xmlEsc(raw === '' ? ' ' : raw);
+    return `<hp:p id="${pid}" paraPrIDRef="${paraId}" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0">` +
+        `<hp:run charPrIDRef="${charId}"><hp:t xml:space="preserve">${safe}</hp:t></hp:run></hp:p>`;
+}
+
+function buildCodeBlock(block, prefix = '') {
+    const parts = [];
+    const lang = String(block.lang || '').trim();
+    if (lang) parts.push(buildCodePara(prefix + lang, '14', '10'));
+    const text = String(block.text ?? '');
+    const lines = text === '' ? [''] : text.split('\n');
+    for (const line of lines) parts.push(buildCodePara(prefix + line, '15', '6'));
+    parts.push(buildBlankPara());
+    return parts.join('');
+}
+
+function collectCodeAuditForHwpx(blocks) {
+    const codeBlocks = [];
+    function walk(list) {
+        for (const block of (list || [])) {
+            if (block.type === 'code') {
+                const lines = String(block.text ?? '').split('\n');
+                codeBlocks.push({
+                    lineCount: lines.length,
+                    firstLine: lines[0] ?? '',
+                    lastLine: lines[lines.length - 1] ?? '',
+                });
+            } else if (block.type === 'quote') {
+                walk(block.blocks);
+            } else if (block.type === 'list') {
+                for (const item of (block.items || [])) walk(item.codeBlocks);
+            }
+        }
+    }
+    walk(blocks);
+    return {
+        blockCount: codeBlocks.length,
+        lineCount: codeBlocks.reduce((sum, b) => sum + b.lineCount, 0),
+        blocks: codeBlocks,
+    };
+}
+
+function validateCodeAudit(ir) {
+    if (!ir || !ir.codeAudit) return;
+    const expected = ir.codeAudit;
+    const actual = collectCodeAuditForHwpx(ir.blocks || []);
+    const sameEdgeLines = (expected.blocks || []).every((block, i) => {
+        const other = actual.blocks[i] || {};
+        return block.firstLine === other.firstLine && block.lastLine === other.lastLine;
+    });
+    if (expected.blockCount !== actual.blockCount
+        || expected.lineCount !== actual.lineCount
+        || !sameEdgeLines) {
+        throw new Error('코드 블록 검증 실패: Markdown 코드 블록 수/줄 수가 변환 전후와 일치하지 않습니다.');
+    }
 }
 
 /** 구분선(HR) 단락 — paraPr id=8(하단 테두리 실선) 사용 */
@@ -868,17 +947,32 @@ function buildSection(ir, marginsHwp, paperKey, landscape = false, customBfMap =
             parts.push(buildHrPara());
 
         } else if (bt === 'list') {
-            (block.items || []).forEach((item, i) => {
+            (block.items || []).forEach((rawItem, i) => {
+                const item = typeof rawItem === 'object' ? rawItem : { text: rawItem };
                 const prefix = block.ordered ? `${i + 1}. ` : '· ';
-                parts.push(buildPara(prefix + item, '0', '5'));
+                if (item.text) parts.push(buildPara(prefix + item.text, '0', '5'));
+                for (const codeBlock of (item.codeBlocks || [])) {
+                    parts.push(buildCodeBlock(codeBlock, '  '));
+                }
             });
 
         } else if (bt === 'table') {
             parts.push(buildTable(block.header, block.rows, contentWidthHwp, customBfMap));
 
         } else if (bt === 'code') {
-            const lines = (block.text || '').split('\n');
-            lines.forEach(line => parts.push(buildPara(line === '' ? ' ' : line, '6', '6')));
+            parts.push(buildCodeBlock(block));
+
+        } else if (bt === 'quote') {
+            for (const quoteBlock of (block.blocks || [])) {
+                if (quoteBlock.type === 'code') {
+                    parts.push(buildCodeBlock(quoteBlock, '> '));
+                } else if (quoteBlock.type === 'para') {
+                    const text = quoteBlock.text || (quoteBlock.runs || []).map(r => r.text || '').join('');
+                    parts.push(buildPara('▶ ' + text, '0', '5'));
+                } else {
+                    parts.push(buildPara('▶ ' + (quoteBlock.text || ''), '0', '5'));
+                }
+            }
 
         } else if (bt === 'image') {
             const imgIndex = imageBlocks.indexOf(block);
@@ -915,12 +1009,14 @@ function buildSection(ir, marginsHwp, paperKey, landscape = false, customBfMap =
 async function buildHwpx(ir, fontName = '휴먼명조', fontSize = 12, marginsMm = null, paperSize = 'A4', onProgress = null, orientation = 'portrait') {
     if (typeof JSZip === 'undefined') throw new Error('JSZip 미로드: 인터넷 연결을 확인하세요.');
 
+    validateCodeAudit(ir);
+
     const marginsHwp = marginsMmToHwp(marginsMm || DEFAULT_MARGINS_MM);
     const landscape  = orientation === 'landscape';
 
     // 표 셀 배경색 수집 → 동적 borderFill 생성용
     const customBfMap = new Map();
-    let nextBfId = 11;
+    let nextBfId = 12;
     for (const block of (ir.blocks || [])) {
         if (block.type !== 'table') continue;
         const allRows = (block.header && block.header.length ? [block.header] : []).concat(block.rows || []);
