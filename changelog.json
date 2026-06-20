@@ -1,6 +1,18 @@
 {
-  "current": "4.3.3",
+  "current": "4.3.4",
   "versions": [
+    {
+      "version": "4.3.4",
+      "date": "2026-06-21",
+      "user": [
+        "구분선 아래 여백 보강 — 변환 문서에서 구분선 아래쪽도 위쪽처럼 간격이 생기도록 조정했습니다"
+      ],
+      "dev": [
+        "[v4.3.4] hwpx.js: buildHrPara()가 HR 단락 뒤에 빈 단락 spacer를 추가하도록 변경",
+        "[v4.3.4] index.html: 업데이트 내역 버튼 v4.3.4 반영",
+        "[v4.3.4] sw.js: CACHE_VERSION to-hwpx-v4.3.4"
+      ]
+    },
     {
       "version": "4.3.3",
       "date": "2026-06-21",

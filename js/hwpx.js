@@ -548,7 +548,8 @@ function buildBlankPara() {
 function buildHrPara() {
     const pid = _nextParaId();
     return `<hp:p id="${pid}" paraPrIDRef="8" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0">` +
-        `<hp:run charPrIDRef="0"><hp:t> </hp:t></hp:run></hp:p>`;
+        `<hp:run charPrIDRef="0"><hp:t> </hp:t></hp:run></hp:p>` +
+        buildBlankPara();
 }
 
 /**
