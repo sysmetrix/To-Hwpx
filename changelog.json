@@ -1,6 +1,18 @@
 {
-  "current": "4.3.7",
+  "current": "4.3.8",
   "versions": [
+    {
+      "version": "4.3.8",
+      "date": "2026-06-21",
+      "user": [
+        "Markdown 코드 블록 배경 표시 보정 — 한글에서 코드 셀 배경이 실제로 칠해지도록 코드 셀 테두리를 어두운 실선으로 변경했습니다"
+      ],
+      "dev": [
+        "[v4.3.8] hwpx.js: 코드 블록용 borderFill id=11의 사방 테두리를 NONE에서 SOLID #101915로 변경",
+        "[v4.3.8] index.html: 업데이트 내역 버튼 v4.3.8 반영",
+        "[v4.3.8] sw.js: CACHE_VERSION to-hwpx-v4.3.8"
+      ]
+    },
     {
       "version": "4.3.7",
       "date": "2026-06-21",

@@ -456,11 +456,11 @@ ${paraBase(14, 'LEFT',   120,   0,    0,    0)}
       <!-- id=11 코드 블록 셀용: 어두운 배경 -->
       <hh:borderFill id="11" threeD="0" shadow="0" centerLine="NONE" breakCellSeparateLine="0">
         <hh:slash type="NONE" Crooked="0" isCounter="0"/><hh:backSlash type="NONE" Crooked="0" isCounter="0"/>
-        <hh:leftBorder type="NONE" width="0.1 mm" color="#D0D7DE"/>
-        <hh:rightBorder type="NONE" width="0.1 mm" color="#D0D7DE"/>
-        <hh:topBorder type="NONE" width="0.1 mm" color="#D0D7DE"/>
-        <hh:bottomBorder type="NONE" width="0.1 mm" color="#D0D7DE"/>
-        <hh:diagonal type="SOLID" width="0.1 mm" color="#D0D7DE"/>
+        <hh:leftBorder type="SOLID" width="0.1 mm" color="#101915"/>
+        <hh:rightBorder type="SOLID" width="0.1 mm" color="#101915"/>
+        <hh:topBorder type="SOLID" width="0.1 mm" color="#101915"/>
+        <hh:bottomBorder type="SOLID" width="0.1 mm" color="#101915"/>
+        <hh:diagonal type="SOLID" width="0.1 mm" color="#101915"/>
         <hh:fillBrush><hh:winBrush faceColor="#101915" hatchColor="#000000" alpha="0"/></hh:fillBrush>
       </hh:borderFill>
 ${[...customBfMap.entries()].map(([key, bfId]) => {
