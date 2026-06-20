@@ -456,24 +456,28 @@ const FORMAT_INFO = {
 const FONT_DOWNLOADS = [
     {
         name: 'Noto Sans KR',
+        systemNames: ['Noto Sans KR', 'NotoSansKR', 'Noto Sans KR Regular'],
         desc: 'Google/Adobe 계열의 넓은 문자 지원 고딕체입니다. 웹 UI 미리보기와 일반 문서용으로 무난합니다.',
         local: ['fonts/NotoSansKR-Regular.ttf', 'Font/NotoSansKR-Regular.ttf', 'Font/Noto_Sans_KR/NotoSansKR-Regular.ttf'],
         official: 'https://fonts.google.com/specimen/Noto+Sans+KR',
     },
     {
         name: '나눔고딕',
+        systemNames: ['나눔고딕', 'NanumGothic', 'Nanum Gothic'],
         desc: '네이버 배포 한글 고딕체입니다. 국내 사용자에게 익숙하고 일반 문서에 잘 맞습니다.',
         local: ['fonts/NanumGothic.ttf', 'Font/NanumGothic.ttf', 'Font/NanumGothic/NanumGothic.ttf'],
         official: 'https://hangeul.naver.com/font',
     },
     {
         name: 'KoPub돋움체',
+        systemNames: ['KoPub돋움체', 'KoPub World Dotum Medium', 'KoPubWorldDotum Medium', 'KoPubDotumMedium'],
         desc: '출판/공공 배포 문서에 어울리는 돋움 계열 폰트입니다. 설치 후 한글에서 같은 이름으로 표시되어야 합니다.',
         local: ['fonts/KoPubWorldDotum-Medium.ttf', 'Font/KoPubDotumMedium.ttf', 'Font/kopub/KoPubDotumMedium.ttf'],
         official: 'https://www.kopus.org',
     },
     {
         name: 'Pretendard GOV',
+        systemNames: ['Pretendard GOV', 'PretendardGOV-Regular', 'Pretendard GOV Variable'],
         desc: '디지털 행정 문서에 어울리는 현대적인 고딕체입니다. 설치 후 HWPX 폰트명과 일치해야 합니다.',
         local: ['fonts/PretendardGOV-Regular.ttf', 'Font/Pretendard-Regular.ttf', 'Font/Pretendard GOV-1.3.9/Pretendard-Regular.ttf'],
         official: 'https://github.com/orioncactus/pretendard',
@@ -575,6 +579,17 @@ async function findLocalFont(paths) {
     return '';
 }
 
+async function isSystemFontInstalled(names) {
+    for (const name of names) {
+        try {
+            const font = new FontFace('__detect__', `local("${name}")`);
+            await font.load();
+            return true;
+        } catch (_) {}
+    }
+    return false;
+}
+
 function formatFontDescription(desc) {
     const splitAt = desc.indexOf('. ');
     if (splitAt === -1) return escHtml(desc);
@@ -595,23 +610,28 @@ async function renderFontGuide() {
                 <p class="font-guide-sample" style="font-family:'${escHtml(font.name)}', var(--font-main)">문서를 한글(HWPX)로 변환합니다 123</p>
             </div>
             <div class="font-guide-actions" data-font-index="${index}">
-                <span class="font-guide-local-missing">로컬 확인 중</span>
+                <span class="font-guide-local-missing">확인 중...</span>
                 <a class="font-official-link" href="${escHtml(font.official)}" target="_blank" rel="noopener">공식 사이트</a>
             </div>
         </section>
     `).join('');
 
-    for (let i = 0; i < FONT_DOWNLOADS.length; i++) {
-        const font = FONT_DOWNLOADS[i];
-        const selector = `[data-font-index="${i}"]`;
-        const box = el.querySelector(selector);
-        if (!box) continue;
-        const localPath = await findLocalFont(font.local);
+    await Promise.all(FONT_DOWNLOADS.map(async (font, i) => {
+        const box = el.querySelector(`[data-font-index="${i}"]`);
+        if (!box) return;
+        const [isInstalled, localPath] = await Promise.all([
+            isSystemFontInstalled(font.systemNames || [font.name]),
+            findLocalFont(font.local),
+        ]);
         const official = `<a class="font-official-link" href="${escHtml(font.official)}" target="_blank" rel="noopener">공식 사이트</a>`;
-        box.innerHTML = localPath
-            ? `<a href="${escHtml(localPath)}" download>TTF 다운로드</a>${official}`
-            : `<span class="font-guide-local-missing">제공 준비 중</span>${official}`;
-    }
+        if (isInstalled) {
+            box.innerHTML = `<span class="font-installed-badge">설치됨 ✓</span>${official}`;
+        } else if (localPath) {
+            box.innerHTML = `<a href="${escHtml(localPath)}" download>TTF 다운로드</a>${official}`;
+        } else {
+            box.innerHTML = `<span class="font-guide-local-missing">미설치</span>${official}`;
+        }
+    }));
 }
 
 function showFontGuide() {
@@ -1533,7 +1553,7 @@ class RhwpEditorClient {
         const bytes = buf instanceof ArrayBuffer
             ? Array.from(new Uint8Array(buf))
             : Array.from(buf);
-        return this._send('loadFile', { data: bytes, fileName }, 45000);
+        return this._send('loadFile', { data: bytes, fileName }, 20000);
     }
 }
 
@@ -1608,13 +1628,13 @@ async function renderBuiltInPreview(blob, sourceError, loading, countEl) {
         <div class="fallback-preview">
             <div class="fallback-preview-head">
                 <div>
-                    <strong>내장 HWPX 미리보기</strong>
-                    <p>원격 rhwp 뷰어가 응답하지 않아 생성된 HWPX 내부 내용을 직접 표시합니다.</p>
+                    <strong>HWPX 텍스트 미리보기</strong>
+                    <p>생성된 HWPX 내용을 텍스트로 표시합니다. 정확한 서식은 한컴오피스에서 확인하세요.</p>
                 </div>
                 ${state.downloadUrl ? `<a class="fallback-download" href="${state.downloadUrl}" download="${escHtml(fileName)}">다운로드</a>` : ''}
             </div>
             <div class="fallback-notice">
-                <strong>rhwp 연결 상태:</strong> ${escHtml(sourceError?.message || '응답 없음')}
+                외부 미리보기 뷰어가 응답하지 않아 내장 텍스트 미리보기로 전환되었습니다.
             </div>
             <div class="fallback-meta">
                 <span><strong>파일</strong>${escHtml(fileName)}</span>

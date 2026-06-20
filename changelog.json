@@ -1,6 +1,24 @@
 {
-  "current": "4.0.6",
+  "current": "4.0.7",
   "versions": [
+    {
+      "version": "4.0.7",
+      "date": "2026-06-20",
+      "user": [
+        "폰트 설치 안내 팝업에서 PC에 폰트가 설치되어 있으면 '설치됨 ✓' 표시",
+        "HWPX 미리보기 외부 뷰어 응답 대기 시간을 45초에서 20초로 단축",
+        "미리보기 전환 시 '응답 없음' 오류 메시지를 간결한 안내 문구로 개선"
+      ],
+      "dev": [
+        "[v4.0.7] app.js: FONT_DOWNLOADS에 systemNames 배열 추가 (폰트별 OS 등록명 후보)",
+        "[v4.0.7] app.js: isSystemFontInstalled() 추가 — FontFace local() API로 OS 설치 여부 감지",
+        "[v4.0.7] app.js: renderFontGuide()를 Promise.all 병렬 검사로 변경, 설치됨/미설치/TTF다운로드 분기",
+        "[v4.0.7] app.js: RhwpEditorClient.loadFile() timeout 45000→20000ms",
+        "[v4.0.7] app.js: renderBuiltInPreview() 헤더·notice 문구를 사용자 친화적으로 변경",
+        "[v4.0.7] style.css: .font-installed-badge 스타일 추가 (초록 배지)",
+        "[v4.0.7] sw.js: CACHE_VERSION to-hwpx-v4.0.7"
+      ]
+    },
     {
       "version": "4.0.6",
       "date": "2026-06-20",
