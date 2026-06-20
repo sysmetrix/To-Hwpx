@@ -1,6 +1,20 @@
 {
-  "current": "4.1.0",
+  "current": "4.1.1",
   "versions": [
+    {
+      "version": "4.1.1",
+      "date": "2026-06-20",
+      "user": [
+        "폰트 설치 안내 문구 개선 — 단계별 설치 방법과 '모든 사용자용으로 설치' 안내 추가",
+        "설치 후 브라우저 재시작 없이 '다시 확인'만으로 감지됨을 안내"
+      ],
+      "dev": [
+        "[v4.1.1] index.html: font-guide-note를 단계별 ol 목록으로 교체",
+        "[v4.1.1] index.html: recheck-hint 문구를 재시작 불필요 안내로 변경",
+        "[v4.1.1] style.css: .font-guide-steps, .font-guide-hint-muted 스타일 추가",
+        "[v4.1.1] sw.js: CACHE_VERSION to-hwpx-v4.1.1"
+      ]
+    },
     {
       "version": "4.1.0",
       "date": "2026-06-20",

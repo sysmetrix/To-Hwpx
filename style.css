@@ -1920,6 +1920,19 @@ a:hover { text-decoration: underline; }
     font-size: 0.82rem;
     line-height: 1.55;
 }
+.font-guide-steps {
+    margin: 0;
+    padding-left: 1.3em;
+    color: var(--c-text-sub);
+    font-size: 0.82rem;
+    line-height: 1.7;
+}
+.font-guide-steps li + li { margin-top: 2px; }
+.font-guide-hint-muted {
+    color: var(--c-text-sub);
+    font-size: 0.78rem;
+    opacity: 0.75;
+}
 
 
 /* ─────────────────────────────────────────────────────────────────
