@@ -1,6 +1,26 @@
 {
-  "current": "4.1.2",
+  "current": "4.1.3",
   "versions": [
+    {
+      "version": "4.1.3",
+      "date": "2026-06-20",
+      "user": [
+        "용지 방향 버튼에 '세로'/'가로' 텍스트 추가 — 아이콘만으로 알기 어려운 문제 개선",
+        "기본 폰트를 휴먼명조에서 맑은 고딕으로 변경",
+        "폰트 안내 버튼 레이블 '설치' → '안내'로 명확화",
+        "KoPub돋움체·Pretendard GOV 설명 문구를 출처 중심으로 통일"
+      ],
+      "dev": [
+        "[v4.1.3] index.html: paper-orient 버튼에 .orient-label 스팬 추가",
+        "[v4.1.3] index.html: ir-toggle 버튼 hidden 처리 (개발자 전용)",
+        "[v4.1.3] index.html: font-guide-btn 레이블 '설치'→'안내'",
+        "[v4.1.3] index.html: 기본 폰트 select 휴먼명조→맑은 고딕",
+        "[v4.1.3] app.js: setOrient() 헬퍼로 orient-label 텍스트 동기화",
+        "[v4.1.3] app.js: KoPub·Pretendard GOV desc 출처 명시, 기술 주석 제거",
+        "[v4.1.3] style.css: paper-orient-btn width auto + padding, orient-label 스타일",
+        "[v4.1.3] sw.js: CACHE_VERSION to-hwpx-v4.1.3"
+      ]
+    },
     {
       "version": "4.1.2",
       "date": "2026-06-20",

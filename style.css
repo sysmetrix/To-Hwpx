@@ -845,15 +845,25 @@ a:hover { text-decoration: underline; }
     display: flex;
     align-items: center;
     justify-content: center;
+    gap: 5px;
     flex-shrink: 0;
-    width: 34px;
+    width: auto;
+    min-width: 34px;
     height: 34px;
+    padding: 0 9px;
     border: 1.5px solid var(--c-border);
     border-radius: var(--radius-sm);
     background: var(--c-surface-alt);
     cursor: pointer;
     color: var(--c-text-sub);
     transition: background var(--trans), border-color var(--trans), color var(--trans);
+}
+.orient-label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    color: inherit;
+    line-height: 1;
 }
 .paper-orient-btn:hover {
     border-color: var(--c-primary);

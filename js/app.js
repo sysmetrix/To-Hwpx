@@ -474,7 +474,7 @@ const FONT_DOWNLOADS = [
         name: 'KoPub돋움체',
         family: 'KoPub돋움체',
         systemNames: ['KoPub돋움체', 'KoPub돋움체 Medium', 'KoPub World Dotum Medium', 'KoPubWorldDotum Medium', 'KoPubDotumMedium'],
-        desc: '출판/공공 배포 문서에 어울리는 돋움 계열 폰트입니다. 설치 후 한글에서 같은 이름으로 표시되어야 합니다.',
+        desc: '한국출판인회의 배포 공공 라이선스 돋움체입니다. 출판·공공 문서에 잘 어울리며 무료로 사용할 수 있습니다.',
         local: ['fonts/KoPubWorldDotum-Medium.ttf', 'Font/KoPubDotumMedium.ttf', 'Font/kopub/KoPubDotumMedium.ttf'],
         official: 'https://www.kopus.org/biz-electronic-font2/',
     },
@@ -482,7 +482,7 @@ const FONT_DOWNLOADS = [
         name: 'Pretendard GOV',
         family: 'Pretendard',
         systemNames: ['Pretendard GOV', 'Pretendard', 'Pretendard 보통', 'PretendardGOV-Regular'],
-        desc: '디지털 행정 문서에 어울리는 현대적인 고딕체입니다. 설치 후 HWPX 폰트명과 일치해야 합니다.',
+        desc: '오픈소스로 공개된 공공 라이선스 현대 고딕체입니다. 디지털 행정 문서에 잘 어울립니다.',
         local: ['fonts/PretendardGOV-Regular.ttf', 'Font/Pretendard-Regular.ttf', 'Font/Pretendard GOV-1.3.9/Pretendard-Regular.ttf'],
         official: 'https://github.com/orioncactus/pretendard/releases/tag/v1.3.9',
     },
@@ -742,18 +742,20 @@ function initOptions() {
     const orientBtn = document.getElementById('paper-orient');
     if (orientBtn) {
         const savedOrient = localStorage.getItem('tohwpx_orientation');
+        const orientLabel = orientBtn.querySelector('.orient-label');
+        const setOrient = (landscape) => {
+            orientBtn.classList.toggle('is-landscape', landscape);
+            orientBtn.setAttribute('aria-label', `용지 방향: ${landscape ? '가로' : '세로'}`);
+            if (orientLabel) orientLabel.textContent = landscape ? '가로' : '세로';
+        };
         if (savedOrient === 'landscape') {
             state.orientation = 'landscape';
-            orientBtn.classList.add('is-landscape');
-            orientBtn.setAttribute('aria-label', '용지 방향: 가로');
-            orientBtn.title = '가로 방향 — 클릭하면 세로로 전환';
+            setOrient(true);
         }
         orientBtn.addEventListener('click', () => {
             const toLandscape = state.orientation === 'portrait';
             state.orientation = toLandscape ? 'landscape' : 'portrait';
-            orientBtn.classList.toggle('is-landscape', toLandscape);
-            orientBtn.setAttribute('aria-label', `용지 방향: ${toLandscape ? '가로' : '세로'}`);
-            orientBtn.title = toLandscape ? '가로 방향 — 클릭하면 세로로 전환' : '세로 방향 — 클릭하면 가로로 전환';
+            setOrient(toLandscape);
             localStorage.setItem('tohwpx_orientation', state.orientation);
         });
     }
