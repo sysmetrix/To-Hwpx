@@ -1,6 +1,19 @@
 {
-  "current": "4.0.3",
+  "current": "4.0.4",
   "versions": [
+    {
+      "version": "4.0.4",
+      "date": "2026-06-20",
+      "user": [
+        "폰트 설치 안내 카드에서 내부 파일 경로 노출 제거",
+        "폰트 버튼 문구를 TTF 다운로드와 공식 사이트로 정리"
+      ],
+      "dev": [
+        "[v4.0.4] app.js: renderFontGuide()의 font.local 경로 표시 제거",
+        "[v4.0.4] app.js: 로컬 TTF/공식/로컬 파일 없음 버튼 문구를 사용자용 표현으로 변경",
+        "[v4.0.4] sw.js: CACHE_VERSION to-hwpx-v4.0.4"
+      ]
+    },
     {
       "version": "4.0.3",
       "date": "2026-06-20",

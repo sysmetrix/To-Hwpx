@@ -528,11 +528,10 @@ async function renderFontGuide() {
                 <h3>${escHtml(font.name)}</h3>
                 <p>${escHtml(font.desc)}</p>
                 <p class="font-guide-sample" style="font-family:'${escHtml(font.name)}', var(--font-main)">문서를 한글(HWPX)로 변환합니다 123</p>
-                <p>${font.local.map(path => `<code>${escHtml(path)}</code>`).join(' ')}</p>
             </div>
             <div class="font-guide-actions" data-font-index="${index}">
                 <span class="font-guide-local-missing">로컬 확인 중</span>
-                <a class="font-official-link" href="${escHtml(font.official)}" target="_blank" rel="noopener">공식</a>
+                <a class="font-official-link" href="${escHtml(font.official)}" target="_blank" rel="noopener">공식 사이트</a>
             </div>
         </section>
     `).join('');
@@ -543,10 +542,10 @@ async function renderFontGuide() {
         const box = el.querySelector(selector);
         if (!box) continue;
         const localPath = await findLocalFont(font.local);
-        const official = `<a class="font-official-link" href="${escHtml(font.official)}" target="_blank" rel="noopener">공식</a>`;
+        const official = `<a class="font-official-link" href="${escHtml(font.official)}" target="_blank" rel="noopener">공식 사이트</a>`;
         box.innerHTML = localPath
-            ? `<a href="${escHtml(localPath)}" download>로컬 TTF</a>${official}`
-            : `<span class="font-guide-local-missing">로컬 파일 없음</span>${official}`;
+            ? `<a href="${escHtml(localPath)}" download>TTF 다운로드</a>${official}`
+            : `<span class="font-guide-local-missing">제공 준비 중</span>${official}`;
     }
 }
 
