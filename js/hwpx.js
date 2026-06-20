@@ -355,8 +355,8 @@ ${paraBase(11, 'RIGHT',  150,   0,    0,    0)}
       <!-- id=12/13  DOCX 정렬 보존: 가운데/오른쪽 -->
 ${paraBase(12, 'CENTER', 160,   0,  850,    0)}
 ${paraBase(13, 'RIGHT',  160,   0,  850,    0)}
-      <!-- id=14  코드 라인: 고정폭 글꼴, 좌측 여백, 배경 -->
-${paraBase(14, 'LEFT',   120,   0,    0,  650, '11')}
+      <!-- id=14  코드 라인: 고정폭 글꼴 -->
+${paraBase(14, 'LEFT',   120,   0,    0,    0)}
     </hh:paraProperties>
     <hh:borderFills itemCnt="${11 + customBfMap.size}">
       <!-- id=1 테두리 없음 -->
@@ -453,7 +453,7 @@ ${paraBase(14, 'LEFT',   120,   0,    0,  650, '11')}
         <hh:bottomBorder type="SOLID" width="0.4 mm" color="#555555"/>
         <hh:diagonal type="SOLID" width="0.1 mm" color="#000000"/>
       </hh:borderFill>
-      <!-- id=11 코드 블록용: 어두운 배경 -->
+      <!-- id=11 코드 블록 셀용: 어두운 배경 -->
       <hh:borderFill id="11" threeD="0" shadow="0" centerLine="NONE" breakCellSeparateLine="0">
         <hh:slash type="NONE" Crooked="0" isCounter="0"/><hh:backSlash type="NONE" Crooked="0" isCounter="0"/>
         <hh:leftBorder type="NONE" width="0.1 mm" color="#D0D7DE"/>
@@ -569,13 +569,30 @@ function buildCodePara(text, paraId = '14', charId = '6') {
         `<hp:run charPrIDRef="${charId}"><hp:t xml:space="preserve">${safe}</hp:t></hp:run></hp:p>`;
 }
 
-function buildCodeBlock(block, prefix = '') {
-    const parts = [];
+function buildCodeBlock(block, prefix = '', contentWidthHwp = 48000) {
     const text = String(block.text ?? '');
     const lines = text === '' ? [''] : text.split('\n');
-    for (const line of lines) parts.push(buildCodePara(prefix + line, '14', '6'));
-    parts.push(buildBlankPara());
-    return parts.join('');
+    const tableWidth = Math.max(12000, contentWidthHwp);
+    const pid = _nextParaId();
+    const codeParas = lines.map(line => buildCodePara(prefix + line, '14', '6')).join('');
+    return `<hp:p id="${pid}" paraPrIDRef="9" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0"><hp:run charPrIDRef="0">` +
+        `<hp:tbl id="0" zOrder="0" numberingType="TABLE" textWrap="TOP_AND_BOTTOM" ` +
+        `textFlow="BOTH_SIDES" lock="0" dropcapstyle="None" pageBreak="ROW" ` +
+        `repeatHeader="0" rowCnt="1" colCnt="1" cellSpacing="0" borderFillIDRef="1">` +
+        `<hp:sz width="${tableWidth}" widthRelTo="ABSOLUTE" height="0" heightRelTo="ABSOLUTE" protect="0"/>` +
+        `<hp:pos treatAsChar="1" affectLSpacing="0" flowWithText="1" allowOverlap="0" holdAnchorAndSO="0" ` +
+        `vertRelTo="PARA" horzRelTo="COLUMN" vertAlign="TOP" horzAlign="LEFT" vertOffset="0" horzOffset="0"/>` +
+        `<hp:outMargin left="0" right="0" top="0" bottom="0"/>` +
+        `<hp:inMargin left="0" right="0" top="0" bottom="0"/>` +
+        `<hp:tr><hp:tc name="" header="0" hasMargin="1" protect="0" editable="0" dirty="0" borderFillIDRef="11">` +
+        `<hp:subList id="" textDirection="HORIZONTAL" lineWrap="BREAK" vertAlign="CENTER" ` +
+        `linkListIDRef="0" linkListNextIDRef="0" textWidth="0" textHeight="0" hasTextRef="0" hasNumRef="0">` +
+        codeParas +
+        `</hp:subList><hp:cellAddr colAddr="0" rowAddr="0"/><hp:cellSpan colSpan="1" rowSpan="1"/>` +
+        `<hp:cellSz width="${tableWidth}" height="${Math.max(1200, lines.length * 650 + 500)}"/>` +
+        `<hp:cellMargin left="700" right="700" top="450" bottom="450"/></hp:tc></hp:tr>` +
+        `</hp:tbl><hp:t></hp:t></hp:run></hp:p>` +
+        buildBlankPara();
 }
 
 function collectCodeAuditForHwpx(blocks) {
@@ -964,7 +981,7 @@ function buildSection(ir, marginsHwp, paperKey, landscape = false, customBfMap =
                 const prefix = block.ordered ? `${i + 1}. ` : '· ';
                 if (item.text) parts.push(buildPara(prefix + item.text, '0', '5'));
                 for (const codeBlock of (item.codeBlocks || [])) {
-                    parts.push(buildCodeBlock(codeBlock, '  '));
+                    parts.push(buildCodeBlock(codeBlock, '  ', contentWidthHwp));
                 }
             });
 
@@ -972,12 +989,12 @@ function buildSection(ir, marginsHwp, paperKey, landscape = false, customBfMap =
             parts.push(buildTable(block.header, block.rows, contentWidthHwp, customBfMap));
 
         } else if (bt === 'code') {
-            parts.push(buildCodeBlock(block));
+            parts.push(buildCodeBlock(block, '', contentWidthHwp));
 
         } else if (bt === 'quote') {
             for (const quoteBlock of (block.blocks || [])) {
                 if (quoteBlock.type === 'code') {
-                    parts.push(buildCodeBlock(quoteBlock, '> '));
+                    parts.push(buildCodeBlock(quoteBlock, '> ', contentWidthHwp));
                 } else if (quoteBlock.type === 'para') {
                     const text = quoteBlock.text || (quoteBlock.runs || []).map(r => r.text || '').join('');
                     parts.push(buildPara('▶ ' + text, '0', '5'));

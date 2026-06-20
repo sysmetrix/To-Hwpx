@@ -1,6 +1,19 @@
 {
-  "current": "4.3.6",
+  "current": "4.3.7",
   "versions": [
+    {
+      "version": "4.3.7",
+      "date": "2026-06-21",
+      "user": [
+        "Markdown 코드 블록 표시 재수정 — 코드 배경이 실제로 칠해지도록 코드 블록을 어두운 1셀 표 객체로 렌더링합니다"
+      ],
+      "dev": [
+        "[v4.3.7] hwpx.js: 코드 줄 문단 배경 의존 제거, 코드 블록을 borderFillIDRef=11 셀 배경 표로 생성",
+        "[v4.3.7] hwpx.js: 코드 라인 paraPr id=14에서 배경 borderFill 참조 제거",
+        "[v4.3.7] index.html: 업데이트 내역 버튼 v4.3.7 반영",
+        "[v4.3.7] sw.js: CACHE_VERSION to-hwpx-v4.3.7"
+      ]
+    },
     {
       "version": "4.3.6",
       "date": "2026-06-21",
