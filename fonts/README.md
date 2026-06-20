@@ -6,10 +6,10 @@
 
 | 폰트 | 기본 경로 | 현재 Font 폴더 호환 경로 |
 |---|---|---|
-| Noto Sans KR | `fonts/NotoSansKR-Regular.ttf` | `Font/Noto_Sans_KR/NotoSansKR-Regular.ttf` |
-| 나눔고딕 | `fonts/NanumGothic-Regular.ttf` | `Font/NanumGothic/NanumGothic-Regular.ttf` |
-| KoPub돋움체 | `fonts/KoPubWorldDotum-Medium.ttf` | `Font/kopub/KoPubDotumMedium.ttf` |
-| Pretendard GOV | `fonts/PretendardGOV-Regular.ttf` | `Font/Pretendard GOV-1.3.9/Pretendard-Regular.ttf` |
+| Noto Sans KR | `fonts/NotoSansKR-Regular.ttf` | `Font/NotoSansKR-Regular.ttf` |
+| 나눔고딕 | `fonts/NanumGothic.ttf` | `Font/NanumGothic.ttf` |
+| KoPub돋움체 | `fonts/KoPubWorldDotum-Medium.ttf` | `Font/KoPubDotumMedium.ttf` |
+| Pretendard GOV | `fonts/PretendardGOV-Regular.ttf` | `Font/Pretendard-Regular.ttf` |
 
 주의: HWPX 파일에는 폰트 파일이 임베딩되지 않습니다. 한컴오피스에서 같은 폰트로 보려면 사용자의 PC에 해당 TTF/OTF를 설치해야 합니다.
 

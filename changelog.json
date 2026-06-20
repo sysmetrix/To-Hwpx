@@ -1,6 +1,21 @@
 {
-  "current": "4.0.1",
+  "current": "4.0.2",
   "versions": [
+    {
+      "version": "4.0.2",
+      "date": "2026-06-20",
+      "user": [
+        "설치형 폰트 다운로드용 TTF 파일 4종을 fonts/ 폴더에 추가",
+        "나눔고딕 다운로드 파일명을 실제 배포 파일명인 NanumGothic.ttf 기준으로 정리",
+        "폰트 안내 팝업이 fonts/ 배포용 파일을 우선 감지하도록 조정"
+      ],
+      "dev": [
+        "[v4.0.2] fonts/: NotoSansKR-Regular.ttf, NanumGothic.ttf, KoPubWorldDotum-Medium.ttf, PretendardGOV-Regular.ttf 추가",
+        "[v4.0.2] app.js: FONT_DOWNLOADS local 경로를 fonts/ 우선, Font/ 작업용 폴더 fallback 구조로 정리",
+        "[v4.0.2] fonts/README.md: NanumGothic.ttf 및 배포용/작업용 폴더 기준 반영",
+        "[v4.0.2] sw.js: CACHE_VERSION to-hwpx-v4.0.2"
+      ]
+    },
     {
       "version": "4.0.1",
       "date": "2026-06-20",

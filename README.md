@@ -226,7 +226,7 @@ python -m http.server 8080
 `sw.js`의 `CACHE_VERSION`을 변경하면 이전 캐시가 자동 삭제됩니다:
 
 ```js
-const CACHE_VERSION = 'to-hwpx-v4.0.1';
+const CACHE_VERSION = 'to-hwpx-v4.0.2';
 ```
 
 배포 시마다 버전을 올려주세요. 화면 상단 버전 문구, `changelog.json`, `CACHE_VERSION`을 함께 맞추면 사용자가 보는 버전과 실제 캐시 버전이 어긋나지 않습니다.
