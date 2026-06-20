@@ -846,16 +846,13 @@ a:hover { text-decoration: underline; }
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    padding: 0 8px;
+    width: 34px;
+    height: 34px;
     border: 1.5px solid var(--c-border);
     border-radius: var(--radius-sm);
     background: var(--c-surface-alt);
     cursor: pointer;
-    font-family: var(--font-main);
-    font-size: 0.78rem;
-    font-weight: 600;
     color: var(--c-text-sub);
-    white-space: nowrap;
     transition: background var(--trans), border-color var(--trans), color var(--trans);
 }
 .paper-orient-btn:hover {
@@ -866,6 +863,18 @@ a:hover { text-decoration: underline; }
     background: var(--c-primary-light);
     border-color: var(--c-primary);
     color: var(--c-primary);
+}
+.orient-icon {
+    display: inline-block;
+    width: 10px;
+    height: 14px;
+    border: 2px solid currentColor;
+    border-radius: 1px;
+    transition: width 0.15s ease, height 0.15s ease;
+}
+.paper-orient-btn.is-landscape .orient-icon {
+    width: 14px;
+    height: 10px;
 }
 
 .checkbox-row {

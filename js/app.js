@@ -579,15 +579,27 @@ async function findLocalFont(paths) {
     return '';
 }
 
-async function isSystemFontInstalled(names) {
-    for (const name of names) {
-        try {
-            const font = new FontFace('__detect__', `local("${name}")`);
-            await font.load();
-            return true;
-        } catch (_) {}
+function isFontInstalledCanvas(fontName) {
+    try {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const testStr = '가나다라마바사 abcdefg 012345';
+        const size = 16;
+
+        ctx.font = `${size}px serif`;
+        const serifW = ctx.measureText(testStr).width;
+        ctx.font = `${size}px "${fontName}", serif`;
+        const testSerifW = ctx.measureText(testStr).width;
+
+        ctx.font = `${size}px sans-serif`;
+        const sansW = ctx.measureText(testStr).width;
+        ctx.font = `${size}px "${fontName}", sans-serif`;
+        const testSansW = ctx.measureText(testStr).width;
+
+        return testSerifW !== serifW || testSansW !== sansW;
+    } catch (_) {
+        return false;
     }
-    return false;
 }
 
 function formatFontDescription(desc) {
@@ -620,7 +632,7 @@ async function renderFontGuide() {
         const box = el.querySelector(`[data-font-index="${i}"]`);
         if (!box) return;
         const [isInstalled, localPath] = await Promise.all([
-            isSystemFontInstalled(font.systemNames || [font.name]),
+            Promise.resolve(isFontInstalledCanvas(font.name)),
             findLocalFont(font.local),
         ]);
         const official = `<a class="font-official-link" href="${escHtml(font.official)}" target="_blank" rel="noopener">공식 사이트</a>`;
@@ -723,16 +735,16 @@ function initOptions() {
         const savedOrient = localStorage.getItem('tohwpx_orientation');
         if (savedOrient === 'landscape') {
             state.orientation = 'landscape';
-            orientBtn.textContent = '가로';
             orientBtn.classList.add('is-landscape');
             orientBtn.setAttribute('aria-label', '용지 방향: 가로');
+            orientBtn.title = '가로 방향 — 클릭하면 세로로 전환';
         }
         orientBtn.addEventListener('click', () => {
             const toLandscape = state.orientation === 'portrait';
             state.orientation = toLandscape ? 'landscape' : 'portrait';
-            orientBtn.textContent = toLandscape ? '가로' : '세로';
             orientBtn.classList.toggle('is-landscape', toLandscape);
             orientBtn.setAttribute('aria-label', `용지 방향: ${toLandscape ? '가로' : '세로'}`);
+            orientBtn.title = toLandscape ? '가로 방향 — 클릭하면 세로로 전환' : '세로 방향 — 클릭하면 가로로 전환';
             localStorage.setItem('tohwpx_orientation', state.orientation);
         });
     }

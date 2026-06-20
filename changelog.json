@@ -1,6 +1,23 @@
 {
-  "current": "4.0.7",
+  "current": "4.0.8",
   "versions": [
+    {
+      "version": "4.0.8",
+      "date": "2026-06-20",
+      "user": [
+        "폰트 설치 감지 방식 개선 — Windows 등록명과 무관하게 실제 렌더링으로 판단",
+        "나눔고딕·Pretendard GOV 등 한글 폰트도 설치 여부를 올바르게 감지",
+        "용지 방향 버튼을 텍스트 대신 직사각형 아이콘으로 변경 — 세로(▯)/가로(▭) 시각적 구분"
+      ],
+      "dev": [
+        "[v4.0.8] app.js: isSystemFontInstalled(FontFace local) → isFontInstalledCanvas() 교체 — canvas measureText 너비 비교 방식",
+        "[v4.0.8] app.js: renderFontGuide() Promise.resolve()로 동기 함수 래핑",
+        "[v4.0.8] index.html: paper-orient 버튼 내용 '세로' 텍스트 → <span class=orient-icon>",
+        "[v4.0.8] app.js: orientBtn.textContent 제거 → classList/title 업데이트로 변경",
+        "[v4.0.8] style.css: .paper-orient-btn 크기 고정(34×34px), .orient-icon 직사각형 shape, is-landscape 전환 애니메이션",
+        "[v4.0.8] sw.js: CACHE_VERSION to-hwpx-v4.0.8"
+      ]
+    },
     {
       "version": "4.0.7",
       "date": "2026-06-20",
