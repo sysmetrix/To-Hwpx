@@ -521,6 +521,24 @@ async function parseDocx(arrayBuffer, docType = 'plain') {
         } catch (_) {}
     }
 
+    // word/footnotes.xml 로드 → 각주 ID → 텍스트 맵
+    const footnotesMap = {};
+    const fnFile = zip.file('word/footnotes.xml');
+    if (fnFile) {
+        try {
+            const fnXml = await fnFile.async('string');
+            const fnDoc = new DOMParser().parseFromString(fnXml, 'application/xml');
+            for (const fn of fnDoc.getElementsByTagNameNS(DOCX_NS, 'footnote')) {
+                const fnId = fn.getAttributeNS(DOCX_NS, 'id') || fn.getAttribute('w:id') || '';
+                // id -1과 0은 특수 구분자 — 건너뜀
+                if (fnId === '-1' || fnId === '0') continue;
+                const tEls = fn.getElementsByTagNameNS(DOCX_NS, 't');
+                const fnText = sanitize(Array.from(tEls).map(t => t.textContent).join('').trim());
+                if (fnId && fnText) footnotesMap[fnId] = fnText;
+            }
+        } catch (_) {}
+    }
+
     // w:body 직계 자식 순회 (단락: w:p, 표: w:tbl)
     const body = xmlDoc.getElementsByTagNameNS(DOCX_NS, 'body')[0];
     if (!body) return ir;
@@ -529,7 +547,7 @@ async function parseDocx(arrayBuffer, docType = 'plain') {
         const localName = node.localName || '';
 
         if (localName === 'p') {
-            const block = extractDocxParagraph(node, stylesMap);
+            const block = extractDocxParagraph(node, stylesMap, footnotesMap);
             if (block) ir.blocks.push(block);
         } else if (localName === 'tbl') {
             const block = extractDocxTable(node);
@@ -540,8 +558,8 @@ async function parseDocx(arrayBuffer, docType = 'plain') {
     return ir;
 }
 
-/** w:p 단락 노드 → IR 블록 (텍스트 추출 + 스타일 판별) */
-function extractDocxParagraph(pNode, stylesMap = {}) {
+/** w:p 단락 노드 → IR 블록 (텍스트 추출 + 스타일 판별 + 각주 지원) */
+function extractDocxParagraph(pNode, stylesMap = {}, footnotesMap = {}) {
     const pStyles = pNode.getElementsByTagNameNS(DOCX_NS, 'pStyle');
     let styleId = '';
     if (pStyles.length) {
@@ -566,9 +584,18 @@ function extractDocxParagraph(pNode, stylesMap = {}) {
     }
 
     // w:r 단위로 텍스트를 읽어 bold/italic 같은 인라인 서식을 일부 보존
+    // w:r 내 w:footnoteReference도 감지하여 각주 삽입
     const runEls = Array.from(pNode.getElementsByTagNameNS(DOCX_NS, 'r'));
     const inlineRuns = [];
     for (const r of runEls) {
+        // 각주 참조 확인
+        const fnRef = r.getElementsByTagNameNS(DOCX_NS, 'footnoteReference')[0];
+        if (fnRef) {
+            const fnId = fnRef.getAttributeNS(DOCX_NS, 'id') || fnRef.getAttribute('w:id') || '';
+            if (fnId && footnotesMap[fnId]) {
+                inlineRuns.push({ text: '', footnote: footnotesMap[fnId] });
+            }
+        }
         const text = sanitize(Array.from(r.getElementsByTagNameNS(DOCX_NS, 't'))
             .map(t => t.textContent || '')
             .join(''));
@@ -579,8 +606,10 @@ function extractDocxParagraph(pNode, stylesMap = {}) {
             italic: r.getElementsByTagNameNS(DOCX_NS, 'i').length > 0,
         });
     }
-    const text = sanitize(inlineRuns.map(r => r.text).join('').trim());
-    if (!text) return null;
+    const text = sanitize(inlineRuns.filter(r => r.text).map(r => r.text).join('').trim());
+    // 각주만 있고 텍스트가 없는 경우도 각주 런이 있으면 null 반환 안 함
+    const hasFootnotes = inlineRuns.some(r => r.footnote);
+    if (!text && !hasFootnotes) return null;
 
     // styles.xml에서 해석한 스타일 이름 사용 (없으면 styleId 원본으로 폴백)
     const resolvedStyle = stylesMap[styleId] || styleId;
@@ -589,8 +618,9 @@ function extractDocxParagraph(pNode, stylesMap = {}) {
         return { type: 'heading', level: Math.min(level, 6), text };
     }
 
-    // bold 런(w:b)이 단락 전체를 덮고 있으면 소제목으로 처리
-    const allBold = inlineRuns.length > 0 && inlineRuns.every(r => r.bold);
+    // bold 런(w:b)이 단락 전체를 덮고 있으면 소제목으로 처리 (텍스트 런만 확인)
+    const textRuns = inlineRuns.filter(r => r.text);
+    const allBold = textRuns.length > 0 && textRuns.every(r => r.bold);
     if (allBold) {
         return { type: 'heading', level: 3, text };
     }
@@ -599,35 +629,100 @@ function extractDocxParagraph(pNode, stylesMap = {}) {
     return align ? { ...base, align } : base;
 }
 
-/** w:tbl 표 노드 → IR table 블록 */
+/** w:tbl 표 노드 → IR table 블록 (셀 병합 지원) */
 function extractDocxTable(tblNode) {
     const rowEls = tblNode.getElementsByTagNameNS(DOCX_NS, 'tr');
     if (!rowEls.length) return null;
 
-    const rows = Array.from(rowEls).map(tr => {
+    // 1단계: 물리 행/열 원시 데이터 수집
+    const rawRows = [];
+    for (const tr of rowEls) {
+        const rawCells = [];
         const cells = tr.getElementsByTagNameNS(DOCX_NS, 'tc');
-        return Array.from(cells).map(tc => {
+        for (const tc of cells) {
             const tEls = tc.getElementsByTagNameNS(DOCX_NS, 't');
             const text = sanitize(Array.from(tEls).map(t => t.textContent).join('').trim());
 
-            // 셀 배경색 (w:tcPr/w:shd@w:fill)
             const tcPr = tc.getElementsByTagNameNS(DOCX_NS, 'tcPr')[0];
+            let bg = null, colSpan = 1, vMergeType = null;
+
             if (tcPr) {
+                // 배경색 (w:tcPr/w:shd@w:fill)
                 const shd = tcPr.getElementsByTagNameNS(DOCX_NS, 'shd')[0];
                 if (shd) {
                     const fill = shd.getAttributeNS(DOCX_NS, 'fill')
                               || shd.getAttribute('w:fill')
                               || shd.getAttribute('fill') || '';
                     if (fill && !/^(auto|FFFFFF|ffffff|000000)$/.test(fill)) {
-                        return { text, bg: fill.replace(/^#/, '').toUpperCase().padStart(6, '0') };
+                        bg = fill.replace(/^#/, '').toUpperCase().padStart(6, '0');
                     }
                 }
+                // 가로 병합 (w:gridSpan)
+                const gs = tcPr.getElementsByTagNameNS(DOCX_NS, 'gridSpan')[0];
+                if (gs) {
+                    colSpan = parseInt(gs.getAttributeNS(DOCX_NS, 'val') || gs.getAttribute('w:val') || '1', 10) || 1;
+                }
+                // 세로 병합 (w:vMerge)
+                const vm = tcPr.getElementsByTagNameNS(DOCX_NS, 'vMerge')[0];
+                if (vm) {
+                    const vmVal = vm.getAttributeNS(DOCX_NS, 'val') || vm.getAttribute('w:val') || '';
+                    vMergeType = (vmVal === 'restart') ? 'restart' : 'continue';
+                }
             }
-            return text;
-        });
-    });
+            rawCells.push({ text, bg, colSpan, vMergeType });
+        }
+        rawRows.push(rawCells);
+    }
 
-    return { type: 'table', header: rows[0] || [], rows: rows.slice(1) };
+    // 2단계: 논리 그리드 구성 — 세로 병합 연속 셀 처리
+    // vMergeStart[논리열] = 병합 시작 행 인덱스 (진행 중인 병합 추적)
+    // mergeStartCells["행_열"] = 병합 시작 셀 객체 (rowSpan을 나중에 증가시킴)
+    const vMergeStart = {};
+    const mergeStartCells = {};
+    const outputRows = [];
+
+    for (let r = 0; r < rawRows.length; r++) {
+        const outRow = [];
+        let logicalCol = 0;
+
+        for (const raw of rawRows[r]) {
+            // 위 행에서 내려오는 세로 병합이 점유 중인 논리 열 건너뜀
+            while (vMergeStart[logicalCol] !== undefined) logicalCol++;
+
+            if (raw.vMergeType === 'continue') {
+                // 세로 병합 연속 셀 → 병합 시작 셀의 rowSpan 증가 후 스킵
+                const startKey = `${vMergeStart[logicalCol]}_${logicalCol}`;
+                if (mergeStartCells[startKey]) mergeStartCells[startKey].rowSpan++;
+                // 이 열은 다음 행에도 병합이 계속될 수 있으므로 vMergeStart 유지
+            } else {
+                // 일반 셀 또는 병합 시작 셀
+                const cell = { text: raw.text, colSpan: raw.colSpan, rowSpan: 1 };
+                if (raw.bg) cell.bg = raw.bg;
+
+                if (raw.vMergeType === 'restart') {
+                    vMergeStart[logicalCol] = r;
+                    mergeStartCells[`${r}_${logicalCol}`] = cell;
+                } else {
+                    // 일반 셀: 이 열의 세로 병합 추적 제거
+                    delete vMergeStart[logicalCol];
+                }
+                outRow.push(cell);
+            }
+
+            logicalCol += raw.colSpan;
+        }
+
+        // 현재 행에서 vMerge continue가 없는 논리 열의 병합 추적 정리
+        // (다음 행에서 해당 열에 일반 셀이 오면 자동으로 delete됨)
+        outputRows.push(outRow);
+    }
+
+    // 3단계: 세로 병합 연속 셀을 rowSpan=0 sentinel로 삽입
+    // outputRows의 각 행에 건너뛴 셀(세로 병합 연속) 위치에 sentinel 추가
+    // 현재 구현에서는 연속 셀을 행에서 제외하므로 rowSpan=0은 별도 처리 없이
+    // hwpx.js에서 outRow 그대로 사용 (연속 셀은 이미 제외됨)
+
+    return { type: 'table', header: outputRows[0] || [], rows: outputRows.slice(1) };
 }
 
 

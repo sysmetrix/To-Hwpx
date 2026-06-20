@@ -407,6 +407,10 @@ let _paraIdCounter = 0;
 function _nextParaId() { return _paraIdCounter++; }
 function _resetParaId() { _paraIdCounter = 0; }
 
+let _footnoteIdCounter = 1;
+function _nextFootnoteId() { return _footnoteIdCounter++; }
+function _resetFootnoteId() { _footnoteIdCounter = 1; }
+
 /**
  * 단락(hp:p) XML 생성
  * replaceEmoji → xmlEsc 순서로 처리하여 이모지 □ 치환 후 XML 안전 처리
@@ -422,11 +426,17 @@ function buildPara(text, charId = '0', paraId = '0') {
  * 인라인 runs 배열(bold/italic/code 플래그) → 단락 XML
  * parsers.js extractInlineRuns()가 생성한 runs 배열을 처리한다.
  * charPr ID: 0=본문, 6=코드, 7=본문bold, 8=본문italic, 9=본문bold+italic
+ * run.footnote 가 있는 경우 각주 컨트롤(hp:ctrl) 을 삽입한다.
  */
 function buildParaRuns(runs, paraId = '0') {
     const pid = _nextParaId();
     let runsXml = '';
+    let ctrlsXml = '';   // 각주 컨트롤은 run 뒤에 배치
     for (const run of (runs || [])) {
+        if (run.footnote) {
+            ctrlsXml += buildFootnoteCtrl(run.footnote);
+            continue;
+        }
         if (!run.text) continue;
         const safe = xmlEsc(replaceEmoji(run.text));
         let cId = '0';
@@ -436,8 +446,8 @@ function buildParaRuns(runs, paraId = '0') {
         else if (run.italic)             cId = '8';
         runsXml += `<hp:run charPrIDRef="${cId}"><hp:t>${safe}</hp:t></hp:run>`;
     }
-    if (!runsXml) return buildBlankPara();
-    return `<hp:p id="${pid}" paraPrIDRef="${paraId}" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0">${runsXml}</hp:p>`;
+    if (!runsXml && !ctrlsXml) return buildBlankPara();
+    return `<hp:p id="${pid}" paraPrIDRef="${paraId}" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0">${runsXml}${ctrlsXml}</hp:p>`;
 }
 
 /**
@@ -457,6 +467,22 @@ function buildHrPara() {
         `<hp:run charPrIDRef="0"><hp:t> </hp:t></hp:run></hp:p>`;
 }
 
+/**
+ * 각주(footnote) 컨트롤 XML 생성
+ * HWPX의 hp:ctrl type="FOOTNOTE" 구조를 사용한다.
+ */
+function buildFootnoteCtrl(footnoteText) {
+    const fnId = _nextFootnoteId();
+    const pid  = _nextParaId();
+    return `<hp:ctrl ctrlID="${fnId}" type="FOOTNOTE">` +
+        `<hp:fnote id="${fnId}" autoNum="1">` +
+        `<hp:p id="${pid}" paraPrIDRef="0" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0">` +
+        `<hp:run charPrIDRef="0"><hp:t>${xmlEsc(replaceEmoji(footnoteText))}</hp:t></hp:run>` +
+        `</hp:p>` +
+        `</hp:fnote>` +
+        `</hp:ctrl>`;
+}
+
 /** heading level → charId / paraId 매핑 (1→H1, 2→H2, 3→H3, 4+→H4) */
 function headingIds(level) {
     const lv = Math.max(1, Math.min(level || 1, 4));
@@ -468,8 +494,10 @@ function headingIds(level) {
  * 한글 글자(2바이트)는 2배, 영문/숫자(1바이트)는 1로 환산
  * 최소 열 너비 3000 HWPUNIT(≈10.6mm) 보장, 최대 40자로 상한
  */
-function cellText(cell) { return typeof cell === 'object' ? (cell?.text ?? '') : String(cell ?? ''); }
-function cellBg(cell)   { return typeof cell === 'object' ? (cell?.bg  || null) : null; }
+function cellText(cell)    { return typeof cell === 'object' ? (cell?.text ?? '') : String(cell ?? ''); }
+function cellBg(cell)     { return typeof cell === 'object' ? (cell?.bg  || null) : null; }
+function cellColSpan(cell) { return typeof cell === 'object' ? (cell?.colSpan || 1) : 1; }
+function cellRowSpan(cell) { return typeof cell === 'object' ? (cell?.rowSpan || 1) : 1; }
 
 function getColumnWidths(allRows, nCols, tableWidth) {
     const MIN_COL = 3000;
@@ -525,7 +553,10 @@ function buildTable(header, rows, contentWidthHwp = 48000, customBfMap = new Map
     if (!allRows.length) return buildBlankPara();
 
     const nRows = allRows.length;
-    const nCols = Math.max(...allRows.map(r => (r || []).length), 1);
+    // 열 수: 각 행의 셀 수 + colSpan - 1 합산으로 실제 논리 열 수 계산
+    const nCols = Math.max(...allRows.map(r =>
+        (r || []).reduce((sum, cell) => sum + (cellColSpan(cell) || 1), 0)
+    ), 1);
     const tableWidth = Math.max(12000, contentWidthHwp);
     const colWidths = getColumnWidths(allRows, nCols, tableWidth);
     const pid = _nextParaId();
@@ -536,24 +567,36 @@ function buildTable(header, rows, contentWidthHwp = 48000, customBfMap = new Map
         const isHd = (header && header.length && r === 0);
         const cId  = isHd ? '5' : '0';   // 표머리=5(bold), 일반=0
         let cellsXml = '';
+        let logicalC = 0;   // 논리 열 인덱스 (colSpan 누적)
 
-        for (let c = 0; c < nCols; c++) {
-            const cell = (row[c] !== undefined && row[c] !== null) ? row[c] : '';
+        for (let ci = 0; ci < row.length; ci++) {
+            const cell = (row[ci] !== undefined && row[ci] !== null) ? row[ci] : '';
+
+            // 세로 병합 연속 셀(rowSpan=0)은 출력 건너뜀
+            if (cellRowSpan(cell) === 0) {
+                logicalC += cellColSpan(cell);
+                continue;
+            }
+
             const val  = cellText(cell);
             const bg   = cellBg(cell);
+            const cs   = cellColSpan(cell);
+            const rs   = cellRowSpan(cell);
             const paraId = isHd ? '7' : (isNumericCell(val) ? '11' : '10');
             let bfId;
             if (bg && customBfMap.has(bg)) {
                 bfId = customBfMap.get(bg);
             } else if (nCols === 1) {
                 bfId = isHd ? '9' : '8';
-            } else if (c === 0) {
+            } else if (logicalC === 0) {
                 bfId = isHd ? '6' : '4';
-            } else if (c === nCols - 1) {
+            } else if (logicalC + cs >= nCols) {
                 bfId = isHd ? '7' : '5';
             } else {
                 bfId = isHd ? '3' : '2';
             }
+            // 병합 셀 너비: 해당 논리 열부터 colSpan 열까지 합산
+            const cellWidth = colWidths.slice(logicalC, logicalC + cs).reduce((a, b) => a + b, 0);
             // 자식 순서: subList → cellAddr → cellSpan → cellSz → cellMargin
             // (rhwp serializer/hwpx/table.rs 기준 OWPML 공식 순서)
             cellsXml +=
@@ -562,11 +605,12 @@ function buildTable(header, rows, contentWidthHwp = 48000, customBfMap = new Map
                     `linkListIDRef="0" linkListNextIDRef="0" textWidth="0" textHeight="0" hasTextRef="0" hasNumRef="0">` +
                 buildPara(val, cId, paraId) +
                 `</hp:subList>` +
-                `<hp:cellAddr colAddr="${c}" rowAddr="${r}"/>` +
-                `<hp:cellSpan colSpan="1" rowSpan="1"/>` +
-                `<hp:cellSz width="${colWidths[c]}" height="1200"/>` +
+                `<hp:cellAddr colAddr="${logicalC}" rowAddr="${r}"/>` +
+                `<hp:cellSpan colSpan="${cs}" rowSpan="${rs}"/>` +
+                `<hp:cellSz width="${cellWidth}" height="1200"/>` +
                 `<hp:cellMargin left="650" right="650" top="220" bottom="220"/>` +
                 `</hp:tc>`;
+            logicalC += cs;
         }
         // <hp:tr>은 속성 없음 (rhwp 기준); header 마킹은 <hp:tc>에만 적용
         rowsXml += `<hp:tr>${cellsXml}</hp:tr>`;
@@ -642,8 +686,9 @@ function buildSection(ir, marginsHwp, paperKey, landscape = false, customBfMap =
     const NS_HP = 'http://www.hancom.co.kr/hwpml/2011/paragraph';
     const docType = ir.doc_type || 'plain';
 
-    // 섹션마다 문단 ID를 0부터 재시작 (HWPX 섹션 범위 기준)
+    // 섹션마다 문단 ID 및 각주 ID를 재시작
     _resetParaId();
+    _resetFootnoteId();
 
     const contentWidthHwp = getContentWidthHwp(marginsHwp, paperKey, landscape);
     const parts = [];
