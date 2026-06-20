@@ -226,14 +226,14 @@ python -m http.server 8080
 `sw.js`의 `CACHE_VERSION`을 변경하면 이전 캐시가 자동 삭제됩니다:
 
 ```js
-const CACHE_VERSION = 'to-hwpx-v4.0.2';
+const CACHE_VERSION = 'to-hwpx-v4.0.3';
 ```
 
 배포 시마다 버전을 올려주세요. 화면 상단 버전 문구, `changelog.json`, `CACHE_VERSION`을 함께 맞추면 사용자가 보는 버전과 실제 캐시 버전이 어긋나지 않습니다.
 
 ### 폰트 파일 제공
 
-앱의 `fonts/` 폴더에 지정된 TTF 파일을 넣으면 화면의 **폰트 설치 안내** 팝업에 로컬 다운로드 버튼이 표시됩니다. 자세한 파일명은 [fonts/README.md](./fonts/README.md)를 확인하세요.
+앱의 `fonts/` 폴더에 제공용 TTF 파일을 두면 화면의 **폰트 설치 안내** 팝업에 사용자용 다운로드 버튼이 표시됩니다. 자세한 파일명은 [fonts/README.md](./fonts/README.md)를 확인하세요.
 
 단, 현재 HWPX 생성 로직은 폰트 파일을 문서 안에 임베딩하지 않고 폰트 이름만 기록합니다. 사용자가 한컴오피스에서 같은 모양으로 보려면 해당 폰트를 PC에 설치해야 합니다.
 
