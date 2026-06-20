@@ -1,6 +1,18 @@
 {
-  "current": "4.3.0",
+  "current": "4.3.1",
   "versions": [
+    {
+      "version": "4.3.1",
+      "date": "2026-06-21",
+      "user": [
+        "DOCX 표 변환 안정화 — Markdown 전용 좌우 끝 테두리 제거 규칙이 DOCX 표에는 적용되지 않도록 수정했습니다"
+      ],
+      "dev": [
+        "[v4.3.1] parsers.js: Markdown→HTML 변환 경로의 table IR에 sourceFormat='md' 표시 추가",
+        "[v4.3.1] hwpx.js: buildTable()에서 sourceFormat='md'인 표에만 좌우 바깥 테두리 제거 borderFill 적용",
+        "[v4.3.1] sw.js: CACHE_VERSION to-hwpx-v4.3.1"
+      ]
+    },
     {
       "version": "4.3.0",
       "date": "2026-06-20",

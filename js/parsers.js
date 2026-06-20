@@ -55,7 +55,7 @@ function parseMd(text, docType = 'plain') {
     // marked.js가 right-flanking delimiter로 인식하지 못해 변환 실패하는 경우 보정
     html = html.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
     html = html.replace(/(?<!\*)\*([^*\n]+)\*(?!\*)/g, '<em>$1</em>');
-    return parseHtml(html, docType);
+    return parseHtml(html, docType, 'md');
 }
 
 
@@ -64,7 +64,7 @@ function parseMd(text, docType = 'plain') {
 //     방법: DOMParser API로 HTML DOM을 생성하고 요소 순회하며 IR 블록 추출
 //     보안: 파싱 결과를 textContent로만 읽어 XSS 실행 불가
 // ─────────────────────────────────────────────────────────────────────────
-function parseHtml(htmlText, docType = 'plain') {
+function parseHtml(htmlText, docType = 'plain', sourceFormat = 'html') {
     const parser = new DOMParser();
     const doc = parser.parseFromString(htmlText, 'text/html');
 
@@ -73,7 +73,7 @@ function parseHtml(htmlText, docType = 'plain') {
     const explicitTitle = titleEl ? sanitize(titleEl.textContent.trim()) : '';
     const ir = emptyIR(explicitTitle || '제목 없음', docType);
 
-    extractFromNode(doc.body || doc.documentElement, ir.blocks);
+    extractFromNode(doc.body || doc.documentElement, ir.blocks, sourceFormat);
 
     // <title> 없는 경우(Markdown→HTML 변환 등): 첫 번째 H1 블록을 문서 제목으로 승격
     // 승격된 H1은 본문 목록에서 제거 (buildSection이 ir.title을 별도로 출력)
@@ -112,7 +112,7 @@ function extractInlineRuns(el) {
 }
 
 /** HTML 노드 재귀 순회 → 의미 있는 요소를 IR 블록으로 추출 */
-function extractFromNode(node, blocks) {
+function extractFromNode(node, blocks, sourceFormat = 'html') {
     for (const child of node.childNodes) {
         const tag = (child.tagName || '').toLowerCase();
 
@@ -148,7 +148,7 @@ function extractFromNode(node, blocks) {
 
         } else if (tag === 'table') {
             // <table> → table 블록
-            const tb = extractHtmlTable(child);
+            const tb = extractHtmlTable(child, sourceFormat);
             if (tb) blocks.push(tb);
 
         } else if (tag === 'pre') {
@@ -175,13 +175,13 @@ function extractFromNode(node, blocks) {
             && !['script', 'style', 'head', 'nav', 'footer', 'aside'].includes(tag)) {
             // div, section, article 등 컨테이너는 재귀 탐색
             // script/style/nav/footer 등 비콘텐츠 요소는 건너뜀
-            extractFromNode(child, blocks);
+            extractFromNode(child, blocks, sourceFormat);
         }
     }
 }
 
 /** <table> DOM 요소 → IR table 블록 변환 */
-function extractHtmlTable(tableEl) {
+function extractHtmlTable(tableEl, sourceFormat = 'html') {
     const rows = tableEl.querySelectorAll('tr');
     if (!rows.length) return null;
 
@@ -192,7 +192,7 @@ function extractHtmlTable(tableEl) {
 
     if (!allRows.length) return null;
     // 첫 행을 항상 헤더 행으로 처리 (D9D9D9 배경색 적용)
-    return { type: 'table', header: allRows[0], rows: allRows.slice(1) };
+    return { type: 'table', header: allRows[0], rows: allRows.slice(1), sourceFormat };
 }
 
 
