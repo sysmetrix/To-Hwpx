@@ -627,10 +627,9 @@ function getContentWidthHwp(marginsHwp, paperKey, landscape = false) {
     return Math.max(12000, paper.w - m.left - m.right);
 }
 
-function buildTable(header, rows, contentWidthHwp = 48000, customBfMap = new Map(), sourceFormat = '') {
+function buildTable(header, rows, contentWidthHwp = 48000, customBfMap = new Map()) {
     const allRows = (header && header.length ? [header] : []).concat(rows || []);
     if (!allRows.length) return buildBlankPara();
-    const removeOuterSideBorders = sourceFormat === 'md';
 
     const nRows = allRows.length;
     // 열 수: 각 행의 셀 수 + colSpan - 1 합산으로 실제 논리 열 수 계산
@@ -666,8 +665,6 @@ function buildTable(header, rows, contentWidthHwp = 48000, customBfMap = new Map
             let bfId;
             if (bg && customBfMap.has(bg)) {
                 bfId = customBfMap.get(bg);
-            } else if (!removeOuterSideBorders) {
-                bfId = isHd ? '3' : '2';
             } else if (nCols === 1) {
                 bfId = isHd ? '9' : '8';
             } else if (logicalC === 0) {
@@ -845,7 +842,7 @@ function buildSection(ir, marginsHwp, paperKey, landscape = false, customBfMap =
             });
 
         } else if (bt === 'table') {
-            parts.push(buildTable(block.header, block.rows, contentWidthHwp, customBfMap, block.sourceFormat));
+            parts.push(buildTable(block.header, block.rows, contentWidthHwp, customBfMap));
 
         } else if (bt === 'code') {
             const lines = (block.text || '').split('\n');

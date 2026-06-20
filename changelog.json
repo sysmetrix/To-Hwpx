@@ -1,6 +1,19 @@
 {
-  "current": "4.3.1",
+  "current": "4.3.2",
   "versions": [
+    {
+      "version": "4.3.2",
+      "date": "2026-06-21",
+      "user": [
+        "DOCX 표 변환 긴급 안정화 — v4.3.1의 표 테두리 조건 변경을 철회해 한글에서 파일 열기 오류가 나지 않도록 복구했습니다"
+      ],
+      "dev": [
+        "[v4.3.2] parsers.js: table IR sourceFormat 전달 변경 철회",
+        "[v4.3.2] hwpx.js: buildTable() borderFill 선택 로직을 v4.3.0 안정 동작으로 복구",
+        "[v4.3.2] index.html: 업데이트 내역 버튼 v4.3.2 반영",
+        "[v4.3.2] sw.js: CACHE_VERSION to-hwpx-v4.3.2"
+      ]
+    },
     {
       "version": "4.3.1",
       "date": "2026-06-21",
