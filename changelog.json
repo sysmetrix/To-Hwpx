@@ -1,6 +1,25 @@
 {
-  "current": "4.3.13",
+  "current": "4.3.14",
   "versions": [
+    {
+      "version": "4.3.14",
+      "date": "2026-06-22",
+      "user": [
+        "긴 제목(H5·H6)이 더 작은 단계로 구분되어 표시됩니다 (이전에는 H4와 동일하게 보였습니다)",
+        "Markdown 중첩 목록의 하위 항목이 사라지지 않고 들여쓰기로 보존됩니다",
+        "할 일 목록(체크박스)의 완료/미완료가 ▣/□로 구분됩니다",
+        "Word(DOCX) 문서의 '굵게 해제' 같은 서식을 더 정확히 인식합니다"
+      ],
+      "dev": [
+        "[v4.3.14] hwpx.js: H5/H6용 charPr 10/11·paraPr 15/16 추가, headingIds 5→10/15·6→11/16, 동적 확장 charPr 시작 id 12로 이동",
+        "[v4.3.14] hwpx.js: 중첩 목록 들여쓰기 paraPr 17/18, 목록 렌더 level/번호/태스크 대응(체크박스 ▣/□)",
+        "[v4.3.14] parsers.js: flattenMdList로 중첩 목록 보존(level/번호/태스크/checked)",
+        "[v4.3.14] parsers.js: DOCX bold/italic를 w:val 토글(docxRunToggle)로 정밀 판정",
+        "[v4.3.14] qa: md_hwpx_test.md·sample.docx 픽스처 + qa/gate.js ①~⑤ 자동 게이트 + 통과본 .hwpx 추가",
+        "[v4.3.14] index.html: 업데이트 내역 버튼 v4.3.14 반영",
+        "[v4.3.14] sw.js: CACHE_VERSION to-hwpx-v4.3.14"
+      ]
+    },
     {
       "version": "4.3.13",
       "date": "2026-06-21",
