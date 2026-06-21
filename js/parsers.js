@@ -923,8 +923,8 @@ function extractDocxParagraph(pNode, stylesMap = {}, footnotesMap = {}) {
         if (!text) continue;
         inlineRuns.push({
             text,
-            bold:      r.getElementsByTagNameNS(DOCX_NS, 'b').length > 0,
-            italic:    r.getElementsByTagNameNS(DOCX_NS, 'i').length > 0,
+            bold:      docxRunToggle(r, 'b'),
+            italic:    docxRunToggle(r, 'i'),
             underline: docxRunToggle(r, 'u'),
             strike:    docxRunToggle(r, 'strike') || docxRunToggle(r, 'dstrike'),
             color:     docxRunColor(r),
