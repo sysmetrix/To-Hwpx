@@ -99,6 +99,10 @@ function splitInlineCodeBlocks(tokens, blocks) {
         } else if (token.type === 'strong' || token.type === 'em') {
             const text = plainMdText(token.tokens || token.text);
             if (text) paraRuns.push({ text, bold: token.type === 'strong', italic: token.type === 'em' });
+        } else if (token.type === 'del') {
+            // ~~취소선~~
+            const text = plainMdText(token.tokens || token.text);
+            if (text) paraRuns.push({ text, strike: true });
         } else if (token.type === 'br') {
             paraRuns.push({ text: '\n' });
         } else {
@@ -213,26 +217,61 @@ function parseHtml(htmlText, docType = 'plain') {
     return ir;
 }
 
+/** 색상 문자열(#rgb/#rrggbb/rgb()/일부 색이름) → #RRGGBB 정규화. 실패 시 null */
+function normalizeHexColor(raw) {
+    if (!raw) return null;
+    raw = String(raw).trim();
+    let m = /^#([0-9a-fA-F]{6})$/.exec(raw);
+    if (m) return '#' + m[1].toUpperCase();
+    m = /^#([0-9a-fA-F]{3})$/.exec(raw);
+    if (m) return '#' + m[1].split('').map(c => c + c).join('').toUpperCase();
+    m = /^rgb\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)$/i.exec(raw);
+    if (m) return '#' + [m[1], m[2], m[3]]
+        .map(n => Math.max(0, Math.min(255, parseInt(n, 10))).toString(16).padStart(2, '0')).join('').toUpperCase();
+    const named = { red: '#FF0000', blue: '#0000FF', green: '#008000', black: '#000000',
+        white: '#FFFFFF', gray: '#808080', grey: '#808080', orange: '#FFA500',
+        purple: '#800080', yellow: '#FFFF00', navy: '#000080', teal: '#008080' };
+    return named[raw.toLowerCase()] || null;
+}
+
+/** 요소의 글자색을 style="color:" 또는 <font color>에서 추출 → #RRGGBB | null */
+function extractNodeColor(node) {
+    if (!node || node.nodeType !== 1 || typeof node.getAttribute !== 'function') return null;
+    const style = node.getAttribute('style');
+    if (style) {
+        const m = /(?:^|;)\s*color\s*:\s*([^;]+)/i.exec(style);
+        const c = m && normalizeHexColor(m[1]);
+        if (c) return c;
+    }
+    return normalizeHexColor(node.getAttribute('color'));
+}
+
 /**
  * DOM 요소 안의 인라인 서식을 runs 배열로 추출
- * bold({text, bold:true}), italic({text, italic:true}), code({text, code:true}) 구분
+ * bold/italic/code 외에 underline(u/ins)·strike(s/strike/del)·color(style/font)도 보존.
  * hwpx.js buildParaRuns()와 대응됨
  */
 function extractInlineRuns(el) {
     const runs = [];
-    function walk(node, bold, italic, code) {
+    function walk(node, st) {
         if (node.nodeType === 3) {
             const text = sanitize(node.textContent || '');
-            if (text) runs.push({ text, bold: !!bold, italic: !!italic, code: !!code });
+            if (text) runs.push({ text, bold: st.bold, italic: st.italic, code: st.code,
+                underline: st.underline, strike: st.strike, color: st.color || null });
         } else if (node.nodeType === 1) {
             const t = (node.tagName || '').toLowerCase();
-            const b = bold  || t === 'strong' || t === 'b';
-            const i = italic || t === 'em'     || t === 'i';
-            const c = code  || t === 'code';
-            for (const ch of node.childNodes) walk(ch, b, i, c);
+            const next = {
+                bold:      st.bold      || t === 'strong' || t === 'b',
+                italic:    st.italic    || t === 'em'     || t === 'i',
+                code:      st.code      || t === 'code',
+                underline: st.underline || t === 'u'      || t === 'ins',
+                strike:    st.strike    || t === 's'      || t === 'strike' || t === 'del',
+                color:     extractNodeColor(node) || st.color,
+            };
+            for (const ch of node.childNodes) walk(ch, next);
         }
     }
-    for (const ch of el.childNodes) walk(ch, false, false, false);
+    for (const ch of el.childNodes) walk(ch, { bold: false, italic: false, code: false, underline: false, strike: false, color: null });
     return runs;
 }
 
@@ -795,6 +834,24 @@ async function parseDocx(arrayBuffer, docType = 'plain') {
     return ir;
 }
 
+/** w:r 안의 토글 속성(w:u/w:strike 등) on/off 판정 — val=0/false/none/off면 off */
+function docxRunToggle(r, name) {
+    const el = r.getElementsByTagNameNS(DOCX_NS, name)[0];
+    if (!el) return false;
+    const v = el.getAttributeNS(DOCX_NS, 'val') || el.getAttribute('w:val') || el.getAttribute('val');
+    if (v == null || v === '') return true;   // 속성만 있고 val 없으면 on
+    return !/^(0|false|none|off)$/i.test(v);
+}
+
+/** w:r 안의 글자색(w:color@val) → #RRGGBB | null (auto/지정없음 제외) */
+function docxRunColor(r) {
+    const el = r.getElementsByTagNameNS(DOCX_NS, 'color')[0];
+    if (!el) return null;
+    const v = el.getAttributeNS(DOCX_NS, 'val') || el.getAttribute('w:val') || el.getAttribute('val') || '';
+    if (!v || /^auto$/i.test(v)) return null;
+    return normalizeHexColor(v.startsWith('#') ? v : '#' + v);
+}
+
 /** w:p 단락 노드 → IR 블록 (텍스트 추출 + 스타일 판별 + 각주 지원) */
 function extractDocxParagraph(pNode, stylesMap = {}, footnotesMap = {}) {
     const pStyles = pNode.getElementsByTagNameNS(DOCX_NS, 'pStyle');
@@ -839,8 +896,11 @@ function extractDocxParagraph(pNode, stylesMap = {}, footnotesMap = {}) {
         if (!text) continue;
         inlineRuns.push({
             text,
-            bold:   r.getElementsByTagNameNS(DOCX_NS, 'b').length > 0,
-            italic: r.getElementsByTagNameNS(DOCX_NS, 'i').length > 0,
+            bold:      r.getElementsByTagNameNS(DOCX_NS, 'b').length > 0,
+            italic:    r.getElementsByTagNameNS(DOCX_NS, 'i').length > 0,
+            underline: docxRunToggle(r, 'u'),
+            strike:    docxRunToggle(r, 'strike') || docxRunToggle(r, 'dstrike'),
+            color:     docxRunColor(r),
         });
     }
     const text = sanitize(inlineRuns.filter(r => r.text).map(r => r.text).join('').trim());
@@ -850,9 +910,22 @@ function extractDocxParagraph(pNode, stylesMap = {}, footnotesMap = {}) {
 
     // styles.xml에서 해석한 스타일 이름 사용 (없으면 styleId 원본으로 폴백)
     const resolvedStyle = stylesMap[styleId] || styleId;
+    // 1) 스타일 이름으로 제목 판별 — 한글 "제목 N" / 영문 "Heading N" / "Title"
     if (/heading|제목|title/i.test(resolvedStyle)) {
-        const level = parseInt(resolvedStyle.replace(/\D/g, '') || styleId.replace(/\D/g, '') || '1', 10) || 1;
+        const digits = resolvedStyle.replace(/\D/g, '') || styleId.replace(/\D/g, '');
+        const level = parseInt(digits || '1', 10) || 1;
         return { type: 'heading', level: Math.min(level, 6), text };
+    }
+    // 2) 스타일명 매칭 실패 시 w:outlineLvl(0~8)을 보조 신호로 사용 (val+1 = 제목 레벨)
+    if (pPrEl) {
+        const olEl = pPrEl.getElementsByTagNameNS(DOCX_NS, 'outlineLvl')[0];
+        if (olEl) {
+            const ov = olEl.getAttributeNS(DOCX_NS, 'val') || olEl.getAttribute('w:val') || olEl.getAttribute('val');
+            const lvl = parseInt(ov, 10);
+            if (Number.isFinite(lvl) && lvl >= 0 && lvl <= 8) {
+                return { type: 'heading', level: Math.min(lvl + 1, 6), text };
+            }
+        }
     }
 
     // bold 런(w:b)이 단락 전체를 덮고 있으면 소제목으로 처리 (텍스트 런만 확인)

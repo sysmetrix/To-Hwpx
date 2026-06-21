@@ -248,7 +248,7 @@ function getBoldFontName(name) {
  * [borderFill] 1=테두리없음, 2=실선(표셀), 3=실선+회색음영(표머리)
  *              4~9=표 좌/우 바깥 테두리 제거 변형
  */
-function buildHeaderXml(fontName, basePt, customBfMap = new Map(), imageBlocks = [], docHeaderFooter = {}) {
+function buildHeaderXml(fontName, basePt, customBfMap = new Map(), imageBlocks = [], docHeaderFooter = {}, customCharMap = new Map()) {
     const fn = xmlEsc(fontName || '휴먼명조');
     const bp = Math.max(6, Math.min(36, parseInt(basePt, 10) || 12));
     const { familyType, weight, type } = getFontMeta(fontName || '휴먼명조');
@@ -285,16 +285,20 @@ function buildHeaderXml(fontName, basePt, customBfMap = new Map(), imageBlocks =
       </hh:fontface>`;
 
     // bold=true 시: boldFn이 있으면 font face 1 참조(별도 Bold 폰트), 없으면 <hh:bold/> 태그
-    const charBase = (id, height, bold = false, italic = false, fontId = null) => {
+    const charBase = (id, height, bold = false, italic = false, fontId = null, opts = {}) => {
         const fi = fontId !== null ? String(fontId) : ((bold && boldFn) ? '1' : '0');
+        const color = (opts.color && /^#[0-9A-Fa-f]{6}$/.test(opts.color)) ? opts.color.toUpperCase() : '#000000';
         const boldTag   = (bold   && !boldFn) ? '\n        <hh:bold/>'   : '';
         const italicTag = italic ? '\n        <hh:italic/>' : '';
-        return `      <hh:charPr id="${id}" height="${height}" textColor="#000000" shadeColor="none" useFontSpace="0" useKerning="0" symMark="NONE" borderFillIDRef="1">
+        // OWPML CharShape 순서: ...offset → bold → italic → underline → strikeout
+        const underlineTag = opts.underline ? `\n        <hh:underline type="BOTTOM" shape="SOLID" color="${color}"/>` : '';
+        const strikeTag    = opts.strike    ? `\n        <hh:strikeout shape="SOLID" color="${color}"/>` : '';
+        return `      <hh:charPr id="${id}" height="${height}" textColor="${color}" shadeColor="none" useFontSpace="0" useKerning="0" symMark="NONE" borderFillIDRef="1">
         <hh:fontRef hangul="${fi}" latin="${fi}" hanja="${fi}" japanese="${fi}" other="${fi}" symbol="${fi}" user="${fi}"/>
         <hh:ratio hangul="100" latin="100" hanja="100" japanese="100" other="100" symbol="100" user="100"/>
         <hh:spacing hangul="0" latin="0" hanja="0" japanese="0" other="0" symbol="0" user="0"/>
         <hh:relSz hangul="100" latin="100" hanja="100" japanese="100" other="100" symbol="100" user="100"/>
-        <hh:offset hangul="0" latin="0" hanja="0" japanese="0" other="0" symbol="0" user="0"/>${boldTag}${italicTag}
+        <hh:offset hangul="0" latin="0" hanja="0" japanese="0" other="0" symbol="0" user="0"/>${boldTag}${italicTag}${underlineTag}${strikeTag}
       </hh:charPr>`;
     };
 
@@ -321,18 +325,24 @@ ${fontFaceBlock('OTHER')}
 ${fontFaceBlock('SYMBOL')}
 ${fontFaceBlock('USER')}
     </hh:fontfaces>
-    <hh:charProperties itemCnt="10">
-      <!-- 0=본문, 1=H1 bold, 2=H2 bold, 3=H3 bold, 4=H4 bold, 5=표머리 bold, 6=코드, 7=본문bold, 8=본문italic, 9=본문bold+italic -->
+    <hh:charProperties itemCnt="${10 + customCharMap.size}">
+      <!-- 0=본문, 1=H1 bold, 2=H2 bold, 3=H3 bold, 4=H4 bold, 5=표머리 bold, 6=코드, 7=본문bold, 8=본문italic, 9=본문bold+italic
+           10~ = 동적 확장(밑줄/취소선/글자색) — customCharMap 키 순서대로 -->
 ${charBase(0, sz.body,  false, false)}
 ${charBase(1, sz.h1,   true,  false)}
 ${charBase(2, sz.h2,   true,  false)}
 ${charBase(3, sz.h3,   true,  false)}
 ${charBase(4, sz.h4,   true,  false)}
 ${charBase(5, sz.tblHd,true,  false)}
-${charBase(6, sz.code, false, false, codeFontId).replace('"#000000"', '"#FFFFFF"')}
+${charBase(6, sz.code, false, false, codeFontId).replace('"#000000"', '"#111111"')}
 ${charBase(7, sz.body, true,  false)}
 ${charBase(8, sz.body, false, true)}
 ${charBase(9, sz.body, true,  true)}
+${[...customCharMap.entries()].map(([key, cid]) => {
+    const [flags, color] = String(key).split('|');
+    return charBase(cid, sz.body, flags[0] === '1', flags[1] === '1', null,
+        { underline: flags[2] === '1', strike: flags[3] === '1', color });
+}).join('\n')}
     </hh:charProperties>
     <hh:paraProperties itemCnt="15">
       <!-- id  정렬    행간  전    후   들여  테두리참조 -->
@@ -453,15 +463,15 @@ ${paraBase(14, 'LEFT',   120,   0,    0,    0)}
         <hh:bottomBorder type="SOLID" width="0.4 mm" color="#555555"/>
         <hh:diagonal type="SOLID" width="0.1 mm" color="#000000"/>
       </hh:borderFill>
-      <!-- id=11 코드 블록 셀용: 기준 md-to-hwpx 방식의 어두운 배경 -->
+      <!-- id=11 코드 블록 셀용: 밝은 회색 배경 + 옅은 테두리 (가독성 우선) -->
       <hh:borderFill id="11" threeD="0" shadow="0" centerLine="NONE" breakCellSeparateLine="0">
         <hh:slash type="NONE" Crooked="0" isCounter="0"/><hh:backSlash type="NONE" Crooked="0" isCounter="0"/>
-        <hh:leftBorder type="SOLID" width="0.2 mm" color="#17211D"/>
-        <hh:rightBorder type="SOLID" width="0.2 mm" color="#17211D"/>
-        <hh:topBorder type="SOLID" width="0.2 mm" color="#17211D"/>
-        <hh:bottomBorder type="SOLID" width="0.2 mm" color="#17211D"/>
+        <hh:leftBorder type="SOLID" width="0.12 mm" color="#D0D7DE"/>
+        <hh:rightBorder type="SOLID" width="0.12 mm" color="#D0D7DE"/>
+        <hh:topBorder type="SOLID" width="0.12 mm" color="#D0D7DE"/>
+        <hh:bottomBorder type="SOLID" width="0.12 mm" color="#D0D7DE"/>
         <hh:diagonal type="NONE" width="0.1 mm" color="#000000"/>
-        <hh:fillBrush><hh:winBrush faceColor="#17211D" hatchColor="#000000" alpha="0"/></hh:fillBrush>
+        <hh:fillBrush><hh:winBrush faceColor="#F6F8FA" hatchColor="#000000" alpha="0"/></hh:fillBrush>
       </hh:borderFill>
 ${[...customBfMap.entries()].map(([key, bfId]) => {
     const [color, variant = 'full'] = String(key).split(':');
@@ -524,12 +534,28 @@ function buildPara(text, charId = '0', paraId = '0') {
 }
 
 /**
- * 인라인 runs 배열(bold/italic/code 플래그) → 단락 XML
+ * run이 기본 charPr(0/6~9)로 표현 불가한 확장 서식(밑줄/취소선/유효한 글자색)을
+ * 가지는지 판정. 동적 charPr(customCharMap) 대상 여부를 결정한다.
+ */
+function runNeedsExtChar(run) {
+    const hasColor = run.color && /^#[0-9A-Fa-f]{6}$/.test(run.color) && run.color.toUpperCase() !== '#000000';
+    return !!(run.underline || run.strike || hasColor);
+}
+
+/** 확장 charPr 시그니처 키: "bold italic underline strike | #RRGGBB" */
+function extCharKey(run) {
+    const color = (run.color && /^#[0-9A-Fa-f]{6}$/.test(run.color)) ? run.color.toUpperCase() : '#000000';
+    return `${run.bold ? 1 : 0}${run.italic ? 1 : 0}${run.underline ? 1 : 0}${run.strike ? 1 : 0}|${color}`;
+}
+
+/**
+ * 인라인 runs 배열(bold/italic/code/underline/strike/color 플래그) → 단락 XML
  * parsers.js extractInlineRuns()가 생성한 runs 배열을 처리한다.
- * charPr ID: 0=본문, 6=코드, 7=본문bold, 8=본문italic, 9=본문bold+italic
+ * charPr ID: 0=본문, 6=코드, 7=본문bold, 8=본문italic, 9=본문bold+italic,
+ *            10~ = 동적 확장(밑줄/취소선/글자색) — customCharMap 조회.
  * run.footnote 가 있는 경우 각주 컨트롤(hp:ctrl) 을 삽입한다.
  */
-function buildParaRuns(runs, paraId = '0') {
+function buildParaRuns(runs, paraId = '0', customCharMap = new Map()) {
     const pid = _nextParaId();
     let runsXml = '';
     let ctrlsXml = '';   // 각주 컨트롤은 run 뒤에 배치
@@ -541,10 +567,18 @@ function buildParaRuns(runs, paraId = '0') {
         if (!run.text) continue;
         const safe = xmlEsc(replaceEmoji(run.text));
         let cId = '0';
-        if      (run.code)               cId = '6';
-        else if (run.bold && run.italic) cId = '9';
-        else if (run.bold)               cId = '7';
-        else if (run.italic)             cId = '8';
+        if (run.code) {
+            cId = '6';
+        } else if (runNeedsExtChar(run) && customCharMap.has(extCharKey(run))) {
+            // 동적 확장 charPr (밑줄/취소선/색). 미스 시 아래 bold/italic 폴백으로 안전 처리
+            cId = String(customCharMap.get(extCharKey(run)));
+        } else if (run.bold && run.italic) {
+            cId = '9';
+        } else if (run.bold) {
+            cId = '7';
+        } else if (run.italic) {
+            cId = '8';
+        }
         runsXml += `<hp:run charPrIDRef="${cId}"><hp:t>${safe}</hp:t></hp:run>`;
     }
     if (!runsXml && !ctrlsXml) return buildBlankPara();
@@ -901,7 +935,7 @@ function buildSectionBootstrap(secPrXml, contentWidthHwp) {
  * IR → section0.xml 전체 문자열
  * [v4] 참조 앱(md-to-hwpx)처럼 첫 bootstrap 문단에 secPr를 배치한다.
  */
-function buildSection(ir, marginsHwp, paperKey, landscape = false, customBfMap = new Map()) {
+function buildSection(ir, marginsHwp, paperKey, landscape = false, customBfMap = new Map(), customCharMap = new Map()) {
     const NS_HS = 'http://www.hancom.co.kr/hwpml/2011/section';
     const NS_HP = 'http://www.hancom.co.kr/hwpml/2011/paragraph';
     const docType = ir.doc_type || 'plain';
@@ -961,7 +995,7 @@ function buildSection(ir, marginsHwp, paperKey, landscape = false, customBfMap =
             if (block.runs && block.runs.length > 0) {
                 // 인라인 서식(bold/italic/code) 보존 경로
                 const hasText = block.runs.some(r => r.text && r.text.trim());
-                parts.push(hasText ? buildParaRuns(block.runs, alignParaId) : buildBlankPara());
+                parts.push(hasText ? buildParaRuns(block.runs, alignParaId, customCharMap) : buildBlankPara());
             } else if (!block.text || !block.text.trim()) {
                 parts.push(buildBlankPara());
             } else {
@@ -1060,12 +1094,26 @@ async function buildHwpx(ir, fontName = '휴먼명조', fontSize = 12, marginsMm
         }
     }
 
+    // 인라인 확장 서식(밑줄/취소선/글자색) 수집 → 동적 charPr 생성용
+    // (header가 section보다 먼저 빌드되므로 customBfMap과 동일하게 사전 스캔)
+    const customCharMap = new Map();
+    let nextCharId = 10;
+    for (const block of (ir.blocks || [])) {
+        if (block.type !== 'para' || !Array.isArray(block.runs)) continue;
+        for (const run of block.runs) {
+            if (run.text && runNeedsExtChar(run)) {
+                const key = extCharKey(run);
+                if (!customCharMap.has(key)) customCharMap.set(key, nextCharId++);
+            }
+        }
+    }
+
     // 이미지 블록 수집
     const imageBlocks = (ir.blocks || []).filter(b => b.type === 'image');
     const docHeaderFooter = { header: ir.header || '', footer: ir.footer || '' };
 
-    const headerXml   = buildHeaderXml(fontName, fontSize, customBfMap, imageBlocks, docHeaderFooter);
-    const section0Xml = buildSection(ir, marginsHwp, paperSize, landscape, customBfMap);
+    const headerXml   = buildHeaderXml(fontName, fontSize, customBfMap, imageBlocks, docHeaderFooter, customCharMap);
+    const section0Xml = buildSection(ir, marginsHwp, paperSize, landscape, customBfMap, customCharMap);
 
     // 이미지가 있을 때 manifest를 동적으로 생성하여 BinData 파일 선언
     const manifestXml = imageBlocks.length
