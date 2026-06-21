@@ -99,6 +99,10 @@ function splitInlineCodeBlocks(tokens, blocks) {
         } else if (token.type === 'strong' || token.type === 'em') {
             const text = plainMdText(token.tokens || token.text);
             if (text) paraRuns.push({ text, bold: token.type === 'strong', italic: token.type === 'em' });
+        } else if (token.type === 'del') {
+            // ~~취소선~~
+            const text = plainMdText(token.tokens || token.text);
+            if (text) paraRuns.push({ text, strike: true });
         } else if (token.type === 'br') {
             paraRuns.push({ text: '\n' });
         } else {
@@ -213,26 +217,61 @@ function parseHtml(htmlText, docType = 'plain') {
     return ir;
 }
 
+/** 색상 문자열(#rgb/#rrggbb/rgb()/일부 색이름) → #RRGGBB 정규화. 실패 시 null */
+function normalizeHexColor(raw) {
+    if (!raw) return null;
+    raw = String(raw).trim();
+    let m = /^#([0-9a-fA-F]{6})$/.exec(raw);
+    if (m) return '#' + m[1].toUpperCase();
+    m = /^#([0-9a-fA-F]{3})$/.exec(raw);
+    if (m) return '#' + m[1].split('').map(c => c + c).join('').toUpperCase();
+    m = /^rgb\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)$/i.exec(raw);
+    if (m) return '#' + [m[1], m[2], m[3]]
+        .map(n => Math.max(0, Math.min(255, parseInt(n, 10))).toString(16).padStart(2, '0')).join('').toUpperCase();
+    const named = { red: '#FF0000', blue: '#0000FF', green: '#008000', black: '#000000',
+        white: '#FFFFFF', gray: '#808080', grey: '#808080', orange: '#FFA500',
+        purple: '#800080', yellow: '#FFFF00', navy: '#000080', teal: '#008080' };
+    return named[raw.toLowerCase()] || null;
+}
+
+/** 요소의 글자색을 style="color:" 또는 <font color>에서 추출 → #RRGGBB | null */
+function extractNodeColor(node) {
+    if (!node || node.nodeType !== 1 || typeof node.getAttribute !== 'function') return null;
+    const style = node.getAttribute('style');
+    if (style) {
+        const m = /(?:^|;)\s*color\s*:\s*([^;]+)/i.exec(style);
+        const c = m && normalizeHexColor(m[1]);
+        if (c) return c;
+    }
+    return normalizeHexColor(node.getAttribute('color'));
+}
+
 /**
  * DOM 요소 안의 인라인 서식을 runs 배열로 추출
- * bold({text, bold:true}), italic({text, italic:true}), code({text, code:true}) 구분
+ * bold/italic/code 외에 underline(u/ins)·strike(s/strike/del)·color(style/font)도 보존.
  * hwpx.js buildParaRuns()와 대응됨
  */
 function extractInlineRuns(el) {
     const runs = [];
-    function walk(node, bold, italic, code) {
+    function walk(node, st) {
         if (node.nodeType === 3) {
             const text = sanitize(node.textContent || '');
-            if (text) runs.push({ text, bold: !!bold, italic: !!italic, code: !!code });
+            if (text) runs.push({ text, bold: st.bold, italic: st.italic, code: st.code,
+                underline: st.underline, strike: st.strike, color: st.color || null });
         } else if (node.nodeType === 1) {
             const t = (node.tagName || '').toLowerCase();
-            const b = bold  || t === 'strong' || t === 'b';
-            const i = italic || t === 'em'     || t === 'i';
-            const c = code  || t === 'code';
-            for (const ch of node.childNodes) walk(ch, b, i, c);
+            const next = {
+                bold:      st.bold      || t === 'strong' || t === 'b',
+                italic:    st.italic    || t === 'em'     || t === 'i',
+                code:      st.code      || t === 'code',
+                underline: st.underline || t === 'u'      || t === 'ins',
+                strike:    st.strike    || t === 's'      || t === 'strike' || t === 'del',
+                color:     extractNodeColor(node) || st.color,
+            };
+            for (const ch of node.childNodes) walk(ch, next);
         }
     }
-    for (const ch of el.childNodes) walk(ch, false, false, false);
+    for (const ch of el.childNodes) walk(ch, { bold: false, italic: false, code: false, underline: false, strike: false, color: null });
     return runs;
 }
 
