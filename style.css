@@ -31,41 +31,43 @@
     /* 아래 값들은 사이트 전체에 재사용되는 디자인 변수입니다.
        비개발자는 이 영역의 색상/숫자 값만 바꾸는 것이 가장 안전합니다. */
 
-    /* 주 색상 (파란 계열 — 한국 공공문서/서비스 톤) */
+    /* 주 색상 (단일 신뢰 블루 — 화면 전체의 유일한 포인트 컬러) */
     --c-primary:        #2563eb;
-    --c-primary-dark:   #1d4ed8;
-    --c-primary-light:  #dbeafe;
+    --c-primary-dark:   #1b4fd1;
+    --c-primary-light:  #e9f0fc;
 
-    /* 포인트 색상 (보라 — 재단 홈페이지 참조) */
-    --c-accent:         #7c3aed;
-    --c-accent-light:   #ede9fe;
+    /* 액센트 — 퍼플 은퇴, 포인트는 블루 하나로 통일.
+       (변수명은 JS/레거시 호환을 위해 유지하되 값은 블루 계열로 매핑) */
+    --c-accent:         #2563eb;
+    --c-accent-light:   #e9f0fc;
 
-    /* 배경 계층 */
-    --c-bg:             #f8f9fa;    /* 페이지 배경 */
+    /* 배경 계층 (따뜻한 오프화이트) */
+    --c-bg:             #faf9f6;    /* 페이지 배경 — 따뜻한 오프화이트 */
     --c-surface:        #ffffff;    /* 카드/패널 배경 */
-    --c-surface-alt:    #f1f5f9;    /* 구분용 약간 어두운 배경 */
+    --c-surface-alt:    #f4f3ef;    /* 구분용 옅은 웜그레이 */
 
-    /* 텍스트 */
-    --c-text:           #1e293b;    /* 본문 텍스트 */
-    --c-text-sub:       #64748b;    /* 부제목·설명 텍스트 */
-    --c-text-muted:     #94a3b8;    /* 비활성 텍스트 */
+    /* 텍스트 (차콜 계열) */
+    --c-text:           #1c1d22;    /* 본문 — 진한 차콜 */
+    --c-text-sub:       #565a62;    /* 부제목·설명 */
+    --c-text-muted:     #9a9ea6;    /* 비활성 */
 
-    /* 테두리 */
-    --c-border:         #e2e8f0;
+    /* 테두리 (얇은 헤어라인) */
+    --c-border:         #e6e4dd;
+    --c-border-strong:  #d6d3ca;
     --c-border-focus:   #93c5fd;
 
-    /* 상태 색상 */
-    --c-success:        #059669;
-    --c-success-light:  #d1fae5;
-    --c-warning:        #d97706;
-    --c-warning-light:  #fef3c7;
-    --c-error:          #dc2626;
-    --c-error-light:    #fee2e2;
+    /* 상태 색상 (성공·오류만 제한적으로 사용) */
+    --c-success:        #047857;
+    --c-success-light:  #e4f2ec;
+    --c-warning:        #b45309;
+    --c-warning-light:  #f8efda;
+    --c-error:          #bf362c;
+    --c-error-light:    #f9e9e7;
 
-    /* 그림자 */
-    --shadow-sm:   0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.05);
-    --shadow-md:   0 4px 12px rgba(0,0,0,.08), 0 2px 6px rgba(0,0,0,.05);
-    --shadow-lg:   0 10px 30px rgba(0,0,0,.10), 0 4px 10px rgba(0,0,0,.06);
+    /* 그림자 (짙은 그림자 제거 — 옅은 단계감만) */
+    --shadow-sm:   0 1px 2px rgba(20,21,26,.04);
+    --shadow-md:   0 4px 16px rgba(20,21,26,.06);
+    --shadow-lg:   0 14px 44px rgba(20,21,26,.10);
 
     /* 타이포그래피 */
     --font-main:   'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif;
@@ -73,12 +75,13 @@
 
     /* 레이아웃 */
     --max-w:        1200px;    /* 최대 콘텐츠 너비 */
+    --max-w-work:   1040px;    /* 변환 작업 공간 최대 폭 (과도한 확산 방지) */
     --radius-sm:    6px;
-    --radius-md:    12px;
-    --radius-lg:    16px;
+    --radius-md:    10px;
+    --radius-lg:    14px;
 
-    /* 트랜지션 (호버·포커스 애니메이션 속도) */
-    --trans:        0.2s ease;
+    /* 트랜지션 (호버·포커스 — 160~220ms 부드러운 전환) */
+    --trans:        0.18s ease;
 }
 
 /* ─────────────────────────────────────────────────────────────────
@@ -107,10 +110,11 @@ img { max-width: 100%; display: block; }
 a   { color: var(--c-primary); text-decoration: none; }
 a:hover { text-decoration: underline; }
 
-/* 접근성: 키보드 포커스 시 외곽선 표시 */
+/* 접근성: 키보드 포커스 시 외곽선 표시 (명확하고 세련되게) */
 :focus-visible {
     outline: 2px solid var(--c-primary);
     outline-offset: 2px;
+    border-radius: 3px;
 }
 
 /* 공통 레이아웃 컨테이너 */
@@ -357,39 +361,46 @@ a:hover { text-decoration: underline; }
    [히어로 섹션]  메인 업로드 CTA
    ───────────────────────────────────────────────────────────────── */
 .hero {
-    background: linear-gradient(135deg, var(--c-primary) 0%, var(--c-accent) 100%);
-    color: #fff;
-    padding: 72px 0 60px;
+    background: var(--c-bg);
+    color: var(--c-text);
+    padding: clamp(56px, 9vw, 104px) 0 clamp(40px, 6vw, 72px);
     text-align: center;
+    border-bottom: 1px solid var(--c-border);
 }
 
 .hero-eyebrow {
     /* "브라우저 전용 · 한글 호환 검증" 등 짧은 강조 문구 */
     display: inline-block;
-    background: rgba(255,255,255,0.2);
-    border: 1px solid rgba(255,255,255,0.3);
+    background: var(--c-primary-light);
+    border: 1px solid var(--c-border);
     border-radius: 100px;
     padding: 4px 16px;
     font-size: 0.82rem;
     letter-spacing: 0.04em;
+    color: var(--c-primary);
     margin-bottom: 20px;
 }
 
 .hero h1 {
-    font-size: clamp(2rem, 5vw, 3rem);
+    font-size: clamp(2.2rem, 5.4vw, 3.6rem);
     font-weight: 800;
-    line-height: 1.2;
-    margin-bottom: 16px;
-    letter-spacing: -0.02em;
+    line-height: 1.16;
+    margin: 0 auto 18px;
+    max-width: 16ch;
+    letter-spacing: -0.03em;
+    color: var(--c-text);
+    word-break: keep-all;
 }
 
 .hero-sub {
-    font-size: clamp(1rem, 2.5vw, 1.2rem);
-    opacity: 0.9;
-    margin-bottom: 18px;
-    max-width: 540px;
+    font-size: clamp(1rem, 2.2vw, 1.18rem);
+    color: var(--c-text-sub);
+    margin-bottom: 30px;
+    max-width: 560px;
     margin-left: auto;
     margin-right: auto;
+    line-height: 1.62;
+    word-break: keep-all;
 }
 
 .hero-badges {
@@ -397,54 +408,58 @@ a:hover { text-decoration: underline; }
     justify-content: center;
     gap: 8px;
     flex-wrap: wrap;
-    margin: 0 auto 28px;
+    margin: 0 auto 32px;
 }
 .hero-badges span,
 .hero-badges button {
     display: inline-flex;
     align-items: center;
-    min-height: 30px;
-    padding: 5px 10px;
-    border: 1px solid rgba(255,255,255,0.32);
-    border-radius: var(--radius-sm);
-    background: rgba(255,255,255,0.12);
-    color: #fff;
+    min-height: 32px;
+    padding: 6px 13px;
+    border: 1px solid var(--c-border);
+    border-radius: 100px;
+    background: var(--c-surface);
+    color: var(--c-text-sub);
     font-size: 0.82rem;
-    font-weight: 700;
+    font-weight: 600;
     line-height: 1.2;
     white-space: nowrap;
     font-family: var(--font-main);
 }
 .hero-badges button {
     cursor: pointer;
-    transition: background var(--trans), border-color var(--trans), transform var(--trans);
+    transition: background var(--trans), border-color var(--trans), color var(--trans), transform var(--trans);
 }
 .hero-badges button:hover {
-    background: rgba(255,255,255,0.22);
-    border-color: rgba(255,255,255,0.6);
+    background: var(--c-primary-light);
+    border-color: var(--c-primary);
+    color: var(--c-primary);
     transform: translateY(-1px);
 }
 
-/* 드롭존 — 히어로 영역 내 */
+/* 드롭존 — 히어로 영역 내 (화면에서 가장 강한 행동 유도 요소) */
 .drop-zone {
-    background: rgba(255,255,255,0.12);
-    border: 2px dashed rgba(255,255,255,0.5);
+    background: var(--c-surface);
+    border: 1.5px dashed var(--c-border-strong);
     border-radius: var(--radius-lg);
-    padding: 48px 24px;
-    max-width: 560px;
+    padding: clamp(36px, 5vw, 56px) 24px;
+    max-width: 620px;
     margin: 0 auto;
     cursor: pointer;
-    transition: background var(--trans), border-color var(--trans), transform var(--trans);
+    box-shadow: var(--shadow-sm);
+    transition: background var(--trans), border-color var(--trans), box-shadow var(--trans), transform var(--trans);
     user-select: none;
 }
 .drop-zone:hover, .drop-zone.drag-over {
-    background: rgba(255,255,255,0.22);
-    border-color: rgba(255,255,255,0.9);
+    background: var(--c-primary-light);
+    border-color: var(--c-primary);
+    border-style: solid;
+    box-shadow: var(--shadow-md);
     transform: scale(1.01);
 }
-.drop-zone .drop-icon    { font-size: 2.8rem; margin-bottom: 12px; }
-.drop-zone .drop-title   { font-size: 1.15rem; font-weight: 700; margin-bottom: 6px; }
-.drop-zone .drop-sub     { font-size: 0.88rem; opacity: 0.8; }
+.drop-zone .drop-icon    { font-size: 2.6rem; margin-bottom: 12px; }
+.drop-zone .drop-title   { font-size: 1.15rem; font-weight: 700; margin-bottom: 6px; color: var(--c-text); }
+.drop-zone .drop-sub     { font-size: 0.86rem; color: var(--c-text-muted); letter-spacing: 0.01em; }
 /* 파일 선택 완료 상태 */
 .file-selected-info {
     display: flex;
@@ -455,24 +470,43 @@ a:hover { text-decoration: underline; }
 }
 .file-emoji     { font-size: 2.2rem; }
 .file-meta      { text-align: left; }
-.file-name      { display: block; font-size: 1rem; }
-.file-size      { font-size: 0.82rem; opacity: 0.75; }
+.file-name      { display: block; font-size: 1rem; font-weight: 700; color: var(--c-text); }
+.file-size      { font-size: 0.82rem; color: var(--c-text-sub); }
 .file-change    {
-    background: rgba(255,255,255,0.25);
-    border: 1px solid rgba(255,255,255,0.4);
+    background: var(--c-surface-alt);
+    border: 1px solid var(--c-border);
     border-radius: var(--radius-sm);
     padding: 5px 12px;
     font-size: 0.82rem;
+    font-weight: 600;
     cursor: pointer;
-    color: #fff;
-    transition: background var(--trans);
+    color: var(--c-text-sub);
+    transition: background var(--trans), border-color var(--trans), color var(--trans);
 }
-.file-change:hover { background: rgba(255,255,255,0.4); }
+.file-change:hover {
+    background: var(--c-primary-light);
+    border-color: var(--c-primary);
+    color: var(--c-primary);
+}
 
+/* 신뢰 메시지 — 업로드 영역 바로 아래 칩 형태로 강조 */
 .hero-note {
-    font-size: 0.8rem;
-    opacity: 0.7;
-    margin-top: 20px;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    margin-top: 24px;
+    padding: 7px 15px;
+    border: 1px solid var(--c-border);
+    border-radius: 100px;
+    background: var(--c-surface);
+    font-size: 0.82rem;
+    color: var(--c-text-sub);
+    word-break: keep-all;
+}
+.hero-note::before {
+    content: "🔒";
+    font-size: 0.86rem;
+    line-height: 1;
 }
 
 
@@ -480,42 +514,47 @@ a:hover { text-decoration: underline; }
    [포맷 그리드]  지원 포맷 카드 목록
    ───────────────────────────────────────────────────────────────── */
 .formats-section {
-    padding: 64px 0;
+    padding: clamp(64px, 8vw, 100px) 0;
     background: var(--c-surface);
 }
 
 .section-title {
-    font-size: 1.6rem;
-    font-weight: 700;
+    font-size: clamp(1.6rem, 3vw, 2.1rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
     text-align: center;
-    margin-bottom: 8px;
+    color: var(--c-text);
+    margin-bottom: 10px;
+    word-break: keep-all;
 }
 .section-sub {
     text-align: center;
     color: var(--c-text-sub);
-    margin-bottom: 32px;
-    font-size: 0.95rem;
+    margin-bottom: 36px;
+    font-size: 0.96rem;
+    word-break: keep-all;
 }
 
 /* 탭 버튼 (기본 서비스 / 확장 서비스) */
 .format-tabs {
     display: flex;
-    gap: 8px;
+    gap: 4px;
     justify-content: center;
-    margin-bottom: 28px;
-    border-bottom: 2px solid var(--c-border);
+    flex-wrap: wrap;
+    margin-bottom: 32px;
+    border-bottom: 1px solid var(--c-border);
     padding-bottom: 0;
 }
 .format-tab {
     background: none;
     border: none;
-    padding: 10px 24px;
-    font-size: 0.95rem;
+    padding: 11px 22px;
+    font-size: 0.93rem;
     font-weight: 600;
     color: var(--c-text-sub);
     cursor: pointer;
-    border-bottom: 3px solid transparent;
-    margin-bottom: -2px;  /* border-bottom과 맞닿도록 */
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;  /* border-bottom과 맞닿도록 */
     transition: color var(--trans), border-color var(--trans);
 }
 .format-tab:hover { color: var(--c-primary); }
@@ -541,20 +580,21 @@ a:hover { text-decoration: underline; }
     flex-direction: column;
     align-items: center;
     background: var(--c-surface);
-    border: 1.5px solid var(--c-border);
+    border: 1px solid var(--c-border);
     border-radius: var(--radius-md);
-    padding: 20px 16px;
+    padding: 22px 16px;
     text-align: center;
     cursor: pointer;
-    transition: border-color var(--trans), box-shadow var(--trans), transform var(--trans);
+    transition: border-color var(--trans), box-shadow var(--trans), background var(--trans), transform var(--trans);
     position: relative;
     min-width: 0;
     min-height: 174px;
 }
 .format-card:hover:not(.coming-soon) {
     border-color: var(--c-primary);
+    background: var(--c-surface);
     box-shadow: var(--shadow-md);
-    transform: translateY(-2px);
+    transform: translateY(-2px) scale(1.01);
 }
 
 /* "Coming Soon" 카드는 흐리게 표시 + 팝업만 가능 */
@@ -661,8 +701,10 @@ a:hover { text-decoration: underline; }
 .converter-layout {
     display: grid;
     grid-template-columns: 1fr;
-    gap: 24px;
+    gap: 20px;
     align-items: start;
+    max-width: var(--max-w-work);   /* 데스크톱에서 과도한 확산 방지 */
+    margin: 0 auto;
 }
 
 /* 왼쪽: 옵션 패널 */
@@ -670,12 +712,15 @@ a:hover { text-decoration: underline; }
     background: var(--c-surface);
     border: 1px solid var(--c-border);
     border-radius: var(--radius-lg);
-    padding: 28px;
+    padding: 26px 28px;
 }
 .options-panel h3 {
-    font-size: 1.1rem;
+    font-size: 0.82rem;
     font-weight: 700;
-    margin-bottom: 20px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--c-text-sub);
+    margin-bottom: 18px;
     padding-bottom: 12px;
     border-bottom: 1px solid var(--c-border);
 }
@@ -1005,9 +1050,12 @@ a:hover { text-decoration: underline; }
     padding: 28px;
 }
 .progress-panel h3 {
-    font-size: 1.1rem;
+    font-size: 0.82rem;
     font-weight: 700;
-    margin-bottom: 20px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--c-text-sub);
+    margin-bottom: 18px;
     padding-bottom: 12px;
     border-bottom: 1px solid var(--c-border);
 }
@@ -1052,9 +1100,9 @@ a:hover { text-decoration: underline; }
     gap: 6px;
     padding: 12px 6px;
     border-radius: var(--radius-sm);
-    border: 1.5px solid var(--c-border);
+    border: 1px solid var(--c-border);
     font-size: 0.78rem;
-    transition: all var(--trans);
+    transition: border-color var(--trans), background var(--trans), color var(--trans);
     text-align: center;
 }
 
@@ -1291,9 +1339,9 @@ a:hover { text-decoration: underline; }
    [푸터]
    ───────────────────────────────────────────────────────────────── */
 .site-footer {
-    background: #1e293b;
+    background: #1b1c20;
     color: rgba(255,255,255,0.7);
-    padding: 40px 0 24px;
+    padding: clamp(48px, 6vw, 72px) 0 28px;
     font-size: 0.85rem;
 }
 .footer-inner {
@@ -2391,4 +2439,45 @@ a:hover { text-decoration: underline; }
     background: var(--c-primary-dark, #1d4ed8);
     box-shadow: var(--shadow-md);
     transform: translateY(-1px);
+}
+
+
+/* ─────────────────────────────────────────────────────────────────
+   [섹션 진입 모션]  CSS 스크롤 기반 페이드업 — 외부 라이브러리·JS 없음
+   - @supports 밖에서는 opacity를 건드리지 않으므로, 미지원 브라우저는
+     항상 정적(완전 표시) 상태로 안전하게 보입니다.
+   - hover 시 transform이 있는 인터랙티브 요소(카드·버튼)는 제외하고,
+     블록 컨테이너 단위로만 적용해 호버 애니메이션과 충돌하지 않게 합니다.
+   - prefers-reduced-motion 환경에서는 적용하지 않습니다.
+   ───────────────────────────────────────────────────────────────── */
+@keyframes reveal-up {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: no-preference) {
+    @supports (animation-timeline: view()) {
+        /* 변환기(핵심 도구)는 첫 로드에 항상 선명하도록 제외.
+           명확히 접히는 포맷 이하 섹션에만 진입 모션 적용 */
+        .formats-section .section-title,
+        .formats-section .section-sub,
+        .format-grid,
+        .steps-grid,
+        .support-table-wrap,
+        .footer-inner {
+            opacity: 0;
+            animation: reveal-up 0.7s ease both;
+            animation-timeline: view();
+            animation-range: entry 0% entry 50%;
+        }
+    }
+}
+
+/* 모션 최소화 사용자 — 장식용 반복 애니메이션·부드러운 스크롤 비활성 */
+@media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    .step-active .step-bubble { animation: none; }
+    .dl-indicator-bar::after { animation: none; }
+    .drop-zone:hover,
+    .drop-zone.drag-over,
+    .format-card:hover:not(.coming-soon) { transform: none; }
 }
