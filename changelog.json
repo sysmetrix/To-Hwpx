@@ -1,6 +1,22 @@
 {
-  "current": "4.3.14",
+  "current": "4.3.15",
   "versions": [
+    {
+      "version": "4.3.15",
+      "date": "2026-06-22",
+      "user": [
+        "Word(DOCX) 문서에 중첩 표(표 안의 표)가 있어도 변환된 HWPX가 한글에서 정상적으로 열립니다 (이전에는 표 구조가 깨져 파일이 열리지 않을 수 있었습니다)",
+        "행마다 칸 수가 다른 표도 빈 칸을 채워 안전하게 변환됩니다 (깨진 표로 인한 열기 실패 방지)"
+      ],
+      "dev": [
+        "[v4.3.15] parsers.js: extractDocxTable이 직계 자식 w:tr/w:tc만 사용(docxDirectChildren) — 중첩 표의 행/셀 누수로 인한 rowCnt/colCnt 불일치 차단, 셀 텍스트는 단락 단위 평탄화로 보존(docxCellText)",
+        "[v4.3.15] hwpx.js: buildTable을 점유 행렬 기반으로 재작성 — 들쭉날쭉한 행·세로병합·잔재가 있어도 모든 (행,열) 격자를 1×1 더미 셀로 채워 정확히 1회 덮이도록 보장(한컴 '안 열림' 방지), renderCell 헬퍼 분리",
+        "[v4.3.15] qa/gate.js: 표 격자 무결성 검사 ⑥ 추가 (모든 hp:tbl이 span 반영 시 (행,열) 정확히 1회 덮임)",
+        "[v4.3.15] qa: docx_table_test.docx(중첩·병합 표) 픽스처 + 통과본 docx_table_test.docx.hwpx 추가",
+        "[v4.3.15] index.html: 업데이트 내역 버튼 v4.3.15 반영",
+        "[v4.3.15] sw.js: CACHE_VERSION to-hwpx-v4.3.15"
+      ]
+    },
     {
       "version": "4.3.14",
       "date": "2026-06-22",
