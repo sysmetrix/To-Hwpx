@@ -889,9 +889,22 @@ function extractDocxParagraph(pNode, stylesMap = {}, footnotesMap = {}) {
 
     // styles.xml에서 해석한 스타일 이름 사용 (없으면 styleId 원본으로 폴백)
     const resolvedStyle = stylesMap[styleId] || styleId;
+    // 1) 스타일 이름으로 제목 판별 — 한글 "제목 N" / 영문 "Heading N" / "Title"
     if (/heading|제목|title/i.test(resolvedStyle)) {
-        const level = parseInt(resolvedStyle.replace(/\D/g, '') || styleId.replace(/\D/g, '') || '1', 10) || 1;
+        const digits = resolvedStyle.replace(/\D/g, '') || styleId.replace(/\D/g, '');
+        const level = parseInt(digits || '1', 10) || 1;
         return { type: 'heading', level: Math.min(level, 6), text };
+    }
+    // 2) 스타일명 매칭 실패 시 w:outlineLvl(0~8)을 보조 신호로 사용 (val+1 = 제목 레벨)
+    if (pPrEl) {
+        const olEl = pPrEl.getElementsByTagNameNS(DOCX_NS, 'outlineLvl')[0];
+        if (olEl) {
+            const ov = olEl.getAttributeNS(DOCX_NS, 'val') || olEl.getAttribute('w:val') || olEl.getAttribute('val');
+            const lvl = parseInt(ov, 10);
+            if (Number.isFinite(lvl) && lvl >= 0 && lvl <= 8) {
+                return { type: 'heading', level: Math.min(lvl + 1, 6), text };
+            }
+        }
     }
 
     // bold 런(w:b)이 단락 전체를 덮고 있으면 소제목으로 처리 (텍스트 런만 확인)
