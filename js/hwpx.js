@@ -822,64 +822,74 @@ function buildTable(header, rows, contentWidthHwp = 48000, customBfMap = new Map
     const colWidths = getColumnWidths(allRows, nCols, tableWidth);
     const pid = _nextParaId();
 
+    // 단일 셀(hp:tc) XML 생성 — 실제 셀과 격자 보충용 더미 셀이 공유
+    // 자식 순서: subList → cellAddr → cellSpan → cellSz → cellMargin
+    // (rhwp serializer/hwpx/table.rs 기준 OWPML 공식 순서)
+    const renderCell = (r, c, cs, rs, val, bg, isHd) => {
+        const cId    = isHd ? '5' : '0';                               // 표머리=5(bold), 일반=0
+        const paraId = isHd ? '7' : (isNumericCell(val) ? '11' : '10');
+        let bfId;
+        if (bg) {
+            const variant = tableSideVariant(nCols, c, cs);
+            bfId = customBfMap.get(bgBorderKey(bg, variant))
+                || customBfMap.get(bgBorderKey(bg, 'full'));
+        }
+        if (!bfId) {
+            if (nCols === 1)          bfId = isHd ? '9' : '8';
+            else if (c === 0)         bfId = isHd ? '6' : '4';
+            else if (c + cs >= nCols) bfId = isHd ? '7' : '5';
+            else                      bfId = isHd ? '3' : '2';
+        }
+        const cellWidth = colWidths.slice(c, c + cs).reduce((a, b) => a + b, 0);
+        return `<hp:tc name="" header="${isHd ? '1' : '0'}" hasMargin="1" protect="0" editable="0" dirty="0" borderFillIDRef="${bfId}">` +
+            `<hp:subList id="" textDirection="HORIZONTAL" lineWrap="BREAK" vertAlign="CENTER" ` +
+                `linkListIDRef="0" linkListNextIDRef="0" textWidth="0" textHeight="0" hasTextRef="0" hasNumRef="0">` +
+            buildPara(val, cId, paraId) +
+            `</hp:subList>` +
+            `<hp:cellAddr colAddr="${c}" rowAddr="${r}"/>` +
+            `<hp:cellSpan colSpan="${cs}" rowSpan="${rs}"/>` +
+            `<hp:cellSz width="${cellWidth}" height="1200"/>` +
+            `<hp:cellMargin left="650" right="650" top="220" bottom="220"/>` +
+            `</hp:tc>`;
+    };
+
+    // 점유 행렬: 모든 (행,열) 격자가 정확히 한 번 덮이도록 보장한다.
+    // 들쭉날쭉한 행·세로병합·중첩표 잔재가 있어도 한글이 여는 표를 만든다.
+    const occupied = Array.from({ length: nRows }, () => new Array(nCols).fill(false));
     let rowsXml = '';
     for (let r = 0; r < nRows; r++) {
         const row  = allRows[r] || [];
         const isHd = (header && header.length && r === 0);
-        const cId  = isHd ? '5' : '0';   // 표머리=5(bold), 일반=0
-        let cellsXml = '';
-        let logicalC = 0;   // 논리 열 인덱스 (colSpan 누적)
+        const rowCells = [];   // {c, xml}
 
         for (let ci = 0; ci < row.length; ci++) {
             const cell = (row[ci] !== undefined && row[ci] !== null) ? row[ci] : '';
+            // 세로 병합 연속 셀(rowSpan=0)은 위 셀의 rowSpan 점유로 처리되므로 건너뜀
+            if (cellRowSpan(cell) === 0) continue;
 
-            // 세로 병합 연속 셀(rowSpan=0)은 출력 건너뜀
-            if (cellRowSpan(cell) === 0) {
-                logicalC += cellColSpan(cell);
-                continue;
-            }
+            // 이 행에서 비어 있는 첫 열 — 위 행 rowSpan이 점유한 열은 자동으로 건너뜀
+            let c = 0;
+            while (c < nCols && occupied[r][c]) c++;
+            if (c >= nCols) break;   // 행 넘침 — 격자 유지를 위해 잉여 셀 폐기
 
-            const val  = cellText(cell);
-            const bg   = cellBg(cell);
-            const cs   = cellColSpan(cell);
-            const rs   = cellRowSpan(cell);
-            const paraId = isHd ? '7' : (isNumericCell(val) ? '11' : '10');
-            let bfId;
-            if (bg) {
-                const variant = tableSideVariant(nCols, logicalC, cs);
-                bfId = customBfMap.get(bgBorderKey(bg, variant))
-                    || customBfMap.get(bgBorderKey(bg, 'full'));
-            }
-            if (!bfId) {
-                if (nCols === 1) {
-                    bfId = isHd ? '9' : '8';
-                } else if (logicalC === 0) {
-                    bfId = isHd ? '6' : '4';
-                } else if (logicalC + cs >= nCols) {
-                    bfId = isHd ? '7' : '5';
-                } else {
-                    bfId = isHd ? '3' : '2';
-                }
-            }
-            // 병합 셀 너비: 해당 논리 열부터 colSpan 열까지 합산
-            const cellWidth = colWidths.slice(logicalC, logicalC + cs).reduce((a, b) => a + b, 0);
-            // 자식 순서: subList → cellAddr → cellSpan → cellSz → cellMargin
-            // (rhwp serializer/hwpx/table.rs 기준 OWPML 공식 순서)
-            cellsXml +=
-                `<hp:tc name="" header="${isHd ? '1' : '0'}" hasMargin="1" protect="0" editable="0" dirty="0" borderFillIDRef="${bfId}">` +
-                `<hp:subList id="" textDirection="HORIZONTAL" lineWrap="BREAK" vertAlign="CENTER" ` +
-                    `linkListIDRef="0" linkListNextIDRef="0" textWidth="0" textHeight="0" hasTextRef="0" hasNumRef="0">` +
-                buildPara(val, cId, paraId) +
-                `</hp:subList>` +
-                `<hp:cellAddr colAddr="${logicalC}" rowAddr="${r}"/>` +
-                `<hp:cellSpan colSpan="${cs}" rowSpan="${rs}"/>` +
-                `<hp:cellSz width="${cellWidth}" height="1200"/>` +
-                `<hp:cellMargin left="650" right="650" top="220" bottom="220"/>` +
-                `</hp:tc>`;
-            logicalC += cs;
+            const cs = Math.min(Math.max(cellColSpan(cell) || 1, 1), nCols - c);
+            const rs = Math.min(Math.max(cellRowSpan(cell) || 1, 1), nRows - r);
+            for (let rr = r; rr < r + rs; rr++)
+                for (let cc = c; cc < c + cs; cc++) occupied[rr][cc] = true;
+
+            rowCells.push({ c, xml: renderCell(r, c, cs, rs, cellText(cell), cellBg(cell), isHd) });
         }
+
+        // 남은 빈 열을 1×1 더미 셀로 채워 격자를 완성한다.
+        for (let c = 0; c < nCols; c++) {
+            if (occupied[r][c]) continue;
+            occupied[r][c] = true;
+            rowCells.push({ c, xml: renderCell(r, c, 1, 1, '', null, isHd) });
+        }
+
         // <hp:tr>은 속성 없음 (rhwp 기준); header 마킹은 <hp:tc>에만 적용
-        rowsXml += `<hp:tr>${cellsXml}</hp:tr>`;
+        rowCells.sort((a, b) => a.c - b.c);
+        rowsXml += `<hp:tr>${rowCells.map(x => x.xml).join('')}</hp:tr>`;
     }
 
     // pageBreak="ROW" → 행 경계에서 쪽 넘김 허용 (긴 표가 다음 페이지로 이어짐)

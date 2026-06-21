@@ -966,21 +966,42 @@ function extractDocxParagraph(pNode, stylesMap = {}, footnotesMap = {}) {
     return align ? { ...base, align } : base;
 }
 
-/** w:tbl 표 노드 → IR table 블록 (셀 병합 지원) */
+/** 요소의 직계 자식 중 해당 localName 만 반환 (네임스페이스 prefix 무관) */
+function docxDirectChildren(el, localName) {
+    const out = [];
+    for (const c of el.childNodes) {
+        if (c.nodeType === 1 && c.localName === localName) out.push(c);
+    }
+    return out;
+}
+
+/** 셀(w:tc) 텍스트 추출 — 중첩 표 내용은 평탄화해 보존하되 단락 경계는 공백으로 구분 */
+function docxCellText(tc) {
+    const parts = [];
+    for (const p of tc.getElementsByTagNameNS(DOCX_NS, 'p')) {
+        const t = Array.from(p.getElementsByTagNameNS(DOCX_NS, 't'))
+            .map(el => el.textContent || '').join('');
+        if (t) parts.push(t);
+    }
+    return sanitize(parts.join(' ').trim());
+}
+
+/** w:tbl 표 노드 → IR table 블록 (셀 병합 지원, 중첩 표 무시) */
 function extractDocxTable(tblNode) {
-    const rowEls = tblNode.getElementsByTagNameNS(DOCX_NS, 'tr');
+    // 직계 자식 행/셀만 사용 — 중첩 표의 w:tr/w:tc가 그리드에 섞여 들어가
+    // rowCnt/colCnt 불일치(한글이 거부하는 깨진 표)가 생기는 것을 방지
+    const rowEls = docxDirectChildren(tblNode, 'tr');
     if (!rowEls.length) return null;
 
     // 1단계: 물리 행/열 원시 데이터 수집
     const rawRows = [];
     for (const tr of rowEls) {
         const rawCells = [];
-        const cells = tr.getElementsByTagNameNS(DOCX_NS, 'tc');
+        const cells = docxDirectChildren(tr, 'tc');
         for (const tc of cells) {
-            const tEls = tc.getElementsByTagNameNS(DOCX_NS, 't');
-            const text = sanitize(Array.from(tEls).map(t => t.textContent).join('').trim());
+            const text = docxCellText(tc);
 
-            const tcPr = tc.getElementsByTagNameNS(DOCX_NS, 'tcPr')[0];
+            const tcPr = docxDirectChildren(tc, 'tcPr')[0];
             let bg = null, colSpan = 1, vMergeType = null;
 
             if (tcPr) {
