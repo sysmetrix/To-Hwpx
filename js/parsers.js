@@ -834,6 +834,24 @@ async function parseDocx(arrayBuffer, docType = 'plain') {
     return ir;
 }
 
+/** w:r 안의 토글 속성(w:u/w:strike 등) on/off 판정 — val=0/false/none/off면 off */
+function docxRunToggle(r, name) {
+    const el = r.getElementsByTagNameNS(DOCX_NS, name)[0];
+    if (!el) return false;
+    const v = el.getAttributeNS(DOCX_NS, 'val') || el.getAttribute('w:val') || el.getAttribute('val');
+    if (v == null || v === '') return true;   // 속성만 있고 val 없으면 on
+    return !/^(0|false|none|off)$/i.test(v);
+}
+
+/** w:r 안의 글자색(w:color@val) → #RRGGBB | null (auto/지정없음 제외) */
+function docxRunColor(r) {
+    const el = r.getElementsByTagNameNS(DOCX_NS, 'color')[0];
+    if (!el) return null;
+    const v = el.getAttributeNS(DOCX_NS, 'val') || el.getAttribute('w:val') || el.getAttribute('val') || '';
+    if (!v || /^auto$/i.test(v)) return null;
+    return normalizeHexColor(v.startsWith('#') ? v : '#' + v);
+}
+
 /** w:p 단락 노드 → IR 블록 (텍스트 추출 + 스타일 판별 + 각주 지원) */
 function extractDocxParagraph(pNode, stylesMap = {}, footnotesMap = {}) {
     const pStyles = pNode.getElementsByTagNameNS(DOCX_NS, 'pStyle');
@@ -878,8 +896,11 @@ function extractDocxParagraph(pNode, stylesMap = {}, footnotesMap = {}) {
         if (!text) continue;
         inlineRuns.push({
             text,
-            bold:   r.getElementsByTagNameNS(DOCX_NS, 'b').length > 0,
-            italic: r.getElementsByTagNameNS(DOCX_NS, 'i').length > 0,
+            bold:      r.getElementsByTagNameNS(DOCX_NS, 'b').length > 0,
+            italic:    r.getElementsByTagNameNS(DOCX_NS, 'i').length > 0,
+            underline: docxRunToggle(r, 'u'),
+            strike:    docxRunToggle(r, 'strike') || docxRunToggle(r, 'dstrike'),
+            color:     docxRunColor(r),
         });
     }
     const text = sanitize(inlineRuns.filter(r => r.text).map(r => r.text).join('').trim());
