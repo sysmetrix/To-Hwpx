@@ -267,6 +267,8 @@ function buildHeaderXml(fontName, basePt, customBfMap = new Map(), imageBlocks =
         h2:    (bp + 4) * 100,
         h3:    (bp + 2) * 100,
         h4:    (bp + 1) * 100,
+        h5:    bp * 100,                        // H5: 본문 크기(굵게)
+        h6:    Math.max((bp - 1) * 100, 800),   // H6: 본문보다 한 단계 작게(굵게)
         tblHd: bp * 100,
         code:  Math.max((bp - 1) * 100, 800),
     };
@@ -325,9 +327,9 @@ ${fontFaceBlock('OTHER')}
 ${fontFaceBlock('SYMBOL')}
 ${fontFaceBlock('USER')}
     </hh:fontfaces>
-    <hh:charProperties itemCnt="${10 + customCharMap.size}">
-      <!-- 0=본문, 1=H1 bold, 2=H2 bold, 3=H3 bold, 4=H4 bold, 5=표머리 bold, 6=코드, 7=본문bold, 8=본문italic, 9=본문bold+italic
-           10~ = 동적 확장(밑줄/취소선/글자색) — customCharMap 키 순서대로 -->
+    <hh:charProperties itemCnt="${12 + customCharMap.size}">
+      <!-- 0=본문, 1=H1, 2=H2, 3=H3, 4=H4, 5=표머리, 6=코드, 7=본문bold, 8=본문italic, 9=본문bold+italic,
+           10=H5, 11=H6, 12~ = 동적 확장(밑줄/취소선/글자색) — customCharMap 키 순서대로 -->
 ${charBase(0, sz.body,  false, false)}
 ${charBase(1, sz.h1,   true,  false)}
 ${charBase(2, sz.h2,   true,  false)}
@@ -338,13 +340,15 @@ ${charBase(6, sz.code, false, false, codeFontId).replace('"#000000"', '"#111111"
 ${charBase(7, sz.body, true,  false)}
 ${charBase(8, sz.body, false, true)}
 ${charBase(9, sz.body, true,  true)}
+${charBase(10, sz.h5,  true,  false)}
+${charBase(11, sz.h6,  true,  false)}
 ${[...customCharMap.entries()].map(([key, cid]) => {
     const [flags, color] = String(key).split('|');
     return charBase(cid, sz.body, flags[0] === '1', flags[1] === '1', null,
         { underline: flags[2] === '1', strike: flags[3] === '1', color });
 }).join('\n')}
     </hh:charProperties>
-    <hh:paraProperties itemCnt="15">
+    <hh:paraProperties itemCnt="19">
       <!-- id  정렬    행간  전    후   들여  테두리참조 -->
 ${paraBase(0, 'JUSTIFY', 160,   0,  850,    0)}
 ${paraBase(1, 'LEFT',    180, 850,  567,    0)}
@@ -367,6 +371,12 @@ ${paraBase(12, 'CENTER', 160,   0,  850,    0)}
 ${paraBase(13, 'RIGHT',  160,   0,  850,    0)}
       <!-- id=14  코드 라인: 고정폭 글꼴 -->
 ${paraBase(14, 'LEFT',   120,   0,    0,    0)}
+      <!-- id=15/16  H5/H6 제목 -->
+${paraBase(15, 'LEFT',   160, 300,  150,    0)}
+${paraBase(16, 'LEFT',   160, 200,  100,    0)}
+      <!-- id=17/18  중첩 목록 들여쓰기 (레벨1/레벨2). 레벨0은 id=5 사용 -->
+${paraBase(17, 'LEFT',   160,   0,  100, 1200)}
+${paraBase(18, 'LEFT',   160,   0,  100, 1800)}
     </hh:paraProperties>
     <hh:borderFills itemCnt="${11 + customBfMap.size}">
       <!-- id=1 테두리 없음 -->
@@ -711,10 +721,12 @@ function buildFootnoteCtrl(footnoteText) {
         `</hp:ctrl>`;
 }
 
-/** heading level → charId / paraId 매핑 (1→H1, 2→H2, 3→H3, 4+→H4) */
+/** heading level → charId / paraId 매핑 (1~4→charPr/paraPr 1~4, 5→10/15, 6→11/16) */
 function headingIds(level) {
-    const lv = Math.max(1, Math.min(level || 1, 4));
-    return { charId: String(lv), paraId: String(lv) };
+    const lv = Math.max(1, Math.min(level || 1, 6));
+    if (lv <= 4) return { charId: String(lv), paraId: String(lv) };
+    if (lv === 5) return { charId: '10', paraId: '15' };
+    return { charId: '11', paraId: '16' };
 }
 
 /**
@@ -1011,10 +1023,23 @@ function buildSection(ir, marginsHwp, paperKey, landscape = false, customBfMap =
             parts.push(buildHrPara(contentWidthHwp));
 
         } else if (bt === 'list') {
-            (block.items || []).forEach((rawItem, i) => {
+            // 중첩 레벨(level)별 들여쓰기 paraPr: 0→5, 1→17, 2+→18
+            // 항목은 문자열(레거시 HTML 경로) 또는 객체(MD: level/ordered/marker/task/checked)
+            const blockOrdered = !!block.ordered;
+            let autoNum = 0;
+            (block.items || []).forEach((rawItem) => {
                 const item = typeof rawItem === 'object' ? rawItem : { text: rawItem };
-                const prefix = block.ordered ? `${i + 1}. ` : '· ';
-                if (item.text) parts.push(buildPara(prefix + item.text, '0', '5'));
+                const level = Math.max(0, Math.min(item.level || 0, 2));
+                const listParaId = level === 0 ? '5' : level === 1 ? '17' : '18';
+                const ordered = item.ordered != null ? item.ordered : blockOrdered;
+                const bullets = ['· ', '◦ ', '▪ '];
+                let marker;
+                // 체크박스: ☑/☐(U+2600~ 블록)은 replaceEmoji가 □로 치환하므로
+                // 그 범위 밖 기하 도형으로 체크(▣)/미체크(□)를 구분 표기
+                if (item.task) marker = item.checked ? '▣ ' : '□ ';
+                else if (ordered) marker = `${item.marker != null ? item.marker : (++autoNum)}. `;
+                else marker = bullets[level];
+                if (item.text) parts.push(buildPara(marker + item.text, '0', listParaId));
                 for (const codeBlock of (item.codeBlocks || [])) {
                     parts.push(buildCodeBlock(codeBlock, '  ', contentWidthHwp));
                 }
@@ -1097,7 +1122,7 @@ async function buildHwpx(ir, fontName = '휴먼명조', fontSize = 12, marginsMm
     // 인라인 확장 서식(밑줄/취소선/글자색) 수집 → 동적 charPr 생성용
     // (header가 section보다 먼저 빌드되므로 customBfMap과 동일하게 사전 스캔)
     const customCharMap = new Map();
-    let nextCharId = 10;
+    let nextCharId = 12;   // 0~9 기본 + 10/11 H5/H6 이후부터 동적 확장
     for (const block of (ir.blocks || [])) {
         if (block.type !== 'para' || !Array.isArray(block.runs)) continue;
         for (const run of block.runs) {

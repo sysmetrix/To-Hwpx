@@ -113,6 +113,40 @@ function splitInlineCodeBlocks(tokens, blocks) {
     flushPara();
 }
 
+/**
+ * marked list 토큰을 재귀적으로 평면화 — 중첩 항목을 잃지 않고 level로 들여쓰기 보존.
+ * 각 항목: {text, codeBlocks, level, ordered, marker(번호|null), task, checked}
+ */
+function flattenMdList(listToken, level, out) {
+    const ordered = !!listToken.ordered;
+    let n = (typeof listToken.start === 'number' && listToken.start > 0) ? listToken.start : 1;
+    for (const item of (listToken.items || [])) {
+        const ownBlocks = [];
+        const nested = [];
+        for (const t of (item.tokens || [])) {
+            if (t.type === 'list') nested.push(t);          // 하위 목록은 레벨+1로 따로
+            else extractMarkdownTokens([t], ownBlocks);
+        }
+        const textParts = ownBlocks
+            .filter(b => b.type === 'para' || b.type === 'heading')
+            .map(b => b.text || plainMdText(b.runs || ''))
+            .filter(Boolean);
+        const codeBlocks = ownBlocks.filter(b => b.type === 'code');
+        const text = sanitize(textParts.join(' ').trim() || (typeof item.text === 'string' ? item.text : ''));
+        if (text || codeBlocks.length) {
+            out.push({
+                text, codeBlocks, level, ordered,
+                marker: ordered ? (n++) : null,
+                task: item.task === true,
+                checked: !!item.checked,
+            });
+        } else if (ordered) {
+            n++;   // 빈 항목도 번호는 소비해 순서 유지
+        }
+        for (const sub of nested) flattenMdList(sub, level + 1, out);
+    }
+}
+
 function extractMarkdownTokens(tokens, blocks) {
     for (const token of (tokens || [])) {
         if (!token) continue;
@@ -128,17 +162,10 @@ function extractMarkdownTokens(tokens, blocks) {
         } else if (token.type === 'hr') {
             blocks.push({ type: 'hr' });
         } else if (token.type === 'list') {
-            const items = (token.items || []).map(item => {
-                const itemBlocks = [];
-                extractMarkdownTokens(item.tokens || [], itemBlocks);
-                const textParts = itemBlocks
-                    .filter(b => b.type === 'para' || b.type === 'heading')
-                    .map(b => b.text || plainMdText(b.runs || ''))
-                    .filter(Boolean);
-                const codeBlocks = itemBlocks.filter(b => b.type === 'code');
-                return { text: sanitize(textParts.join(' ').trim() || item.text || ''), codeBlocks };
-            }).filter(item => item.text || item.codeBlocks.length);
-            if (items.length) blocks.push({ type: 'list', ordered: !!token.ordered, items });
+            // 중첩 목록을 평면화하되 각 항목에 level(들여쓰기)·번호·태스크를 보존
+            const items = [];
+            flattenMdList(token, 0, items);
+            if (items.length) blocks.push({ type: 'list', items });
         } else if (token.type === 'blockquote') {
             const quoteBlocks = [];
             extractMarkdownTokens(token.tokens || [], quoteBlocks);
@@ -896,8 +923,8 @@ function extractDocxParagraph(pNode, stylesMap = {}, footnotesMap = {}) {
         if (!text) continue;
         inlineRuns.push({
             text,
-            bold:      r.getElementsByTagNameNS(DOCX_NS, 'b').length > 0,
-            italic:    r.getElementsByTagNameNS(DOCX_NS, 'i').length > 0,
+            bold:      docxRunToggle(r, 'b'),
+            italic:    docxRunToggle(r, 'i'),
             underline: docxRunToggle(r, 'u'),
             strike:    docxRunToggle(r, 'strike') || docxRunToggle(r, 'dstrike'),
             color:     docxRunColor(r),
