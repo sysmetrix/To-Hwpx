@@ -348,7 +348,7 @@ ${[...customCharMap.entries()].map(([key, cid]) => {
         { underline: flags[2] === '1', strike: flags[3] === '1', color });
 }).join('\n')}
     </hh:charProperties>
-    <hh:paraProperties itemCnt="17">
+    <hh:paraProperties itemCnt="19">
       <!-- id  정렬    행간  전    후   들여  테두리참조 -->
 ${paraBase(0, 'JUSTIFY', 160,   0,  850,    0)}
 ${paraBase(1, 'LEFT',    180, 850,  567,    0)}
@@ -374,6 +374,9 @@ ${paraBase(14, 'LEFT',   120,   0,    0,    0)}
       <!-- id=15/16  H5/H6 제목 -->
 ${paraBase(15, 'LEFT',   160, 300,  150,    0)}
 ${paraBase(16, 'LEFT',   160, 200,  100,    0)}
+      <!-- id=17/18  중첩 목록 들여쓰기 (레벨1/레벨2). 레벨0은 id=5 사용 -->
+${paraBase(17, 'LEFT',   160,   0,  100, 1200)}
+${paraBase(18, 'LEFT',   160,   0,  100, 1800)}
     </hh:paraProperties>
     <hh:borderFills itemCnt="${11 + customBfMap.size}">
       <!-- id=1 테두리 없음 -->
@@ -1020,10 +1023,23 @@ function buildSection(ir, marginsHwp, paperKey, landscape = false, customBfMap =
             parts.push(buildHrPara(contentWidthHwp));
 
         } else if (bt === 'list') {
-            (block.items || []).forEach((rawItem, i) => {
+            // 중첩 레벨(level)별 들여쓰기 paraPr: 0→5, 1→17, 2+→18
+            // 항목은 문자열(레거시 HTML 경로) 또는 객체(MD: level/ordered/marker/task/checked)
+            const blockOrdered = !!block.ordered;
+            let autoNum = 0;
+            (block.items || []).forEach((rawItem) => {
                 const item = typeof rawItem === 'object' ? rawItem : { text: rawItem };
-                const prefix = block.ordered ? `${i + 1}. ` : '· ';
-                if (item.text) parts.push(buildPara(prefix + item.text, '0', '5'));
+                const level = Math.max(0, Math.min(item.level || 0, 2));
+                const listParaId = level === 0 ? '5' : level === 1 ? '17' : '18';
+                const ordered = item.ordered != null ? item.ordered : blockOrdered;
+                const bullets = ['· ', '◦ ', '▪ '];
+                let marker;
+                // 체크박스: ☑/☐(U+2600~ 블록)은 replaceEmoji가 □로 치환하므로
+                // 그 범위 밖 기하 도형으로 체크(▣)/미체크(□)를 구분 표기
+                if (item.task) marker = item.checked ? '▣ ' : '□ ';
+                else if (ordered) marker = `${item.marker != null ? item.marker : (++autoNum)}. `;
+                else marker = bullets[level];
+                if (item.text) parts.push(buildPara(marker + item.text, '0', listParaId));
                 for (const codeBlock of (item.codeBlocks || [])) {
                     parts.push(buildCodeBlock(codeBlock, '  ', contentWidthHwp));
                 }
