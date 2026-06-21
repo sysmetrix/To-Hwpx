@@ -129,9 +129,9 @@ a:hover { text-decoration: underline; }
    [헤더] — 재단 홈페이지 2단 구조 참조
    ───────────────────────────────────────────────────────────────── */
 
-/* 유틸리티 바 (최상단 얇은 띠) */
+/* 유틸리티 바 (최상단 얇은 띠) — 푸터와 동일한 뉴트럴 차콜 배경 */
 .utility-bar {
-    background: var(--c-primary);
+    background: #1b1c20;
     color: rgba(255,255,255,0.85);
     font-size: 0.78rem;
     padding: 6px 0;

@@ -1,6 +1,18 @@
 {
-  "current": "4.3.11",
+  "current": "4.3.12",
   "versions": [
+    {
+      "version": "4.3.12",
+      "date": "2026-06-21",
+      "user": [
+        "상단 안내 띠(｢BWYF｣ AX Challenger)의 배경을 페이지 맨 아래 저작권 영역과 같은 차분한 차콜 색으로 맞춰 화면 위아래 톤을 통일했습니다"
+      ],
+      "dev": [
+        "[v4.3.12] style.css: .utility-bar 배경을 var(--c-primary)에서 푸터와 동일한 #1b1c20으로 변경",
+        "[v4.3.12] index.html: 업데이트 내역 버튼 v4.3.12 반영",
+        "[v4.3.12] sw.js: CACHE_VERSION to-hwpx-v4.3.12"
+      ]
+    },
     {
       "version": "4.3.11",
       "date": "2026-06-21",
