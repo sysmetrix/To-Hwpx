@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="112" fill="#2563eb"/>
+  <path d="M148 96h156l60 60v260H148z" fill="#ffffff"/>
+  <path d="M304 96v68h68" fill="#dbeafe"/>
+  <rect x="184" y="232" width="144" height="24" rx="12" fill="#2563eb"/>
+  <rect x="184" y="280" width="144" height="24" rx="12" fill="#2563eb" opacity=".82"/>
+  <rect x="184" y="328" width="104" height="24" rx="12" fill="#2563eb" opacity=".64"/>
+  <text x="256" y="205" text-anchor="middle" font-family="Arial, sans-serif" font-size="78" font-weight="800" fill="#1e3a8a">H</text>
+</svg>

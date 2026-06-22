@@ -376,12 +376,33 @@ function restoreTitleToBodyIfNeeded(ir, titleText, finalTitle) {
     const text = normalizeTitleCandidate(titleText);
     if (!text || text === normalizeTitleCandidate(finalTitle)) return;
     if (!Array.isArray(ir.blocks)) ir.blocks = [];
-    const alreadyInBody = ir.blocks.some(block => normalizeTitleCandidate(block?.text) === text);
+    const alreadyInBody = ir.blocks.some(block => blockTitleText(block) === text);
     if (!alreadyInBody) ir.blocks.unshift({ type: 'heading', level: 1, text });
+}
+
+function blockTitleText(block) {
+    if (!block) return '';
+    if (typeof block.text === 'string') return normalizeTitleCandidate(block.text);
+    if (Array.isArray(block.runs)) {
+        return normalizeTitleCandidate(block.runs.map(run => run?.text || '').join(''));
+    }
+    return '';
+}
+
+function findFirstDocumentTitleCandidate(ir) {
+    const blocks = Array.isArray(ir.blocks) ? ir.blocks : [];
+    for (const block of blocks) {
+        if (!['heading', 'para'].includes(block?.type)) continue;
+        const text = blockTitleText(block);
+        if (!text || isGenericTitleCandidate(text)) continue;
+        return { block, text };
+    }
+    return null;
 }
 
 function applyDocumentTitlePolicy(ir, file, customTitle, titleSource) {
     const fallback = fileBaseName(file);
+    const ext = getFileExtension(file?.name || '');
     const parsedTitle = normalizeTitleCandidate(ir.title);
     const direct = normalizeTitleCandidate(customTitle);
     if (direct) {
@@ -396,21 +417,22 @@ function applyDocumentTitlePolicy(ir, file, customTitle, titleSource) {
         return;
     }
 
-    if (parsedTitle && !isGenericTitleCandidate(parsedTitle)) {
+    if (ext !== 'docx' && parsedTitle && !isGenericTitleCandidate(parsedTitle)) {
         ir.title = parsedTitle;
         return;
     }
 
-    restoreTitleToBodyIfNeeded(ir, parsedTitle, fallback);
+    const firstTitle = findFirstDocumentTitleCandidate(ir);
+    if (firstTitle) {
+        ir.title = firstTitle.text;
+        if (firstTitle.block.type === 'heading') {
+            ir.blocks.splice(ir.blocks.indexOf(firstTitle.block), 1);
+        }
+        return;
+    }
 
-    const heading = (ir.blocks || []).find(block =>
-        block?.type === 'heading' &&
-        normalizeTitleCandidate(block.text) &&
-        !isGenericTitleCandidate(block.text)
-    );
-    if (heading) {
-        ir.title = normalizeTitleCandidate(heading.text);
-        ir.blocks.splice(ir.blocks.indexOf(heading), 1);
+    if (parsedTitle && !isGenericTitleCandidate(parsedTitle)) {
+        ir.title = parsedTitle;
         return;
     }
 
@@ -1549,6 +1571,7 @@ function setProgressPanelState(stateName) {
     const empty = document.getElementById('progress-empty');
     if (!panel) return;
 
+    panel.hidden = stateName === 'empty';
     panel.classList.remove('is-empty', 'is-ready', 'is-converting', 'is-success', 'is-warning', 'is-error');
     panel.classList.add(`is-${stateName}`);
 

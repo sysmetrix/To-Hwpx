@@ -1,6 +1,21 @@
 {
-  "current": "4.4.0",
+  "current": "4.4.1",
   "versions": [
+    {
+      "version": "4.4.1",
+      "date": "2026-06-23",
+      "user": [
+        "자동 제목을 문서 첫 문장/제목 기준으로 고르면 실제 문서 앞쪽의 의미 있는 텍스트를 우선 사용하도록 개선했습니다",
+        "파일 선택 전에는 진행 상태 패널을 숨겨 첫 화면을 더 단순하게 정리했습니다",
+        "모바일 설치 화면에서 사용할 앱 아이콘을 파일 기반 아이콘으로 교체했습니다"
+      ],
+      "dev": [
+        "[v4.4.1] app.js: DOCX는 findFirstDocumentTitleCandidate()가 heading/para를 문서 순서대로 스캔하고, 비-DOCX는 parser title(H1 승격)을 우선하도록 제목 정책 수정",
+        "[v4.4.1] app.js/index.html: progress-panel 초기 hidden 및 setProgressPanelState(empty)에서 숨김 처리",
+        "[v4.4.1] index.html/manifest.json/icons: data favicon을 icons/app-icon.svg 파일 기반 아이콘으로 교체",
+        "[v4.4.1] sw.js: CACHE_VERSION to-hwpx-v4.4.1 및 icons/app-icon.svg 앱 셸 캐시 추가"
+      ]
+    },
     {
       "version": "4.4.0",
       "date": "2026-06-23",

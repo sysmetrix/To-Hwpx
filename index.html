@@ -43,7 +43,8 @@
     <meta property="og:type" content="website">
 
     <!-- 파비콘 (텍스트 기반 SVG) -->
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📄</text></svg>">
+    <link rel="icon" type="image/svg+xml" href="icons/app-icon.svg">
+    <link rel="apple-touch-icon" href="icons/app-icon.svg">
 
     <!-- 한글 웹 폰트 (Google Fonts) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -97,7 +98,7 @@
             <span>｢BWYF｣ AX Challenger 2026</span>
             <!-- [주의] id="open-changelog"는 app.js에서 업데이트 내역 모달을 여는 연결값 -->
             <button class="util-changelog-btn" id="open-changelog" aria-label="업데이트 내역 보기">
-                📋 v4.4.0 업데이트 내역
+                📋 v4.4.1 업데이트 내역
             </button>
         </div>
     </div>
@@ -232,12 +233,12 @@
                                name="doc-title"
                                placeholder="비우면 자동 채움"
                                maxlength="200">
-                        <p class="form-hint title-help">상단 제목 블록을 켜면 이 제목이 문서 맨 위에 표시됩니다.</p>
+                        <p class="form-hint title-help"><b>고급 설정의 상단 제목 블록</b>을 켜면 이 제목이 문서 맨 위에 표시됩니다.</p>
                         <div class="title-source-row">
                             <span>자동 제목</span>
                             <select id="title-source" name="title-source" aria-label="자동 제목 기준">
                                 <option value="filename" selected>파일 이름</option>
-                                <option value="heading">문서 첫 제목</option>
+                                <option value="heading">문서 첫 문장/제목</option>
                             </select>
                         </div>
                     </div>
@@ -412,7 +413,7 @@
             </div><!-- /.options-panel -->
 
             <!-- ── 오른쪽: 변환 진행 패널 ──────────────────────── -->
-            <div class="progress-panel is-empty" aria-live="polite" aria-label="변환 진행 상황">
+            <div class="progress-panel is-empty" aria-live="polite" aria-label="변환 진행 상황" hidden>
                 <h3>진행 상태</h3>
 
                 <div id="progress-empty" class="progress-empty">
