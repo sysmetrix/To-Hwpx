@@ -1,6 +1,21 @@
 {
-  "current": "4.3.41",
+  "current": "4.3.42",
   "versions": [
+    {
+      "version": "4.3.42",
+      "date": "2026-06-23",
+      "user": [
+        "Word(DOCX)에 제목이 없을 때 표지/제목 칸이 비지 않고 파일 이름이 제목으로 들어갑니다",
+        "색이 있는 제목·소제목의 글자색도 이제 그대로 가져옵니다 (이전에는 본문 색만 일부 들어왔습니다)"
+      ],
+      "dev": [
+        "[v4.3.42] app.js: 변환 시 제목이 비면 파일명(확장자 제외)을 ir.title 폴백으로 사용",
+        "[v4.3.42] parsers.js: 제목/아웃라인 단락의 글자색(headColor)을 heading 블록 color로 보존",
+        "[v4.3.42] hwpx.js: extCharKey에 height 차원 추가(제목 크기+색 동적 charPr), 사전 스캔이 색 있는 제목에 charPr 생성·block._cId 주석, buildSection heading이 이를 사용 → 색 제목이 크기 유지한 채 색 보존",
+        "[v4.3.42] index.html: 히어로 제목 문구 변경('그냥 한글로, TO HWPX')",
+        "[v4.3.42] sw.js: CACHE_VERSION to-hwpx-v4.3.42, index.html v4.3.42"
+      ]
+    },
     {
       "version": "4.3.41",
       "date": "2026-06-22",

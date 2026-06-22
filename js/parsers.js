@@ -990,6 +990,10 @@ function extractDocxParagraph(pNode, stylesMap = {}, footnotesMap = {}) {
     const hasFootnotes = inlineRuns.some(r => r.footnote);
     if (!text && !hasFootnotes) return null;
 
+    // 제목 단락의 글자색(첫 색 있는 런) — 제목으로 렌더해도 색을 보존하기 위해 전달
+    const headColor = (inlineRuns.find(r => r.text && r.color) || {}).color || null;
+    const withColor = (b) => (headColor ? { ...b, color: headColor } : b);
+
     // styles.xml에서 해석한 스타일 이름 사용 (없으면 styleId 원본으로 폴백)
     const resolvedStyle = stylesMap[styleId] || styleId;
     // 1) 스타일 이름으로 제목 판별 — 한글 "제목 N" / 영문 "Heading N" / "Title"
@@ -998,7 +1002,7 @@ function extractDocxParagraph(pNode, stylesMap = {}, footnotesMap = {}) {
         const level = parseInt(digits || '1', 10) || 1;
         // Word '제목(Title)' 스타일(번호 없음)만 문서 제목으로 표시. '제목 1'(Heading 1)은
         // 섹션 제목이므로 docTitle로 보지 않음 → 본문에 그대로 남는다.
-        const block = { type: 'heading', level: Math.min(level, 6), text };
+        const block = withColor({ type: 'heading', level: Math.min(level, 6), text });
         if (!digits && (/title/i.test(resolvedStyle) || /^\s*제목\s*$/.test(resolvedStyle) || /title/i.test(styleId))) {
             block.docTitle = true;
         }
@@ -1011,7 +1015,7 @@ function extractDocxParagraph(pNode, stylesMap = {}, footnotesMap = {}) {
             const ov = olEl.getAttributeNS(DOCX_NS, 'val') || olEl.getAttribute('w:val') || olEl.getAttribute('val');
             const lvl = parseInt(ov, 10);
             if (Number.isFinite(lvl) && lvl >= 0 && lvl <= 8) {
-                return { type: 'heading', level: Math.min(lvl + 1, 6), text };
+                return withColor({ type: 'heading', level: Math.min(lvl + 1, 6), text });
             }
         }
     }

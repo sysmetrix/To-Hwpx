@@ -344,8 +344,8 @@ ${charBase(10, sz.h5,  true,  false)}
 ${charBase(11, sz.h6,  true,  false)}
 ${charBase(12, 100,    false, false)}
 ${[...customCharMap.entries()].map(([key, cid]) => {
-    const [flags, color] = String(key).split('|');
-    return charBase(cid, sz.body, flags[0] === '1', flags[1] === '1', null,
+    const [flags, color, height] = String(key).split('|');
+    return charBase(cid, height ? +height : sz.body, flags[0] === '1', flags[1] === '1', null,
         { underline: flags[2] === '1', strike: flags[3] === '1', color });
 }).join('\n')}
     </hh:charProperties>
@@ -609,10 +609,11 @@ function runNeedsExtChar(run) {
     return !!(run.underline || run.strike || hasColor);
 }
 
-/** 확장 charPr 시그니처 키: "bold italic underline strike | #RRGGBB" */
+/** 확장 charPr 시그니처 키: "bold italic underline strike | #RRGGBB | height"
+ *  height 비움 = 본문 크기. 제목 색 보존 시 제목 크기(HWPUNIT)를 함께 넣어 구분한다. */
 function extCharKey(run) {
     const color = (run.color && /^#[0-9A-Fa-f]{6}$/.test(run.color)) ? run.color.toUpperCase() : '#000000';
-    return `${run.bold ? 1 : 0}${run.italic ? 1 : 0}${run.underline ? 1 : 0}${run.strike ? 1 : 0}|${color}`;
+    return `${run.bold ? 1 : 0}${run.italic ? 1 : 0}${run.underline ? 1 : 0}${run.strike ? 1 : 0}|${color}|${run.height || ''}`;
 }
 
 /**
@@ -1128,7 +1129,8 @@ function buildSection(ir, marginsHwp, paperKey, landscape = false, customBfMap =
 
         if (bt === 'heading') {
             const { charId, paraId } = headingIds(block.level);
-            parts.push(buildPara(block.text || '', charId, paraId));
+            // 색 있는 제목은 사전 스캔이 만든 동적 charPr(제목 크기+색) 사용
+            parts.push(buildPara(block.text || '', block._cId || charId, paraId));
 
         } else if (bt === 'para') {
             const alignParaId = block.align === 'center' ? '12' : block.align === 'right' ? '13' : '0';
@@ -1252,14 +1254,24 @@ async function buildHwpx(ir, fontName = '휴먼명조', fontSize = 12, marginsMm
     const customCharMap = new Map();
     let nextCharId = 13;   // 0~11 기본 + 12(1pt) 이후부터 동적 확장
     const addExtChar = (run) => {
-        if (run.text == null && !run.color) return;
-        if (!runNeedsExtChar(run)) return;
+        if (!runNeedsExtChar(run)) return null;
         const key = extCharKey(run);
         if (!customCharMap.has(key)) customCharMap.set(key, nextCharId++);
+        return customCharMap.get(key);
     };
+    // 제목 색 보존용 제목 크기(HWPUNIT) — buildHeaderXml sz와 동일 계산
+    const _bp = Math.max(6, Math.min(36, parseInt(fontSize, 10) || 12));
+    const headingHeightHwp = (lvl) => ({
+        1: (_bp + 6) * 100, 2: (_bp + 4) * 100, 3: (_bp + 2) * 100,
+        4: (_bp + 1) * 100, 5: _bp * 100, 6: Math.max((_bp - 1) * 100, 800),
+    }[lvl] || _bp * 100);
     for (const block of (ir.blocks || [])) {
         if (block.type === 'para' && Array.isArray(block.runs)) {
             for (const run of block.runs) if (run.text) addExtChar(run);
+        } else if (block.type === 'heading' && block.color) {
+            // 색 있는 제목: 제목 크기 + bold + 색으로 동적 charPr 생성 후 블록에 charId 주석
+            const cid = addExtChar({ bold: true, color: block.color, height: headingHeightHwp(block.level || 1) });
+            if (cid != null) block._cId = String(cid);
         } else if (block.type === 'table') {
             // 표 셀 글자색(예: 흰 글자 머리행)도 동적 charPr 대상 — 머리행은 bold
             (block.header || []).forEach(c => { const col = cellColor(c); if (col) addExtChar({ color: col, bold: true }); });

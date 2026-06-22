@@ -1026,6 +1026,10 @@ async function runConversionPipeline() {
 
         // 사용자가 제목을 직접 입력했으면 파서 감지 제목을 덮어씀
         if (state.customTitle) ir.title = state.customTitle;
+        // 제목을 못 찾았으면 파일명(확장자 제외)을 제목으로 폴백 — 표지/제목 칸이 비지 않게
+        if (!ir.title || !String(ir.title).trim()) {
+            ir.title = (state.file?.name || '').replace(/\.[^.]+$/, '').trim();
+        }
         state.ir = ir;
 
         // [보안] IR 미리보기는 textContent로만 표시 (innerHTML 사용 금지)
