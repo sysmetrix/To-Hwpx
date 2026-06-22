@@ -1,6 +1,21 @@
 {
-  "current": "4.3.33",
+  "current": "4.3.34",
   "versions": [
+    {
+      "version": "4.3.34",
+      "date": "2026-06-22",
+      "user": [
+        "미리보기가 즉시 뜨도록 바뀌었습니다 — 문서 구조(제목·표·코드·목록·서식)를 브라우저 안에서 바로 보여줍니다 (외부 뷰어 대기 없음)",
+        "정밀 미리보기(외부 rhwp 뷰어)는 필요할 때 '정밀 미리보기' 버튼으로만 불러옵니다"
+      ],
+      "dev": [
+        "[v4.3.34] app.js: 미리보기를 IR→HTML 즉시 렌더(기본)로 전환 — irBlocksToHtml/irRunsToHtml/irListToHtml/irTableToHtml 추가(제목·단락 서식·목록·표 머리행/배경/병합·코드·인용·이미지). state.ir 사용, 100% 로컬",
+        "[v4.3.34] app.js/index.html: 외부 rhwp 뷰어는 'open-rhwp-precise' 버튼으로 지연 로드(iframe data-src→src), 접속 실패 시 안내. 자동 로드/SRI 외부요청 제거",
+        "[v4.3.34] style.css: .preview-ir 문서형 스타일(코드 검정·표 머리행 #D9D9D9 등), .btn-precise-preview",
+        "[v4.3.34] docs: hwpx-public-doc/references/hwpx_rendering_gotchas.md 추가 — 네임스페이스(hh vs hc) 함정·진단·지시 지침",
+        "[v4.3.34] sw.js: CACHE_VERSION to-hwpx-v4.3.34, index.html v4.3.34"
+      ]
+    },
     {
       "version": "4.3.33",
       "date": "2026-06-22",

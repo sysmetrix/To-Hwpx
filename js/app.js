@@ -1651,6 +1651,7 @@ function initModals() {
     document.getElementById('open-install-guide')?.addEventListener('click', showInstallGuide);
     document.getElementById('open-privacy-guide')?.addEventListener('click', showPrivacyGuide);
     document.getElementById('open-font-guide')?.addEventListener('click', showFontGuide);
+    document.getElementById('open-rhwp-precise')?.addEventListener('click', loadRhwpPrecise);
 
     // 오버레이 바깥 클릭으로 닫기
     document.getElementById('preview-modal')?.addEventListener('click', (e) => {
@@ -2019,82 +2020,154 @@ async function renderBuiltInPreview(blob, sourceError, loading, countEl) {
     if (countEl) countEl.textContent = `구조 미리보기 · ${paragraphs.length}문단`;
 }
 
-/** 미리보기 모달 열기 — HWPX Blob을 rhwp iframe에 로드 */
-async function openPreview(blob) {
-    const modal   = document.getElementById('preview-modal');
-    const loading = document.getElementById('preview-loading');
-    const iframe  = document.getElementById('rhwp-iframe');
-    const countEl = document.getElementById('preview-pagecount');
-    if (!modal || !iframe || !blob) return;
+/** IR 인라인 런 배열 → HTML (bold/italic/underline/strike/color/code/footnote) */
+function irRunsToHtml(runs) {
+    let h = '';
+    for (const r of (runs || [])) {
+        if (r.footnote) { h += `<sup class="ir-fn" title="${escHtml(r.footnote)}">[주]</sup>`; continue; }
+        let t = escHtml(r.text || '');
+        if (!t) continue;
+        if (r.code) { h += `<code>${t}</code>`; continue; }
+        if (r.bold) t = `<strong>${t}</strong>`;
+        if (r.italic) t = `<em>${t}</em>`;
+        const deco = [];
+        if (r.underline) deco.push('underline');
+        if (r.strike) deco.push('line-through');
+        const css = (r.color && /^#[0-9A-Fa-f]{6}$/.test(r.color) ? `color:${r.color};` : '')
+                  + (deco.length ? `text-decoration:${deco.join(' ')};` : '');
+        h += css ? `<span style="${css}">${t}</span>` : t;
+    }
+    return h;
+}
 
-    // 모달 표시
+/** IR list 블록 → HTML (중첩 level 들여쓰기·번호·체크박스) */
+function irListToHtml(block) {
+    const cell = v => escHtml(typeof v === 'object' ? (v?.text ?? '') : String(v ?? ''));
+    let h = '<div class="ir-list">', auto = 0;
+    for (const raw of (block.items || [])) {
+        const it = typeof raw === 'object' ? raw : { text: raw };
+        const level = Math.max(0, Math.min(it.level || 0, 4));
+        const ordered = it.ordered != null ? it.ordered : !!block.ordered;
+        let marker;
+        if (it.task) marker = it.checked ? '☑' : '☐';
+        else if (ordered) marker = `${it.marker != null ? it.marker : (++auto)}.`;
+        else marker = '•';
+        h += `<div class="ir-li" style="padding-left:${level * 1.4 + 1}em">${marker} ${cell(it)}</div>`;
+        for (const cb of (it.codeBlocks || [])) h += `<pre class="ir-code"><code>${escHtml(cb.text || '')}</code></pre>`;
+    }
+    return h + '</div>';
+}
+
+/** IR table 블록 → HTML (머리행·셀 배경색·병합 반영) */
+function irTableToHtml(block) {
+    const txt = c => escHtml(typeof c === 'object' ? (c?.text ?? '') : String(c ?? ''));
+    const bg  = c => (typeof c === 'object' ? (c?.bg || null) : null);
+    const cs  = c => (typeof c === 'object' ? (c?.colSpan || 1) : 1);
+    const rs  = c => (typeof c === 'object' ? (c?.rowSpan || 1) : 1);
+    const rows = (block.header && block.header.length ? [{ cells: block.header, hd: true }] : [])
+        .concat((block.rows || []).map(r => ({ cells: r, hd: false })));
+    let h = '<table class="ir-table"><tbody>';
+    for (const row of rows) {
+        h += '<tr>';
+        for (const c of (row.cells || [])) {
+            if (rs(c) === 0) continue;   // 세로병합 연속 sentinel
+            const tag = row.hd ? 'th' : 'td';
+            const span = `${cs(c) > 1 ? ` colspan="${cs(c)}"` : ''}${rs(c) > 1 ? ` rowspan="${rs(c)}"` : ''}`;
+            const b = bg(c);
+            const style = b ? ` style="background:#${escHtml(b)}"` : '';
+            h += `<${tag}${span}${style}>${txt(c)}</${tag}>`;
+        }
+        h += '</tr>';
+    }
+    return h + '</tbody></table>';
+}
+
+/** IR blocks → HTML (재귀: 인용 중첩 지원) */
+function irBlocksToHtml(blocks) {
+    let h = '';
+    for (const b of (blocks || [])) {
+        switch (b.type) {
+            case 'heading': { const l = Math.min(b.level || 1, 6); h += `<h${l}>${escHtml(b.text || '')}</h${l}>`; break; }
+            case 'para':
+                if (b.runs && b.runs.length) { const inner = irRunsToHtml(b.runs); h += `<p>${inner || '&nbsp;'}</p>`; }
+                else if (b.text && b.text.trim()) h += `<p>${escHtml(b.text)}</p>`;
+                else h += '<p>&nbsp;</p>';
+                break;
+            case 'blank': h += '<p>&nbsp;</p>'; break;
+            case 'hr':    h += '<hr>'; break;
+            case 'code':  h += `<pre class="ir-code"><code>${escHtml(b.text || '')}</code></pre>`; break;
+            case 'list':  h += irListToHtml(b); break;
+            case 'table': h += irTableToHtml(b); break;
+            case 'quote': h += `<blockquote>${irBlocksToHtml(b.blocks)}</blockquote>`; break;
+            case 'image': h += `<p class="ir-image">🖼 [이미지${b.alt ? ': ' + escHtml(b.alt) : ''}]</p>`; break;
+            default: if (b.text) h += `<p>${escHtml(b.text)}</p>`;
+        }
+    }
+    return h;
+}
+
+/** 미리보기 모달 열기 — 기본은 IR을 HTML로 즉시 렌더(빠르고 100% 로컬) */
+function openPreview(blob) {
+    const modal = document.getElementById('preview-modal');
+    if (!modal) return;
     modal.classList.add('open');
+    document.body.style.overflow = 'hidden';
+
+    const irBox   = document.getElementById('preview-ir');
+    const wrap    = document.getElementById('preview-iframe-wrap');
+    const countEl = document.getElementById('preview-pagecount');
+    if (countEl) countEl.textContent = '';
+    if (wrap) wrap.hidden = true;          // 정밀(rhwp) 영역은 기본 숨김
+    if (irBox) {
+        irBox.hidden = false;
+        irBox.innerHTML = state.ir
+            ? `<div class="ir-page">${state.ir.title && state.ir.title.trim()
+                ? `<h1 class="ir-title">${escHtml(state.ir.title.trim())}</h1>` : ''}${irBlocksToHtml(state.ir.blocks)}</div>`
+            : '<p class="preview-empty">미리보기할 내용이 없습니다. 먼저 파일을 변환해 주세요.</p>';
+    }
+}
+
+/** 정밀 미리보기 — 외부 rhwp(WebAssembly) 뷰어를 선택적으로 로드 */
+async function loadRhwpPrecise() {
+    const wrap    = document.getElementById('preview-iframe-wrap');
+    const irBox   = document.getElementById('preview-ir');
+    const iframe  = document.getElementById('rhwp-iframe');
+    const loading = document.getElementById('preview-loading');
+    const countEl = document.getElementById('preview-pagecount');
+    if (!wrap || !iframe || !state.hwpxBlob) return;
+
+    if (irBox) irBox.hidden = true;
+    wrap.hidden = false;
+    if (!iframe.src && iframe.dataset.src) iframe.src = iframe.dataset.src;  // 클릭 시에만 외부 로드
+
     loading.classList.remove('preview-loading--fallback');
     loading.style.display = 'flex';
-
-    // 5초 후 건너뛰기 버튼 표시 — 사용자가 기다리다 닫는 상황 방지
-    let _skipResolve = null;
-    const skipPromise = new Promise(resolve => { _skipResolve = resolve; });
-
     loading.innerHTML = `
         <div style="text-align:center">
             <div class="loading-spinner"></div>
             <p>rhwp 뷰어를 불러오는 중...</p>
             <p class="preview-loading-sub">최초 실행 시 WebAssembly 로드로 10~20초 소요될 수 있습니다</p>
-            <button id="skip-rhwp-btn" class="btn-skip-rhwp" style="display:none;margin-top:14px">
-                내장 미리보기로 바로 전환
-            </button>
         </div>`;
 
-    const skipBtn = document.getElementById('skip-rhwp-btn');
-    if (skipBtn) skipBtn.addEventListener('click', () => { if (_skipResolve) _skipResolve(); });
-    const skipTimer = setTimeout(() => {
-        if (skipBtn) skipBtn.style.display = 'inline-block';
-    }, 5000);
-
-    if (countEl) countEl.textContent = '';
-    document.body.style.overflow = 'hidden';
-
     try {
-        // 클라이언트 최초 초기화 (iframe이 바뀌지 않으면 재사용)
         if (!_rhwpClient) _rhwpClient = new RhwpEditorClient(iframe);
-
-        // WASM 준비 대기 — 사용자 건너뛰기와 경쟁
-        const isReady = await Promise.race([
-            _rhwpClient.waitReady().then(() => true),
-            skipPromise.then(() => false),
-        ]);
-        clearTimeout(skipTimer);
-
-        if (!isReady) throw new Error('사용자가 내장 미리보기로 전환했습니다');
-
-        // Blob → ArrayBuffer → rhwp 로드 (반환값: {pageCount: number})
-        const buf      = await blob.arrayBuffer();
+        await _rhwpClient.waitReady();
+        const buf      = await state.hwpxBlob.arrayBuffer();
         const fileName = (state.file?.name || 'document').replace(/\.[^.]+$/, '') + '.hwpx';
         const result   = await _rhwpClient.loadFile(buf, fileName);
-
-        if (result?.pageCount && countEl) {
-            countEl.textContent = `총 ${result.pageCount}페이지`;
-        }
+        if (result?.pageCount && countEl) countEl.textContent = `총 ${result.pageCount}페이지`;
         loading.style.display = 'none';
     } catch (err) {
-        clearTimeout(skipTimer);
         console.error('[rhwp]', err);
-        try {
-            await renderBuiltInPreview(blob, err, loading, countEl);
-        } catch (fallbackErr) {
-            loading.classList.remove('preview-loading--fallback');
-            loading.innerHTML = `
-                <div style="text-align:center;padding:24px">
-                    <p style="font-size:1.8rem;margin-bottom:10px">⚠</p>
-                    <p style="font-weight:600;color:var(--c-error)">미리보기 로드 실패</p>
-                    <p style="font-size:0.8rem;color:var(--c-text-muted);margin-top:6px">${escHtml(fallbackErr.message)}</p>
-                    <p style="font-size:0.78rem;color:var(--c-text-muted);margin-top:4px">
-                        생성된 HWPX는 다운로드 후 한컴오피스에서 확인할 수 있습니다.
-                    </p>
-                </div>`;
-            console.error('[preview fallback]', fallbackErr);
-        }
+        loading.innerHTML = `
+            <div style="text-align:center;padding:24px">
+                <p style="font-size:1.8rem;margin-bottom:10px">⚠</p>
+                <p style="font-weight:600;color:var(--c-error)">정밀 미리보기를 불러오지 못했습니다</p>
+                <p style="font-size:0.8rem;color:var(--c-text-muted);margin-top:6px">${escHtml(err.message || '')}</p>
+                <p style="font-size:0.78rem;color:var(--c-text-muted);margin-top:4px">
+                    기본 미리보기를 사용하거나, 다운로드 후 한컴오피스에서 확인하세요.
+                </p>
+            </div>`;
     }
 }
 

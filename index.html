@@ -97,7 +97,7 @@
             <span>｢BWYF｣ AX Challenger 2026</span>
             <!-- [주의] id="open-changelog"는 app.js에서 업데이트 내역 모달을 여는 연결값 -->
             <button class="util-changelog-btn" id="open-changelog" aria-label="업데이트 내역 보기">
-                📋 v4.3.33 업데이트 내역
+                📋 v4.3.34 업데이트 내역
             </button>
         </div>
     </div>
@@ -823,11 +823,16 @@
             <span class="modal-title">📄 HWPX 미리보기</span>
             <div class="modal-header-actions">
                 <span id="preview-pagecount" class="preview-pageinfo"></span>
+                <!-- 기본: 빠른 로컬 미리보기(IR). 정밀 뷰어(rhwp)는 선택 -->
+                <button type="button" id="open-rhwp-precise" class="btn-precise-preview">정밀 미리보기(베타)</button>
                 <button class="modal-close" id="close-preview" aria-label="미리보기 닫기">✕</button>
             </div>
         </div>
         <div class="modal-body">
-            <div class="preview-iframe-wrap">
+            <!-- 기본 미리보기: IR을 HTML로 즉시 렌더 (빠르고 100% 로컬) -->
+            <div id="preview-ir" class="preview-ir" aria-label="문서 구조 미리보기"></div>
+            <!-- 정밀 미리보기 영역 (버튼 클릭 시에만 사용) -->
+            <div class="preview-iframe-wrap" id="preview-iframe-wrap" hidden>
                 <div class="preview-loading" id="preview-loading">
                     <div>
                         <div class="loading-spinner"></div>
@@ -835,17 +840,18 @@
                         <p class="preview-loading-sub">최초 실행 시 WebAssembly 로드로 10~20초 소요될 수 있습니다</p>
                     </div>
                 </div>
-                <!-- rhwp studio — 외부 뷰어가 응답하지 않으면 JS 내장 미리보기로 전환 -->
+                <!-- rhwp studio — 외부 WASM 뷰어 (선택, 접속 불가 시 위 기본 미리보기 사용) -->
                 <iframe id="rhwp-iframe"
-                        src="https://edwardkim.github.io/rhwp/"
-                        title="HWPX 미리보기 뷰어"
+                        title="HWPX 정밀 미리보기 뷰어"
                         allow="clipboard-read; clipboard-write"
-                        sandbox="allow-scripts allow-same-origin allow-forms allow-popups">
+                        sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+                        data-src="https://edwardkim.github.io/rhwp/">
                 </iframe>
             </div>
             <div class="preview-footer">
-                미리보기는 <a href="https://github.com/edwardkim/rhwp" target="_blank" rel="noopener">rhwp</a>
-                (WebAssembly 기반 오픈소스 뷰어)를 사용합니다. 화면 미리보기와 한컴오피스에서 여는 최종 결과는 글꼴, 여백, 표 너비가 다를 수 있습니다.
+                기본 미리보기는 문서 구조를 브라우저 안에서 바로 렌더한 것으로, 한컴오피스의 글꼴·여백·표 너비와 다를 수 있습니다.
+                정확한 결과는 다운로드 후 한컴오피스에서 확인하세요. '정밀 미리보기'는 외부
+                <a href="https://github.com/edwardkim/rhwp" target="_blank" rel="noopener">rhwp</a> 뷰어(WebAssembly)를 사용합니다.
             </div>
         </div>
     </div>
