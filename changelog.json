@@ -1,6 +1,19 @@
 {
-  "current": "4.3.35",
+  "current": "4.3.36",
   "versions": [
+    {
+      "version": "4.3.36",
+      "date": "2026-06-22",
+      "user": [
+        "'상단 제목 블록' 선택을 미리보기가 보이는 카드 방식으로 바꿨습니다 — 표지 디자인을 눈으로 보고 고를 수 있습니다",
+        "'자동 다운로드' 설정을 최신 토글 스위치로 바꿔 더 깔끔해졌습니다"
+      ],
+      "dev": [
+        "[v4.3.36] index.html/style.css: 상단 제목 블록 select → 라디오 카드(미니 미리보기: 청록/초록/보라→노랑 밴드·점선) 4종, 자동 다운로드 체크박스 → 토글 스위치(.toggle-*)",
+        "[v4.3.36] app.js: doc-type 라디오(name=doc-type) change 핸들러로 state.docType 갱신, 초기화는 plain 라디오 checked로 변경 (getElementById('doc-type') 제거)",
+        "[v4.3.36] sw.js: CACHE_VERSION to-hwpx-v4.3.36, index.html v4.3.36"
+      ]
+    },
     {
       "version": "4.3.35",
       "date": "2026-06-22",
