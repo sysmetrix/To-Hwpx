@@ -1,6 +1,23 @@
 {
-  "current": "4.3.38",
+  "current": "4.3.39",
   "versions": [
+    {
+      "version": "4.3.39",
+      "date": "2026-06-22",
+      "user": [
+        "표지/기본형 머리말 표 전체 높이를 22.96mm로 통일했습니다 (색띠: 단위형 1.91mm·연간형/기본형 1.35mm)",
+        "단위형 하단 그라데이션을 원형으로 바꿨습니다",
+        "기본형도 표지처럼 [팀명/이름] 칸을 쓰도록 통일했습니다",
+        "세 형식 모두 맨 아래 점선을 0.12mm로, 표 아래 바깥 여백을 3mm로 맞췄습니다"
+      ],
+      "dev": [
+        "[v4.3.39] hwpx.js: buildCoverTable 총높이 22.96mm 고정 — 색띠 style별(unit 1.91/그외 1.35mm), 이름칸 8.22mm, 중간칸=22.96-띠×2-8.22 역산",
+        "[v4.3.39] hwpx.js: borderFill 13 그라데이션 type LINEAR→RADIAL(원형), 17 하단 점선 width 0.2→0.12mm",
+        "[v4.3.39] hwpx.js: 모든 표지 이름칸을 [팀명/이름]+borderFill 17로 통일(기본형 소속/작성자 제거), 표 outMargin 아래 mmToHwp(3)",
+        "[v4.3.39] index.html: 기본형 안내문 갱신([팀명/이름] 통일)",
+        "[v4.3.39] sw.js: CACHE_VERSION to-hwpx-v4.3.39, index.html v4.3.39"
+      ]
+    },
     {
       "version": "4.3.38",
       "date": "2026-06-22",
