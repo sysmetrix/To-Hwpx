@@ -781,8 +781,9 @@ a:hover { text-decoration: underline; }
     grid-template-columns: repeat(4, 1fr);
     gap: 0 10px;
 }
+/* 한글 폰트 · 글꼴 크기 · 용지 크기 · 용지 방향 — 한 줄(4열). 폰트만 넓게, 나머지는 좁게 */
 .options-grid-advanced {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.2fr);
 }
 
 .advanced-settings {
