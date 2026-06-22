@@ -97,7 +97,7 @@
             <span>｢BWYF｣ AX Challenger 2026</span>
             <!-- [주의] id="open-changelog"는 app.js에서 업데이트 내역 모달을 여는 연결값 -->
             <button class="util-changelog-btn" id="open-changelog" aria-label="업데이트 내역 보기">
-                📋 v4.3.20 업데이트 내역
+                📋 v4.3.21 업데이트 내역
             </button>
         </div>
     </div>
@@ -229,17 +229,18 @@
                         <span id="detected-format" aria-live="polite"></span>
                     </div>
                 </div>
-                <!-- 포맷 힌트 — 포맷 카드 → '이 포맷으로 변환하기' 클릭 시 노출 -->
-                <div id="format-hint" role="status" aria-live="polite"></div>
-
-                <!-- 문서 제목 (전체 폭 — 가장 먼저 설정) -->
-                <div class="form-row">
-                    <label for="doc-title">문서 제목 <small style="font-weight:400;color:var(--c-text-muted)">(선택 — 비우면 자동 감지)</small></label>
-                    <input type="text"
-                           id="doc-title"
-                           name="doc-title"
-                           placeholder="파일 선택 시 자동 입력"
-                           maxlength="200">
+                <div class="title-format-row">
+                    <!-- 문서 제목 (전체 폭 — 가장 먼저 설정) -->
+                    <div class="form-row title-row-main">
+                        <label for="doc-title">문서 제목 <small style="font-weight:400;color:var(--c-text-muted)">(선택 — 비우면 자동 감지)</small></label>
+                        <input type="text"
+                               id="doc-title"
+                               name="doc-title"
+                               placeholder="파일 선택 시 자동 입력"
+                               maxlength="200">
+                    </div>
+                    <!-- 포맷 힌트 — 파일 선택/포맷 카드 클릭 시 노출 -->
+                    <div id="format-hint" role="status" aria-live="polite"></div>
                 </div>
 
                 <details class="advanced-settings">

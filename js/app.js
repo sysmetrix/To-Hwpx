@@ -1796,6 +1796,7 @@ function resetConverterState() {
     }
     applyOrientationUi('portrait');
     updateConvertButton(false);
+    document.getElementById('hero-title')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     showAlert('선택 파일과 변환 옵션을 기본값으로 초기화했습니다.');
 }
 

@@ -1,6 +1,20 @@
 {
-  "current": "4.3.20",
+  "current": "4.3.21",
   "versions": [
+    {
+      "version": "4.3.21",
+      "date": "2026-06-22",
+      "user": [
+        "문서 형태 감지 안내를 문서 제목 오른쪽에 배치해 선택한 파일의 변환 기대치를 더 가까이 볼 수 있게 했습니다",
+        "초기화 버튼을 누르면 선택 파일과 옵션을 되돌린 뒤 첫 화면으로 이동합니다"
+      ],
+      "dev": [
+        "[v4.3.21] index.html/style.css: doc-title과 format-hint를 title-format-row 2열 레이아웃으로 묶고 모바일 단일열 대응",
+        "[v4.3.21] app.js: resetConverterState() 완료 후 hero-title로 smooth scroll",
+        "[v4.3.21] index.html: 업데이트 내역 버튼 v4.3.21 반영",
+        "[v4.3.21] sw.js: CACHE_VERSION to-hwpx-v4.3.21"
+      ]
+    },
     {
       "version": "4.3.20",
       "date": "2026-06-22",

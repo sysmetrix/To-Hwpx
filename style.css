@@ -842,6 +842,16 @@ a:hover { text-decoration: underline; }
     color: var(--c-text-sub);
 }
 
+.title-format-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(220px, 0.48fr);
+    gap: 14px;
+    align-items: start;
+}
+.title-format-row .title-row-main {
+    min-width: 0;
+}
+
 /* 페이지 여백 — 2열 그리드 */
 .margin-grid-2col {
     display: grid;
@@ -1053,9 +1063,10 @@ a:hover { text-decoration: underline; }
     font-size: 0.85rem;
     color: var(--c-text-sub);
     background: var(--c-accent-light);
-    padding: 6px 12px;
+    padding: 9px 12px;
     border-radius: var(--radius-sm);
-    margin-bottom: 16px;
+    margin-bottom: 18px;
+    min-height: 59px;
 }
 .format-hint-head {
     display: flex;
@@ -1646,6 +1657,7 @@ a:hover { text-decoration: underline; }
     .options-2col { grid-template-columns: 1fr; }
     .options-grid-4col { grid-template-columns: repeat(2, 1fr); }
     .advanced-settings-grid { grid-template-columns: 1fr; }
+    .title-format-row { grid-template-columns: 1fr; gap: 0; }
     #pipeline-steps { grid-template-columns: repeat(4, 1fr); }
     .result-primary { align-items: stretch; flex-direction: column; }
     .btn-download-primary { justify-content: center; width: 100%; }
