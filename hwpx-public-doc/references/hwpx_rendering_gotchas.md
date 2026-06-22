@@ -31,6 +31,15 @@ OWPML은 요소마다 소속 네임스페이스가 정해져 있다. **prefix를
 </hh:borderFill>
 ```
 
+### 이미지(그림)도 같은 함정 — v4.3.45에서 해결
+
+- **증상:** 이미지가 든 DOCX를 변환하면 HWPX가 한글에서 **오류 창이 뜨고 안 열림**.
+- **원인 3가지:**
+  1. `hp:pic` 구조가 비표준(`hp:instd`·`hp:picEffect` 등)이었음. 정식 구조는 `hp:offset/orgSz/curSz/flip/rotationInfo/renderingInfo(hc:transMatrix…)/imgRect(hc:pt0…)/imgClip/inMargin/imgDim/hc:img/sz/pos`.
+  2. 그림 바이너리 참조는 **`<hc:img binaryItemIDRef="image1">`(문자열 id)** 이고, 그 id는 **`content.hpf`의 `<opf:item id="image1" href="BinData/image1.jpg" media-type="image/jpg" isEmbeded="1"/>`** 와 매칭된다. header의 `hh:binDataList`가 아니다(제거함).
+  3. `hc:img`·`hc:pt0` 등 hc: 요소를 쓰므로 **section0 루트에 `xmlns:hc` 선언 필요**.
+- **확인처:** hwpxlib `testFile/reader_writer/SimplePicture.hwpx` (실제 한컴 그림 HWPX 샘플) — GitHub API로 받아 `Contents/section0.xml`의 `hp:pic`, `content.hpf`를 그대로 대조.
+
 ---
 
 ## 2. 정답 확인처 — 추측하지 말고 한컴 호환 라이브러리와 대조

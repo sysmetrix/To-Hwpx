@@ -7,6 +7,7 @@
 - `md_hwpx_test.md` — H1~H6·중첩목록·태스크리스트·표·코드블록·취소선·밑줄·HTML인라인·HR 종합 입력
 - `sample.docx` — 제목(영문/한글/outlineLvl) + 굵게/기울임/밑줄/취소선/글자색 DOCX 입력
 - `docx_table_test.docx` — 가로/세로 병합 + **중첩 표** + 일반 표 DOCX 입력 (표 격자 무결성 회귀 방지)
+- `docx_image_test.docx` — **본문 이미지(PNG)** 가 든 DOCX (그림 hp:pic·content.hpf 선언·BinData 회귀 방지 — 한글에서 열리는지 확인)
 - `../samples/*.hwpx` — 위 입력의 변환 통과본(참고용, 한컴오피스로 직접 열어 시각 확인)
 - 자동 검증: 저장소 루트에서 `node qa/gate.js qa/fixtures/md_hwpx_test.md` (①~⑥ 모두 PASS면 exit 0). 사용법은 `qa/gate.js` 상단 주석 참고.
   - ⑥ 표 격자 무결성: 모든 표의 (행,열)이 span 반영 시 정확히 1회 덮이는지 검사 — 중첩 표 누수·들쭉날쭉한 행이 만드는 "한컴이 안 열리는 깨진 표" 차단

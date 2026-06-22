@@ -109,6 +109,29 @@ const CONTENT_HPF = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 
 const MIN_PNG_B64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
 
+/**
+ * content.hpf 동적 생성 — 이미지가 있으면 opf:manifest에 BinData를 선언한다.
+ * 그림(hc:img@binaryItemIDRef)이 참조하는 id = 여기 opf:item@id (binName에서 확장자 제외).
+ * (한컴 호환 라이브러리 hwpxlib SimplePicture.hwpx 기준)
+ */
+function buildContentHpf(imageBlocks = []) {
+    const items = imageBlocks.map(img => {
+        const id  = String(img.binName).replace(/\.[^.]+$/, '');
+        const ext = String(img.binName).split('.').pop().toLowerCase();
+        const mt  = 'image/' + (ext === 'jpeg' ? 'jpg' : ext);
+        return `    <opf:item id="${id}" href="BinData/${img.binName}" media-type="${mt}" isEmbeded="1"/>`;
+    }).join('\n');
+    return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<opf:package xmlns:opf="http://www.idpf.org/2007/opf/" xmlns:hp="http://www.hancom.co.kr/hwpml/2011/paragraph" xmlns:hc="http://www.hancom.co.kr/hwpml/2011/core" xmlns:hh="http://www.hancom.co.kr/hwpml/2011/head" xmlns:hs="http://www.hancom.co.kr/hwpml/2011/section" xmlns:hpf="http://www.hancom.co.kr/schema/2011/hpf" version="" unique-identifier="" id="">
+  <opf:metadata><opf:title>HWPX Document</opf:title></opf:metadata>
+  <opf:manifest>
+    <opf:item id="header" href="Contents/header.xml" media-type="application/xml"/>
+${items ? items + '\n' : ''}    <opf:item id="section0" href="Contents/section0.xml" media-type="application/xml"/>
+  </opf:manifest>
+  <opf:spine><opf:itemref idref="section0" linear="yes"/></opf:spine>
+</opf:package>`;
+}
+
 
 // ─────────────────────────────────────────────────────────────────────────
 // [XML 유틸리티]
@@ -160,18 +183,34 @@ function buildImageRun(imgBlock, imgIndex, contentWidthHwp = 48000) {
         h = Math.round(h * contentWidthHwp / w);
         w = contentWidthHwp;
     }
-    const binId = imgIndex + 1; // 1-based
+    // 그림 바이너리 참조 id = content.hpf manifest의 opf:item id = binName(확장자 제외)
+    const imgId   = String(imgBlock.binName || `image${imgIndex + 1}`).replace(/\.[^.]+$/, '');
+    const shapeId = 1500000000 + imgIndex;
+    const instId  = 1600000000 + imgIndex;
+    // OWPML 정식 그림 구조 (hwpxlib SimplePicture.hwpx 기준). hc: 요소는 section0 루트에 xmlns:hc 선언됨.
     return `<hp:p id="${pid}" paraPrIDRef="0" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0">` +
         `<hp:run charPrIDRef="0">` +
-        `<hp:pic id="P${String(binId).padStart(8, '0')}" pictureType="img" reverse="0" watermark="0" picSubType="0" zOrder="0">` +
-        `<hp:sz width="${w}" height="${h}"/>` +
+        `<hp:pic id="${shapeId}" zOrder="0" numberingType="PICTURE" textWrap="TOP_AND_BOTTOM" ` +
+        `textFlow="BOTH_SIDES" lock="0" dropcapstyle="None" href="" groupLevel="0" instid="${instId}" reverse="0">` +
+        `<hp:offset x="0" y="0"/>` +
+        `<hp:orgSz width="${w}" height="${h}"/>` +
+        `<hp:curSz width="${w}" height="${h}"/>` +
+        `<hp:flip horizontal="0" vertical="0"/>` +
+        `<hp:rotationInfo angle="0" centerX="${Math.round(w / 2)}" centerY="${Math.round(h / 2)}" rotateimage="1"/>` +
+        `<hp:renderingInfo>` +
+        `<hc:transMatrix e1="1" e2="0" e3="0" e4="0" e5="1" e6="0"/>` +
+        `<hc:scaMatrix e1="1" e2="0" e3="0" e4="0" e5="1" e6="0"/>` +
+        `<hc:rotMatrix e1="1" e2="0" e3="0" e4="0" e5="1" e6="0"/>` +
+        `</hp:renderingInfo>` +
+        `<hp:imgRect><hc:pt0 x="0" y="0"/><hc:pt1 x="${w}" y="0"/><hc:pt2 x="${w}" y="${h}"/><hc:pt3 x="0" y="${h}"/></hp:imgRect>` +
+        `<hp:imgClip left="0" right="${w}" top="0" bottom="${h}"/>` +
+        `<hp:inMargin left="0" right="0" top="0" bottom="0"/>` +
+        `<hp:imgDim dimwidth="${w}" dimheight="${h}"/>` +
+        `<hc:img binaryItemIDRef="${imgId}" bright="0" contrast="0" effect="REAL_PIC" alpha="0"/>` +
+        `<hp:sz width="${w}" widthRelTo="ABSOLUTE" height="${h}" heightRelTo="ABSOLUTE" protect="0"/>` +
         `<hp:pos treatAsChar="1" affectLSpacing="0" flowWithText="1" allowOverlap="0" holdAnchorAndSO="0" ` +
-        `vertRelTo="PARA" horzRelTo="COLUMN" vertAlign="TOP" horzAlign="LEFT" vertOffset="0" horzOffset="0"/>` +
+        `vertRelTo="PARA" horzRelTo="COLUMN" vertAlign="TOP" horzAlign="CENTER" vertOffset="0" horzOffset="0"/>` +
         `<hp:outMargin left="0" right="0" top="0" bottom="0"/>` +
-        `<hp:picEffect effect="REAL_PIC" alpha="255">` +
-        `<hp:imgRectangle left="0" top="0" right="${w}" bottom="${h}"/>` +
-        `</hp:picEffect>` +
-        `<hp:instd binDataIDRef="${binId}"/>` +
         `</hp:pic>` +
         `</hp:run>` +
         `</hp:p>`;
@@ -557,14 +596,6 @@ ${[...customBfMap.entries()].map(([key, bfId]) => {
       </hh:borderFill>`;
 }).join('\n')}
     </hh:borderFills>
-${imageBlocks.length
-    ? `    <hh:binDataList itemCnt="${imageBlocks.length}">
-${imageBlocks.map((img, i) => {
-        const fmt = img.binName.split('.').pop().toUpperCase();
-        return `      <hh:binData id="${i + 1}" type="EMBED" format="${fmt}" compress="COMPRESS" inAccessible="0">BinData/${img.binName}</hh:binData>`;
-    }).join('\n')}
-    </hh:binDataList>`
-    : ''}
   </hh:refList>
 ${(docHeaderFooter.header || docHeaderFooter.footer)
     ? `  <hh:masterPages itemCnt="1">${buildMasterPage(docHeaderFooter.header || '', docHeaderFooter.footer || '')}</hh:masterPages>`
@@ -1206,7 +1237,7 @@ function buildSection(ir, marginsHwp, paperKey, landscape = false, customBfMap =
     }
 
     return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n` +
-        `<hs:sec xmlns:hs="${NS_HS}" xmlns:hp="${NS_HP}">` +
+        `<hs:sec xmlns:hs="${NS_HS}" xmlns:hp="${NS_HP}" xmlns:hc="http://www.hancom.co.kr/hwpml/2011/core">` +
         parts.join('') +
         `</hs:sec>`;
 }
@@ -1307,7 +1338,7 @@ ${imageBlocks.map(img => `  <odf:file-entry odf:full-path="BinData/${img.binName
     zip.file('META-INF/manifest.xml',  manifestXml);
     zip.file('Contents/header.xml',    headerXml);
     zip.file('Contents/section0.xml',  section0Xml);
-    zip.file('Contents/content.hpf',   CONTENT_HPF);
+    zip.file('Contents/content.hpf',   imageBlocks.length ? buildContentHpf(imageBlocks) : CONTENT_HPF);
     zip.file('Preview/PrvText.txt',    ir.title || 'To HWPX 변환 문서');
     zip.file('Preview/PrvImage.png',   MIN_PNG_B64, { base64: true });
 
