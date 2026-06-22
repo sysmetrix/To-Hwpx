@@ -1,6 +1,20 @@
 {
-  "current": "4.3.32",
+  "current": "4.3.33",
   "versions": [
+    {
+      "version": "4.3.33",
+      "date": "2026-06-22",
+      "user": [
+        "표 머리글 음영·코드블록 검정 배경·DOCX 셀 배경색이 한글에서 보이지 않던 문제를 완전히 해결했습니다 (채우기가 잘못된 위치에 기록돼 무시되던 것)",
+        "이제 코드블록은 검은 배경+흰 글자, 표 머리글은 회색 음영으로 제대로 표시됩니다"
+      ],
+      "dev": [
+        "[v4.3.33] hwpx.js: 채우기 fillBrush/winBrush를 hh:(head)→hc:(core) 네임스페이스로 교정 — OWPML 표준상 채우기는 hc 네임스페이스라 hh:로 쓰면 한컴이 무시(테두리는 hh로 정상). 이것이 표/코드/DOCX 셀 배경이 안 보이던 진짜 원인",
+        "[v4.3.33] hwpx.js: header 루트에 xmlns:hc=\"http://www.hancom.co.kr/hwpml/2011/core\" 선언 추가, winBrush 6곳 hc: 전환, alpha=0(불투명) 유지",
+        "[v4.3.33] 출처 확인: hancom-io/neolord0 hwpxlib BorderFillWriter(채우기=hc_fillBrush) 기준",
+        "[v4.3.33] sw.js: CACHE_VERSION to-hwpx-v4.3.33, index.html v4.3.33"
+      ]
+    },
     {
       "version": "4.3.32",
       "date": "2026-06-22",
