@@ -1,6 +1,19 @@
 {
-  "current": "4.3.24",
+  "current": "4.3.25",
   "versions": [
+    {
+      "version": "4.3.25",
+      "date": "2026-06-22",
+      "user": [
+        "문서 제목과 포맷 감지 안내가 같은 폭으로 보이도록 레이아웃을 조정했습니다",
+        "나눔고딕을 브라우저에서 더 안정적으로 사용할 수 있도록 글꼴 확인 방식을 보강했습니다"
+      ],
+      "dev": [
+        "[v4.3.25] style.css: title-format-row를 1fr/1fr 그리드로 변경",
+        "[v4.3.25] app.js: 나눔고딕 시스템 감지 실패 시 bundled TTF를 FontFace로 로드해 사용 가능 상태 표시",
+        "[v4.3.25] sw.js: CACHE_VERSION to-hwpx-v4.3.25"
+      ]
+    },
     {
       "version": "4.3.24",
       "date": "2026-06-22",

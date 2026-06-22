@@ -662,6 +662,22 @@ async function findLocalFont(paths) {
     return '';
 }
 
+async function loadBundledFontForPreview(font) {
+    if (!('FontFace' in window) || !font?.family || !font?.local?.length) return false;
+    for (const path of font.local) {
+        try {
+            const res = await fetch(path, { cache: 'no-store' });
+            if (!res.ok) continue;
+            const buffer = await res.arrayBuffer();
+            const face = new FontFace(font.family, buffer);
+            await face.load();
+            document.fonts.add(face);
+            return true;
+        } catch (_) {}
+    }
+    return false;
+}
+
 /**
  * 캔버스 텍스트 폭 비교로 시스템 폰트 설치 여부 감지.
  * 권한(queryLocalFonts)·CDN 불필요, 전 브라우저 동작. 대상 폰트로 렌더한 폭이
@@ -782,9 +798,14 @@ async function renderFontGuide() {
             isSystemFontInstalled(font.systemNames || [font.name], localFontsList),
             findLocalFont(font.local),
         ]);
+        const isBundledUsable = !isInstalled && font.name === '나눔고딕'
+            ? await loadBundledFontForPreview(font)
+            : false;
         const official = `<a class="font-official-link" href="${escHtml(font.official)}" target="_blank" rel="noopener">공식 사이트</a>`;
         if (isInstalled) {
             box.innerHTML = `<span class="font-installed-badge">설치됨 ✓</span>${official}`;
+        } else if (isBundledUsable) {
+            box.innerHTML = `<span class="font-installed-badge">사용 가능 ✓</span>${official}`;
         } else if (localPath) {
             box.innerHTML = `<a href="${escHtml(localPath)}" download>TTF 다운로드</a>${official}`;
         } else {
