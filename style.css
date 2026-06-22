@@ -1151,14 +1151,17 @@ a:hover { text-decoration: underline; }
 .cr-bar { height: 7px; width: 60%; border-radius: 1px; background: var(--c-text-sub); }
 .cr-line { height: 3px; width: 100%; border-radius: 1px; background: #d6dae0; }
 .cr-line--short { width: 65%; }
-.cr-band { height: 8px; width: 100%; border-radius: 1px; }
-.cr-band--cyan  { background: linear-gradient(90deg, #5BC8F5, #1E73BE); }
-.cr-band--green { background: #1E7145; }
-.cr-band--py    { background: linear-gradient(90deg, #7030A0, #FFC000); }
-.cr-dots {
-    margin-top: auto;
+.cr-band { height: 7px; width: 100%; border-radius: 1px; flex-shrink: 0; }
+.cr-band--cyan     { background: #0080C0; }
+.cr-band--cyangrad { background: linear-gradient(90deg, #0080C0, #3CBFFF); }
+.cr-band--green    { background: #126E3A; }
+.cr-band--py       { background: linear-gradient(90deg, #724598 0 80%, #FFD900 80% 100%); }
+.cr-fill { flex: 1; min-height: 4px; }
+.cr-uline {
+    flex-shrink: 0;
     height: 0;
-    border-bottom: 2px dotted #9aa0a6;
+    margin-top: 3px;
+    border-bottom: 1.5px solid #555;
 }
 @media (max-width: 560px) {
     .card-radio-group { grid-template-columns: repeat(2, 1fr); }
