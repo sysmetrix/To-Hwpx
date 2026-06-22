@@ -247,7 +247,7 @@ function clearSelectedFile() {
         dz.innerHTML = `
             <div class="drop-icon">📂</div>
             <div class="drop-title">파일을 여기에 드래그하거나 클릭하세요</div>
-            <div class="drop-sub">입력 가능 포맷: MD · HTML · TXT · CSV · XLSX · JSON · IPYNB · DOCX · HWP · HWPX / 출력: HWPX</div>
+            <div class="drop-sub">입력 포맷: MD · HTML · TXT · CSV · XLSX · JSON · IPYNB · DOCX · HWP · HWPX<br>출력: HWPX</div>
         `;
     }
 

@@ -1,6 +1,20 @@
 {
-  "current": "4.3.21",
+  "current": "4.3.22",
   "versions": [
+    {
+      "version": "4.3.22",
+      "date": "2026-06-22",
+      "user": [
+        "첫 화면 제목을 HWPX로 간결하게 줄이고, 중복 설명 문구를 제거했습니다",
+        "드래그앤드롭 영역의 입력/출력 포맷 안내를 두 줄로 나눠 더 읽기 쉽게 정리했습니다"
+      ],
+      "dev": [
+        "[v4.3.22] index.html: hero-title을 HWPX로 단순화하고 hero-sub 입력/출력 설명 제거",
+        "[v4.3.22] index.html/app.js: drop-sub 문구를 입력 포맷/출력 HWPX 2줄 표기로 변경",
+        "[v4.3.22] index.html: 업데이트 내역 버튼 v4.3.22 반영",
+        "[v4.3.22] sw.js: CACHE_VERSION to-hwpx-v4.3.22"
+      ]
+    },
     {
       "version": "4.3.21",
       "date": "2026-06-22",
