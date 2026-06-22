@@ -2241,6 +2241,49 @@ a:hover { text-decoration: underline; }
 /* ─────────────────────────────────────────────────────────────────
    [미리보기 모달]
    ───────────────────────────────────────────────────────────────── */
+/* IR 기본 미리보기 (빠른 로컬 렌더) */
+.preview-ir {
+    height: 72vh;
+    overflow: auto;
+    background: #e9ecef;
+    padding: 24px;
+}
+.preview-ir .ir-page {
+    max-width: 720px;
+    margin: 0 auto;
+    background: #fff;
+    padding: 40px 48px;
+    box-shadow: var(--shadow-md);
+    border-radius: 2px;
+    color: #111;
+    line-height: 1.7;
+    font-size: 0.95rem;
+    word-break: break-word;
+}
+.preview-ir .ir-title { font-size: 1.5rem; font-weight: 800; margin: 0 0 0.6em; }
+.preview-ir h1, .preview-ir h2, .preview-ir h3,
+.preview-ir h4, .preview-ir h5, .preview-ir h6 { line-height: 1.35; margin: 1em 0 0.4em; }
+.preview-ir p { margin: 0 0 0.5em; }
+.preview-ir hr { border: none; border-top: 1px solid #ccc; margin: 1em 0; }
+.preview-ir code { background: #f0f0f0; padding: 1px 5px; border-radius: 3px; font-size: 0.88em; }
+.preview-ir pre.ir-code {
+    background: #000; color: #fff; padding: 12px 14px; border-radius: 4px;
+    overflow: auto; margin: 0.6em 0;
+}
+.preview-ir pre.ir-code code { background: none; color: inherit; padding: 0; }
+.preview-ir .ir-list { margin: 0.3em 0; }
+.preview-ir .ir-li { margin: 0.15em 0; }
+.preview-ir blockquote {
+    margin: 0.6em 0; padding: 4px 14px; border-left: 3px solid #b0b8c0; color: #555;
+}
+.preview-ir .ir-image { color: #888; font-style: italic; }
+.preview-ir table.ir-table { border-collapse: collapse; margin: 0.8em 0; width: 100%; }
+.preview-ir table.ir-table th, .preview-ir table.ir-table td {
+    border: 1px solid #999; padding: 5px 9px; text-align: left; vertical-align: top;
+}
+.preview-ir table.ir-table th { background: #D9D9D9; font-weight: 700; }
+.preview-ir .preview-empty { color: var(--c-text-muted); text-align: center; padding: 40px; }
+
 .preview-iframe-wrap {
     position: relative;
     width: 100%;
@@ -2270,6 +2313,19 @@ a:hover { text-decoration: underline; }
     color: var(--c-text-muted);
     margin-top: 6px;
 }
+.btn-precise-preview {
+    padding: 5px 12px;
+    background: none;
+    border: 1.5px solid var(--c-border);
+    border-radius: var(--radius-sm);
+    color: var(--c-text-sub);
+    font-family: var(--font-main);
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color var(--trans), color var(--trans);
+}
+.btn-precise-preview:hover { border-color: var(--c-primary); color: var(--c-primary); }
 .btn-skip-rhwp {
     display: inline-block;
     padding: 8px 18px;
