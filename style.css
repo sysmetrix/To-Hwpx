@@ -430,7 +430,7 @@ a:hover { text-decoration: underline; }
     justify-content: center;
     gap: 8px;
     flex-wrap: wrap;
-    margin: 0 auto 32px;
+    margin: 18px auto 0;
 }
 .hero-badges span,
 .hero-badges button {

@@ -98,7 +98,7 @@
             <span>｢BWYF｣ AX Challenger 2026</span>
             <!-- [주의] id="open-changelog"는 app.js에서 업데이트 내역 모달을 여는 연결값 -->
             <button class="util-changelog-btn" id="open-changelog" aria-label="업데이트 내역 보기">
-                📋 v4.4.8 업데이트 내역
+                📋 v4.4.9 업데이트 내역
             </button>
         </div>
     </div>
@@ -171,22 +171,21 @@
         <!-- [문구 수정 가능] h1 안의 글자와 줄바꿈(<br>)만 수정. id="hero-title"은 유지 -->
         <h1 id="hero-title">그냥 한글로,<br>TO HWPX</h1>
 
-        <!-- 서브 설명 -->
-        <!-- [문구 수정 가능] 서비스 소개 문구만 수정 -->
+        <!-- 파일 드롭존 (app.js의 initDropZone에서 이벤트 연결) -->
+        <div id="drop-zone" class="drop-zone" role="button" tabindex="0"
+             aria-label="파일을 드래그하거나 클릭하여 선택">
+            <div class="drop-icon">📂</div>
+            <div class="drop-title">파일을 여기에 드래그하거나 클릭하세요</div>
+            <div class="drop-sub">입력: MD · HTML · TXT · CSV · XLSX · JSON · IPYNB · DOCX · HWP<br>출력: HWPX</div>
+        </div>
+
+        <!-- 보조 안내 버튼 — 첫 행동(파일 선택)을 방해하지 않도록 드롭존 아래에 배치 -->
         <div class="hero-badges" aria-label="지원 실행 환경">
             <!-- [주의] 아래 버튼 id는 app.js 모달 열기 기능과 연결됨. 글자만 수정 -->
             <button type="button" id="open-pc-guide">PC 브라우저 지원</button>
             <button type="button" id="open-mobile-guide">모바일 브라우저 지원</button>
             <button type="button" id="open-install-guide">앱처럼 설치 가능</button>
             <button type="button" id="open-privacy-guide">안전한 로컬 처리</button>
-        </div>
-
-        <!-- 파일 드롭존 (app.js의 initDropZone에서 이벤트 연결) -->
-        <div id="drop-zone" class="drop-zone" role="button" tabindex="0"
-             aria-label="파일을 드래그하거나 클릭하여 선택">
-            <div class="drop-icon">📂</div>
-            <div class="drop-title">파일을 여기에 드래그하거나 클릭하세요</div>
-            <div class="drop-sub">입력: MD · HTML · TXT · CSV · XLSX · JSON · IPYNB · DOCX<br>출력: HWPX</div>
         </div>
 
         <!-- 숨겨진 파일 인풋 (드롭존 클릭 시 트리거됨) -->
@@ -220,18 +219,18 @@
                 <div class="title-format-row">
                     <!-- 문서 제목 (전체 폭 — 가장 먼저 설정) -->
                     <div class="form-row title-row-main">
-                        <label for="doc-title">문서 제목 <small style="font-weight:400;color:var(--c-text-muted)">(직접 입력 — 비우면 아래 자동 기준)</small></label>
+                        <label for="doc-title">문서 제목 <small style="font-weight:400;color:var(--c-text-muted)">(선택 사항)</small></label>
                         <input type="text"
                                id="doc-title"
                                name="doc-title"
-                               placeholder="비우면 자동 채움"
+                               placeholder="비워두면 문서에서 자동으로 찾습니다"
                                maxlength="200">
                         <p class="form-hint title-help"><b>고급 설정의 상단 제목 블록</b>을 켜면 이 제목이 문서 맨 위에 표시됩니다.</p>
                         <div class="title-source-row">
-                            <span>비워둘 때 제목 기준</span>
+                            <span>자동 제목 기준</span>
                             <select id="title-source" name="title-source" aria-label="문서 제목을 비워둘 때 적용할 제목 기준">
-                                <option value="filename">파일 이름/문서 제목</option>
-                                <option value="heading" selected>문서 첫 문장 또는 제목</option>
+                                <option value="heading" selected>문서 첫 문장/제목</option>
+                                <option value="filename">파일 이름 사용</option>
                             </select>
                         </div>
                     </div>

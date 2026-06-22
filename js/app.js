@@ -23,7 +23,7 @@ const state = {
     ir:           null,                // 파싱 완료된 IR JSON
     docType:      'plain',             // 상단 제목 블록: plain(없음)|titleblock(기본)|cover-unit(표지단위)|cover-annual(표지연간)
     customTitle:  '',                  // 사용자가 입력한 제목 (비어 있으면 자동 기준 적용)
-    titleSource:  'heading',           // 자동 제목 기준: 'filename'(파일 이름/문서 제목) | 'heading'(문서 첫 제목)
+    titleSource:  'heading',           // 자동 제목 기준: 'filename'(파일 이름) | 'heading'(문서 첫 제목)
     docFont:      '맑은 고딕',          // 출력 폰트 (기본: 맑은 고딕)
     fontSize:     12,                  // 기본 글꼴 크기 (pt)
     paperSize:    'A4',                // 용지 크기: "A4" | "B5" | "Letter"
@@ -198,7 +198,10 @@ function handleFileSelect(file) {
     const ext = getFileExtension(file.name);
     if (!SUPPORTED_EXTENSIONS.has(ext)) {
         clearSelectedFile();
-        showAlert(`지원하지 않는 파일 형식입니다: ${ext ? '.' + ext : '확장자 없음'}\n입력 가능 포맷: ${SUPPORTED_FORMAT_LABEL}\n출력: HWPX`);
+        showToast(
+            `<strong>지원하지 않는 파일 형식입니다</strong> <span>${escHtml(SUPPORTED_FORMAT_LABEL)} 파일을 선택해 주세요.</span>`,
+            { timeout: 6000 }
+        );
         return;
     }
 
@@ -254,7 +257,7 @@ function clearSelectedFile() {
         dz.innerHTML = `
             <div class="drop-icon">📂</div>
             <div class="drop-title">파일을 여기에 드래그하거나 클릭하세요</div>
-            <div class="drop-sub">입력 포맷: MD · HTML · TXT · CSV · XLSX · JSON · IPYNB · DOCX<br>출력: HWPX</div>
+            <div class="drop-sub">입력: MD · HTML · TXT · CSV · XLSX · JSON · IPYNB · DOCX · HWP<br>출력: HWPX</div>
         `;
     }
 
@@ -927,7 +930,7 @@ function initOptions() {
         });
     }
 
-    // 비워둘 때 제목 기준 (파일 이름 / 문서 첫 문장 또는 제목)
+    // 자동 제목 기준 (문서 첫 문장/제목 또는 파일 이름)
     const titleSrcEl = document.getElementById('title-source');
     if (titleSrcEl) {
         titleSrcEl.addEventListener('change', () => {
@@ -1986,7 +1989,7 @@ function resetConverterState() {
 
     state.docType = 'plain';
     state.customTitle = '';
-    state.titleSource = 'filename';
+    state.titleSource = 'heading';
     state.docFont = '맑은 고딕';
     state.fontSize = 12;
     state.paperSize = 'A4';
@@ -2005,7 +2008,7 @@ function resetConverterState() {
     const plainRadio = document.querySelector('input[name="doc-type"][value="plain"]');
     if (plainRadio) plainRadio.checked = true;
     const titleSrc = document.getElementById('title-source');
-    if (titleSrc) titleSrc.value = 'filename';
+    if (titleSrc) titleSrc.value = 'heading';
     if (docFont) docFont.value = '맑은 고딕';
     if (fontSize) fontSize.value = '12';
     if (paperSize) paperSize.value = 'A4';
