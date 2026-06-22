@@ -1,6 +1,20 @@
 {
-  "current": "4.4.4",
+  "current": "4.4.5",
   "versions": [
+    {
+      "version": "4.4.5",
+      "date": "2026-06-23",
+      "user": [
+        "서비스 안내 구분자를 제거하고, 입력 포맷 카드가 변환 화면 아래에 더 자연스럽게 이어지도록 정리했습니다",
+        "예정 포맷·동작 원리·지원 현황은 보조 안내로 접어 필요할 때만 펼쳐 볼 수 있게 했습니다"
+      ],
+      "dev": [
+        "[v4.4.5] index.html: zone-divider--info 제거, panel-basic은 상시 노출, panel-ext/panel-how/panel-support를 service-details 접힘 영역으로 이동",
+        "[v4.4.5] app.js: initFormatTabs()를 closest service-details scope로 제한해 보조 안내 탭이 기본 포맷 카드를 숨기지 않도록 수정",
+        "[v4.4.5] style.css: service-details summary/border 스타일 추가",
+        "[v4.4.5] sw.js: CACHE_VERSION to-hwpx-v4.4.5"
+      ]
+    },
     {
       "version": "4.4.4",
       "date": "2026-06-23",

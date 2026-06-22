@@ -596,6 +596,23 @@ a:hover { text-decoration: underline; }
 .format-panel { display: none; }
 .format-panel.active { display: block; }
 
+.service-details {
+    margin-top: 28px;
+    border-top: 1px solid var(--c-border);
+    padding-top: 16px;
+}
+.service-details > summary {
+    width: fit-content;
+    margin: 0 auto 18px;
+    color: var(--c-text-sub);
+    cursor: pointer;
+    font-size: 0.88rem;
+    font-weight: 700;
+}
+.service-details > summary:hover {
+    color: var(--c-primary);
+}
+
 /* 포맷 카드 그리드 */
 .format-grid {
     display: grid;

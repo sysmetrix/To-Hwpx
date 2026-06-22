@@ -98,7 +98,7 @@
             <span>｢BWYF｣ AX Challenger 2026</span>
             <!-- [주의] id="open-changelog"는 app.js에서 업데이트 내역 모달을 여는 연결값 -->
             <button class="util-changelog-btn" id="open-changelog" aria-label="업데이트 내역 보기">
-                📋 v4.4.3 업데이트 내역
+                📋 v4.4.5 업데이트 내역
             </button>
         </div>
     </div>
@@ -453,61 +453,19 @@
 
 
 <!-- ════════════════════════════════════════════════════════════════
-     [존 구분자: 서비스 안내]
-     ════════════════════════════════════════════════════════════════ -->
-<div class="zone-divider zone-divider--info" aria-hidden="true">
-    <div class="container">
-        <span class="zone-divider-label">📋 서비스 안내</span>
-    </div>
-</div>
-
-<!-- ════════════════════════════════════════════════════════════════
      [입력 가능 포맷 + 동작 원리 + 지원 현황]  탭 전환
      ════════════════════════════════════════════════════════════════ -->
 <section class="formats-section" id="formats" aria-labelledby="formats-title">
     <div class="container">
         <h2 class="section-title" id="formats-title">입력 가능 포맷</h2>
-        <p class="section-sub">입력 파일별 보존 범위와 제한사항을 확인할 수 있습니다</p>
-
-        <!-- 탭: 입력 가능 포맷 / 예정 포맷 / 동작 원리 / 지원 현황 -->
-        <!-- app.js의 initFormatTabs에서 탭 전환 로직 처리 -->
-        <div class="format-tabs" role="tablist">
-            <button class="format-tab active"
-                    data-target="panel-basic"
-                    role="tab"
-                    aria-selected="true"
-                    aria-controls="panel-basic">
-                🟦 입력 포맷 (7종)
-            </button>
-            <button class="format-tab"
-                    data-target="panel-ext"
-                    role="tab"
-                    aria-selected="false"
-                    aria-controls="panel-ext">
-                🔜 예정 포맷 (5종)
-            </button>
-            <button class="format-tab"
-                    data-target="panel-how"
-                    role="tab"
-                    aria-selected="false"
-                    aria-controls="panel-how">
-                🔍 동작 원리
-            </button>
-            <button class="format-tab"
-                    data-target="panel-support"
-                    role="tab"
-                    aria-selected="false"
-                    aria-controls="panel-support">
-                📊 지원 현황
-            </button>
-        </div>
+        <p class="section-sub">카드를 선택하면 포맷별 보존 범위와 제한사항을 확인할 수 있습니다</p>
 
         <!-- ── 기본 서비스 패널 ─────────────────────────────────────
              [수정 시] 새 포맷 카드 추가 → .format-card 복사 후 data-ext/내용 수정
              [중요] data-ext 값은 js/app.js FORMAT_INFO, js/parsers.js PARSERS와 연결됨
              비개발자는 카드 안의 표시 문구(card-ext/card-name/card-quality/badge)만 바꾸는 것이 안전합니다.
              ─────────────────────────────────────────────────────── -->
-        <div class="format-panel active" id="panel-basic" role="tabpanel">
+        <div class="format-panel active" id="panel-basic">
             <div class="format-grid">
 
                 <!-- Markdown -->
@@ -576,63 +534,91 @@
             </div><!-- /.format-grid -->
         </div><!-- /#panel-basic -->
 
-        <!-- ── 확장 서비스 패널 ─────────────────────────────────────
-             IPYNB는 JSON 기반이라 클라이언트에서 처리 가능
-             나머지는 향후 백엔드 연동 예정
-             ─────────────────────────────────────────────────────── -->
-        <div class="format-panel" id="panel-ext" role="tabpanel">
-            <div class="format-grid">
+        <details class="service-details">
+            <summary>보조 안내 보기</summary>
+            <!-- 탭: 예정 포맷 / 동작 원리 / 지원 현황 -->
+            <!-- app.js의 initFormatTabs에서 탭 전환 로직 처리 -->
+            <div class="format-tabs" role="tablist">
+                <button class="format-tab active"
+                        data-target="panel-ext"
+                        role="tab"
+                        aria-selected="true"
+                        aria-controls="panel-ext">
+                    🔜 예정 포맷
+                </button>
+                <button class="format-tab"
+                        data-target="panel-how"
+                        role="tab"
+                        aria-selected="false"
+                        aria-controls="panel-how">
+                    🔍 동작 원리
+                </button>
+                <button class="format-tab"
+                        data-target="panel-support"
+                        role="tab"
+                        aria-selected="false"
+                        aria-controls="panel-support">
+                    📊 지원 현황
+                </button>
+            </div>
 
-                <!-- IPYNB -->
-                <div class="format-card" data-ext="ipynb" role="button" tabindex="0">
-                    <div class="card-icon"><img src="https://api.iconify.design/simple-icons/jupyter.svg?color=%23f37626" alt="" class="format-brand-icon" loading="lazy" aria-hidden="true"></div>
-                    <div class="card-ext">IPYNB</div>
-                    <div class="card-name">Jupyter Notebook</div>
-                    <div class="card-quality">★★☆</div>
-                    <span class="card-badge badge-available">지원됨</span>
-                </div>
+            <!-- ── 확장 서비스 패널 ─────────────────────────────────────
+                 IPYNB는 JSON 기반이라 클라이언트에서 처리 가능
+                 나머지는 향후 백엔드 연동 예정
+                 ─────────────────────────────────────────────────────── -->
+            <div class="format-panel active" id="panel-ext" role="tabpanel">
+                <div class="format-grid">
 
-                <!-- PDF (Coming Soon) -->
-                <div class="format-card coming-soon" data-ext="pdf" aria-disabled="true">
-                    <div class="card-icon"><img src="https://api.iconify.design/simple-icons/adobeacrobatreader.svg?color=%23e2231a" alt="" class="format-brand-icon" loading="lazy" aria-hidden="true"></div>
-                    <div class="card-ext">PDF</div>
-                    <div class="card-name">PDF 문서</div>
-                    <div class="card-quality">★★☆</div>
-                    <span class="card-badge badge-soon">예정</span>
-                </div>
+                    <!-- IPYNB -->
+                    <div class="format-card" data-ext="ipynb" role="button" tabindex="0">
+                        <div class="card-icon"><img src="https://api.iconify.design/simple-icons/jupyter.svg?color=%23f37626" alt="" class="format-brand-icon" loading="lazy" aria-hidden="true"></div>
+                        <div class="card-ext">IPYNB</div>
+                        <div class="card-name">Jupyter Notebook</div>
+                        <div class="card-quality">★★☆</div>
+                        <span class="card-badge badge-available">지원됨</span>
+                    </div>
 
-                <!-- PPTX (Coming Soon) -->
-                <div class="format-card coming-soon" data-ext="pptx" aria-disabled="true">
-                    <div class="card-icon"><img src="https://api.iconify.design/simple-icons/microsoftpowerpoint.svg?color=%23b7472a" alt="" class="format-brand-icon" loading="lazy" aria-hidden="true"></div>
-                    <div class="card-ext">PPTX</div>
-                    <div class="card-name">PowerPoint</div>
-                    <div class="card-quality">★☆☆</div>
-                    <span class="card-badge badge-soon">예정</span>
-                </div>
+                    <!-- PDF (Coming Soon) -->
+                    <div class="format-card coming-soon" data-ext="pdf" aria-disabled="true">
+                        <div class="card-icon"><img src="https://api.iconify.design/simple-icons/adobeacrobatreader.svg?color=%23e2231a" alt="" class="format-brand-icon" loading="lazy" aria-hidden="true"></div>
+                        <div class="card-ext">PDF</div>
+                        <div class="card-name">PDF 문서</div>
+                        <div class="card-quality">★★☆</div>
+                        <span class="card-badge badge-soon">예정</span>
+                    </div>
 
-                <!-- ODT/RTF (Coming Soon) -->
-                <div class="format-card coming-soon" data-ext="odt" aria-disabled="true">
-                    <div class="card-icon">📃</div>
-                    <div class="card-ext">ODT / RTF</div>
-                    <div class="card-name">오픈 문서</div>
-                    <div class="card-quality">★★☆</div>
-                    <span class="card-badge badge-soon">예정</span>
-                </div>
+                    <!-- PPTX (Coming Soon) -->
+                    <div class="format-card coming-soon" data-ext="pptx" aria-disabled="true">
+                        <div class="card-icon"><img src="https://api.iconify.design/simple-icons/microsoftpowerpoint.svg?color=%23b7472a" alt="" class="format-brand-icon" loading="lazy" aria-hidden="true"></div>
+                        <div class="card-ext">PPTX</div>
+                        <div class="card-name">PowerPoint</div>
+                        <div class="card-quality">★☆☆</div>
+                        <span class="card-badge badge-soon">예정</span>
+                    </div>
 
-                <!-- EPUB (Coming Soon) -->
-                <div class="format-card coming-soon" data-ext="epub" aria-disabled="true">
-                    <div class="card-icon">📚</div>
-                    <div class="card-ext">EPUB</div>
-                    <div class="card-name">전자책</div>
-                    <div class="card-quality">★★☆</div>
-                    <span class="card-badge badge-soon">예정</span>
-                </div>
+                    <!-- ODT/RTF (Coming Soon) -->
+                    <div class="format-card coming-soon" data-ext="odt" aria-disabled="true">
+                        <div class="card-icon">📃</div>
+                        <div class="card-ext">ODT / RTF</div>
+                        <div class="card-name">오픈 문서</div>
+                        <div class="card-quality">★★☆</div>
+                        <span class="card-badge badge-soon">예정</span>
+                    </div>
 
-            </div><!-- /.format-grid -->
-        </div><!-- /#panel-ext -->
+                    <!-- EPUB (Coming Soon) -->
+                    <div class="format-card coming-soon" data-ext="epub" aria-disabled="true">
+                        <div class="card-icon">📚</div>
+                        <div class="card-ext">EPUB</div>
+                        <div class="card-name">전자책</div>
+                        <div class="card-quality">★★☆</div>
+                        <span class="card-badge badge-soon">예정</span>
+                    </div>
+
+                </div><!-- /.format-grid -->
+            </div><!-- /#panel-ext -->
 
         <!-- ── 동작 원리 패널 ────────────────────────────────────── -->
-        <div class="format-panel" id="panel-how" role="tabpanel">
+            <div class="format-panel" id="panel-how" role="tabpanel">
             <span id="how-it-works" aria-hidden="true"></span>
             <p class="section-sub" style="margin:16px 0 32px">PC와 모바일 브라우저 안에서 7단계로 완전히 처리됩니다</p>
             <div class="steps-grid">
@@ -668,10 +654,10 @@
                 </div>
 
             </div><!-- /.steps-grid -->
-        </div><!-- /#panel-how -->
+            </div><!-- /#panel-how -->
 
         <!-- ── 지원 현황 패널 ────────────────────────────────────── -->
-        <div class="format-panel" id="panel-support" role="tabpanel">
+            <div class="format-panel" id="panel-support" role="tabpanel">
             <span id="support" aria-hidden="true"></span>
             <p class="section-sub" style="margin:16px 0 24px">★★★: 구조 보존 양호 / ★★☆: 기본 구조 변환 / ★☆☆: 내용 추출 중심</p>
             <div class="support-table-wrap">
@@ -787,7 +773,8 @@
                     </tbody>
                 </table>
             </div><!-- /.support-table-wrap -->
-        </div><!-- /#panel-support -->
+            </div><!-- /#panel-support -->
+        </details>
 
     </div><!-- /.container -->
 </section>
