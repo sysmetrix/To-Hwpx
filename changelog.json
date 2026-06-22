@@ -1,6 +1,20 @@
 {
-  "current": "4.3.26",
+  "current": "4.3.27",
   "versions": [
+    {
+      "version": "4.3.27",
+      "date": "2026-06-22",
+      "user": [
+        "Noto Sans KR의 '공식 사이트' 링크를 정확한 글꼴 페이지로 변경했습니다",
+        "'초기화' 버튼을 누르면 '즐겨찾기 안내'와 동일한 토스트 안내로 표시됩니다"
+      ],
+      "dev": [
+        "[v4.3.27] app.js: Noto Sans KR official 링크를 fonts.google.com/noto/specimen/Noto+Sans+KR로 변경",
+        "[v4.3.27] app.js: showToast 공용 토스트 헬퍼 추가(즐겨찾기 토스트 통합), 초기화 완료 안내를 showAlert→showToast로 변경",
+        "[v4.3.27] index.html: 업데이트 내역 버튼 v4.3.27 반영",
+        "[v4.3.27] sw.js: CACHE_VERSION to-hwpx-v4.3.27"
+      ]
+    },
     {
       "version": "4.3.26",
       "date": "2026-06-22",
