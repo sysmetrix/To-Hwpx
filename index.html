@@ -97,7 +97,7 @@
             <span>｢BWYF｣ AX Challenger 2026</span>
             <!-- [주의] id="open-changelog"는 app.js에서 업데이트 내역 모달을 여는 연결값 -->
             <button class="util-changelog-btn" id="open-changelog" aria-label="업데이트 내역 보기">
-                📋 v4.3.34 업데이트 내역
+                📋 v4.3.35 업데이트 내역
             </button>
         </div>
     </div>
@@ -247,10 +247,12 @@
                                     <label for="doc-type">상단 제목 블록</label>
                                     <select id="doc-type" name="doc-type">
                                         <option value="plain" selected>없음</option>
-                                        <option value="titleblock">넣기</option>
+                                        <option value="titleblock">기본 제목 블록</option>
+                                        <option value="cover-unit">표지(단위형)</option>
+                                        <option value="cover-annual">표지(연간형)</option>
                                     </select>
                                 </div>
-                                <p class="form-hint">'넣기'를 고르면 문서 맨 위에 제목·작성일과 부제·작성자·소속 빈칸을 넣습니다. 세부 내용은 변환 후 한글에서 채워주세요.</p>
+                                <p class="form-hint">문서 맨 위에 머리말을 넣습니다. '기본'은 제목·작성일·부제/작성자/소속 빈칸, '표지'는 색 밴드 + [팀명/이름] + 점선입니다. 세부 내용은 변환 후 한글에서 채워주세요.</p>
 
                                 <div class="options-grid-4col options-grid-advanced">
                                     <div class="form-row">
