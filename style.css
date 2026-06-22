@@ -101,7 +101,7 @@ html {
 body {
     font-family: var(--font-main);
     background: var(--c-bg);
-    color: var(--c-primary);
+    color: var(--c-text);
     line-height: 1.6;
     -webkit-font-smoothing: antialiased;  /* macOS 폰트 렌더링 개선 */
 }
@@ -860,6 +860,9 @@ a:hover { text-decoration: underline; }
     font-size: 0.74rem;
     color: var(--c-text-muted);
     margin-top: 2px;
+}
+.adv-summary-text {
+    color: var(--c-primary);
 }
 .adv-chevron {                       /* 펼침 표시 — 원형 배경으로 클릭 가능함을 명확히 */
     flex-shrink: 0;
