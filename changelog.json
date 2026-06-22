@@ -1,6 +1,21 @@
 {
-  "current": "4.3.34",
+  "current": "4.3.35",
   "versions": [
+    {
+      "version": "4.3.35",
+      "date": "2026-06-22",
+      "user": [
+        "상단 제목 블록에 '표지(단위형)'·'표지(연간형)' 디자인을 추가했습니다 — 문서 맨 위에 색 밴드와 [팀명/이름]·점선이 들어갑니다",
+        "표지 색상은 우선 근사값으로 적용했고, 정확한 색은 추후 반영 예정입니다"
+      ],
+      "dev": [
+        "[v4.3.35] hwpx.js: 표지 밴드용 borderFill 12~15 추가(12=청록 그라데이션·13=초록·14=보라→노랑 그라데이션·15=점선 DOT), hc:gradation 사용. borderFills itemCnt 11→15 기준, DOCX 셀 배경 customBfMap 시작 id 12→16",
+        "[v4.3.35] hwpx.js: buildCoverBand(전폭 1×1 장식 밴드) 추가, buildSection에 docType 'cover-unit'/'cover-annual' 분기(밴드 2줄 + [팀명/이름] 우측 + 점선 + 제목)",
+        "[v4.3.35] index.html: 상단 제목 블록 셀렉트에 표지(단위형)/표지(연간형) 추가",
+        "[v4.3.35] TODO: 표지 밴드 색은 근사값 — 사용자 제공 정확 hex로 교체 예정",
+        "[v4.3.35] sw.js: CACHE_VERSION to-hwpx-v4.3.35, index.html v4.3.35"
+      ]
+    },
     {
       "version": "4.3.34",
       "date": "2026-06-22",

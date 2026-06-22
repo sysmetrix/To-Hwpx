@@ -21,7 +21,7 @@
 const state = {
     file:         null,                // 선택된 File 객체
     ir:           null,                // 파싱 완료된 IR JSON
-    docType:      'plain',             // 상단 제목 블록: "plain"(없음) | "titleblock"(넣기)
+    docType:      'plain',             // 상단 제목 블록: plain(없음)|titleblock(기본)|cover-unit(표지단위)|cover-annual(표지연간)
     customTitle:  '',                  // 사용자가 입력한 제목 (비어 있으면 파서가 자동 감지)
     docFont:      '맑은 고딕',          // 출력 폰트 (기본: 맑은 고딕)
     fontSize:     12,                  // 기본 글꼴 크기 (pt)
