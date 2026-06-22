@@ -23,7 +23,7 @@ const state = {
     ir:           null,                // 파싱 완료된 IR JSON
     docType:      'plain',             // 문서 유형: "official" | "report" | "plain"
     customTitle:  '',                  // 사용자가 입력한 제목 (비어 있으면 파서가 자동 감지)
-    docFont:      '휴먼명조',           // 출력 폰트 (기본: 휴먼명조)
+    docFont:      '맑은 고딕',          // 출력 폰트 (기본: 맑은 고딕)
     fontSize:     12,                  // 기본 글꼴 크기 (pt)
     paperSize:    'A4',                // 용지 크기: "A4" | "B5" | "Letter"
     orientation:  'portrait',          // 용지 방향: "portrait" | "landscape"
@@ -75,6 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initNavLinks();             // 부드러운 스크롤 네비게이션
     initModals();               // 미리보기·업데이트 내역 모달
     initBookmarkButton();       // 즐겨찾기 안내 버튼
+    initResetButton();          // 현재 선택 파일과 변환 옵션 초기화
 });
 
 
@@ -260,6 +261,15 @@ function clearSelectedFile() {
         hint.style.display = 'none';
         hint.innerHTML = '';
     }
+
+    const titleInput = document.getElementById('doc-title');
+    if (titleInput) {
+        titleInput.value = '';
+        titleInput.placeholder = '파일 선택 시 자동 입력';
+    }
+
+    const fileInput = document.getElementById('file-input');
+    if (fileInput) fileInput.value = '';
 }
 
 /** 드롭존 내부 UI를 파일 선택 상태로 업데이트 */
@@ -829,20 +839,14 @@ function initOptions() {
     const orientBtn = document.getElementById('paper-orient');
     if (orientBtn) {
         const savedOrient = localStorage.getItem('tohwpx_orientation');
-        const orientLabel = orientBtn.querySelector('.orient-label');
-        const setOrient = (landscape) => {
-            orientBtn.classList.toggle('is-landscape', landscape);
-            orientBtn.setAttribute('aria-label', `용지 방향: ${landscape ? '가로' : '세로'}`);
-            if (orientLabel) orientLabel.textContent = landscape ? '가로' : '세로';
-        };
         if (savedOrient === 'landscape') {
             state.orientation = 'landscape';
-            setOrient(true);
+            applyOrientationUi('landscape');
         }
         orientBtn.addEventListener('click', () => {
             const toLandscape = state.orientation === 'portrait';
             state.orientation = toLandscape ? 'landscape' : 'portrait';
-            setOrient(toLandscape);
+            applyOrientationUi(state.orientation);
             localStorage.setItem('tohwpx_orientation', state.orientation);
         });
     }
@@ -1384,6 +1388,16 @@ function syncMarginInputs() {
     }
 }
 
+function applyOrientationUi(orientation) {
+    const landscape = orientation === 'landscape';
+    const orientBtn = document.getElementById('paper-orient');
+    if (!orientBtn) return;
+    const orientLabel = orientBtn.querySelector('.orient-label');
+    orientBtn.classList.toggle('is-landscape', landscape);
+    orientBtn.setAttribute('aria-label', `용지 방향: ${landscape ? '가로' : '세로'}`);
+    if (orientLabel) orientLabel.textContent = landscape ? '가로' : '세로';
+}
+
 
 // ─────────────────────────────────────────────────────────────────────────
 // [진행률 표시]
@@ -1731,7 +1745,7 @@ function initBookmarkButton() {
         const toast = document.createElement('div');
         toast.id        = 'bookmark-toast';
         toast.className = 'bookmark-toast';
-        toast.innerHTML = `<strong>${key}</strong>를 눌러 즐겨찾기에 추가하세요<button class="bookmark-toast-close" aria-label="닫기">✕</button>`;
+        toast.innerHTML = `<strong>${key}</strong>를 눌러 즐겨찾기에 추가하세요 <span>브라우저 보안상 자동 추가는 지원되지 않습니다.</span><button class="bookmark-toast-close" aria-label="닫기">✕</button>`;
         document.body.appendChild(toast);
 
         toast.querySelector('.bookmark-toast-close').addEventListener('click', () => toast.remove());
@@ -1740,6 +1754,49 @@ function initBookmarkButton() {
         _toastTimer = setTimeout(() => toast.remove(), 4000);
         requestAnimationFrame(() => toast.classList.add('bookmark-toast--show'));
     });
+}
+
+function initResetButton() {
+    const btn = document.getElementById('reset-btn');
+    if (!btn) return;
+    btn.addEventListener('click', resetConverterState);
+}
+
+function resetConverterState() {
+    clearSelectedFile();
+    hideAlert();
+
+    state.docType = 'plain';
+    state.customTitle = '';
+    state.docFont = '맑은 고딕';
+    state.fontSize = 12;
+    state.paperSize = 'A4';
+    state.orientation = 'portrait';
+    state.pageMargins = { top: 10, bottom: 10, left: 20, right: 20, header: 10, footer: 10 };
+    state.autoDownload = true;
+
+    for (const key of ['tohwpx_font', 'tohwpx_fontSize', 'tohwpx_paperSize', 'tohwpx_autoDownload', 'tohwpx_orientation']) {
+        localStorage.removeItem(key);
+    }
+
+    const docType = document.getElementById('doc-type');
+    const docFont = document.getElementById('doc-font');
+    const fontSize = document.getElementById('font-size');
+    const paperSize = document.getElementById('paper-size');
+    const autoDownload = document.getElementById('auto-download');
+    if (docType) docType.value = 'plain';
+    if (docFont) docFont.value = '맑은 고딕';
+    if (fontSize) fontSize.value = '12';
+    if (paperSize) paperSize.value = 'A4';
+    if (autoDownload) autoDownload.checked = true;
+
+    for (const [side, value] of Object.entries(state.pageMargins)) {
+        const el = document.getElementById(`margin-${side}`);
+        if (el) el.value = value;
+    }
+    applyOrientationUi('portrait');
+    updateConvertButton(false);
+    showAlert('선택 파일과 변환 옵션을 기본값으로 초기화했습니다.');
 }
 
 

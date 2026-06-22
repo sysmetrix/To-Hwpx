@@ -261,7 +261,8 @@ a:hover { text-decoration: underline; }
 .nav-tooltip-wrap:hover .nav-tooltip { display: block; }
 
 /* 즐겨찾기 버튼 (nav 안) */
-.nav-bookmark-btn {
+.nav-bookmark-btn,
+.nav-reset-btn {
     border: 1.5px solid var(--c-border);
     border-radius: 20px;
     padding: 4px 12px;
@@ -277,6 +278,11 @@ a:hover { text-decoration: underline; }
     background: var(--c-warning-light);
     color: #b45309;
     border-color: #fbbf24;
+}
+.nav-reset-btn:hover {
+    background: var(--c-primary-light);
+    color: var(--c-primary);
+    border-color: var(--c-primary);
 }
 
 /* 즐겨찾기 토스트 알림 */
@@ -304,6 +310,10 @@ a:hover { text-decoration: underline; }
     transform: translateX(-50%) translateY(0);
 }
 .bookmark-toast strong { color: #93c5fd; }
+.bookmark-toast span {
+    color: rgba(255,255,255,0.72);
+    font-size: 0.78rem;
+}
 .bookmark-toast-close {
     background: none;
     border: none;
@@ -785,6 +795,21 @@ a:hover { text-decoration: underline; }
     padding: 14px;
     border-top: 1px solid var(--c-border);
     background: var(--c-surface);
+}
+.advanced-settings-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 240px;
+    gap: 18px;
+    align-items: start;
+}
+.advanced-main {
+    min-width: 0;
+}
+.advanced-margins {
+    margin-bottom: 0;
+}
+.advanced-margins .margin-grid-2col {
+    margin-top: 0;
 }
 
 /* 변환기 섹션 파일 드롭 영역 — mini-drop-zone·detected-row 통합 */
@@ -1607,7 +1632,8 @@ a:hover { text-decoration: underline; }
         gap: 6px;
     }
     #main-nav .main-nav a,
-    #main-nav .nav-bookmark-btn {
+    #main-nav .nav-bookmark-btn,
+    #main-nav .nav-reset-btn {
         display: flex;
         width: 100%;
         text-align: center;
@@ -1619,6 +1645,7 @@ a:hover { text-decoration: underline; }
     .form-group-row { grid-template-columns: 1fr; }
     .options-2col { grid-template-columns: 1fr; }
     .options-grid-4col { grid-template-columns: repeat(2, 1fr); }
+    .advanced-settings-grid { grid-template-columns: 1fr; }
     #pipeline-steps { grid-template-columns: repeat(4, 1fr); }
     .result-primary { align-items: stretch; flex-direction: column; }
     .btn-download-primary { justify-content: center; width: 100%; }

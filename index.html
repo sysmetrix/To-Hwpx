@@ -97,7 +97,7 @@
             <span>｢BWYF｣ AX Challenger 2026</span>
             <!-- [주의] id="open-changelog"는 app.js에서 업데이트 내역 모달을 여는 연결값 -->
             <button class="util-changelog-btn" id="open-changelog" aria-label="업데이트 내역 보기">
-                📋 v4.3.19 업데이트 내역
+                📋 v4.3.20 업데이트 내역
             </button>
         </div>
     </div>
@@ -133,8 +133,13 @@
                         </a>
                     </li>
                     <li>
-                        <button class="nav-bookmark-btn" id="bookmark-btn" aria-label="즐겨찾기 추가 안내">
-                            ★ 즐겨찾기
+                        <button class="nav-bookmark-btn" id="bookmark-btn" aria-label="즐겨찾기 단축키 안내">
+                            ★ 즐겨찾기 안내
+                        </button>
+                    </li>
+                    <li>
+                        <button class="nav-reset-btn" id="reset-btn" aria-label="선택 파일과 변환 옵션 초기화">
+                            ↺ 초기화
                         </button>
                     </li>
                 </ul>
@@ -237,107 +242,110 @@
                            maxlength="200">
                 </div>
 
-                <!-- 기본 옵션: 문서 유형 -->
-                <!-- [수정 시] 옵션 값은 parsers.js의 emptyIR docType과 맞춰야 함 -->
-                <div class="form-row">
-                    <label for="doc-type">문서 유형</label>
-                    <select id="doc-type" name="doc-type">
-                        <option value="plain" selected>일반 문서</option>
-                        <option value="official">공문</option>
-                        <option value="report">보고서</option>
-                    </select>
-                </div>
-
                 <details class="advanced-settings">
                     <summary>고급 설정</summary>
                     <div class="advanced-settings-body">
-                    <div class="options-grid-4col options-grid-advanced">
-                    <div class="form-row">
-                        <label for="doc-font">한글 폰트</label>
-                        <!-- [주의] HWPX에는 폰트 파일이 임베딩되지 않고 폰트 이름만 기록됩니다.
-                             선택한 폰트를 한글에서 그대로 보려면 사용자 PC에 TTF/OTF 설치가 필요합니다. -->
-                        <div class="font-select-wrap">
-                            <select id="doc-font" name="doc-font">
-                                <option value="휴먼명조">휴먼명조</option>
-                                <option value="맑은 고딕" selected>맑은 고딕</option>
-                                <option value="나눔고딕">나눔고딕</option>
-                                <option value="KoPub돋움체 Medium">KoPub돋움체</option>
-                                <option value="Noto Sans KR">Noto Sans KR</option>
-                                <option value="Pretendard GOV Variable Medium">Pretendard GOV</option>
-                            </select>
-                            <button type="button" id="open-font-guide" class="font-guide-btn"
-                                    aria-label="폰트 설치 안내 열기" title="폰트 설치 안내">
-                                안내
-                            </button>
+                        <div class="advanced-settings-grid">
+                            <div class="advanced-main">
+                                <!-- [수정 시] 옵션 값은 parsers.js의 emptyIR docType과 맞춰야 함 -->
+                                <div class="form-row">
+                                    <label for="doc-type">문서 유형</label>
+                                    <select id="doc-type" name="doc-type">
+                                        <option value="plain" selected>일반 문서</option>
+                                        <option value="official">공문</option>
+                                        <option value="report">보고서</option>
+                                    </select>
+                                </div>
+
+                                <div class="options-grid-4col options-grid-advanced">
+                                    <div class="form-row">
+                                        <label for="doc-font">한글 폰트</label>
+                                        <!-- [주의] HWPX에는 폰트 파일이 임베딩되지 않고 폰트 이름만 기록됩니다.
+                                             선택한 폰트를 한글에서 그대로 보려면 사용자 PC에 TTF/OTF 설치가 필요합니다. -->
+                                        <div class="font-select-wrap">
+                                            <select id="doc-font" name="doc-font">
+                                                <option value="휴먼명조">휴먼명조</option>
+                                                <option value="맑은 고딕" selected>맑은 고딕</option>
+                                                <option value="나눔고딕">나눔고딕</option>
+                                                <option value="KoPub돋움체 Medium">KoPub돋움체</option>
+                                                <option value="Noto Sans KR">Noto Sans KR</option>
+                                                <option value="Pretendard GOV Variable Medium">Pretendard GOV</option>
+                                            </select>
+                                            <button type="button" id="open-font-guide" class="font-guide-btn"
+                                                    aria-label="폰트 설치 안내 열기" title="폰트 설치 안내">
+                                                안내
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="form-row">
+                                        <label for="font-size">글꼴 크기</label>
+                                        <select id="font-size" name="font-size">
+                                            <option value="9">9pt</option>
+                                            <option value="10">10pt</option>
+                                            <option value="11">11pt</option>
+                                            <option value="12" selected>12pt</option>
+                                            <option value="13">13pt</option>
+                                            <option value="14">14pt</option>
+                                            <option value="16">16pt</option>
+                                            <option value="18">18pt</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-row">
+                                        <label for="paper-size">용지 크기</label>
+                                        <div class="paper-size-wrap">
+                                            <select id="paper-size" name="paper-size">
+                                                <option value="A4" selected>A4</option>
+                                                <option value="B5">B5</option>
+                                                <option value="Letter">Letter</option>
+                                            </select>
+                                            <button type="button" id="paper-orient" class="paper-orient-btn"
+                                                    aria-label="용지 방향: 세로" title="클릭하여 가로/세로 전환">
+                                                <span class="orient-icon" aria-hidden="true"></span>
+                                                <span class="orient-label">세로</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 페이지 여백 — 용지 크기 설정 옆에 배치
+                                 hwpx.js buildHwpx()에서 mm → HWPUNIT 변환 (1mm ≈ 283 HWPUNIT) -->
+                            <div class="form-row advanced-margins">
+                                <label>페이지 여백 (mm)</label>
+                                <div class="margin-grid-2col">
+                                    <div class="margin-item">
+                                        <label for="margin-top">위</label>
+                                        <input type="number" id="margin-top"
+                                               value="10" min="0" max="60" step="1" aria-label="위 여백 mm">
+                                    </div>
+                                    <div class="margin-item">
+                                        <label for="margin-bottom">아래</label>
+                                        <input type="number" id="margin-bottom"
+                                               value="10" min="0" max="60" step="1" aria-label="아래 여백 mm">
+                                    </div>
+                                    <div class="margin-item">
+                                        <label for="margin-left">왼쪽</label>
+                                        <input type="number" id="margin-left"
+                                               value="20" min="0" max="60" step="1" aria-label="왼쪽 여백 mm">
+                                    </div>
+                                    <div class="margin-item">
+                                        <label for="margin-right">오른쪽</label>
+                                        <input type="number" id="margin-right"
+                                               value="20" min="0" max="60" step="1" aria-label="오른쪽 여백 mm">
+                                    </div>
+                                    <div class="margin-item">
+                                        <label for="margin-header">머리말</label>
+                                        <input type="number" id="margin-header"
+                                               value="10" min="0" max="30" step="1" aria-label="머리말 여백 mm">
+                                    </div>
+                                    <div class="margin-item">
+                                        <label for="margin-footer">꼬리말</label>
+                                        <input type="number" id="margin-footer"
+                                               value="10" min="0" max="30" step="1" aria-label="꼬리말 여백 mm">
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                    <div class="form-row">
-                        <label for="font-size">글꼴 크기</label>
-                        <select id="font-size" name="font-size">
-                            <option value="9">9pt</option>
-                            <option value="10">10pt</option>
-                            <option value="11">11pt</option>
-                            <option value="12" selected>12pt</option>
-                            <option value="13">13pt</option>
-                            <option value="14">14pt</option>
-                            <option value="16">16pt</option>
-                            <option value="18">18pt</option>
-                        </select>
-                    </div>
-                    <div class="form-row">
-                        <label for="paper-size">용지 크기</label>
-                        <div class="paper-size-wrap">
-                            <select id="paper-size" name="paper-size">
-                                <option value="A4" selected>A4</option>
-                                <option value="B5">B5</option>
-                                <option value="Letter">Letter</option>
-                            </select>
-                            <button type="button" id="paper-orient" class="paper-orient-btn"
-                                    aria-label="용지 방향: 세로" title="클릭하여 가로/세로 전환">
-                                <span class="orient-icon" aria-hidden="true"></span>
-                                <span class="orient-label">세로</span>
-                            </button>
-                        </div>
-                    </div>
-                    </div>
-                <!-- 페이지 여백 — 2열 배치
-                     hwpx.js buildHwpx()에서 mm → HWPUNIT 변환 (1mm ≈ 283 HWPUNIT)
-                     [수정 시] 기본값 변경은 app.js state.pageMargins 와 hwpx.js DEFAULT_MARGINS_MM 에서 -->
-                <div class="form-row">
-                    <label>페이지 여백 (mm)</label>
-                    <div class="margin-grid-2col">
-                        <div class="margin-item">
-                            <label for="margin-top">위</label>
-                            <input type="number" id="margin-top"
-                                   value="10" min="0" max="60" step="1" aria-label="위 여백 mm">
-                        </div>
-                        <div class="margin-item">
-                            <label for="margin-bottom">아래</label>
-                            <input type="number" id="margin-bottom"
-                                   value="10" min="0" max="60" step="1" aria-label="아래 여백 mm">
-                        </div>
-                        <div class="margin-item">
-                            <label for="margin-left">왼쪽</label>
-                            <input type="number" id="margin-left"
-                                   value="20" min="0" max="60" step="1" aria-label="왼쪽 여백 mm">
-                        </div>
-                        <div class="margin-item">
-                            <label for="margin-right">오른쪽</label>
-                            <input type="number" id="margin-right"
-                                   value="20" min="0" max="60" step="1" aria-label="오른쪽 여백 mm">
-                        </div>
-                        <div class="margin-item">
-                            <label for="margin-header">머리말</label>
-                            <input type="number" id="margin-header"
-                                   value="10" min="0" max="30" step="1" aria-label="머리말 여백 mm">
-                        </div>
-                        <div class="margin-item">
-                            <label for="margin-footer">꼬리말</label>
-                            <input type="number" id="margin-footer"
-                                   value="10" min="0" max="30" step="1" aria-label="꼬리말 여백 mm">
-                        </div>
-                    </div>
-                </div>
 
                 <label class="checkbox-row" for="auto-download">
                     <input type="checkbox" id="auto-download" checked>

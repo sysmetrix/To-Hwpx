@@ -1,6 +1,23 @@
 {
-  "current": "4.3.19",
+  "current": "4.3.20",
   "versions": [
+    {
+      "version": "4.3.20",
+      "date": "2026-06-22",
+      "user": [
+        "문서 유형을 고급 설정 안으로 이동해 기본 화면을 더 단순하게 정리했습니다",
+        "고급 설정에서 용지 크기와 페이지 여백이 나란히 보이도록 배치를 조정했습니다",
+        "즐겨찾기 버튼을 자동 추가가 아닌 단축키 안내 버튼으로 명확히 바꾸고, 옆에 선택 파일과 옵션을 되돌리는 초기화 버튼을 추가했습니다"
+      ],
+      "dev": [
+        "[v4.3.20] index.html/style.css: advanced-settings를 좌측 옵션+우측 페이지 여백 2열 구조로 재배치하고 문서 유형을 고급 설정으로 이동",
+        "[v4.3.20] index.html/style.css/app.js: nav reset 버튼 추가, resetConverterState()로 파일 선택/결과/옵션/localStorage 초기화",
+        "[v4.3.20] app.js: 즐겨찾기 토스트에 브라우저 보안상 자동 추가 불가 안내 추가",
+        "[v4.3.20] app.js: 용지 방향 UI 갱신을 applyOrientationUi() 공통 헬퍼로 분리",
+        "[v4.3.20] index.html: 업데이트 내역 버튼 v4.3.20 반영",
+        "[v4.3.20] sw.js: CACHE_VERSION to-hwpx-v4.3.20"
+      ]
+    },
     {
       "version": "4.3.19",
       "date": "2026-06-22",
