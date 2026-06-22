@@ -97,7 +97,7 @@
             <span>｢BWYF｣ AX Challenger 2026</span>
             <!-- [주의] id="open-changelog"는 app.js에서 업데이트 내역 모달을 여는 연결값 -->
             <button class="util-changelog-btn" id="open-changelog" aria-label="업데이트 내역 보기">
-                📋 v4.3.16 업데이트 내역
+                📋 v4.3.17 업데이트 내역
             </button>
         </div>
     </div>
@@ -163,8 +163,8 @@
         <!-- 서브 설명 -->
         <!-- [문구 수정 가능] 서비스 소개 문구만 수정 -->
         <p class="hero-sub">
-            Markdown, HTML, DOCX, CSV, JSON 등 다양한 포맷을<br>
-            한컴 오피스 없이 .hwpx 파일로 변환합니다.
+            입력 가능 포맷: MD, HTML, TXT, CSV, XLSX, JSON, IPYNB, DOCX, HWP, HWPX<br>
+            출력: 한컴오피스에서 열 수 있는 HWPX 파일
         </p>
 
         <div class="hero-badges" aria-label="지원 실행 환경">
@@ -179,7 +179,7 @@
              aria-label="파일을 드래그하거나 클릭하여 선택">
             <div class="drop-icon">📂</div>
             <div class="drop-title">파일을 여기에 드래그하거나 클릭하세요</div>
-            <div class="drop-sub">MD · HTML · TXT · CSV · XLSX · JSON · IPYNB · DOCX · HWPX 지원</div>
+            <div class="drop-sub">입력 가능 포맷: MD · HTML · TXT · CSV · XLSX · JSON · IPYNB · DOCX · HWP · HWPX / 출력: HWPX</div>
         </div>
 
         <!-- 숨겨진 파일 인풋 (드롭존 클릭 시 트리거됨) -->
@@ -207,18 +207,14 @@
 <section class="converter-section" id="converter" aria-labelledby="converter-title">
     <div class="container">
         <h2 class="section-title" id="converter-title">변환하기</h2>
-        <p class="section-sub">파일 선택 → 옵션 확인 → 변환 완료 후 자동 다운로드까지 한 화면에서 처리합니다</p>
+        <p class="section-sub">파일 선택 → 기본 옵션 확인 → 변환 → 결과 확인/다운로드 순서로 진행합니다</p>
 
         <div class="converter-layout">
 
             <!-- ── 왼쪽: 옵션 패널 ──────────────────────────────── -->
             <div class="options-panel">
-                <h3>⚙️ 변환 옵션</h3>
+                <h3>파일 선택 및 기본 옵션</h3>
 
-                <!-- 옵션 패널 내부 2열 배치 — 왼쪽: 드롭·제목·옵션, 오른쪽: 페이지 여백
-                     [수정 시] 드롭·클릭 이벤트는 app.js initConverterDropArea()에서 처리 -->
-                <div class="options-2col">
-                <div class="options-left">
                 <!-- 파일 드롭 영역 — 클릭하거나 드래그해서 바로 업로드 -->
                 <div id="converter-drop-area" class="converter-drop-area" role="button" tabindex="0"
                      aria-label="파일을 드래그하거나 클릭하여 선택">
@@ -241,17 +237,21 @@
                            maxlength="200">
                 </div>
 
-                <!-- 4열: 문서 유형 | 한글 폰트 | 글꼴 크기 | 용지 크기 -->
+                <!-- 기본 옵션: 문서 유형 -->
                 <!-- [수정 시] 옵션 값은 parsers.js의 emptyIR docType과 맞춰야 함 -->
-                <div class="options-grid-4col">
-                    <div class="form-row">
-                        <label for="doc-type">문서 유형</label>
-                        <select id="doc-type" name="doc-type">
-                            <option value="plain" selected>일반 문서</option>
-                            <option value="official">공문</option>
-                            <option value="report">보고서</option>
-                        </select>
-                    </div>
+                <div class="form-row">
+                    <label for="doc-type">문서 유형</label>
+                    <select id="doc-type" name="doc-type">
+                        <option value="plain" selected>일반 문서</option>
+                        <option value="official">공문</option>
+                        <option value="report">보고서</option>
+                    </select>
+                </div>
+
+                <details class="advanced-settings">
+                    <summary>고급 설정</summary>
+                    <div class="advanced-settings-body">
+                    <div class="options-grid-4col options-grid-advanced">
                     <div class="form-row">
                         <label for="doc-font">한글 폰트</label>
                         <!-- [주의] HWPX에는 폰트 파일이 임베딩되지 않고 폰트 이름만 기록됩니다.
@@ -299,11 +299,7 @@
                             </button>
                         </div>
                     </div>
-                </div>
-
-                </div><!-- /.options-left -->
-
-                <div class="options-right">
+                    </div>
                 <!-- 페이지 여백 — 2열 배치
                      hwpx.js buildHwpx()에서 mm → HWPUNIT 변환 (1mm ≈ 283 HWPUNIT)
                      [수정 시] 기본값 변경은 app.js state.pageMargins 와 hwpx.js DEFAULT_MARGINS_MM 에서 -->
@@ -343,9 +339,6 @@
                     </div>
                 </div>
 
-                </div><!-- /.options-right -->
-                </div><!-- /.options-2col -->
-
                 <label class="checkbox-row" for="auto-download">
                     <input type="checkbox" id="auto-download" checked>
                     <span>
@@ -363,6 +356,8 @@
                     ▶ IR 미리보기 보기
                 </button>
                 <pre id="ir-preview" hidden aria-label="IR 미리보기"><code id="ir-content">파일을 업로드하면 중간 표현(IR)이 여기에 표시됩니다.</code></pre>
+                    </div>
+                </details>
 
                 <!-- 변환 시작 버튼 -->
                 <button id="convert-btn"
@@ -374,18 +369,25 @@
             </div><!-- /.options-panel -->
 
             <!-- ── 오른쪽: 변환 진행 패널 ──────────────────────── -->
-            <div class="progress-panel" aria-live="polite" aria-label="변환 진행 상황">
-                <h3>📊 변환 진행</h3>
+            <div class="progress-panel is-empty" aria-live="polite" aria-label="변환 진행 상황">
+                <h3>진행 상태</h3>
+
+                <div id="progress-empty" class="progress-empty">
+                    <strong>파일을 선택하면 변환 준비 상태가 표시됩니다.</strong>
+                    <span>아직 진행 중인 변환이 없습니다.</span>
+                </div>
 
                 <!-- 전체 진행률 바 -->
-                <div class="progress-wrap" role="progressbar"
-                     aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
-                    <div id="progress-bar"></div>
-                </div>
-                <div class="progress-meta">
-                    <!-- [수정 시] 상태 메시지 텍스트는 app.js의 setStatusText에서 업데이트 -->
-                    <span id="status-text">대기 중</span>
-                    <span id="progress-pct">0%</span>
+                <div class="progress-details">
+                    <div class="progress-wrap" role="progressbar"
+                         aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                        <div id="progress-bar"></div>
+                    </div>
+                    <div class="progress-meta">
+                        <!-- [수정 시] 상태 메시지 텍스트는 app.js의 setStatusText에서 업데이트 -->
+                        <span id="status-text">대기 중</span>
+                        <span id="progress-pct">0%</span>
+                    </div>
                 </div>
 
                 <!-- 7단계 파이프라인 시각화
@@ -422,14 +424,14 @@
 </div>
 
 <!-- ════════════════════════════════════════════════════════════════
-     [포맷 그리드 + 동작 원리 + 지원 현황]  탭 전환
+     [입력 가능 포맷 + 동작 원리 + 지원 현황]  탭 전환
      ════════════════════════════════════════════════════════════════ -->
 <section class="formats-section" id="formats" aria-labelledby="formats-title">
     <div class="container">
-        <h2 class="section-title" id="formats-title">지원 포맷</h2>
-        <p class="section-sub">클릭하면 해당 포맷 변환기로 이동합니다</p>
+        <h2 class="section-title" id="formats-title">입력 가능 포맷</h2>
+        <p class="section-sub">입력 파일별 보존 범위와 제한사항을 확인할 수 있습니다</p>
 
-        <!-- 탭: 기본 서비스 / 확장 서비스 / 동작 원리 / 지원 현황 -->
+        <!-- 탭: 입력 가능 포맷 / 예정 포맷 / 동작 원리 / 지원 현황 -->
         <!-- app.js의 initFormatTabs에서 탭 전환 로직 처리 -->
         <div class="format-tabs" role="tablist">
             <button class="format-tab active"
@@ -437,14 +439,14 @@
                     role="tab"
                     aria-selected="true"
                     aria-controls="panel-basic">
-                🟦 기본 서비스 (7종)
+                🟦 입력 포맷 (7종)
             </button>
             <button class="format-tab"
                     data-target="panel-ext"
                     role="tab"
                     aria-selected="false"
                     aria-controls="panel-ext">
-                🔜 확장 서비스 (5종)
+                🔜 예정 포맷 (5종)
             </button>
             <button class="format-tab"
                     data-target="panel-how"

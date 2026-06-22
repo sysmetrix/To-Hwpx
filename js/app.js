@@ -63,6 +63,7 @@ const SUPPORTED_FORMAT_LABEL = 'MD, HTML, TXT, CSV, XLSX, JSON, IPYNB, DOCX, HWP
 // ─────────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
     renderPipelineSteps();      // 파이프라인 단계 DOM 렌더링
+    setProgressPanelState('empty');
     initDropZone();             // 파일 드롭/선택 영역 (히어로 드롭존)
     initConverterDropArea();    // 변환기 섹션 통합 드롭 영역
     initFormatTabs();           // 포맷 탭 전환 (기본/확장 서비스)
@@ -189,7 +190,7 @@ function handleFileSelect(file) {
     const ext = getFileExtension(file.name);
     if (!SUPPORTED_EXTENSIONS.has(ext)) {
         clearSelectedFile();
-        showAlert(`지원하지 않는 파일 형식입니다: ${ext ? '.' + ext : '확장자 없음'}\n지원 형식: ${SUPPORTED_FORMAT_LABEL}`);
+        showAlert(`지원하지 않는 파일 형식입니다: ${ext ? '.' + ext : '확장자 없음'}\n입력 가능 포맷: ${SUPPORTED_FORMAT_LABEL}\n출력: HWPX`);
         return;
     }
 
@@ -212,6 +213,7 @@ function handleFileSelect(file) {
     updateConvertButton(true);       // 변환 버튼 활성화
     hideResult();                    // 이전 변환 결과 숨기기
     resetPipeline();                 // 파이프라인 초기화
+    setProgressPanelState('ready');
 
     // 문서 제목 입력 placeholder를 파일명(확장자 제외)으로 설정
     const titleInput = document.getElementById('doc-title');
@@ -230,6 +232,7 @@ function clearSelectedFile() {
     revokeDownloadUrl();
     hideResult();
     resetPipeline();
+    setProgressPanelState('empty');
     updateConvertButton(false);
 
     const badge = document.getElementById('detected-format');
@@ -243,7 +246,7 @@ function clearSelectedFile() {
         dz.innerHTML = `
             <div class="drop-icon">📂</div>
             <div class="drop-title">파일을 여기에 드래그하거나 클릭하세요</div>
-            <div class="drop-sub">MD · HTML · TXT · CSV · XLSX · JSON · IPYNB · DOCX · HWPX 지원</div>
+            <div class="drop-sub">입력 가능 포맷: MD · HTML · TXT · CSV · XLSX · JSON · IPYNB · DOCX · HWP · HWPX / 출력: HWPX</div>
         `;
     }
 
@@ -914,6 +917,7 @@ async function runConversionPipeline() {
 
     state.isConverting = true;
     resetPipeline();
+    setProgressPanelState('converting');
     hideResult();
     hideAlert();
     updateConvertButton(false);
@@ -1024,12 +1028,15 @@ async function runConversionPipeline() {
 
         // 결과 카드 표시
         showResult({ url: downloadUrl, fileName, size: finalBlob.size, validation });
+        setProgressPanelState(validation.pass ? 'success' : 'warning');
         if (state.autoDownload) {
             triggerDownload(downloadUrl, fileName);
             setStatusText('완료! 다운로드를 시작했습니다.');
         }
 
     } catch (err) {
+        setProgressPanelState('error');
+        setStatusText('실패');
         showAlert('변환 중 오류가 발생했습니다: ' + err.message);
         console.error('[To HWPX] 변환 오류:', err);
     } finally {
@@ -1206,6 +1213,8 @@ function hideResult() {
         area.style.display = 'none';
         area.innerHTML = '';
     }
+    const ind = document.getElementById('dl-indicator');
+    if (ind) ind.hidden = true;
 }
 
 function triggerDownload(url, fileName) {
@@ -1286,6 +1295,28 @@ function setProgressValue(pct) {
 function setStatusText(msg) {
     const el = document.getElementById('status-text');
     if (el) el.textContent = msg;
+}
+
+function setProgressPanelState(stateName) {
+    const panel = document.querySelector('.progress-panel');
+    const empty = document.getElementById('progress-empty');
+    if (!panel) return;
+
+    panel.classList.remove('is-empty', 'is-ready', 'is-converting', 'is-success', 'is-warning', 'is-error');
+    panel.classList.add(`is-${stateName}`);
+
+    const copy = {
+        empty: ['파일을 선택하면 변환 준비 상태가 표시됩니다.', '아직 진행 중인 변환이 없습니다.'],
+        ready: ['기본 옵션을 확인한 뒤 변환을 시작하세요.', '진행률은 변환 버튼을 누르면 표시됩니다.'],
+        converting: ['변환 중입니다.', '파일 분석, HWPX 생성, 구조 검증을 순서대로 진행합니다.'],
+        success: ['변환이 완료되었습니다.', '결과를 확인하거나 HWPX 파일을 다운로드하세요.'],
+        warning: ['변환은 완료되었지만 확인이 필요합니다.', '결과 카드의 구조 검증 경고를 확인하세요.'],
+        error: ['변환에 실패했습니다.', '상단 알림의 오류 내용을 확인한 뒤 다시 시도하세요.'],
+    }[stateName] || null;
+
+    if (empty && copy) {
+        empty.innerHTML = `<strong>${escHtml(copy[0])}</strong><span>${escHtml(copy[1])}</span>`;
+    }
 }
 
 

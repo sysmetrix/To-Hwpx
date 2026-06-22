@@ -738,6 +738,34 @@ a:hover { text-decoration: underline; }
     grid-template-columns: repeat(4, 1fr);
     gap: 0 10px;
 }
+.options-grid-advanced {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.advanced-settings {
+    border: 1px solid var(--c-border);
+    border-radius: var(--radius-md);
+    background: var(--c-surface-alt);
+    margin: 2px 0 14px;
+    overflow: hidden;
+}
+.advanced-settings summary {
+    cursor: pointer;
+    padding: 12px 14px;
+    color: var(--c-text-sub);
+    font-size: 0.88rem;
+    font-weight: 800;
+    list-style-position: inside;
+}
+.advanced-settings summary:hover {
+    background: var(--c-primary-light);
+    color: var(--c-primary-dark);
+}
+.advanced-settings-body {
+    padding: 14px;
+    border-top: 1px solid var(--c-border);
+    background: var(--c-surface);
+}
 
 /* 변환기 섹션 파일 드롭 영역 — mini-drop-zone·detected-row 통합 */
 .converter-drop-area {
@@ -1082,6 +1110,45 @@ a:hover { text-decoration: underline; }
     margin-bottom: 18px;
     padding-bottom: 12px;
     border-bottom: 1px solid var(--c-border);
+}
+.progress-empty {
+    display: grid;
+    gap: 4px;
+    padding: 14px 16px;
+    border-radius: var(--radius-md);
+    background: var(--c-surface-alt);
+    border: 1px solid var(--c-border);
+    margin-bottom: 14px;
+}
+.progress-empty strong {
+    font-size: 0.92rem;
+    color: var(--c-text);
+}
+.progress-empty span {
+    font-size: 0.8rem;
+    color: var(--c-text-muted);
+}
+.progress-panel.is-empty .progress-details,
+.progress-panel.is-empty #pipeline-steps,
+.progress-panel.is-empty #result-area,
+.progress-panel.is-empty #dl-indicator {
+    display: none !important;
+}
+.progress-panel.is-converting .progress-empty {
+    background: var(--c-primary-light);
+    border-color: var(--c-primary);
+}
+.progress-panel.is-success .progress-empty {
+    background: var(--c-success-light);
+    border-color: var(--c-success);
+}
+.progress-panel.is-warning .progress-empty {
+    background: var(--c-warning-light);
+    border-color: var(--c-warning);
+}
+.progress-panel.is-error .progress-empty {
+    background: var(--c-error-light);
+    border-color: var(--c-error);
 }
 
 /* 진행률 바 */
