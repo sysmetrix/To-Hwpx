@@ -1,6 +1,21 @@
 {
-  "current": "4.3.23",
+  "current": "4.3.24",
   "versions": [
+    {
+      "version": "4.3.24",
+      "date": "2026-06-22",
+      "user": [
+        "첫 화면 제목을 '그냥 HWPX로'로 바로잡았습니다",
+        "드래그앤드롭 안내에서 입력 포맷의 HWP/HWPX를 제거하고, 출력 HWPX 줄과 시작 위치를 맞췄습니다",
+        "나눔고딕 설치 인식이 흔들리는 원인인 브라우저 로컬 폰트 권한/등록명 차이/폭 비교 오판 가능성을 줄였습니다"
+      ],
+      "dev": [
+        "[v4.3.24] index.html/app.js: drop-sub 입력 포맷 목록에서 HWP/HWPX 제거 및 hero-title 문구 수정",
+        "[v4.3.24] style.css: drop-sub를 inline-block left align으로 변경해 중앙 배치 안에서 줄 시작점 정렬",
+        "[v4.3.24] app.js: Nanum Gothic 등록명 후보 확장 및 isFontInstalledByPixels() 픽셀 렌더링 비교 폴백 추가",
+        "[v4.3.24] sw.js: CACHE_VERSION to-hwpx-v4.3.24"
+      ]
+    },
     {
       "version": "4.3.23",
       "date": "2026-06-22",

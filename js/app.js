@@ -247,7 +247,7 @@ function clearSelectedFile() {
         dz.innerHTML = `
             <div class="drop-icon">📂</div>
             <div class="drop-title">파일을 여기에 드래그하거나 클릭하세요</div>
-            <div class="drop-sub">입력 포맷: MD · HTML · TXT · CSV · XLSX · JSON · IPYNB · DOCX · HWP · HWPX<br>출력: HWPX</div>
+            <div class="drop-sub">입력 포맷: MD · HTML · TXT · CSV · XLSX · JSON · IPYNB · DOCX<br>출력: HWPX</div>
         `;
     }
 
@@ -521,7 +521,11 @@ const FONT_DOWNLOADS = [
     {
         name: '나눔고딕',
         family: 'NanumGothic',
-        systemNames: ['나눔고딕', '나눔고딕 보통', 'NanumGothic', 'Nanum Gothic'],
+        systemNames: [
+            '나눔고딕', '나눔고딕 보통', '나눔고딕 Regular', '나눔고딕OTF', '나눔고딕OTF Regular',
+            'NanumGothic', 'NanumGothic Regular', 'NanumGothicOTF', 'NanumGothicOTF Regular',
+            'Nanum Gothic', 'Nanum Gothic Regular', 'Nanum Gothic OTF', 'Nanum Gothic OTF Regular'
+        ],
         desc: '네이버 배포 한글 고딕체입니다. 국내 사용자에게 익숙하고 일반 문서에 잘 맞습니다.',
         local: ['fonts/NanumGothic.ttf', 'Font/NanumGothic.ttf', 'Font/NanumGothic/NanumGothic.ttf'],
         official: 'https://hangeul.naver.com/font',
@@ -678,6 +682,42 @@ function isFontInstalledByMeasure(name) {
     } catch (_) { return false; }
 }
 
+function isFontInstalledByPixels(name) {
+    try {
+        if (!isFontInstalledByPixels._canvas) {
+            isFontInstalledByPixels._canvas = document.createElement('canvas');
+            isFontInstalledByPixels._canvas.width = 360;
+            isFontInstalledByPixels._canvas.height = 96;
+            isFontInstalledByPixels._ctx = isFontInstalledByPixels._canvas.getContext('2d', { willReadFrequently: true });
+        }
+        const canvas = isFontInstalledByPixels._canvas;
+        const ctx = isFontInstalledByPixels._ctx;
+        if (!canvas || !ctx) return false;
+        const sample = '가나다라마바사 ABCD 1234';
+        const signature = family => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#000';
+            ctx.font = `48px ${family}`;
+            ctx.textBaseline = 'top';
+            ctx.fillText(sample, 8, 8);
+            const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+            let hash = 0;
+            let ink = 0;
+            for (let i = 3; i < data.length; i += 16) {
+                const alpha = data[i];
+                if (alpha) ink += alpha;
+                hash = ((hash << 5) - hash + alpha) | 0;
+            }
+            return `${ink}:${hash}`;
+        };
+        return ['monospace', 'serif', 'sans-serif'].some(base => {
+            const fallback = signature(base);
+            const candidate = signature(`"${name}", ${base}`);
+            return candidate !== fallback;
+        });
+    } catch (_) { return false; }
+}
+
 async function isSystemFontInstalled(names, localFontsList = null) {
     const norm = s => String(s || '').toLowerCase().replace(/\s+/g, '');
     // 1) queryLocalFonts() — 현재 사용자 설치 폰트까지 (공백·대소문자 정규화 + 굵기 접미사 보완)
@@ -691,6 +731,7 @@ async function isSystemFontInstalled(names, localFontsList = null) {
     }
     // 2) 캔버스 폭 측정 — 권한 없이도 동작하는 신뢰성 높은 방법 (나눔고딕 미인식 문제 해결)
     if (names.some(isFontInstalledByMeasure)) return true;
+    if (names.some(isFontInstalledByPixels)) return true;
     // 3) 폴백: FontFace local()
     for (const name of names) {
         try {

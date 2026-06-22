@@ -469,7 +469,14 @@ a:hover { text-decoration: underline; }
 }
 .drop-zone .drop-icon    { font-size: 2.6rem; margin-bottom: 12px; }
 .drop-zone .drop-title   { font-size: 1.15rem; font-weight: 700; margin-bottom: 6px; color: var(--c-text); }
-.drop-zone .drop-sub     { font-size: 0.86rem; color: var(--c-text-muted); letter-spacing: 0.01em; }
+.drop-zone .drop-sub {
+    display: inline-block;
+    font-size: 0.86rem;
+    color: var(--c-text-muted);
+    letter-spacing: 0.01em;
+    line-height: 1.65;
+    text-align: left;
+}
 /* 파일 선택 완료 상태 */
 .file-selected-info {
     display: flex;
