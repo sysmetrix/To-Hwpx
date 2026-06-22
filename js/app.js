@@ -22,7 +22,8 @@ const state = {
     file:         null,                // 선택된 File 객체
     ir:           null,                // 파싱 완료된 IR JSON
     docType:      'plain',             // 상단 제목 블록: plain(없음)|titleblock(기본)|cover-unit(표지단위)|cover-annual(표지연간)
-    customTitle:  '',                  // 사용자가 입력한 제목 (비어 있으면 파서가 자동 감지)
+    customTitle:  '',                  // 사용자가 입력한 제목 (비어 있으면 자동 기준 적용)
+    titleSource:  'filename',          // 자동 제목 기준: 'filename'(파일 이름) | 'heading'(문서 첫 제목)
     docFont:      '맑은 고딕',          // 출력 폰트 (기본: 맑은 고딕)
     fontSize:     12,                  // 기본 글꼴 크기 (pt)
     paperSize:    'A4',                // 용지 크기: "A4" | "B5" | "Letter"
@@ -387,10 +388,11 @@ const FORMAT_INFO = {
         desc: 'Git, Notion 등 개발 문서 도구에서 널리 쓰이는 텍스트 기반 마크업 언어입니다.',
         tech: 'marked.js → HTML 파싱 → IR(중간 표현) → HWPX',
         features: [
-            '제목(H1~H6), 굵기, 기울임, 취소선 지원',
-            '표(GitHub Flavored Markdown) 지원',
-            '순서/비순서 목록, 인용문 지원',
-            '코드블록(펜스 코드·인라인 코드) 지원',
+            '제목(H1~H6), 굵게/기울임/밑줄/취소선/글자색 지원',
+            '구두점에 붙은 **굵게**·따옴표·앰퍼샌드(&)·부등호(<,>)도 정확히 처리',
+            '표(GitHub Flavored Markdown): 머리행 음영·중첩목록 보존',
+            '순서/비순서 목록, 태스크리스트(☑/□), 인용문 지원',
+            '코드블록(검정 배경·흰 글자)·인라인 코드 지원',
             '이모지, 수평선 지원',
         ],
         limits: ['이미지 미지원', '인라인 HTML 일부 무시'],
@@ -408,15 +410,17 @@ const FORMAT_INFO = {
     },
     docx: {
         icon: '📘', name: 'Word 문서 (DOCX)',
-        quality: '★☆☆', available: true,
-        desc: 'Microsoft Word의 Office Open XML(.docx) 형식입니다.',
+        quality: '★★★', available: true,
+        desc: 'Microsoft Word의 Office Open XML(.docx) 형식입니다. 변환 품질을 대폭 개선했습니다.',
         tech: 'JSZip으로 압축 해제 → word/document.xml 본문·표 추출 → IR → HWPX',
         features: [
-            '본문 텍스트와 기본 제목 스타일 추출',
-            '단순 표(Table) 구조 변환',
-            '일부 목록 텍스트 추출',
+            '제목(Title)·소제목, 굵게/기울임/밑줄/취소선/글자색 보존',
+            '표: 가로·세로 병합, 셀 배경색, 셀 글자색까지 보존',
+            '중첩 표·들쭉날쭉한 표도 깨지지 않게 변환',
+            '순서/비순서 목록, 각주, 머리글/바닥글 추출',
+            '문단 정렬(가운데·오른쪽) 보존',
         ],
-        limits: ['이미지 미지원', '머리글·바닥글 미지원', '각주·미주 미지원', '정렬·색상·폰트·병합 셀 등 복잡한 서식 손실'],
+        limits: ['이미지(본문 삽입)·WMF/EMF 미지원', '세밀한 레이아웃·일부 스타일은 단순화'],
     },
     hwp: {
         icon: '🇰🇷', name: '한글 문서 (HWP)',
@@ -836,6 +840,14 @@ function initOptions() {
         });
     }
 
+    // 자동 제목 기준 (파일 이름 / 문서 첫 제목)
+    const titleSrcEl = document.getElementById('title-source');
+    if (titleSrcEl) {
+        titleSrcEl.addEventListener('change', () => {
+            state.titleSource = titleSrcEl.value;
+        });
+    }
+
     // 폰트 선택 (<select id="doc-font">) — 선택 값 localStorage 저장
     const fontEl = document.getElementById('doc-font');
     if (fontEl) {
@@ -884,19 +896,18 @@ function initOptions() {
         });
     }
 
-    // 용지 방향 버튼 (#paper-orient)
-    const orientBtn = document.getElementById('paper-orient');
-    if (orientBtn) {
+    // 용지 방향 세그먼트(세로/가로) — .seg-btn[data-orient]
+    const orientBtns = document.querySelectorAll('.seg-btn[data-orient]');
+    if (orientBtns.length) {
         const savedOrient = localStorage.getItem('tohwpx_orientation');
-        if (savedOrient === 'landscape') {
-            state.orientation = 'landscape';
-            applyOrientationUi('landscape');
-        }
-        orientBtn.addEventListener('click', () => {
-            const toLandscape = state.orientation === 'portrait';
-            state.orientation = toLandscape ? 'landscape' : 'portrait';
-            applyOrientationUi(state.orientation);
-            localStorage.setItem('tohwpx_orientation', state.orientation);
+        if (savedOrient === 'landscape') state.orientation = 'landscape';
+        applyOrientationUi(state.orientation);
+        orientBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                state.orientation = btn.dataset.orient === 'landscape' ? 'landscape' : 'portrait';
+                applyOrientationUi(state.orientation);
+                localStorage.setItem('tohwpx_orientation', state.orientation);
+            });
         });
     }
 
@@ -1024,12 +1035,20 @@ async function runConversionPipeline() {
             throw new Error('파일 파싱 실패: ' + e.message);
         }
 
-        // 사용자가 제목을 직접 입력했으면 파서 감지 제목을 덮어씀
-        if (state.customTitle) ir.title = state.customTitle;
-        // 제목을 못 찾았으면 파일명(확장자 제외)을 제목으로 폴백 — 표지/제목 칸이 비지 않게
-        if (!ir.title || !String(ir.title).trim()) {
-            ir.title = (state.file?.name || '').replace(/\.[^.]+$/, '').trim();
+        // 제목 결정: ① 직접 입력 > ② 자동 기준(파일 이름 / 문서 첫 제목) > ③ 파일명 폴백
+        const fname = (state.file?.name || '').replace(/\.[^.]+$/, '').trim();
+        const hasTitle = () => ir.title && String(ir.title).trim();
+        if (state.customTitle) {
+            ir.title = state.customTitle;
+        } else if (state.titleSource === 'heading') {
+            // 문서 첫 제목 우선 — 파서가 못 올렸으면 본문 첫 제목을 끌어와 제목으로(본문에서 제거)
+            if (!hasTitle()) {
+                const fh = (ir.blocks || []).find(b => b.type === 'heading');
+                if (fh) { ir.title = fh.text; ir.blocks.splice(ir.blocks.indexOf(fh), 1); }
+            }
         }
+        // 파서 제목도 없으면(또는 '파일 이름' 기준) 파일명으로 채워 표지/제목 칸이 비지 않게
+        if (!hasTitle()) ir.title = fname;
         state.ir = ir;
 
         // [보안] IR 미리보기는 textContent로만 표시 (innerHTML 사용 금지)
@@ -1443,12 +1462,11 @@ function syncMarginInputs() {
 
 function applyOrientationUi(orientation) {
     const landscape = orientation === 'landscape';
-    const orientBtn = document.getElementById('paper-orient');
-    if (!orientBtn) return;
-    const orientLabel = orientBtn.querySelector('.orient-label');
-    orientBtn.classList.toggle('is-landscape', landscape);
-    orientBtn.setAttribute('aria-label', `용지 방향: ${landscape ? '가로' : '세로'}`);
-    if (orientLabel) orientLabel.textContent = landscape ? '가로' : '세로';
+    document.querySelectorAll('.seg-btn[data-orient]').forEach(btn => {
+        const active = (btn.dataset.orient === 'landscape') === landscape;
+        btn.classList.toggle('is-active', active);
+        btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+    });
 }
 
 
@@ -1688,17 +1706,22 @@ function initModals() {
         if (e.target === e.currentTarget) closeFontGuide();
     });
 
-    // ESC 키로 닫기
+    // ESC: 모달이 열려 있으면 닫고, 아니면 초기화 버튼과 동일하게 동작
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
-            closePreview();
-            closeChangelog();
-            closePcGuide();
-            closeMobileGuide();
-            closeInstallGuide();
-            closePrivacyGuide();
-            closeFontGuide();
-        }
+        if (e.key !== 'Escape') return;
+        const modalOpen = !!document.querySelector('.modal-overlay.open');
+        closePreview();
+        closeChangelog();
+        closePcGuide();
+        closeMobileGuide();
+        closeInstallGuide();
+        closePrivacyGuide();
+        closeFontGuide();
+        if (modalOpen) return;   // 모달을 닫은 경우엔 초기화하지 않음
+        const ae = document.activeElement;
+        const typing = ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.isContentEditable);
+        if (typing) { ae.blur(); return; }   // 입력 중이면 포커스 해제만
+        resetConverterState();
     });
 
     // 체인지로그 탭 전환
@@ -1845,6 +1868,7 @@ function resetConverterState() {
 
     state.docType = 'plain';
     state.customTitle = '';
+    state.titleSource = 'filename';
     state.docFont = '맑은 고딕';
     state.fontSize = 12;
     state.paperSize = 'A4';
@@ -1862,6 +1886,8 @@ function resetConverterState() {
     const autoDownload = document.getElementById('auto-download');
     const plainRadio = document.querySelector('input[name="doc-type"][value="plain"]');
     if (plainRadio) plainRadio.checked = true;
+    const titleSrc = document.getElementById('title-source');
+    if (titleSrc) titleSrc.value = 'filename';
     if (docFont) docFont.value = '맑은 고딕';
     if (fontSize) fontSize.value = '12';
     if (paperSize) paperSize.value = 'A4';

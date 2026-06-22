@@ -27,6 +27,7 @@ function mmToHwp(mm) { return Math.round(mm * MM_TO_HWP); }
 
 const PAPER_SIZES = {
     'A4':     { w: 59528, h: 84188 },
+    'A3':     { w: 84189, h: 119055 },   // 297 × 420 mm
     'B5':     { w: 51430, h: 72817 },
     'Letter': { w: 61920, h: 80136 },
 };

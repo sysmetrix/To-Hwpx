@@ -786,7 +786,7 @@ a:hover { text-decoration: underline; }
 }
 
 .advanced-settings {
-    border: 1px solid var(--c-border);
+    border: 1.5px solid var(--c-border);
     border-radius: var(--radius-md);
     background: var(--c-surface-alt);
     margin: 2px 0 14px;
@@ -794,16 +794,18 @@ a:hover { text-decoration: underline; }
 }
 .advanced-settings summary {
     cursor: pointer;
-    padding: 12px 14px;
-    color: var(--c-text-sub);
-    font-size: 0.88rem;
+    padding: 13px 14px;
+    color: var(--c-text);
+    font-size: 0.92rem;
     font-weight: 800;
+    background: var(--c-surface);   /* 패널 본문과 구분되는 헤더 바 */
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 10px;
     list-style: none;
 }
+.advanced-settings[open] summary { border-bottom: 1px solid var(--c-border); }
 .advanced-settings summary::-webkit-details-marker { display: none; }
 .advanced-settings summary::marker { content: ''; }
 .adv-summary-text small {
@@ -813,18 +815,22 @@ a:hover { text-decoration: underline; }
     color: var(--c-text-muted);
     margin-top: 2px;
 }
-.adv-chevron {
+.adv-chevron {                       /* 펼침 표시 — 원형 배경으로 클릭 가능함을 명확히 */
     flex-shrink: 0;
-    color: var(--c-text-muted);
-    transition: transform 0.2s;
-    font-size: 0.8rem;
+    width: 24px;
+    height: 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: var(--c-primary-light);
+    color: var(--c-primary);
+    transition: transform 0.2s, background 0.2s;
+    font-size: 0.78rem;
 }
 .advanced-settings[open] .adv-chevron { transform: rotate(180deg); }
-.advanced-settings summary:hover {
-    background: var(--c-primary-light);
-    color: var(--c-primary-dark);
-}
-.advanced-settings summary:hover .adv-chevron { color: var(--c-primary-dark); }
+.advanced-settings summary:hover { background: var(--c-primary-light); }
+.advanced-settings summary:hover .adv-chevron { background: var(--c-primary); color: #fff; }
 .advanced-settings-body {
     padding: 14px;
     border-top: 1px solid var(--c-border);
@@ -967,6 +973,21 @@ a:hover { text-decoration: underline; }
     border-color: var(--c-primary);
     box-shadow: 0 0 0 3px rgba(56, 108, 255, 0.15);
 }
+/* 자동 제목 기준 (파일 이름 / 문서 첫 제목) */
+.title-source-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+    font-size: 0.8rem;
+    color: var(--c-text-muted);
+}
+.title-source-row select {
+    width: auto;
+    flex: 0 0 auto;
+    padding: 6px 30px 6px 10px;
+    font-size: 0.82rem;
+}
 /* 옵션 보조 안내문 */
 .form-hint {
     margin: -10px 0 18px;
@@ -1073,6 +1094,31 @@ a:hover { text-decoration: underline; }
     width: 14px;
     height: 10px;
 }
+
+/* 세그먼트 컨트롤 (용지 방향 등 2지선다) */
+.seg-control {
+    display: inline-flex;
+    width: 100%;
+    border: 1.5px solid var(--c-border);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+}
+.seg-btn {
+    flex: 1;
+    padding: 9px 0;
+    border: none;
+    background: var(--c-surface);
+    color: var(--c-text-sub);
+    font-family: var(--font-main);
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background var(--trans), color var(--trans);
+}
+.seg-btn + .seg-btn { border-left: 1.5px solid var(--c-border); }
+.seg-btn:hover { background: var(--c-primary-light); color: var(--c-primary-dark); }
+.seg-btn.is-active { background: var(--c-primary); color: #fff; }
+.seg-btn:focus-visible { outline: 2px solid var(--c-primary); outline-offset: -2px; }
 
 .checkbox-row {
     display: flex;
