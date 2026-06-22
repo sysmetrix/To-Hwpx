@@ -932,6 +932,13 @@ a:hover { text-decoration: underline; }
     outline: none;
     border-color: var(--c-primary);
 }
+/* 옵션 보조 안내문 */
+.form-hint {
+    margin: -10px 0 18px;
+    font-size: 0.78rem;
+    line-height: 1.5;
+    color: var(--c-text-sub);
+}
 
 /* margin-grid — 레거시 선택자 (사용 안 함) */
 .margin-grid { display: none; }

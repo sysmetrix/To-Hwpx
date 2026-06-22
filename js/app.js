@@ -21,7 +21,7 @@
 const state = {
     file:         null,                // 선택된 File 객체
     ir:           null,                // 파싱 완료된 IR JSON
-    docType:      'plain',             // 문서 유형: "official" | "report" | "plain"
+    docType:      'plain',             // 상단 제목 블록: "plain"(없음) | "titleblock"(넣기)
     customTitle:  '',                  // 사용자가 입력한 제목 (비어 있으면 파서가 자동 감지)
     docFont:      '맑은 고딕',          // 출력 폰트 (기본: 맑은 고딕)
     fontSize:     12,                  // 기본 글꼴 크기 (pt)
@@ -809,10 +809,10 @@ function closeFontGuide() {
 
 // ─────────────────────────────────────────────────────────────────────────
 // [옵션 패널]
-//   문서 유형(공문/보고서/일반) + 사용자 지정 제목 + IR 미리보기 토글
+//   상단 제목 블록(없음/넣기) + 사용자 지정 제목 + IR 미리보기 토글
 // ─────────────────────────────────────────────────────────────────────────
 function initOptions() {
-    // 문서 유형 선택 (<select>)
+    // 상단 제목 블록 선택 (<select id="doc-type">: plain=없음 / titleblock=넣기)
     const docTypeEl = document.getElementById('doc-type');
     if (docTypeEl) {
         docTypeEl.addEventListener('change', () => {
