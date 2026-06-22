@@ -1,6 +1,22 @@
 {
-  "current": "4.3.15",
+  "current": "4.3.16",
   "versions": [
+    {
+      "version": "4.3.16",
+      "date": "2026-06-22",
+      "user": [
+        "굵게 표시가 따옴표·괄호·콜론에 바로 붙어 있어도 적용됩니다 (예: \"**굵게**\", (**강조**), **굵게**: — 이전에는 일부에서 별표가 그대로 보였습니다)",
+        "본문의 따옴표(\")·앰퍼샌드(&)·부등호(<, >)가 'A &amp; B'처럼 깨져 보이던 문제를 고쳤습니다 (인라인 코드 포함)",
+        "나눔고딕 등 설치한 한글 글꼴을 더 정확히 '설치됨'으로 인식합니다 (브라우저 권한 없이도 감지)"
+      ],
+      "dev": [
+        "[v4.3.16] parsers.js: splitInlineEmphasis 추가 — marked가 구두점 인접(flanking) 규칙으로 놓친 **굵게**/*기울임*/~~취소~~를 평문 토큰에서 런으로 복구(정상 토큰화 시엔 *가 없어 중복 처리 안 됨)",
+        "[v4.3.16] parsers.js: decodeMdEntities 추가 — marked 인라인 토큰·코드스팬의 &quot;/&amp;/&lt; 단일 이스케이프를 디코드해 xmlEsc 이중 이스케이프 해소(펜스 코드블록 .text는 원문이라 제외)",
+        "[v4.3.16] app.js: isFontInstalledByMeasure(캔버스 텍스트 폭 비교) 추가 + isSystemFontInstalled을 정규화·굵기접미사 접두 매칭 + 측정 폴백으로 강화(queryLocalFonts 권한/CDN 불필요, 나눔고딕 미인식 해결)",
+        "[v4.3.16] index.html: 업데이트 내역 버튼 v4.3.16 반영",
+        "[v4.3.16] sw.js: CACHE_VERSION to-hwpx-v4.3.16"
+      ]
+    },
     {
       "version": "4.3.15",
       "date": "2026-06-22",
