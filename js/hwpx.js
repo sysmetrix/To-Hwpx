@@ -10,7 +10,7 @@
  *   ⑤ replaceEmoji() 추가 — HWP 미지원 이모지 → □ 치환
  *   ⑥ secPr를 section 맨 앞으로 이동 (한컴 호환 방식)
  *   ⑦ secPr 단순화 — 호환성 최우선 구조
- *   ⑧ buildSection docType 분기 (공문/보고서/일반)
+ *   ⑧ buildSection docType 분기 (titleblock=상단 제목 블록 / plain=없음)
  *   ⑨ 빈 블록(blank 타입) → 빈 단락으로 출력
  *   ⑩ buildHwpx 시그니처: (ir, fontName, fontSize, marginsMm, paperSize)
  *
@@ -974,34 +974,25 @@ function buildSection(ir, marginsHwp, paperKey, landscape = false, customBfMap =
     const parts = [];
     parts.push(buildSectionBootstrap(buildSecPr(marginsHwp, paperKey, landscape, hasMasterPage), contentWidthHwp));
 
-    // ── 문서 유형별 머리글 ────────────────────────────────────────────
-    if (docType === 'official') {
-        // 공문 형식: 수신/발신/제목 헤더
-        parts.push(buildPara('수  신: (해당 기관)', '0', '0'));
-        parts.push(buildPara('발  신: ', '0', '0'));
-        parts.push(buildBlankPara());
-    } else if (docType === 'report') {
-        // 보고서: 보고서 라벨
-        parts.push(buildPara('보  고  서', '1', '1'));
-        parts.push(buildBlankPara());
-    }
-
-    // ── 문서 제목 ──────────────────────────────────────────────────────
-    if (ir.title && ir.title.trim()) {
-        if (docType === 'official') {
-            parts.push(buildPara('제  목: ' + ir.title, '3', '3'));
-        } else {
-            parts.push(buildPara(ir.title, '1', '1'));
-        }
-        parts.push(buildBlankPara());  // 제목 아래 빈 줄
-    }
-
-    // 보고서: 작성일 줄
-    if (docType === 'report') {
+    // ── 상단 제목 블록 / 문서 제목 ───────────────────────────────────────
+    //   docType 'titleblock'(넣기): 제목(가운데·H1) + 작성일(가운데) +
+    //     부제/작성자/소속 빈 라벨(변환 후 한글에서 직접 채움) + 구분선
+    //   그 외(없음): 기존대로 제목만 H1으로 출력
+    const titleText = (ir.title && ir.title.trim()) ? ir.title.trim() : '';
+    if (docType === 'titleblock') {
+        if (titleText) parts.push(buildPara(titleText, '1', '12'));   // H1 글자 + 가운데 정렬(paraPr 12)
         const today = new Date();
         const dateStr = `${today.getFullYear()}년 ${today.getMonth() + 1}월 ${today.getDate()}일`;
-        parts.push(buildPara(dateStr, '0', '0'));
+        parts.push(buildPara(dateStr, '0', '12'));                    // 작성일 가운데
         parts.push(buildBlankPara());
+        parts.push(buildPara('부제: ',   '0', '0'));                  // 빈 라벨 — 직접 작성
+        parts.push(buildPara('작성자: ', '0', '0'));
+        parts.push(buildPara('소속: ',   '0', '0'));
+        parts.push(buildHrPara(contentWidthHwp));                     // 구분선
+        parts.push(buildBlankPara());
+    } else if (titleText) {
+        parts.push(buildPara(titleText, '1', '1'));
+        parts.push(buildBlankPara());  // 제목 아래 빈 줄
     }
 
     // ── 본문 블록 ──────────────────────────────────────────────────────

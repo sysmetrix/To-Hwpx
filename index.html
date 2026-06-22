@@ -97,7 +97,7 @@
             <span>｢BWYF｣ AX Challenger 2026</span>
             <!-- [주의] id="open-changelog"는 app.js에서 업데이트 내역 모달을 여는 연결값 -->
             <button class="util-changelog-btn" id="open-changelog" aria-label="업데이트 내역 보기">
-                📋 v4.3.28 업데이트 내역
+                📋 v4.3.29 업데이트 내역
             </button>
         </div>
     </div>
@@ -179,7 +179,7 @@
              aria-label="파일을 드래그하거나 클릭하여 선택">
             <div class="drop-icon">📂</div>
             <div class="drop-title">파일을 여기에 드래그하거나 클릭하세요</div>
-            <div class="drop-sub">입력 포맷: MD · HTML · TXT · CSV · XLSX · JSON · IPYNB · DOCX<br>출력: HWPX</div>
+            <div class="drop-sub">입력: MD · HTML · TXT · CSV · XLSX · JSON · IPYNB · DOCX<br>출력: HWPX</div>
         </div>
 
         <!-- 숨겨진 파일 인풋 (드롭존 클릭 시 트리거됨) -->
@@ -243,15 +243,15 @@
                     <div class="advanced-settings-body">
                         <div class="advanced-settings-grid">
                             <div class="advanced-main">
-                                <!-- [수정 시] 옵션 값은 parsers.js의 emptyIR docType과 맞춰야 함 -->
+                                <!-- [수정 시] 옵션 값(plain/titleblock)은 hwpx.js buildSection의 docType 분기와 맞춰야 함 -->
                                 <div class="form-row">
-                                    <label for="doc-type">문서 유형</label>
+                                    <label for="doc-type">상단 제목 블록</label>
                                     <select id="doc-type" name="doc-type">
-                                        <option value="plain" selected>일반 문서</option>
-                                        <option value="official">공문</option>
-                                        <option value="report">보고서</option>
+                                        <option value="plain" selected>없음</option>
+                                        <option value="titleblock">넣기</option>
                                     </select>
                                 </div>
+                                <p class="form-hint">'넣기'를 고르면 문서 맨 위에 제목·작성일과 부제·작성자·소속 빈칸을 넣습니다. 세부 내용은 변환 후 한글에서 채워주세요.</p>
 
                                 <div class="options-grid-4col options-grid-advanced">
                                     <div class="form-row">
