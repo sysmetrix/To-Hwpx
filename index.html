@@ -97,7 +97,7 @@
             <span>｢BWYF｣ AX Challenger 2026</span>
             <!-- [주의] id="open-changelog"는 app.js에서 업데이트 내역 모달을 여는 연결값 -->
             <button class="util-changelog-btn" id="open-changelog" aria-label="업데이트 내역 보기">
-                📋 v4.3.31 업데이트 내역
+                📋 v4.3.32 업데이트 내역
             </button>
         </div>
     </div>
@@ -172,6 +172,7 @@
             <button type="button" id="open-pc-guide">PC 브라우저 지원</button>
             <button type="button" id="open-mobile-guide">모바일 브라우저 지원</button>
             <button type="button" id="open-install-guide">앱처럼 설치 가능</button>
+            <button type="button" id="open-privacy-guide">안전한 로컬 처리</button>
         </div>
 
         <!-- 파일 드롭존 (app.js의 initDropZone에서 이벤트 연결) -->
@@ -186,8 +187,6 @@
         <!-- [포맷 추가 시] accept에 새 확장자를 추가해야 파일 선택창에서 보입니다. -->
         <input type="file" id="file-input" hidden
                accept=".md,.markdown,.html,.htm,.txt,.csv,.xlsx,.xls,.json,.ipynb,.docx,.hwp,.hwpx">
-
-        <p class="hero-note">파일은 PC와 모바일 브라우저에서만 처리됩니다. 서버에 전송되지 않습니다.</p>
     </div>
 </section>
 
@@ -960,6 +959,30 @@
                     </ol>
                 </section>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     [안전한 로컬 처리 안내 모달]
+     파일은 사용자 기기(브라우저) 안에서만 처리되고 서버로 전송되지 않음
+     ════════════════════════════════════════════════════════════════ -->
+<div id="privacy-guide-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="privacy-guide-title">
+    <div class="modal-box modal-box--md">
+        <div class="modal-header">
+            <span class="modal-title" id="privacy-guide-title">안전한 로컬 처리</span>
+            <button class="modal-close" id="close-privacy-guide" aria-label="안전한 로컬 처리 안내 닫기">✕</button>
+        </div>
+        <div class="modal-body">
+            <p class="support-guide-lead">
+                파일은 PC와 모바일 브라우저에서만 처리됩니다. 서버에 전송되지 않습니다.
+            </p>
+            <ul class="support-guide-list">
+                <li>업로드한 파일은 변환 과정에서 사용자 기기(브라우저) 안에서만 읽고 처리됩니다.</li>
+                <li>원본 파일도, 변환된 HWPX도 외부 서버로 전송·저장되지 않습니다.</li>
+                <li>변환 결과는 사용자가 직접 내려받으며, 페이지를 닫으면 메모리에서 사라집니다.</li>
+                <li>단, '정밀 미리보기'를 사용할 때만 외부 뷰어(rhwp)를 불러오며, 이때도 파일은 브라우저 안에 머뭅니다.</li>
+            </ul>
         </div>
     </div>
 </div>

@@ -1,6 +1,20 @@
 {
-  "current": "4.3.31",
+  "current": "4.3.32",
   "versions": [
+    {
+      "version": "4.3.32",
+      "date": "2026-06-22",
+      "user": [
+        "개인정보 안내를 '안전한 로컬 처리' 배지 버튼으로 바꿨습니다 (PC/모바일/설치 안내 옆, 클릭하면 상세 설명)",
+        "화면 곳곳에 반복되던 '서버 미전송' 문구를 정리해 깔끔하게 다듬었습니다"
+      ],
+      "dev": [
+        "[v4.3.32] index.html: hero 배지에 '안전한 로컬 처리' 버튼(#open-privacy-guide) 추가 + 개인정보 안내 모달(#privacy-guide-modal, 제공 문구+상세 4항목) 추가",
+        "[v4.3.32] index.html: 드롭존 아래 상시 노출되던 hero-note 문구 제거(중복 정리) — 푸터 1곳·메타·온디맨드 모달로 일원화",
+        "[v4.3.32] app.js: showPrivacyGuide/closePrivacyGuide + 버튼·오버레이·ESC 닫기 배선",
+        "[v4.3.32] sw.js: CACHE_VERSION to-hwpx-v4.3.32, index.html v4.3.32"
+      ]
+    },
     {
       "version": "4.3.31",
       "date": "2026-06-22",
