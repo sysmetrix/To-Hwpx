@@ -1883,16 +1883,48 @@ function renderChangelogContent(tab) {
     el.innerHTML = groups.map(group => `
         <section class="changelog-date-group">
             <div class="changelog-date-heading">${escHtml(group.date)}</div>
-            ${group.versions.map(v => `
-                <div class="changelog-version">
-                    <div class="changelog-version-header">
-                        <span class="changelog-ver-badge">${v.range ? escHtml(v.range) : 'v' + escHtml(v.version)}</span>
-                    </div>
-                    <ul class="changelog-list">
-                        ${(v[tab] || []).map(item => `<li>${escHtml(item)}</li>`).join('')}
-                    </ul>
-                </div>
-            `).join('')}
+            ${tab === 'user' ? renderMergedUserChangelog(group.versions) : renderVersionedChangelog(group.versions, tab)}
         </section>
+    `).join('');
+}
+
+function versionLabel(version) {
+    return version.range ? version.range : `v${version.version}`;
+}
+
+function renderMergedUserChangelog(versions) {
+    const labels = versions.map(versionLabel);
+    const mergedItems = [];
+    const seen = new Set();
+    for (const version of versions) {
+        for (const item of version.user || []) {
+            if (seen.has(item)) continue;
+            seen.add(item);
+            mergedItems.push(item);
+        }
+    }
+    const badge = labels.length > 1 ? `${labels[labels.length - 1]} – ${labels[0]}` : labels[0];
+    return `
+        <div class="changelog-version">
+            <div class="changelog-version-header">
+                <span class="changelog-ver-badge">${escHtml(badge)}</span>
+            </div>
+            <ul class="changelog-list">
+                ${mergedItems.map(item => `<li>${escHtml(item)}</li>`).join('')}
+            </ul>
+        </div>
+    `;
+}
+
+function renderVersionedChangelog(versions, tab) {
+    return versions.map(v => `
+        <div class="changelog-version">
+            <div class="changelog-version-header">
+                <span class="changelog-ver-badge">${escHtml(versionLabel(v))}</span>
+            </div>
+            <ul class="changelog-list">
+                ${(v[tab] || []).map(item => `<li>${escHtml(item)}</li>`).join('')}
+            </ul>
+        </div>
     `).join('');
 }
