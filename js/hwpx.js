@@ -1119,7 +1119,7 @@ function buildSection(ir, marginsHwp, paperKey, landscape = false, customBfMap =
         parts.push(buildPara(dateStr, '0', '13'));   // 작성일: 표 밖 바로 아래, 우측 정렬(paraPr 13)
         parts.push(buildBlankPara());
     } else if (titleText) {
-        parts.push(buildPara(titleText, '1', '1'));
+        parts.push(buildPara(titleText, '1', '12'));   // 제목: H1 + 가운데 정렬(paraPr 12)
         parts.push(buildBlankPara());  // 제목 아래 빈 줄
     }
 
