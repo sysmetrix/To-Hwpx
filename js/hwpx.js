@@ -493,13 +493,13 @@ ${paraBase(18, 'LEFT',   160,   0,  100, 1800)}
         <hh:diagonal type="NONE" width="0.1 mm" color="#FFFFFF"/>
         <hc:fillBrush><hc:winBrush faceColor="#0080C0" hatchColor="#000000" alpha="0"/></hc:fillBrush>
       </hh:borderFill>
-      <!-- id=13 단위형 하단: 그라데이션 #0080C0→#3CBFFF (가로중심0·세로중심0·기울임0·번짐50·번짐중심50) -->
+      <!-- id=13 단위형 하단: 원형(RADIAL) 그라데이션 #0080C0→#3CBFFF (중심0·기울임0·번짐50·번짐중심50) -->
       <hh:borderFill id="13" threeD="0" shadow="0" centerLine="NONE" breakCellSeparateLine="0">
         <hh:slash type="NONE" Crooked="0" isCounter="0"/><hh:backSlash type="NONE" Crooked="0" isCounter="0"/>
         <hh:leftBorder type="NONE" width="0.1 mm" color="#FFFFFF"/><hh:rightBorder type="NONE" width="0.1 mm" color="#FFFFFF"/>
         <hh:topBorder type="NONE" width="0.1 mm" color="#FFFFFF"/><hh:bottomBorder type="NONE" width="0.1 mm" color="#FFFFFF"/>
         <hh:diagonal type="NONE" width="0.1 mm" color="#FFFFFF"/>
-        <hc:fillBrush><hc:gradation type="LINEAR" angle="0" centerX="0" centerY="0" step="50" colorNum="2" stepCenter="50" alpha="0"><hc:color value="#0080C0"/><hc:color value="#3CBFFF"/></hc:gradation></hc:fillBrush>
+        <hc:fillBrush><hc:gradation type="RADIAL" angle="0" centerX="0" centerY="0" step="50" colorNum="2" stepCenter="50" alpha="0"><hc:color value="#0080C0"/><hc:color value="#3CBFFF"/></hc:gradation></hc:fillBrush>
       </hh:borderFill>
       <!-- id=14 연간형 상단: 단색 #126E3A -->
       <hh:borderFill id="14" threeD="0" shadow="0" centerLine="NONE" breakCellSeparateLine="0">
@@ -529,7 +529,7 @@ ${paraBase(18, 'LEFT',   160,   0,  100, 1800)}
       <hh:borderFill id="17" threeD="0" shadow="0" centerLine="NONE" breakCellSeparateLine="0">
         <hh:slash type="NONE" Crooked="0" isCounter="0"/><hh:backSlash type="NONE" Crooked="0" isCounter="0"/>
         <hh:leftBorder type="NONE" width="0.1 mm" color="#FFFFFF"/><hh:rightBorder type="NONE" width="0.1 mm" color="#FFFFFF"/>
-        <hh:topBorder type="NONE" width="0.1 mm" color="#FFFFFF"/><hh:bottomBorder type="DOT" width="0.2 mm" color="#000000"/>
+        <hh:topBorder type="NONE" width="0.1 mm" color="#FFFFFF"/><hh:bottomBorder type="DOT" width="0.12 mm" color="#000000"/>
         <hh:diagonal type="NONE" width="0.1 mm" color="#FFFFFF"/>
       </hh:borderFill>
       <!-- id=18 기본형 표지 밴드: 회색 #808080 단색(위아래 동일), 테두리 없음 -->
@@ -772,9 +772,14 @@ function buildHrPara(contentWidthHwp = 48000) {
  */
 function buildCoverTable(style, titleText, contentWidthHwp = 48000) {
     const pid   = _nextParaId();
-    const hThin = mmToHwp(1.35);
-    const hMid  = mmToHwp(style === 'annual' ? 16.46 : 12.04);
-    const hName = mmToHwp(style === 'basic' ? 16.44 : 8.22);   // basic은 소속+작성자 2줄
+    // 총높이 22.96mm 통일. 색띠 높이는 style별(단위 1.91 / 그 외 1.35), 이름칸 8.22mm,
+    // 중간 제목칸은 나머지(= 22.96 - 색띠×2 - 8.22)로 역산.
+    const bandMm = style === 'unit' ? 1.91 : 1.35;
+    const nameMm = 8.22;
+    const midMm  = 22.96 - bandMm * 2 - nameMm;
+    const hThin = mmToHwp(bandMm);
+    const hMid  = mmToHwp(midMm);
+    const hName = mmToHwp(nameMm);
 
     const cell = (bf, w, h, colSpan, colAddr, rowAddr, contentXml) =>
         `<hp:tc name="" header="0" hasMargin="1" protect="0" editable="0" dirty="0" borderFillIDRef="${bf}">` +
@@ -786,11 +791,8 @@ function buildCoverTable(style, titleText, contentWidthHwp = 48000) {
 
     const band = () => buildBlankPara('12');                                       // 1pt 빈줄(띠 높이 최소화)
     const titlePara = titleText ? buildPara(titleText, '1', '7') : buildBlankPara();// H1 가운데
-    // 아래 칸 내용: basic=소속/작성자(우측, 순서 소속→작성자), 그 외=[팀명/이름]
-    const nameContent = style === 'basic'
-        ? buildPara('소속: ', '0', '13') + buildPara('작성자: ', '0', '13')
-        : buildPara('[팀명 / 이름]', '7', '13');
-    const nameBf = style === 'basic' ? '1' : '17';                                 // 표지: 하단 점선(17)
+    const nameContent = buildPara('[팀명 / 이름]', '7', '13');                     // 모든 스타일 공통, 굵게 우측
+    const nameBf = '17';                                                           // 하단 점선(0.12mm)
 
     let colCnt, W, rows;
     if (style === 'annual') {
@@ -806,7 +808,7 @@ function buildCoverTable(style, titleText, contentWidthHwp = 48000) {
         colCnt = 1;
         W = Math.min(Math.max(12000, contentWidthHwp), mmToHwp(169));
         const topBf = style === 'unit' ? 12 : 18;     // unit=#0080C0, basic=#808080
-        const botBf = style === 'unit' ? 13 : 18;     // unit=그라데이션, basic=#808080
+        const botBf = style === 'unit' ? 13 : 18;     // unit=원형 그라데이션, basic=#808080
         rows =
             `<hp:tr>${cell(topBf, W, hThin, 1, 0, 0, band())}</hp:tr>` +
             `<hp:tr>${cell(1,     W, hMid,  1, 0, 1, titlePara)}</hp:tr>` +
@@ -821,7 +823,7 @@ function buildCoverTable(style, titleText, contentWidthHwp = 48000) {
         `<hp:sz width="${W}" widthRelTo="ABSOLUTE" height="${totalH}" heightRelTo="ABSOLUTE" protect="0"/>` +
         `<hp:pos treatAsChar="1" affectLSpacing="0" flowWithText="1" allowOverlap="0" holdAnchorAndSO="0" ` +
         `vertRelTo="PARA" horzRelTo="COLUMN" vertAlign="TOP" horzAlign="CENTER" vertOffset="0" horzOffset="0"/>` +
-        `<hp:outMargin left="0" right="0" top="0" bottom="0"/><hp:inMargin left="0" right="0" top="0" bottom="0"/>` +
+        `<hp:outMargin left="0" right="0" top="0" bottom="${mmToHwp(3)}"/><hp:inMargin left="0" right="0" top="0" bottom="0"/>` +
         rows +
         `</hp:tbl><hp:t></hp:t></hp:run></hp:p>`;
 }
