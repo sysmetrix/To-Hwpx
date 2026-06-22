@@ -1,6 +1,25 @@
 {
-  "current": "4.3.40",
+  "current": "4.3.41",
   "versions": [
+    {
+      "version": "4.3.41",
+      "date": "2026-06-22",
+      "user": [
+        "Word 제목 칸에 섹션 제목('문서 구성' 등)이 잘못 들어가던 문제를 고쳤습니다 — 진짜 '제목(Title)' 스타일만 문서 제목으로 가져옵니다(없으면 비움)",
+        "표 밖 본문의 글자색도 잘 가져옵니다 (굵게+색 문장이 소제목으로 바뀌며 색이 사라지던 경우 포함)",
+        "상단 제목 블록 선택지를 '기본형 / 단위형 / 연간형'으로 정리했습니다('표지' 단어 삭제)",
+        "새로고침(F5) 시 항상 맨 위 화면에서 시작합니다",
+        "파일 선택 전 비어 보이던 형식 안내 영역에 안내 문구를 넣어 레이아웃을 정리했습니다"
+      ],
+      "dev": [
+        "[v4.3.41] parsers.js: DOCX 제목 승격을 Word '제목(Title)' 스타일(번호 없음)만으로 한정(docTitle 태그) — 'Heading 1/제목 1' 섹션 제목은 본문 유지",
+        "[v4.3.41] parsers.js: allBold→heading 휴리스틱에 색/밑줄/취소선 있으면 제외(서식 보존), 단락 글자색은 기존대로 runs로 보존",
+        "[v4.3.41] index.html: 라디오 카드 라벨 '기본형/단위형/연간형'(표지 제거)",
+        "[v4.3.41] app.js: history.scrollRestoration='manual' + 로드 시 scrollTo(0,0)(F5 맨 위), showFormatHintPlaceholder로 형식 힌트 빈칸 방지",
+        "[v4.3.41] style.css: .format-hint-empty 안내 placeholder 스타일",
+        "[v4.3.41] sw.js: CACHE_VERSION to-hwpx-v4.3.41, index.html v4.3.41"
+      ]
+    },
     {
       "version": "4.3.40",
       "date": "2026-06-22",

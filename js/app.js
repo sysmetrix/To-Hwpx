@@ -61,7 +61,11 @@ const SUPPORTED_FORMAT_LABEL = 'MD, HTML, TXT, CSV, XLSX, JSON, IPYNB, DOCX, HWP
 // [DOM 준비 후 초기화]
 //   모든 기능 초기화를 DOMContentLoaded 이후 실행
 // ─────────────────────────────────────────────────────────────────────────
+// 새로고침(F5) 시 브라우저의 스크롤 복원을 끄고 항상 맨 위에서 시작
+if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+
 document.addEventListener('DOMContentLoaded', () => {
+    window.scrollTo(0, 0);      // 새로고침 시 첫 화면(맨 위)으로
     renderPipelineSteps();      // 파이프라인 단계 DOM 렌더링
     setProgressPanelState('empty');
     initDropZone();             // 파일 드롭/선택 영역 (히어로 드롭존)
@@ -76,6 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initModals();               // 미리보기·업데이트 내역 모달
     initBookmarkButton();       // 즐겨찾기 안내 버튼
     initResetButton();          // 현재 선택 파일과 변환 옵션 초기화
+    showFormatHintPlaceholder();// 파일 선택 전 포맷 힌트 영역 안내(빈칸 방지)
 });
 
 
@@ -256,11 +261,7 @@ function clearSelectedFile() {
     if (cda) cda.classList.remove('has-file');
     if (cdaLabel) cdaLabel.textContent = '파일을 드래그하거나 클릭하여 선택';
 
-    const hint = document.getElementById('format-hint');
-    if (hint) {
-        hint.style.display = 'none';
-        hint.innerHTML = '';
-    }
+    showFormatHintPlaceholder();   // 파일 전: 빈칸 대신 안내 placeholder로 레이아웃 유지
 
     const titleInput = document.getElementById('doc-title');
     if (titleInput) {
@@ -320,6 +321,14 @@ function getFormatInfoForExt(ext) {
         hwpx: 'hwp',
     };
     return FORMAT_INFO[ext] || FORMAT_INFO[aliases[ext]] || null;
+}
+
+/** 파일 선택 전 포맷 힌트 영역에 안내 placeholder를 채워 레이아웃을 안정시킨다 */
+function showFormatHintPlaceholder() {
+    const hint = document.getElementById('format-hint');
+    if (!hint) return;
+    hint.innerHTML = '<div class="format-hint-empty">파일을 선택하면 형식과 보존 정보가 여기에 표시됩니다.</div>';
+    hint.style.display = 'block';
 }
 
 function updateFormatExpectation(ext, waiting = false) {
