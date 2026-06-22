@@ -74,14 +74,54 @@ function parseMd(text, docType = 'plain') {
     return parseHtml(html, docType);
 }
 
+/**
+ * marked 인라인 토큰의 .text는 HTML 엔티티로 이스케이프돼 있다(&quot; &amp; &lt; 등).
+ * 이를 디코드하지 않으면 hwpx 생성 시 xmlEsc가 한 번 더 이스케이프해 한컴에서
+ * `A &amp; B`, `"` → `&quot;` 처럼 깨져 보인다. 알려진 엔티티만 역변환(&amp;는 마지막).
+ * (펜스 코드블록 .text는 이스케이프되지 않으므로 이 함수를 적용하지 않는다)
+ */
+function decodeMdEntities(s) {
+    return String(s == null ? '' : s)
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'")
+        .replace(/&apos;/g, "'")
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&amp;/g, '&');
+}
+
 function plainMdText(token) {
     if (!token) return '';
-    if (typeof token === 'string') return sanitize(token);
+    if (typeof token === 'string') return sanitize(decodeMdEntities(token));
     if (Array.isArray(token)) return sanitize(token.map(plainMdText).join(''));
-    if (token.type === 'codespan') return sanitize(token.text || token.raw || '');
+    if (token.type === 'codespan') return sanitize(decodeMdEntities(token.text || token.raw || ''));
     if (token.type === 'br') return '\n';
     if (token.tokens) return plainMdText(token.tokens);
-    return sanitize(token.text || token.raw || '');
+    return sanitize(decodeMdEntities(token.text || token.raw || ''));
+}
+
+/**
+ * marked가 구두점 인접(flanking) 규칙으로 놓친 인라인 강조를 텍스트에서 복구.
+ *   `**굵게**`(strong) · `*기울임*`(em) · `~~취소~~`(del) 를 런 배열로 분리한다.
+ * marked가 정상 토큰화한 경우 text 토큰에는 `*`/`~`가 남지 않으므로 중복 처리되지 않는다.
+ * (예: `"**굵게**"`, `(**굵게**)`, `**굵게**:` 처럼 따옴표·괄호·콜론에 붙은 경우 복구)
+ */
+function splitInlineEmphasis(text) {
+    const src = String(text == null ? '' : text);
+    if (!/[*~]/.test(src)) return [{ text: src }];
+    const runs = [];
+    // **굵게** | *기울임*(첫 글자 공백 아님) | ~~취소~~
+    const re = /\*\*([^*]+?)\*\*|\*([^*\s][^*]*?)\*|~~([^~]+?)~~/g;
+    let last = 0, m;
+    while ((m = re.exec(src)) !== null) {
+        if (m.index > last) runs.push({ text: src.slice(last, m.index) });
+        if (m[1] != null)      runs.push({ text: m[1], bold: true });
+        else if (m[2] != null) runs.push({ text: m[2], italic: true });
+        else if (m[3] != null) runs.push({ text: m[3], strike: true });
+        last = re.lastIndex;
+    }
+    if (last < src.length) runs.push({ text: src.slice(last) });
+    return runs.length ? runs : [{ text: src }];
 }
 
 function splitInlineCodeBlocks(tokens, blocks) {
@@ -95,7 +135,7 @@ function splitInlineCodeBlocks(tokens, blocks) {
     for (const token of source) {
         if (token.type === 'codespan') {
             flushPara();
-            blocks.push({ type: 'code', text: sanitize(token.text || ''), inline: true });
+            blocks.push({ type: 'code', text: sanitize(decodeMdEntities(token.text || '')), inline: true });
         } else if (token.type === 'strong' || token.type === 'em') {
             const text = plainMdText(token.tokens || token.text);
             if (text) paraRuns.push({ text, bold: token.type === 'strong', italic: token.type === 'em' });
@@ -106,8 +146,9 @@ function splitInlineCodeBlocks(tokens, blocks) {
         } else if (token.type === 'br') {
             paraRuns.push({ text: '\n' });
         } else {
+            // marked가 강조로 토큰화하지 못한 평문에서 **굵게**/*기울임*/~~취소~~ 복구
             const text = plainMdText(token.tokens || token.text || token.raw);
-            if (text) paraRuns.push({ text });
+            if (text) paraRuns.push(...splitInlineEmphasis(text));
         }
     }
     flushPara();

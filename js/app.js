@@ -583,18 +583,40 @@ async function findLocalFont(paths) {
     return '';
 }
 
+/**
+ * 캔버스 텍스트 폭 비교로 시스템 폰트 설치 여부 감지.
+ * 권한(queryLocalFonts)·CDN 불필요, 전 브라우저 동작. 대상 폰트로 렌더한 폭이
+ * 일반 대체글꼴(monospace/serif/sans-serif)과 다르면 그 폰트가 설치된 것으로 판단.
+ * 한글·라틴·한자를 섞은 표본을 써서 한글 전용 글꼴도 안정적으로 구분한다.
+ */
+function isFontInstalledByMeasure(name) {
+    try {
+        if (!isFontInstalledByMeasure._ctx) {
+            isFontInstalledByMeasure._ctx = document.createElement('canvas').getContext('2d');
+        }
+        const ctx = isFontInstalledByMeasure._ctx;
+        if (!ctx) return false;
+        const sample = '한글ABCmwWil漢字가나다라微嶺';
+        const widthOf = family => { ctx.font = `72px ${family}`; return ctx.measureText(sample).width; };
+        // 3개 대체글꼴 중 하나라도 폭이 달라지면 설치된 것 (기본 한글 글꼴과 겹치는 경우 대비)
+        return ['monospace', 'serif', 'sans-serif'].some(base => widthOf(`"${name}", ${base}`) !== widthOf(base));
+    } catch (_) { return false; }
+}
+
 async function isSystemFontInstalled(names, localFontsList = null) {
-    // queryLocalFonts() 결과 우선 사용 — 현재 사용자 설치 폰트까지 감지
+    const norm = s => String(s || '').toLowerCase().replace(/\s+/g, '');
+    // 1) queryLocalFonts() — 현재 사용자 설치 폰트까지 (공백·대소문자 정규화 + 굵기 접미사 보완)
     if (localFontsList !== null) {
-        const lc = s => s.toLowerCase();
-        const sets = [
-            new Set(localFontsList.map(f => lc(f.family))),
-            new Set(localFontsList.map(f => lc(f.fullName))),
-            new Set(localFontsList.map(f => lc(f.postscriptName))),
-        ];
-        return names.some(name => sets.some(s => s.has(lc(name))));
+        const pool = [];
+        for (const f of localFontsList) pool.push(norm(f.family), norm(f.fullName), norm(f.postscriptName));
+        const exact = new Set(pool);
+        if (names.some(n => exact.has(norm(n)))) return true;
+        // "NanumGothic" 조회 시 "NanumGothicBold" 등 굵기 변형도 설치로 인정 (접두 4자 이상)
+        if (names.some(n => { const k = norm(n); return k.length >= 4 && pool.some(p => p && p.startsWith(k)); })) return true;
     }
-    // 폴백: FontFace local() — 시스템 전체 설치 폰트만 접근
+    // 2) 캔버스 폭 측정 — 권한 없이도 동작하는 신뢰성 높은 방법 (나눔고딕 미인식 문제 해결)
+    if (names.some(isFontInstalledByMeasure)) return true;
+    // 3) 폴백: FontFace local()
     for (const name of names) {
         try {
             const font = new FontFace('__detect__', `local("${name}")`);
