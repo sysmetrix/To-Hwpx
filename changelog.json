@@ -1,6 +1,24 @@
 {
-  "current": "4.3.37",
+  "current": "4.3.38",
   "versions": [
+    {
+      "version": "4.3.38",
+      "date": "2026-06-22",
+      "user": [
+        "표지 색 띠가 의도한 얇은 두께로 표시됩니다 (띠 칸 글꼴을 1pt로 줄여 과하게 벌어지던 문제 해결)",
+        "연간형 하단 띠 너비를 보라 129.93mm·노랑 39.93mm로 맞췄고, 표지 [팀명/이름] 칸 아래 선을 점선으로 바꿨습니다",
+        "기본형도 표지와 같은 형태(회색 띠 + 제목 + 소속/작성자)로 통일했습니다. 부제는 빼고 소속·작성자는 오른쪽 정렬했습니다",
+        "작성일은 표 바로 아래 오른쪽에 표기됩니다"
+      ],
+      "dev": [
+        "[v4.3.38] hwpx.js: charPr 12(1pt) 추가 — 표지 색 띠 칸 빈줄을 1pt로 깔아 띠 높이(1.35mm) 최소화. charProperties itemCnt 12→13, 동적 charPr 시작 12→13",
+        "[v4.3.38] hwpx.js: borderFill 18(#808080 회색 밴드) 추가, 17 하단 테두리 SOLID→DOT(점선). borderFills itemCnt 17→18, DOCX 셀배경 시작 18→19",
+        "[v4.3.38] hwpx.js: buildCoverTable에 'basic' 추가(회색 위아래 띠 + 소속/작성자 우측·순서 소속→작성자, 부제 삭제). 연간 하단 너비 mmToHwp(129.93)/(39.93) 정확화. buildBlankPara(charId) 옵션",
+        "[v4.3.38] hwpx.js: buildSection에서 basic/unit/annual 모두 buildCoverTable로, 작성일은 표 밖 바로 아래 우측(paraPr 13)",
+        "[v4.3.38] index.html/style.css: 기본형 라디오 카드 미리보기를 회색 띠로, .cr-band--gray 추가, 안내문 갱신",
+        "[v4.3.38] sw.js: CACHE_VERSION to-hwpx-v4.3.38, index.html v4.3.38"
+      ]
+    },
     {
       "version": "4.3.37",
       "date": "2026-06-22",
