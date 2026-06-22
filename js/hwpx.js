@@ -327,9 +327,9 @@ ${fontFaceBlock('OTHER')}
 ${fontFaceBlock('SYMBOL')}
 ${fontFaceBlock('USER')}
     </hh:fontfaces>
-    <hh:charProperties itemCnt="${12 + customCharMap.size}">
+    <hh:charProperties itemCnt="${13 + customCharMap.size}">
       <!-- 0=본문, 1=H1, 2=H2, 3=H3, 4=H4, 5=표머리, 6=코드, 7=본문bold, 8=본문italic, 9=본문bold+italic,
-           10=H5, 11=H6, 12~ = 동적 확장(밑줄/취소선/글자색) — customCharMap 키 순서대로 -->
+           10=H5, 11=H6, 12=1pt(표지 색띠 높이 최소화), 13~ = 동적 확장(밑줄/취소선/글자색) -->
 ${charBase(0, sz.body,  false, false)}
 ${charBase(1, sz.h1,   true,  false)}
 ${charBase(2, sz.h2,   true,  false)}
@@ -342,6 +342,7 @@ ${charBase(8, sz.body, false, true)}
 ${charBase(9, sz.body, true,  true)}
 ${charBase(10, sz.h5,  true,  false)}
 ${charBase(11, sz.h6,  true,  false)}
+${charBase(12, 100,    false, false)}
 ${[...customCharMap.entries()].map(([key, cid]) => {
     const [flags, color] = String(key).split('|');
     return charBase(cid, sz.body, flags[0] === '1', flags[1] === '1', null,
@@ -378,7 +379,7 @@ ${paraBase(16, 'LEFT',   160, 200,  100,    0)}
 ${paraBase(17, 'LEFT',   160,   0,  100, 1200)}
 ${paraBase(18, 'LEFT',   160,   0,  100, 1800)}
     </hh:paraProperties>
-    <hh:borderFills itemCnt="${17 + customBfMap.size}">
+    <hh:borderFills itemCnt="${18 + customBfMap.size}">
       <!-- id=1 테두리 없음 -->
       <hh:borderFill id="1" threeD="0" shadow="0" centerLine="NONE" breakCellSeparateLine="0">
         <hh:slash type="NONE" Crooked="0" isCounter="0"/><hh:backSlash type="NONE" Crooked="0" isCounter="0"/>
@@ -524,12 +525,20 @@ ${paraBase(18, 'LEFT',   160,   0,  100, 1800)}
         <hh:diagonal type="NONE" width="0.1 mm" color="#FFFFFF"/>
         <hc:fillBrush><hc:winBrush faceColor="#FFD900" hatchColor="#000000" alpha="0"/></hc:fillBrush>
       </hh:borderFill>
-      <!-- id=17 표지 [팀명/이름] 칸: 흰 배경(투명), 하단만 실선 -->
+      <!-- id=17 표지 [팀명/이름] 칸: 흰 배경(투명), 하단만 점선 -->
       <hh:borderFill id="17" threeD="0" shadow="0" centerLine="NONE" breakCellSeparateLine="0">
         <hh:slash type="NONE" Crooked="0" isCounter="0"/><hh:backSlash type="NONE" Crooked="0" isCounter="0"/>
         <hh:leftBorder type="NONE" width="0.1 mm" color="#FFFFFF"/><hh:rightBorder type="NONE" width="0.1 mm" color="#FFFFFF"/>
-        <hh:topBorder type="NONE" width="0.1 mm" color="#FFFFFF"/><hh:bottomBorder type="SOLID" width="0.2 mm" color="#000000"/>
+        <hh:topBorder type="NONE" width="0.1 mm" color="#FFFFFF"/><hh:bottomBorder type="DOT" width="0.2 mm" color="#000000"/>
         <hh:diagonal type="NONE" width="0.1 mm" color="#FFFFFF"/>
+      </hh:borderFill>
+      <!-- id=18 기본형 표지 밴드: 회색 #808080 단색(위아래 동일), 테두리 없음 -->
+      <hh:borderFill id="18" threeD="0" shadow="0" centerLine="NONE" breakCellSeparateLine="0">
+        <hh:slash type="NONE" Crooked="0" isCounter="0"/><hh:backSlash type="NONE" Crooked="0" isCounter="0"/>
+        <hh:leftBorder type="NONE" width="0.1 mm" color="#FFFFFF"/><hh:rightBorder type="NONE" width="0.1 mm" color="#FFFFFF"/>
+        <hh:topBorder type="NONE" width="0.1 mm" color="#FFFFFF"/><hh:bottomBorder type="NONE" width="0.1 mm" color="#FFFFFF"/>
+        <hh:diagonal type="NONE" width="0.1 mm" color="#FFFFFF"/>
+        <hc:fillBrush><hc:winBrush faceColor="#808080" hatchColor="#000000" alpha="0"/></hc:fillBrush>
       </hh:borderFill>
 ${[...customBfMap.entries()].map(([key, bfId]) => {
     const [color, variant = 'full'] = String(key).split(':');
@@ -647,10 +656,10 @@ function buildParaRuns(runs, paraId = '0', customCharMap = new Map()) {
  * 빈 단락 (빈 줄 간격 표현용) — paraPr id=9(여백 없음) 사용
  * 본문 paraPr(id=0)의 next=850 여백이 중복 적용되지 않도록 별도 스타일 사용
  */
-function buildBlankPara() {
+function buildBlankPara(charId = '0') {
     const pid = _nextParaId();
     return `<hp:p id="${pid}" paraPrIDRef="9" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0">` +
-        `<hp:run charPrIDRef="0"><hp:t> </hp:t></hp:run></hp:p>`;
+        `<hp:run charPrIDRef="${charId}"><hp:t> </hp:t></hp:run></hp:p>`;
 }
 
 function buildCodePara(text, paraId = '14', charId = '6') {
@@ -754,21 +763,18 @@ function buildHrPara(contentWidthHwp = 48000) {
 }
 
 /**
- * 표지 표 — 상단 색 띠 / 제목 흰칸 / 하단 색 띠 / [팀명·이름] 흰칸(하단 실선)을
- * 하나의 표로 생성한다. 제목은 중간 흰 칸에 들어간다.
- *   unit  : 상단 #0080C0 단색 / 하단 #0080C0→#3CBFFF 그라데이션 (1열)
- *   annual: 상단 #126E3A 단색 / 하단 8:2 분할(#724598 / #FFD900) (2열)
- * @param {string} style        'unit' | 'annual'
- * @param {string} titleText    중간 칸에 넣을 제목
- * @param {number} contentWidthHwp 본문 폭(HWPUNIT)
+ * 표지 표 — 상단 색 띠 / 제목 흰칸 / 하단 색 띠 / (이름/소속) 흰칸을 한 표로 생성.
+ * 제목은 중간 흰 칸에 들어간다. 색 띠 내용은 1pt(charPr 12)로 높이를 최소화.
+ *   basic : 위아래 #808080 단색, 아래칸 = 소속/작성자(우측)              (1열)
+ *   unit  : 상단 #0080C0 / 하단 #0080C0→#3CBFFF 그라데이션, 아래칸 [팀명/이름] (1열)
+ *   annual: 상단 #126E3A / 하단 좌 #724598(129.93mm)·우 #FFD900(39.93mm)        (2열)
+ * @param {string} style  'basic' | 'unit' | 'annual'
  */
 function buildCoverTable(style, titleText, contentWidthHwp = 48000) {
     const pid   = _nextParaId();
-    const W     = Math.min(Math.max(12000, contentWidthHwp), mmToHwp(169));
     const hThin = mmToHwp(1.35);
     const hMid  = mmToHwp(style === 'annual' ? 16.46 : 12.04);
-    const hName = mmToHwp(8.22);
-    const totalH = hThin + hMid + hThin + hName;
+    const hName = mmToHwp(style === 'basic' ? 16.44 : 8.22);   // basic은 소속+작성자 2줄
 
     const cell = (bf, w, h, colSpan, colAddr, rowAddr, contentXml) =>
         `<hp:tc name="" header="0" hasMargin="1" protect="0" editable="0" dirty="0" borderFillIDRef="${bf}">` +
@@ -778,26 +784,36 @@ function buildCoverTable(style, titleText, contentWidthHwp = 48000) {
         `</hp:subList><hp:cellAddr colAddr="${colAddr}" rowAddr="${rowAddr}"/><hp:cellSpan colSpan="${colSpan}" rowSpan="1"/>` +
         `<hp:cellSz width="${w}" height="${h}"/><hp:cellMargin left="280" right="280" top="0" bottom="0"/></hp:tc>`;
 
-    const titlePara = titleText ? buildPara(titleText, '1', '7') : buildBlankPara();  // H1 가운데
-    const namePara  = buildPara('[팀명 / 이름]', '7', '13');                          // 굵게 우측
+    const band = () => buildBlankPara('12');                                       // 1pt 빈줄(띠 높이 최소화)
+    const titlePara = titleText ? buildPara(titleText, '1', '7') : buildBlankPara();// H1 가운데
+    // 아래 칸 내용: basic=소속/작성자(우측, 순서 소속→작성자), 그 외=[팀명/이름]
+    const nameContent = style === 'basic'
+        ? buildPara('소속: ', '0', '13') + buildPara('작성자: ', '0', '13')
+        : buildPara('[팀명 / 이름]', '7', '13');
+    const nameBf = style === 'basic' ? '1' : '17';                                 // 표지: 하단 점선(17)
 
-    let colCnt, rows;
+    let colCnt, W, rows;
     if (style === 'annual') {
         colCnt = 2;
-        const wL = Math.round(W * 0.8), wR = W - wL;
+        const wL = mmToHwp(129.93), wR = mmToHwp(39.93);
+        W = wL + wR;
         rows =
-            `<hp:tr>${cell(14, W, hThin, 2, 0, 0, buildBlankPara())}</hp:tr>` +
+            `<hp:tr>${cell(14, W, hThin, 2, 0, 0, band())}</hp:tr>` +
             `<hp:tr>${cell(1,  W, hMid,  2, 0, 1, titlePara)}</hp:tr>` +
-            `<hp:tr>${cell(15, wL, hThin, 1, 0, 2, buildBlankPara())}${cell(16, wR, hThin, 1, 1, 2, buildBlankPara())}</hp:tr>` +
-            `<hp:tr>${cell(17, W, hName, 2, 0, 3, namePara)}</hp:tr>`;
+            `<hp:tr>${cell(15, wL, hThin, 1, 0, 2, band())}${cell(16, wR, hThin, 1, 1, 2, band())}</hp:tr>` +
+            `<hp:tr>${cell(nameBf, W, hName, 2, 0, 3, nameContent)}</hp:tr>`;
     } else {
         colCnt = 1;
+        W = Math.min(Math.max(12000, contentWidthHwp), mmToHwp(169));
+        const topBf = style === 'unit' ? 12 : 18;     // unit=#0080C0, basic=#808080
+        const botBf = style === 'unit' ? 13 : 18;     // unit=그라데이션, basic=#808080
         rows =
-            `<hp:tr>${cell(12, W, hThin, 1, 0, 0, buildBlankPara())}</hp:tr>` +
-            `<hp:tr>${cell(1,  W, hMid,  1, 0, 1, titlePara)}</hp:tr>` +
-            `<hp:tr>${cell(13, W, hThin, 1, 0, 2, buildBlankPara())}</hp:tr>` +
-            `<hp:tr>${cell(17, W, hName, 1, 0, 3, namePara)}</hp:tr>`;
+            `<hp:tr>${cell(topBf, W, hThin, 1, 0, 0, band())}</hp:tr>` +
+            `<hp:tr>${cell(1,     W, hMid,  1, 0, 1, titlePara)}</hp:tr>` +
+            `<hp:tr>${cell(botBf, W, hThin, 1, 0, 2, band())}</hp:tr>` +
+            `<hp:tr>${cell(nameBf, W, hName, 1, 0, 3, nameContent)}</hp:tr>`;
     }
+    const totalH = hThin + hMid + hThin + hName;
     return `<hp:p id="${pid}" paraPrIDRef="9" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0"><hp:run charPrIDRef="0">` +
         `<hp:tbl id="0" zOrder="0" numberingType="TABLE" textWrap="TOP_AND_BOTTOM" ` +
         `textFlow="BOTH_SIDES" lock="0" dropcapstyle="None" pageBreak="ROW" ` +
@@ -1080,25 +1096,18 @@ function buildSection(ir, marginsHwp, paperKey, landscape = false, customBfMap =
     parts.push(buildSectionBootstrap(buildSecPr(marginsHwp, paperKey, landscape, hasMasterPage), contentWidthHwp));
 
     // ── 상단 제목 블록 / 표지 / 문서 제목 ─────────────────────────────────
-    //   'titleblock' : 제목(가운데·H1)+작성일+부제/작성자/소속 빈 라벨+구분선
-    //   'cover-unit' : 청록 그라데이션 밴드 2줄 + [팀명/이름] 우측 + 점선
-    //   'cover-annual': 초록 밴드 + 보라→노랑 밴드 + [팀명/이름] 우측 + 점선
+    //   basic/unit/annual 은 모두 한 표(buildCoverTable)로: 상단 띠 / 제목 흰칸 /
+    //   하단 띠 / (소속·작성자 또는 [팀명·이름]) 흰칸. 작성일은 표 밖 바로 아래 우측.
     //   그 외(없음)   : 제목만 H1
     const titleText = (ir.title && ir.title.trim()) ? ir.title.trim() : '';
-    if (docType === 'titleblock') {
-        if (titleText) parts.push(buildPara(titleText, '1', '12'));   // H1 글자 + 가운데 정렬(paraPr 12)
+    const coverStyle = docType === 'titleblock' ? 'basic'
+                     : docType === 'cover-unit' ? 'unit'
+                     : docType === 'cover-annual' ? 'annual' : null;
+    if (coverStyle) {
+        parts.push(buildCoverTable(coverStyle, titleText, contentWidthHwp));
         const today = new Date();
         const dateStr = `${today.getFullYear()}년 ${today.getMonth() + 1}월 ${today.getDate()}일`;
-        parts.push(buildPara(dateStr, '0', '12'));                    // 작성일 가운데
-        parts.push(buildBlankPara());
-        parts.push(buildPara('부제: ',   '0', '0'));                  // 빈 라벨 — 직접 작성
-        parts.push(buildPara('작성자: ', '0', '0'));
-        parts.push(buildPara('소속: ',   '0', '0'));
-        parts.push(buildHrPara(contentWidthHwp));                     // 구분선
-        parts.push(buildBlankPara());
-    } else if (docType === 'cover-unit' || docType === 'cover-annual') {
-        // 표지: 상단 띠 / 제목 흰칸 / 하단 띠 / [팀명·이름]을 하나의 표로 (제목은 중간 칸)
-        parts.push(buildCoverTable(docType === 'cover-annual' ? 'annual' : 'unit', titleText, contentWidthHwp));
+        parts.push(buildPara(dateStr, '0', '13'));   // 작성일: 표 밖 바로 아래, 우측 정렬(paraPr 13)
         parts.push(buildBlankPara());
     } else if (titleText) {
         parts.push(buildPara(titleText, '1', '1'));
@@ -1216,7 +1225,7 @@ async function buildHwpx(ir, fontName = '휴먼명조', fontSize = 12, marginsMm
 
     // 표 셀 배경색 수집 → 동적 borderFill 생성용
     const customBfMap = new Map();
-    let nextBfId = 18;   // 1~11 기본 + 12~17 표지 밴드 이후부터 DOCX 셀 배경색
+    let nextBfId = 19;   // 1~11 기본 + 12~18 표지 밴드 이후부터 DOCX 셀 배경색
     for (const block of (ir.blocks || [])) {
         if (block.type !== 'table') continue;
         const allRows = (block.header && block.header.length ? [block.header] : []).concat(block.rows || []);
@@ -1233,7 +1242,7 @@ async function buildHwpx(ir, fontName = '휴먼명조', fontSize = 12, marginsMm
     // 인라인 확장 서식(밑줄/취소선/글자색) 수집 → 동적 charPr 생성용
     // (header가 section보다 먼저 빌드되므로 customBfMap과 동일하게 사전 스캔)
     const customCharMap = new Map();
-    let nextCharId = 12;   // 0~9 기본 + 10/11 H5/H6 이후부터 동적 확장
+    let nextCharId = 13;   // 0~11 기본 + 12(1pt) 이후부터 동적 확장
     for (const block of (ir.blocks || [])) {
         if (block.type !== 'para' || !Array.isArray(block.runs)) continue;
         for (const run of block.runs) {

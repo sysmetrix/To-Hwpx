@@ -1152,6 +1152,7 @@ a:hover { text-decoration: underline; }
 .cr-line { height: 3px; width: 100%; border-radius: 1px; background: #d6dae0; }
 .cr-line--short { width: 65%; }
 .cr-band { height: 7px; width: 100%; border-radius: 1px; flex-shrink: 0; }
+.cr-band--gray     { background: #808080; }
 .cr-band--cyan     { background: #0080C0; }
 .cr-band--cyangrad { background: linear-gradient(90deg, #0080C0, #3CBFFF); }
 .cr-band--green    { background: #126E3A; }
