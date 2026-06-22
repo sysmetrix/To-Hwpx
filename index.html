@@ -97,7 +97,7 @@
             <span>｢BWYF｣ AX Challenger 2026</span>
             <!-- [주의] id="open-changelog"는 app.js에서 업데이트 내역 모달을 여는 연결값 -->
             <button class="util-changelog-btn" id="open-changelog" aria-label="업데이트 내역 보기">
-                📋 v4.3.35 업데이트 내역
+                📋 v4.3.36 업데이트 내역
             </button>
         </div>
     </div>
@@ -242,15 +242,39 @@
                     <div class="advanced-settings-body">
                         <div class="advanced-settings-grid">
                             <div class="advanced-main">
-                                <!-- [수정 시] 옵션 값(plain/titleblock)은 hwpx.js buildSection의 docType 분기와 맞춰야 함 -->
+                                <!-- [수정 시] 라디오 value(plain/titleblock/cover-unit/cover-annual)는 hwpx.js buildSection의 docType 분기와 맞춰야 함 -->
                                 <div class="form-row">
-                                    <label for="doc-type">상단 제목 블록</label>
-                                    <select id="doc-type" name="doc-type">
-                                        <option value="plain" selected>없음</option>
-                                        <option value="titleblock">기본 제목 블록</option>
-                                        <option value="cover-unit">표지(단위형)</option>
-                                        <option value="cover-annual">표지(연간형)</option>
-                                    </select>
+                                    <span class="form-row-label">상단 제목 블록</span>
+                                    <div class="card-radio-group" role="radiogroup" aria-label="상단 제목 블록">
+                                        <label class="card-radio">
+                                            <input type="radio" name="doc-type" value="plain" checked>
+                                            <span class="card-radio-box">
+                                                <span class="cr-preview"></span>
+                                                <span class="cr-label">없음</span>
+                                            </span>
+                                        </label>
+                                        <label class="card-radio">
+                                            <input type="radio" name="doc-type" value="titleblock">
+                                            <span class="card-radio-box">
+                                                <span class="cr-preview"><span class="cr-bar"></span><span class="cr-line"></span><span class="cr-line cr-line--short"></span></span>
+                                                <span class="cr-label">기본 제목</span>
+                                            </span>
+                                        </label>
+                                        <label class="card-radio">
+                                            <input type="radio" name="doc-type" value="cover-unit">
+                                            <span class="card-radio-box">
+                                                <span class="cr-preview"><span class="cr-band cr-band--cyan"></span><span class="cr-band cr-band--cyan"></span><span class="cr-dots"></span></span>
+                                                <span class="cr-label">표지 단위형</span>
+                                            </span>
+                                        </label>
+                                        <label class="card-radio">
+                                            <input type="radio" name="doc-type" value="cover-annual">
+                                            <span class="card-radio-box">
+                                                <span class="cr-preview"><span class="cr-band cr-band--green"></span><span class="cr-band cr-band--py"></span><span class="cr-dots"></span></span>
+                                                <span class="cr-label">표지 연간형</span>
+                                            </span>
+                                        </label>
+                                    </div>
                                 </div>
                                 <p class="form-hint">문서 맨 위에 머리말을 넣습니다. '기본'은 제목·작성일·부제/작성자/소속 빈칸, '표지'는 색 밴드 + [팀명/이름] + 점선입니다. 세부 내용은 변환 후 한글에서 채워주세요.</p>
 
@@ -344,12 +368,13 @@
                             </div>
                         </div>
 
-                <label class="checkbox-row" for="auto-download">
-                    <input type="checkbox" id="auto-download" checked>
-                    <span>
+                <label class="toggle-row" for="auto-download">
+                    <span class="toggle-text">
                         <strong>변환 완료 후 자동 다운로드</strong>
                         <small>완료 카드에서도 다시 다운로드할 수 있습니다.</small>
                     </span>
+                    <input type="checkbox" id="auto-download" class="toggle-input" checked>
+                    <span class="toggle-switch" aria-hidden="true"></span>
                 </label>
 
                 <!-- IR 미리보기 토글 (개발자 전용 — 일반 사용자에게 노출 안 함) -->

@@ -812,13 +812,12 @@ function closeFontGuide() {
 //   상단 제목 블록(없음/넣기) + 사용자 지정 제목 + IR 미리보기 토글
 // ─────────────────────────────────────────────────────────────────────────
 function initOptions() {
-    // 상단 제목 블록 선택 (<select id="doc-type">: plain=없음 / titleblock=넣기)
-    const docTypeEl = document.getElementById('doc-type');
-    if (docTypeEl) {
-        docTypeEl.addEventListener('change', () => {
-            state.docType = docTypeEl.value;
+    // 상단 제목 블록 선택 (라디오 카드: plain/titleblock/cover-unit/cover-annual)
+    document.querySelectorAll('input[name="doc-type"]').forEach(radio => {
+        radio.addEventListener('change', () => {
+            if (radio.checked) state.docType = radio.value;
         });
-    }
+    });
 
     // 사용자 지정 제목 입력
     const titleEl = document.getElementById('doc-title');
@@ -1844,12 +1843,12 @@ function resetConverterState() {
         localStorage.removeItem(key);
     }
 
-    const docType = document.getElementById('doc-type');
     const docFont = document.getElementById('doc-font');
     const fontSize = document.getElementById('font-size');
     const paperSize = document.getElementById('paper-size');
     const autoDownload = document.getElementById('auto-download');
-    if (docType) docType.value = 'plain';
+    const plainRadio = document.querySelector('input[name="doc-type"][value="plain"]');
+    if (plainRadio) plainRadio.checked = true;
     if (docFont) docFont.value = '맑은 고딕';
     if (fontSize) fontSize.value = '12';
     if (paperSize) paperSize.value = 'A4';
