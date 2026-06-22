@@ -303,7 +303,11 @@ a:hover { text-decoration: underline; }
     z-index: 9999;
     opacity: 0;
     transition: opacity 0.25s, transform 0.25s;
-    white-space: nowrap;
+    /* 모바일에서 글자가 잘리지 않도록: 화면 폭 이내로 제한하고 줄바꿈 허용 */
+    flex-wrap: wrap;
+    max-width: min(92vw, 440px);
+    overflow-wrap: anywhere;
+    word-break: break-word;
 }
 .bookmark-toast--show {
     opacity: 1;
@@ -322,6 +326,8 @@ a:hover { text-decoration: underline; }
     font-size: 14px;
     padding: 0 0 0 4px;
     line-height: 1;
+    /* 여러 줄로 줄바꿈돼도 닫기 버튼은 우측에 정렬 */
+    margin-left: auto;
 }
 .bookmark-toast-close:hover { color: #fff; }
 
