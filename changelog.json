@@ -1,6 +1,17 @@
 {
-  "current": "4.3.45",
+  "current": "4.3.46",
   "versions": [
+    {
+      "version": "4.3.46",
+      "date": "2026-06-23",
+      "user": [
+        "고급 설정의 한글 폰트·글꼴 크기·용지 크기·용지 방향을 한 줄에 보기 좋게 정렬했습니다"
+      ],
+      "dev": [
+        "[v4.3.46] style.css: .options-grid-advanced를 3열→4열(폰트 1.6fr·크기/용지 1fr·방향 1.2fr)로 바꿔 4개 컨트롤을 한 줄에 배치",
+        "[v4.3.46] sw.js: CACHE_VERSION to-hwpx-v4.3.46, index.html v4.3.46"
+      ]
+    },
     {
       "version": "4.3.45",
       "date": "2026-06-23",
