@@ -315,7 +315,7 @@ function buildHeaderXml(fontName, basePt, customBfMap = new Map(), imageBlocks =
       </hh:paraPr>`;
 
     return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<hh:head xmlns:hh="http://www.hancom.co.kr/hwpml/2011/head" version="1.4" secCnt="1">
+<hh:head xmlns:hh="http://www.hancom.co.kr/hwpml/2011/head" xmlns:hc="http://www.hancom.co.kr/hwpml/2011/core" version="1.4" secCnt="1">
   <hh:beginNum page="1" footnote="1" endnote="1" pic="1" tbl="1" equation="1"/>
   <hh:refList>
     <hh:fontfaces itemCnt="7">
@@ -405,7 +405,7 @@ ${paraBase(18, 'LEFT',   160,   0,  100, 1800)}
         <hh:topBorder type="SOLID" width="0.12 mm" color="#000000"/>
         <hh:bottomBorder type="SOLID" width="0.12 mm" color="#000000"/>
         <hh:diagonal type="SOLID" width="0.1 mm" color="#000000"/>
-        <hh:fillBrush><hh:winBrush faceColor="#D9D9D9" hatchColor="#000000" alpha="0"/></hh:fillBrush>
+        <hc:fillBrush><hc:winBrush faceColor="#D9D9D9" hatchColor="#000000" alpha="0"/></hc:fillBrush>
       </hh:borderFill>
       <!-- id=4 일반 셀: 왼쪽 바깥 테두리 없음 -->
       <hh:borderFill id="4" threeD="0" shadow="0" centerLine="NONE" breakCellSeparateLine="0">
@@ -433,7 +433,7 @@ ${paraBase(18, 'LEFT',   160,   0,  100, 1800)}
         <hh:topBorder type="SOLID" width="0.12 mm" color="#000000"/>
         <hh:bottomBorder type="SOLID" width="0.12 mm" color="#000000"/>
         <hh:diagonal type="SOLID" width="0.1 mm" color="#000000"/>
-        <hh:fillBrush><hh:winBrush faceColor="#D9D9D9" hatchColor="#000000" alpha="0"/></hh:fillBrush>
+        <hc:fillBrush><hc:winBrush faceColor="#D9D9D9" hatchColor="#000000" alpha="0"/></hc:fillBrush>
       </hh:borderFill>
       <!-- id=7 표 머리글: 오른쪽 바깥 테두리 없음 -->
       <hh:borderFill id="7" threeD="0" shadow="0" centerLine="NONE" breakCellSeparateLine="0">
@@ -443,7 +443,7 @@ ${paraBase(18, 'LEFT',   160,   0,  100, 1800)}
         <hh:topBorder type="SOLID" width="0.12 mm" color="#000000"/>
         <hh:bottomBorder type="SOLID" width="0.12 mm" color="#000000"/>
         <hh:diagonal type="SOLID" width="0.1 mm" color="#000000"/>
-        <hh:fillBrush><hh:winBrush faceColor="#D9D9D9" hatchColor="#000000" alpha="0"/></hh:fillBrush>
+        <hc:fillBrush><hc:winBrush faceColor="#D9D9D9" hatchColor="#000000" alpha="0"/></hc:fillBrush>
       </hh:borderFill>
       <!-- id=8 일반 셀: 좌우 바깥 테두리 없음 (1열 표) -->
       <hh:borderFill id="8" threeD="0" shadow="0" centerLine="NONE" breakCellSeparateLine="0">
@@ -462,7 +462,7 @@ ${paraBase(18, 'LEFT',   160,   0,  100, 1800)}
         <hh:topBorder type="SOLID" width="0.12 mm" color="#000000"/>
         <hh:bottomBorder type="SOLID" width="0.12 mm" color="#000000"/>
         <hh:diagonal type="SOLID" width="0.1 mm" color="#000000"/>
-        <hh:fillBrush><hh:winBrush faceColor="#D9D9D9" hatchColor="#000000" alpha="0"/></hh:fillBrush>
+        <hc:fillBrush><hc:winBrush faceColor="#D9D9D9" hatchColor="#000000" alpha="0"/></hc:fillBrush>
       </hh:borderFill>
       <!-- id=10 구분선(HR)용: 하단 테두리만 실선 0.4mm 회색 -->
       <hh:borderFill id="10" threeD="0" shadow="0" centerLine="NONE" breakCellSeparateLine="0">
@@ -481,7 +481,7 @@ ${paraBase(18, 'LEFT',   160,   0,  100, 1800)}
         <hh:topBorder type="SOLID" width="0.12 mm" color="#444444"/>
         <hh:bottomBorder type="SOLID" width="0.12 mm" color="#444444"/>
         <hh:diagonal type="NONE" width="0.1 mm" color="#000000"/>
-        <hh:fillBrush><hh:winBrush faceColor="#000000" hatchColor="#000000" alpha="0"/></hh:fillBrush>
+        <hc:fillBrush><hc:winBrush faceColor="#000000" hatchColor="#000000" alpha="0"/></hc:fillBrush>
       </hh:borderFill>
 ${[...customBfMap.entries()].map(([key, bfId]) => {
     const [color, variant = 'full'] = String(key).split(':');
@@ -495,7 +495,7 @@ ${[...customBfMap.entries()].map(([key, bfId]) => {
         <hh:topBorder type="SOLID" width="0.12 mm" color="#000000"/>
         <hh:bottomBorder type="SOLID" width="0.12 mm" color="#000000"/>
         <hh:diagonal type="SOLID" width="0.1 mm" color="#000000"/>
-        <hh:fillBrush><hh:winBrush faceColor="#${color}" hatchColor="#000000" alpha="0"/></hh:fillBrush>
+        <hc:fillBrush><hc:winBrush faceColor="#${color}" hatchColor="#000000" alpha="0"/></hc:fillBrush>
       </hh:borderFill>`;
 }).join('\n')}
     </hh:borderFills>
