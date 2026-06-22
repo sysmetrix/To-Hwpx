@@ -903,13 +903,15 @@ async function parseDocx(arrayBuffer, docType = 'plain') {
         }
     }
 
-    // 첫 번째 제목(레벨1: Title/Heading1/제목)을 문서 제목으로 승격하고 본문에서 제거
-    // (MD/HTML 파서와 동일 동작 — 표지/제목 칸에 실제 제목이 들어가게 함)
-    const h1Idx = ir.blocks.findIndex(b => b.type === 'heading' && b.level === 1);
-    if (h1Idx !== -1) {
-        ir.title = ir.blocks[h1Idx].text;
-        ir.blocks.splice(h1Idx, 1);
+    // Word '제목(Title)' 스타일 단락만 문서 제목으로 승격하고 본문에서 제거.
+    // (섹션 제목인 '제목 1'/Heading 1 등은 본문에 그대로 둔다 — 잘못된 제목 방지)
+    const titleIdx = ir.blocks.findIndex(b => b.type === 'heading' && b.docTitle);
+    if (titleIdx !== -1) {
+        ir.title = ir.blocks[titleIdx].text;
+        ir.blocks.splice(titleIdx, 1);
     }
+    // docTitle 표시는 IR 밖으로 내보내지 않음 (렌더에 불필요)
+    for (const b of ir.blocks) if (b && b.docTitle) delete b.docTitle;
 
     return ir;
 }
@@ -994,7 +996,13 @@ function extractDocxParagraph(pNode, stylesMap = {}, footnotesMap = {}) {
     if (/heading|제목|title/i.test(resolvedStyle)) {
         const digits = resolvedStyle.replace(/\D/g, '') || styleId.replace(/\D/g, '');
         const level = parseInt(digits || '1', 10) || 1;
-        return { type: 'heading', level: Math.min(level, 6), text };
+        // Word '제목(Title)' 스타일(번호 없음)만 문서 제목으로 표시. '제목 1'(Heading 1)은
+        // 섹션 제목이므로 docTitle로 보지 않음 → 본문에 그대로 남는다.
+        const block = { type: 'heading', level: Math.min(level, 6), text };
+        if (!digits && (/title/i.test(resolvedStyle) || /^\s*제목\s*$/.test(resolvedStyle) || /title/i.test(styleId))) {
+            block.docTitle = true;
+        }
+        return block;
     }
     // 2) 스타일명 매칭 실패 시 w:outlineLvl(0~8)을 보조 신호로 사용 (val+1 = 제목 레벨)
     if (pPrEl) {
@@ -1008,10 +1016,13 @@ function extractDocxParagraph(pNode, stylesMap = {}, footnotesMap = {}) {
         }
     }
 
-    // bold 런(w:b)이 단락 전체를 덮고 있으면 소제목으로 처리 (텍스트 런만 확인)
+    // bold 런(w:b)이 단락 전체를 덮고 있으면 소제목으로 처리 (텍스트 런만 확인).
+    // 단, 글자색/밑줄/취소선이 있으면 그 서식을 보존해야 하므로 heading으로 바꾸지 않고
+    // 색 있는 단락(runs)으로 둔다(소제목 변환 시 색이 사라지던 문제 방지).
     const textRuns = inlineRuns.filter(r => r.text);
     const allBold = textRuns.length > 0 && textRuns.every(r => r.bold);
-    if (allBold) {
+    const hasExtFmt = textRuns.some(r => r.color || r.underline || r.strike);
+    if (allBold && !hasExtFmt) {
         return { type: 'heading', level: 3, text };
     }
 

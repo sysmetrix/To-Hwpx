@@ -1192,6 +1192,15 @@ a:hover { text-decoration: underline; }
     margin-bottom: 18px;
     min-height: 59px;
 }
+/* 파일 선택 전 안내(빈칸 방지) — 박스 높이에 맞춰 가운데 정렬 */
+.format-hint-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 41px;
+    color: var(--c-text-muted);
+    text-align: center;
+}
 .format-hint-head {
     display: flex;
     align-items: center;
