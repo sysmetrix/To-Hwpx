@@ -859,6 +859,7 @@ function headingIds(level) {
  */
 function cellText(cell)    { return typeof cell === 'object' ? (cell?.text ?? '') : String(cell ?? ''); }
 function cellBg(cell)     { return typeof cell === 'object' ? (cell?.bg  || null) : null; }
+function cellColor(cell)   { return typeof cell === 'object' ? (cell?.color || null) : null; }
 function cellColSpan(cell) { return typeof cell === 'object' ? (cell?.colSpan || 1) : 1; }
 function cellRowSpan(cell) { return typeof cell === 'object' ? (cell?.rowSpan || 1) : 1; }
 
@@ -932,7 +933,7 @@ function getContentWidthHwp(marginsHwp, paperKey, landscape = false) {
     return Math.max(12000, paper.w - m.left - m.right);
 }
 
-function buildTable(header, rows, contentWidthHwp = 48000, customBfMap = new Map()) {
+function buildTable(header, rows, contentWidthHwp = 48000, customBfMap = new Map(), customCharMap = new Map()) {
     const allRows = (header && header.length ? [header] : []).concat(rows || []);
     if (!allRows.length) return buildBlankPara();
 
@@ -948,8 +949,13 @@ function buildTable(header, rows, contentWidthHwp = 48000, customBfMap = new Map
     // 단일 셀(hp:tc) XML 생성 — 실제 셀과 격자 보충용 더미 셀이 공유
     // 자식 순서: subList → cellAddr → cellSpan → cellSz → cellMargin
     // (rhwp serializer/hwpx/table.rs 기준 OWPML 공식 순서)
-    const renderCell = (r, c, cs, rs, val, bg, isHd) => {
-        const cId    = isHd ? '5' : '0';                               // 표머리=5(bold), 일반=0
+    const renderCell = (r, c, cs, rs, val, bg, isHd, color) => {
+        let cId      = isHd ? '5' : '0';                               // 표머리=5(bold), 일반=0
+        // 셀 글자색(예: 흰 글자 머리행)이 있으면 동적 charPr 사용 (미스 시 기본값 유지)
+        if (color && runNeedsExtChar({ color })) {
+            const key = extCharKey({ bold: isHd, color });
+            if (customCharMap.has(key)) cId = String(customCharMap.get(key));
+        }
         const paraId = isHd ? '7' : (isNumericCell(val) ? '11' : '10');
         let bfId;
         if (bg) {
@@ -1000,14 +1006,14 @@ function buildTable(header, rows, contentWidthHwp = 48000, customBfMap = new Map
             for (let rr = r; rr < r + rs; rr++)
                 for (let cc = c; cc < c + cs; cc++) occupied[rr][cc] = true;
 
-            rowCells.push({ c, xml: renderCell(r, c, cs, rs, cellText(cell), cellBg(cell), isHd) });
+            rowCells.push({ c, xml: renderCell(r, c, cs, rs, cellText(cell), cellBg(cell), isHd, cellColor(cell)) });
         }
 
         // 남은 빈 열을 1×1 더미 셀로 채워 격자를 완성한다.
         for (let c = 0; c < nCols; c++) {
             if (occupied[r][c]) continue;
             occupied[r][c] = true;
-            rowCells.push({ c, xml: renderCell(r, c, 1, 1, '', null, isHd) });
+            rowCells.push({ c, xml: renderCell(r, c, 1, 1, '', null, isHd, null) });
         }
 
         // <hp:tr>은 속성 없음 (rhwp 기준); header 마킹은 <hp:tc>에만 적용
@@ -1168,7 +1174,7 @@ function buildSection(ir, marginsHwp, paperKey, landscape = false, customBfMap =
             });
 
         } else if (bt === 'table') {
-            parts.push(buildTable(block.header, block.rows, contentWidthHwp, customBfMap));
+            parts.push(buildTable(block.header, block.rows, contentWidthHwp, customBfMap, customCharMap));
 
         } else if (bt === 'code') {
             parts.push(buildCodeBlock(block, '', contentWidthHwp));
@@ -1245,13 +1251,19 @@ async function buildHwpx(ir, fontName = '휴먼명조', fontSize = 12, marginsMm
     // (header가 section보다 먼저 빌드되므로 customBfMap과 동일하게 사전 스캔)
     const customCharMap = new Map();
     let nextCharId = 13;   // 0~11 기본 + 12(1pt) 이후부터 동적 확장
+    const addExtChar = (run) => {
+        if (run.text == null && !run.color) return;
+        if (!runNeedsExtChar(run)) return;
+        const key = extCharKey(run);
+        if (!customCharMap.has(key)) customCharMap.set(key, nextCharId++);
+    };
     for (const block of (ir.blocks || [])) {
-        if (block.type !== 'para' || !Array.isArray(block.runs)) continue;
-        for (const run of block.runs) {
-            if (run.text && runNeedsExtChar(run)) {
-                const key = extCharKey(run);
-                if (!customCharMap.has(key)) customCharMap.set(key, nextCharId++);
-            }
+        if (block.type === 'para' && Array.isArray(block.runs)) {
+            for (const run of block.runs) if (run.text) addExtChar(run);
+        } else if (block.type === 'table') {
+            // 표 셀 글자색(예: 흰 글자 머리행)도 동적 charPr 대상 — 머리행은 bold
+            (block.header || []).forEach(c => { const col = cellColor(c); if (col) addExtChar({ color: col, bold: true }); });
+            (block.rows || []).forEach(row => (row || []).forEach(c => { const col = cellColor(c); if (col) addExtChar({ color: col, bold: false }); }));
         }
     }
 
