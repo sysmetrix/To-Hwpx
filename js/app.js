@@ -74,7 +74,8 @@ document.addEventListener('DOMContentLoaded', () => {
     initFormatTabs();           // 포맷 탭 전환 (기본/확장 서비스)
     initFormatCards();          // 포맷 카드 클릭 이벤트
     initOptions();              // 문서 유형·제목·폰트·여백 옵션
-    initConvertButton();        // 변환 시작 버튼 + Ctrl+Enter 단축키
+    initConvertButton();        // 변환 시작 버튼 + Ctrl/⌘+Enter 단축키
+    initKeyboardShortcuts();     // Ctrl/⌘+O 파일 선택 등 공통 단축키
     initScrollBehavior();       // 스크롤 시 헤더 효과
     initMobileMenu();           // 모바일 햄버거 메뉴
     initNavLinks();             // 부드러운 스크롤 네비게이션
@@ -924,7 +925,7 @@ function initOptions() {
         });
     }
 
-    // 자동 제목 기준 (파일 이름 / 문서 첫 제목)
+    // 비워둘 때 제목 기준 (파일 이름 / 문서 첫 문장 또는 제목)
     const titleSrcEl = document.getElementById('title-source');
     if (titleSrcEl) {
         titleSrcEl.addEventListener('change', () => {
@@ -1047,7 +1048,7 @@ function initOptions() {
 
 
 // ─────────────────────────────────────────────────────────────────────────
-// [변환 버튼 + Ctrl+Enter 단축키]
+// [변환 버튼 + Ctrl/⌘+Enter 단축키]
 // ─────────────────────────────────────────────────────────────────────────
 function initConvertButton() {
     const btn = document.getElementById('convert-btn');
@@ -1061,12 +1062,24 @@ function initConvertButton() {
     // Ctrl+Enter (Windows/Linux) / ⌘+Enter (Mac) 단축키로 변환 시작
     document.addEventListener('keydown', (e) => {
         if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-            if (state.file && !state.isConverting) {
-                e.preventDefault();
-                syncMarginInputs();
-                runConversionPipeline();
-            }
+            if (!state.file || state.isConverting) return;
+            e.preventDefault();
+            syncMarginInputs();
+            runConversionPipeline();
         }
+    });
+}
+
+function initKeyboardShortcuts() {
+    document.addEventListener('keydown', (e) => {
+        if (!((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'o')) return;
+        const modalOpen = !!document.querySelector('.modal-overlay.open');
+        if (modalOpen) return;
+        const ae = document.activeElement;
+        const typing = ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.isContentEditable);
+        if (typing) return;
+        e.preventDefault();
+        document.getElementById('file-input')?.click();
     });
 }
 

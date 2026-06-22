@@ -1,6 +1,22 @@
 {
-  "current": "4.4.1",
+  "current": "4.4.2",
   "versions": [
+    {
+      "version": "4.4.2",
+      "date": "2026-06-23",
+      "user": [
+        "변환 화면의 중복 섹션 문구를 줄이고, 파일 선택과 변환 작업에 바로 집중할 수 있게 정리했습니다",
+        "문서 제목을 비워둘 때 적용되는 기준임을 알 수 있도록 제목 옵션명을 더 명확하게 바꿨습니다",
+        "자주 쓰는 단축키를 버튼 안내와 실제 키 동작으로 보강했습니다"
+      ],
+      "dev": [
+        "[v4.4.2] index.html: zone-divider--work 제거, converter-title을 파일 선택 및 변환으로 변경, section-sub 반복 설명 제거",
+        "[v4.4.2] index.html: title-source 라벨/옵션을 비워둘 때 제목 기준, 파일 이름 사용, 문서 첫 문장 또는 제목으로 변경",
+        "[v4.4.2] app.js: initKeyboardShortcuts() 추가 — Ctrl/⌘+O로 파일 선택 열기",
+        "[v4.4.2] index.html/app.js: 변환/초기화/즐겨찾기 버튼 title 및 단축키 안내 정리",
+        "[v4.4.2] sw.js: CACHE_VERSION to-hwpx-v4.4.2"
+      ]
+    },
     {
       "version": "4.4.1",
       "date": "2026-06-23",
