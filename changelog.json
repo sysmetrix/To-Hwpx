@@ -1,6 +1,21 @@
 {
-  "current": "4.3.44",
+  "current": "4.3.45",
   "versions": [
+    {
+      "version": "4.3.45",
+      "date": "2026-06-23",
+      "user": [
+        "이미지가 들어간 Word(DOCX) 문서를 변환하면 한글에서 오류가 뜨고 안 열리던 문제를 해결했습니다 — 이제 그림이 정상 삽입됩니다"
+      ],
+      "dev": [
+        "[v4.3.45] hwpx.js: 그림 hp:pic를 OWPML 정식 구조로 재작성(offset/orgSz/curSz/renderingInfo 행렬/imgRect/imgClip/imgDim/hc:img/sz/pos), 비표준 hp:instd·hp:picEffect 제거",
+        "[v4.3.45] hwpx.js: 그림 바이너리 참조를 hc:img@binaryItemIDRef(문자열 id)로, content.hpf를 동적 생성해 opf:item(isEmbeded=1)으로 BinData 선언. header binDataList 제거",
+        "[v4.3.45] hwpx.js: section0 루트에 xmlns:hc 선언(hc:img·hc:pt0 등 hc 요소용)",
+        "[v4.3.45] 출처: hwpxlib testFile/reader_writer/SimplePicture.hwpx(실제 한컴 그림 HWPX) 구조 대조",
+        "[v4.3.45] app.js: DOCX 기능 설명에 '본문 이미지 삽입 지원' 추가·limits 갱신; qa: docx_image_test.docx 픽스처 + 렌더링 함정 문서 이미지 항목",
+        "[v4.3.45] sw.js: CACHE_VERSION to-hwpx-v4.3.45, index.html v4.3.45"
+      ]
+    },
     {
       "version": "4.3.44",
       "date": "2026-06-23",
