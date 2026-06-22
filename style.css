@@ -996,6 +996,9 @@ a:hover { text-decoration: underline; }
     line-height: 1.5;
     color: var(--c-text-sub);
 }
+.title-help {
+    margin: 6px 0 8px;
+}
 
 /* margin-grid — 레거시 선택자 (사용 안 함) */
 .margin-grid { display: none; }

@@ -356,6 +356,67 @@ function getFileExtension(fileName) {
     return parts.length > 1 ? parts.pop().toLowerCase().trim() : '';
 }
 
+function fileBaseName(file) {
+    return (file?.name || '').replace(/\.[^.]+$/, '').trim();
+}
+
+function normalizeTitleCandidate(text) {
+    return String(text || '').replace(/\s+/g, ' ').trim();
+}
+
+function isGenericTitleCandidate(text) {
+    const compact = normalizeTitleCandidate(text).toLowerCase().replace(/[\s:：\-–—_()[\]{}]+/g, '');
+    return [
+        '문서구성', '목차', '차례', '개요', '본문', '내용', '소개', '서론',
+        'tableofcontents', 'contents', 'outline', 'overview', 'introduction'
+    ].includes(compact);
+}
+
+function restoreTitleToBodyIfNeeded(ir, titleText, finalTitle) {
+    const text = normalizeTitleCandidate(titleText);
+    if (!text || text === normalizeTitleCandidate(finalTitle)) return;
+    if (!Array.isArray(ir.blocks)) ir.blocks = [];
+    const alreadyInBody = ir.blocks.some(block => normalizeTitleCandidate(block?.text) === text);
+    if (!alreadyInBody) ir.blocks.unshift({ type: 'heading', level: 1, text });
+}
+
+function applyDocumentTitlePolicy(ir, file, customTitle, titleSource) {
+    const fallback = fileBaseName(file);
+    const parsedTitle = normalizeTitleCandidate(ir.title);
+    const direct = normalizeTitleCandidate(customTitle);
+    if (direct) {
+        restoreTitleToBodyIfNeeded(ir, parsedTitle, direct);
+        ir.title = direct;
+        return;
+    }
+
+    if (titleSource === 'filename') {
+        restoreTitleToBodyIfNeeded(ir, parsedTitle, fallback);
+        ir.title = fallback;
+        return;
+    }
+
+    if (parsedTitle && !isGenericTitleCandidate(parsedTitle)) {
+        ir.title = parsedTitle;
+        return;
+    }
+
+    restoreTitleToBodyIfNeeded(ir, parsedTitle, fallback);
+
+    const heading = (ir.blocks || []).find(block =>
+        block?.type === 'heading' &&
+        normalizeTitleCandidate(block.text) &&
+        !isGenericTitleCandidate(block.text)
+    );
+    if (heading) {
+        ir.title = normalizeTitleCandidate(heading.text);
+        ir.blocks.splice(ir.blocks.indexOf(heading), 1);
+        return;
+    }
+
+    ir.title = fallback;
+}
+
 
 // ─────────────────────────────────────────────────────────────────────────
 // [포맷 탭 전환]
@@ -1036,20 +1097,8 @@ async function runConversionPipeline() {
             throw new Error('파일 파싱 실패: ' + e.message);
         }
 
-        // 제목 결정: ① 직접 입력 > ② 자동 기준(파일 이름 / 문서 첫 제목) > ③ 파일명 폴백
-        const fname = (state.file?.name || '').replace(/\.[^.]+$/, '').trim();
-        const hasTitle = () => ir.title && String(ir.title).trim();
-        if (state.customTitle) {
-            ir.title = state.customTitle;
-        } else if (state.titleSource === 'heading') {
-            // 문서 첫 제목 우선 — 파서가 못 올렸으면 본문 첫 제목을 끌어와 제목으로(본문에서 제거)
-            if (!hasTitle()) {
-                const fh = (ir.blocks || []).find(b => b.type === 'heading');
-                if (fh) { ir.title = fh.text; ir.blocks.splice(ir.blocks.indexOf(fh), 1); }
-            }
-        }
-        // 파서 제목도 없으면(또는 '파일 이름' 기준) 파일명으로 채워 표지/제목 칸이 비지 않게
-        if (!hasTitle()) ir.title = fname;
+        // 제목 결정: 직접 입력 > 자동 기준(파일 이름 / 문서 첫 제목) > 파일명 폴백
+        applyDocumentTitlePolicy(ir, state.file, state.customTitle, state.titleSource);
         state.ir = ir;
 
         // [보안] IR 미리보기는 textContent로만 표시 (innerHTML 사용 금지)

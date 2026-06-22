@@ -1,12 +1,29 @@
 {
-  "current": "4.3.46",
+  "current": "4.4.0",
   "versions": [
+    {
+      "version": "4.4.0",
+      "date": "2026-06-23",
+      "user": [
+        "문서 제목 자동 입력이 파일 이름 기준과 문서 첫 제목 기준을 정확히 따르도록 개선했습니다",
+        "첫 화면 제목을 두 줄로 정리하고, 문서 제목 옵션의 적용 위치를 더 명확히 안내합니다",
+        "오늘자 사용자 업데이트 내역을 핵심 변화 중심으로 정리했습니다",
+        "날짜가 바뀌면 두 번째 버전 번호를 올리고, 같은 날짜의 수정은 세 번째 번호로 관리하도록 기준을 정리했습니다"
+      ],
+      "dev": [
+        "[v4.4.0] app.js: applyDocumentTitlePolicy() 추가 — 직접입력 > 파일명/문서첫제목 자동 기준 > 파일명 폴백 순서 명확화",
+        "[v4.4.0] app.js: 자동 제목 '파일 이름' 선택 시 parser title을 무시하고 파일명을 사용, 제목으로 쓰지 않는 parser title은 본문 heading으로 복구",
+        "[v4.4.0] app.js: 문서 구성/목차/개요 등 일반 섹션명 제목 후보 제외",
+        "[v4.4.0] index.html/style.css: hero-title을 그냥 한글로,<br>TO HWPX 2줄 표기로 변경하고 문서 제목 help 문구 추가",
+        "[v4.4.0] changelog.json: 2026-06-23 사용자 항목을 핵심 변화 중심으로 정리",
+        "[v4.4.0] qa/bump-version.js/package.json: 날짜별 minor, 같은 날짜 patch 증가 버전 규칙 자동 계산 스크립트 추가",
+        "[v4.4.0] sw.js: CACHE_VERSION to-hwpx-v4.4.0, index.html v4.4.0"
+      ]
+    },
     {
       "version": "4.3.46",
       "date": "2026-06-23",
-      "user": [
-        "고급 설정의 한글 폰트·글꼴 크기·용지 크기·용지 방향을 한 줄에 보기 좋게 정렬했습니다"
-      ],
+      "user": [],
       "dev": [
         "[v4.3.46] style.css: .options-grid-advanced를 3열→4열(폰트 1.6fr·크기/용지 1fr·방향 1.2fr)로 바꿔 4개 컨트롤을 한 줄에 배치",
         "[v4.3.46] sw.js: CACHE_VERSION to-hwpx-v4.3.46, index.html v4.3.46"
@@ -15,9 +32,7 @@
     {
       "version": "4.3.45",
       "date": "2026-06-23",
-      "user": [
-        "이미지가 들어간 Word(DOCX) 문서를 변환하면 한글에서 오류가 뜨고 안 열리던 문제를 해결했습니다 — 이제 그림이 정상 삽입됩니다"
-      ],
+      "user": [],
       "dev": [
         "[v4.3.45] hwpx.js: 그림 hp:pic를 OWPML 정식 구조로 재작성(offset/orgSz/curSz/renderingInfo 행렬/imgRect/imgClip/imgDim/hc:img/sz/pos), 비표준 hp:instd·hp:picEffect 제거",
         "[v4.3.45] hwpx.js: 그림 바이너리 참조를 hc:img@binaryItemIDRef(문자열 id)로, content.hpf를 동적 생성해 opf:item(isEmbeded=1)으로 BinData 선언. header binDataList 제거",
@@ -30,13 +45,7 @@
     {
       "version": "4.3.44",
       "date": "2026-06-23",
-      "user": [
-        "자동 제목 기준을 '파일 이름 / 문서 첫 제목' 중에서 고를 수 있습니다",
-        "용지 크기에 A3를 추가하고, 용지 방향을 '세로/가로' 버튼으로 분리해 더 명확하게 했습니다",
-        "ESC 키로 초기화(열린 안내창이 있으면 먼저 닫힘)할 수 있습니다",
-        "고급 설정이 더 잘 보이도록 다듬고, 폰트·크기·용지 드롭다운을 현대적으로 개선했습니다",
-        "Word(DOCX)·Markdown 변환 품질이 크게 향상되어 포맷 설명과 별점을 갱신하고, Word 카드를 HTML 앞으로 옮겼습니다"
-      ],
+      "user": [],
       "dev": [
         "[v4.3.44] app.js: state.titleSource(filename/heading) + 변환 시 직접입력>자동기준(파일명/문서첫제목)>파일명 폴백 순으로 제목 결정",
         "[v4.3.44] hwpx.js: PAPER_SIZES에 A3(297×420mm) 추가, index.html 용지 select A3 옵션",
@@ -50,12 +59,7 @@
     {
       "version": "4.3.43",
       "date": "2026-06-23",
-      "user": [
-        "상단 제목 블록을 '없음'으로 두고 변환해도 제목이 가운데 정렬됩니다",
-        "고급 설정이 무엇을 담는지 한눈에 보이도록 안내와 펼침 표시(▾)를 추가했습니다",
-        "페이지 여백 배치를 위·머리말(상단) / 왼쪽·오른쪽 / 아래·꼬리말(하단)로 정리했습니다",
-        "한글 폰트·글꼴 크기·용지·세로가로 등 옵션 컨트롤을 더 깔끔한 디자인으로 다듬었습니다"
-      ],
+      "user": [],
       "dev": [
         "[v4.3.43] hwpx.js: 'plain'(없음) 모드 제목을 paraPr 1→12(가운데)로",
         "[v4.3.43] index.html: 고급설정 summary에 내용 힌트+셰브런(adv-summary-text/adv-chevron), 페이지 여백 순서 위·머리말/왼·오른/아래·꼬리말로 재배치",
@@ -66,10 +70,7 @@
     {
       "version": "4.3.42",
       "date": "2026-06-23",
-      "user": [
-        "Word(DOCX)에 제목이 없을 때 표지/제목 칸이 비지 않고 파일 이름이 제목으로 들어갑니다",
-        "색이 있는 제목·소제목의 글자색도 이제 그대로 가져옵니다 (이전에는 본문 색만 일부 들어왔습니다)"
-      ],
+      "user": [],
       "dev": [
         "[v4.3.42] app.js: 변환 시 제목이 비면 파일명(확장자 제외)을 ir.title 폴백으로 사용",
         "[v4.3.42] parsers.js: 제목/아웃라인 단락의 글자색(headColor)을 heading 블록 color로 보존",
