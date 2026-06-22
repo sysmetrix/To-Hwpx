@@ -596,21 +596,40 @@ a:hover { text-decoration: underline; }
 .format-panel { display: none; }
 .format-panel.active { display: block; }
 
-.service-details {
+.service-info {
     margin-top: 28px;
     border-top: 1px solid var(--c-border);
     padding-top: 16px;
 }
-.service-details > summary {
-    width: fit-content;
-    margin: 0 auto 18px;
-    color: var(--c-text-sub);
-    cursor: pointer;
-    font-size: 0.88rem;
-    font-weight: 700;
+.service-info-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin-bottom: 22px;
 }
-.service-details > summary:hover {
-    color: var(--c-primary);
+.service-info-label {
+    color: var(--c-text-muted);
+    font-size: 0.82rem;
+    font-weight: 800;
+}
+.service-tabs {
+    margin-bottom: 0;
+    border-bottom: 0;
+    gap: 8px;
+}
+.service-tabs .format-tab {
+    border: 1px solid var(--c-border);
+    border-radius: 999px;
+    margin-bottom: 0;
+    padding: 8px 14px;
+    background: var(--c-surface);
+    font-size: 0.84rem;
+}
+.service-tabs .format-tab.active {
+    background: var(--c-primary-light);
+    border-color: rgba(37,99,235,0.28);
 }
 
 /* 포맷 카드 그리드 */

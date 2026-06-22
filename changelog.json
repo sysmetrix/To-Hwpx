@@ -1,6 +1,19 @@
 {
-  "current": "4.4.5",
+  "current": "4.4.6",
   "versions": [
+    {
+      "version": "4.4.6",
+      "date": "2026-06-23",
+      "user": [
+        "보조 안내를 접힘 토글 대신 더 알아보기 정보 바로 바꿔 더 자연스럽게 탐색할 수 있게 했습니다"
+      ],
+      "dev": [
+        "[v4.4.6] index.html: service-details/details summary 구조를 service-info-bar + service-tabs 구조로 변경",
+        "[v4.4.6] style.css: service-info-bar, service-info-label, service-tabs pill 스타일 추가",
+        "[v4.4.6] app.js: initFormatTabs() scope를 service-info로 갱신하고 aria-selected 동기화",
+        "[v4.4.6] sw.js: CACHE_VERSION to-hwpx-v4.4.6"
+      ]
+    },
     {
       "version": "4.4.5",
       "date": "2026-06-23",

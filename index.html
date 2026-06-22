@@ -98,7 +98,7 @@
             <span>｢BWYF｣ AX Challenger 2026</span>
             <!-- [주의] id="open-changelog"는 app.js에서 업데이트 내역 모달을 여는 연결값 -->
             <button class="util-changelog-btn" id="open-changelog" aria-label="업데이트 내역 보기">
-                📋 v4.4.5 업데이트 내역
+                📋 v4.4.6 업데이트 내역
             </button>
         </div>
     </div>
@@ -534,11 +534,12 @@
             </div><!-- /.format-grid -->
         </div><!-- /#panel-basic -->
 
-        <details class="service-details">
-            <summary>보조 안내 보기</summary>
-            <!-- 탭: 예정 포맷 / 동작 원리 / 지원 현황 -->
-            <!-- app.js의 initFormatTabs에서 탭 전환 로직 처리 -->
-            <div class="format-tabs" role="tablist">
+        <div class="service-info">
+            <div class="service-info-bar">
+                <span class="service-info-label">더 알아보기</span>
+                <!-- 탭: 예정 포맷 / 동작 원리 / 지원 현황 -->
+                <!-- app.js의 initFormatTabs에서 탭 전환 로직 처리 -->
+                <div class="format-tabs service-tabs" role="tablist">
                 <button class="format-tab active"
                         data-target="panel-ext"
                         role="tab"
@@ -560,6 +561,7 @@
                         aria-controls="panel-support">
                     📊 지원 현황
                 </button>
+                </div>
             </div>
 
             <!-- ── 확장 서비스 패널 ─────────────────────────────────────
@@ -774,7 +776,7 @@
                 </table>
             </div><!-- /.support-table-wrap -->
             </div><!-- /#panel-support -->
-        </details>
+        </div>
 
     </div><!-- /.container -->
 </section>

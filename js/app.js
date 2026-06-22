@@ -449,10 +449,14 @@ function initFormatTabs() {
     const tabs = document.querySelectorAll('.format-tab');
     tabs.forEach(tab => {
         tab.addEventListener('click', () => {
-            const scope = tab.closest('.service-details') || document;
+            const scope = tab.closest('.service-info') || document;
             // 모든 탭 비활성화 후 클릭된 탭만 활성화
-            scope.querySelectorAll('.format-tab').forEach(t => t.classList.remove('active'));
+            scope.querySelectorAll('.format-tab').forEach(t => {
+                t.classList.remove('active');
+                t.setAttribute('aria-selected', 'false');
+            });
             tab.classList.add('active');
+            tab.setAttribute('aria-selected', 'true');
 
             // 연결된 패널 표시 (data-target 속성으로 매핑)
             const targetId = tab.dataset.target;
