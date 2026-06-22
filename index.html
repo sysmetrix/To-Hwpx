@@ -539,11 +539,11 @@
                 <span class="service-info-label">더 알아보기</span>
                 <!-- 탭: 예정 포맷 / 동작 원리 / 지원 현황 -->
                 <!-- app.js의 initFormatTabs에서 탭 전환 로직 처리 -->
-                <div class="format-tabs service-tabs" role="tablist">
-                <button class="format-tab active"
+                <div class="format-tabs service-tabs" role="tablist" aria-label="보조 안내">
+                <button class="format-tab"
                         data-target="panel-ext"
                         role="tab"
-                        aria-selected="true"
+                        aria-selected="false"
                         aria-controls="panel-ext">
                     🔜 예정 포맷
                 </button>
@@ -568,7 +568,7 @@
                  IPYNB는 JSON 기반이라 클라이언트에서 처리 가능
                  나머지는 향후 백엔드 연동 예정
                  ─────────────────────────────────────────────────────── -->
-            <div class="format-panel active" id="panel-ext" role="tabpanel">
+            <div class="format-panel" id="panel-ext" role="tabpanel">
                 <div class="format-grid">
 
                     <!-- IPYNB -->
@@ -1110,9 +1110,6 @@
         </div>
         <div class="modal-body" id="fmt-modal-body">
             <!-- openFormatModal()이 채움 -->
-        </div>
-        <div class="fmt-modal-actions" id="fmt-modal-footer" hidden>
-            <button class="btn-primary" id="fmt-modal-use-btn">이 포맷으로 변환하기 →</button>
         </div>
     </div>
 </div>

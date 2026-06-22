@@ -1,6 +1,20 @@
 {
-  "current": "4.4.6",
+  "current": "4.4.7",
   "versions": [
+    {
+      "version": "4.4.7",
+      "date": "2026-06-23",
+      "user": [
+        "입력 가능 포맷 안내가 첫 화면을 길게 밀어내지 않도록 보조 안내를 필요할 때만 열리게 했습니다",
+        "포맷 상세 팝업에서 오해를 줄 수 있던 변환하기 버튼을 제거했습니다"
+      ],
+      "dev": [
+        "[v4.4.7] index.html: service-info 초기 active 패널 제거 및 fmt-modal-use-btn/footer 제거",
+        "[v4.4.7] style.css: service-info 초기 여백 축소 및 활성 패널에만 상단 간격 적용",
+        "[v4.4.7] app.js: service-info 탭 토글 방식 적용 및 fmt-modal-use-btn 이벤트/상태 제거",
+        "[v4.4.7] sw.js: CACHE_VERSION to-hwpx-v4.4.7"
+      ]
+    },
     {
       "version": "4.4.6",
       "date": "2026-06-23",

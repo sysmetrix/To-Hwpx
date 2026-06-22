@@ -450,18 +450,21 @@ function initFormatTabs() {
     tabs.forEach(tab => {
         tab.addEventListener('click', () => {
             const scope = tab.closest('.service-info') || document;
+            const shouldOpen = !tab.classList.contains('active');
             // 모든 탭 비활성화 후 클릭된 탭만 활성화
             scope.querySelectorAll('.format-tab').forEach(t => {
                 t.classList.remove('active');
                 t.setAttribute('aria-selected', 'false');
             });
-            tab.classList.add('active');
-            tab.setAttribute('aria-selected', 'true');
+            if (shouldOpen) {
+                tab.classList.add('active');
+                tab.setAttribute('aria-selected', 'true');
+            }
 
             // 연결된 패널 표시 (data-target 속성으로 매핑)
             const targetId = tab.dataset.target;
             scope.querySelectorAll('.format-panel').forEach(panel => {
-                panel.classList.toggle('active', panel.id === targetId);
+                panel.classList.toggle('active', shouldOpen && panel.id === targetId);
             });
         });
     });
@@ -667,13 +670,6 @@ function initFormatCards() {
         ?.addEventListener('click', e => {
             if (e.target.id === 'format-modal') closeFormatModal();
         });
-    document.getElementById('fmt-modal-use-btn')
-        ?.addEventListener('click', () => {
-            const ext = document.getElementById('fmt-modal-use-btn').dataset.ext || '';
-            closeFormatModal();
-            updateFormatExpectation(ext, true);
-            document.getElementById('converter')?.scrollIntoView({ behavior: 'smooth' });
-        });
 }
 
 function decorateFormatCard(card) {
@@ -734,11 +730,6 @@ function openFormatModal(ext) {
     }
 
     document.getElementById('fmt-modal-body').innerHTML = html;
-
-    const footer = document.getElementById('fmt-modal-footer');
-    if (footer) footer.hidden = !info.available;
-    const useBtn = document.getElementById('fmt-modal-use-btn');
-    if (useBtn) useBtn.dataset.ext = ext;
 
     modal.classList.add('open');
     document.body.style.overflow = 'hidden';
