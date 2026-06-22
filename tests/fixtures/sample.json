@@ -1,0 +1,9 @@
+{
+  "title": "Golden JSON 제목 Alpha",
+  "paragraph": "첫 문단입니다. 한글 English Alpha와 특수문자 & < > \" ' 를 포함합니다.",
+  "list": ["목록 항목 하나", "목록 항목 English", "특수문자 항목 & < >"],
+  "table": [
+    { "구분": "표 제목", "값": "표 값 한글", "비고": "English Cell" },
+    { "구분": "긴 텍스트", "값": "long text wraps safely", "비고": "빈 셀 대비" }
+  ]
+}

@@ -659,6 +659,9 @@ function parseIpynb(text, docType = 'plain') {
         if (cell.cell_type === 'markdown') {
             // 마크다운 셀 → MD 파서 재사용
             const mdIR = parseMd(source, docType);
+            if (mdIR.title && mdIR.title !== '제목 없음' && ir.title === 'Jupyter Notebook') {
+                ir.title = mdIR.title;
+            }
             ir.blocks.push(...mdIR.blocks);
 
         } else if (cell.cell_type === 'code') {

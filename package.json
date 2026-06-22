@@ -1,0 +1,12 @@
+{
+  "name": "to-hwpx",
+  "version": "4.3.19",
+  "private": true,
+  "scripts": {
+    "test:golden": "node tests/golden.js"
+  },
+  "devDependencies": {
+    "jszip": "^3.10.1",
+    "playwright": "^1.56.1"
+  }
+}

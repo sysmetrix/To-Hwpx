@@ -1,0 +1,5 @@
+구분,값,비고
+CSV 제목,표 값 한글,English Cell
+문단,"한글 English Alpha & < > "" '",특수문자 보존
+빈 셀,,빈 칸 유지 확인
+긴 텍스트,"긴 텍스트 long text wraps safely 긴 텍스트 long text wraps safely",목록 항목 하나
