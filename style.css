@@ -101,7 +101,7 @@ html {
 body {
     font-family: var(--font-main);
     background: var(--c-bg);
-    color: var(--c-text);
+    color: var(--c-primary);
     line-height: 1.6;
     -webkit-font-smoothing: antialiased;  /* macOS 폰트 렌더링 개선 */
 }

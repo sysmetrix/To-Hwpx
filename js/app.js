@@ -23,7 +23,7 @@ const state = {
     ir:           null,                // 파싱 완료된 IR JSON
     docType:      'plain',             // 상단 제목 블록: plain(없음)|titleblock(기본)|cover-unit(표지단위)|cover-annual(표지연간)
     customTitle:  '',                  // 사용자가 입력한 제목 (비어 있으면 자동 기준 적용)
-    titleSource:  'filename',          // 자동 제목 기준: 'filename'(파일 이름) | 'heading'(문서 첫 제목)
+    titleSource:  'heading',           // 자동 제목 기준: 'filename'(파일 이름/문서 제목) | 'heading'(문서 첫 제목)
     docFont:      '맑은 고딕',          // 출력 폰트 (기본: 맑은 고딕)
     fontSize:     12,                  // 기본 글꼴 크기 (pt)
     paperSize:    'A4',                // 용지 크기: "A4" | "B5" | "Letter"
