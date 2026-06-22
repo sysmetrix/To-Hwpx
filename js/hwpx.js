@@ -378,7 +378,7 @@ ${paraBase(16, 'LEFT',   160, 200,  100,    0)}
 ${paraBase(17, 'LEFT',   160,   0,  100, 1200)}
 ${paraBase(18, 'LEFT',   160,   0,  100, 1800)}
     </hh:paraProperties>
-    <hh:borderFills itemCnt="${15 + customBfMap.size}">
+    <hh:borderFills itemCnt="${17 + customBfMap.size}">
       <!-- id=1 테두리 없음 -->
       <hh:borderFill id="1" threeD="0" shadow="0" centerLine="NONE" breakCellSeparateLine="0">
         <hh:slash type="NONE" Crooked="0" isCounter="0"/><hh:backSlash type="NONE" Crooked="0" isCounter="0"/>
@@ -483,43 +483,52 @@ ${paraBase(18, 'LEFT',   160,   0,  100, 1800)}
         <hh:diagonal type="NONE" width="0.1 mm" color="#000000"/>
         <hc:fillBrush><hc:winBrush faceColor="#000000" hatchColor="#000000" alpha="0"/></hc:fillBrush>
       </hh:borderFill>
-      <!-- id=12 표지(단위형) 밴드: 청록 가로 그라데이션, 테두리 없음 (TODO: 정확한 hex 수령 시 교체) -->
+      <!-- 표지 밴드용 borderFill (사용자 지정 색). 테두리 없음 -->
+      <!-- id=12 단위형 상단: 단색 #0080C0 -->
       <hh:borderFill id="12" threeD="0" shadow="0" centerLine="NONE" breakCellSeparateLine="0">
         <hh:slash type="NONE" Crooked="0" isCounter="0"/><hh:backSlash type="NONE" Crooked="0" isCounter="0"/>
-        <hh:leftBorder type="NONE" width="0.1 mm" color="#FFFFFF"/>
-        <hh:rightBorder type="NONE" width="0.1 mm" color="#FFFFFF"/>
-        <hh:topBorder type="NONE" width="0.1 mm" color="#FFFFFF"/>
-        <hh:bottomBorder type="NONE" width="0.1 mm" color="#FFFFFF"/>
+        <hh:leftBorder type="NONE" width="0.1 mm" color="#FFFFFF"/><hh:rightBorder type="NONE" width="0.1 mm" color="#FFFFFF"/>
+        <hh:topBorder type="NONE" width="0.1 mm" color="#FFFFFF"/><hh:bottomBorder type="NONE" width="0.1 mm" color="#FFFFFF"/>
         <hh:diagonal type="NONE" width="0.1 mm" color="#FFFFFF"/>
-        <hc:fillBrush><hc:gradation type="LINEAR" angle="90" centerX="0" centerY="0" step="50" colorNum="2" stepCenter="50" alpha="0"><hc:color value="#5BC8F5"/><hc:color value="#1E73BE"/></hc:gradation></hc:fillBrush>
+        <hc:fillBrush><hc:winBrush faceColor="#0080C0" hatchColor="#000000" alpha="0"/></hc:fillBrush>
       </hh:borderFill>
-      <!-- id=13 표지(연간형) 밴드1: 초록 단색, 테두리 없음 (TODO: 정확한 hex 수령 시 교체) -->
+      <!-- id=13 단위형 하단: 그라데이션 #0080C0→#3CBFFF (가로중심0·세로중심0·기울임0·번짐50·번짐중심50) -->
       <hh:borderFill id="13" threeD="0" shadow="0" centerLine="NONE" breakCellSeparateLine="0">
         <hh:slash type="NONE" Crooked="0" isCounter="0"/><hh:backSlash type="NONE" Crooked="0" isCounter="0"/>
-        <hh:leftBorder type="NONE" width="0.1 mm" color="#FFFFFF"/>
-        <hh:rightBorder type="NONE" width="0.1 mm" color="#FFFFFF"/>
-        <hh:topBorder type="NONE" width="0.1 mm" color="#FFFFFF"/>
-        <hh:bottomBorder type="NONE" width="0.1 mm" color="#FFFFFF"/>
+        <hh:leftBorder type="NONE" width="0.1 mm" color="#FFFFFF"/><hh:rightBorder type="NONE" width="0.1 mm" color="#FFFFFF"/>
+        <hh:topBorder type="NONE" width="0.1 mm" color="#FFFFFF"/><hh:bottomBorder type="NONE" width="0.1 mm" color="#FFFFFF"/>
         <hh:diagonal type="NONE" width="0.1 mm" color="#FFFFFF"/>
-        <hc:fillBrush><hc:winBrush faceColor="#1E7145" hatchColor="#000000" alpha="0"/></hc:fillBrush>
+        <hc:fillBrush><hc:gradation type="LINEAR" angle="0" centerX="0" centerY="0" step="50" colorNum="2" stepCenter="50" alpha="0"><hc:color value="#0080C0"/><hc:color value="#3CBFFF"/></hc:gradation></hc:fillBrush>
       </hh:borderFill>
-      <!-- id=14 표지(연간형) 밴드2: 보라→노랑 가로 그라데이션, 테두리 없음 (TODO: 정확한 hex 수령 시 교체) -->
+      <!-- id=14 연간형 상단: 단색 #126E3A -->
       <hh:borderFill id="14" threeD="0" shadow="0" centerLine="NONE" breakCellSeparateLine="0">
         <hh:slash type="NONE" Crooked="0" isCounter="0"/><hh:backSlash type="NONE" Crooked="0" isCounter="0"/>
-        <hh:leftBorder type="NONE" width="0.1 mm" color="#FFFFFF"/>
-        <hh:rightBorder type="NONE" width="0.1 mm" color="#FFFFFF"/>
-        <hh:topBorder type="NONE" width="0.1 mm" color="#FFFFFF"/>
-        <hh:bottomBorder type="NONE" width="0.1 mm" color="#FFFFFF"/>
+        <hh:leftBorder type="NONE" width="0.1 mm" color="#FFFFFF"/><hh:rightBorder type="NONE" width="0.1 mm" color="#FFFFFF"/>
+        <hh:topBorder type="NONE" width="0.1 mm" color="#FFFFFF"/><hh:bottomBorder type="NONE" width="0.1 mm" color="#FFFFFF"/>
         <hh:diagonal type="NONE" width="0.1 mm" color="#FFFFFF"/>
-        <hc:fillBrush><hc:gradation type="LINEAR" angle="90" centerX="0" centerY="0" step="50" colorNum="2" stepCenter="50" alpha="0"><hc:color value="#7030A0"/><hc:color value="#FFC000"/></hc:gradation></hc:fillBrush>
+        <hc:fillBrush><hc:winBrush faceColor="#126E3A" hatchColor="#000000" alpha="0"/></hc:fillBrush>
       </hh:borderFill>
-      <!-- id=15 표지 점선 구분: 하단 점선 테두리만 -->
+      <!-- id=15 연간형 하단 좌(8): 단색 #724598 -->
       <hh:borderFill id="15" threeD="0" shadow="0" centerLine="NONE" breakCellSeparateLine="0">
         <hh:slash type="NONE" Crooked="0" isCounter="0"/><hh:backSlash type="NONE" Crooked="0" isCounter="0"/>
-        <hh:leftBorder type="NONE" width="0.1 mm" color="#FFFFFF"/>
-        <hh:rightBorder type="NONE" width="0.1 mm" color="#FFFFFF"/>
-        <hh:topBorder type="NONE" width="0.1 mm" color="#FFFFFF"/>
-        <hh:bottomBorder type="DOT" width="0.2 mm" color="#808080"/>
+        <hh:leftBorder type="NONE" width="0.1 mm" color="#FFFFFF"/><hh:rightBorder type="NONE" width="0.1 mm" color="#FFFFFF"/>
+        <hh:topBorder type="NONE" width="0.1 mm" color="#FFFFFF"/><hh:bottomBorder type="NONE" width="0.1 mm" color="#FFFFFF"/>
+        <hh:diagonal type="NONE" width="0.1 mm" color="#FFFFFF"/>
+        <hc:fillBrush><hc:winBrush faceColor="#724598" hatchColor="#000000" alpha="0"/></hc:fillBrush>
+      </hh:borderFill>
+      <!-- id=16 연간형 하단 우(2): 단색 #FFD900 -->
+      <hh:borderFill id="16" threeD="0" shadow="0" centerLine="NONE" breakCellSeparateLine="0">
+        <hh:slash type="NONE" Crooked="0" isCounter="0"/><hh:backSlash type="NONE" Crooked="0" isCounter="0"/>
+        <hh:leftBorder type="NONE" width="0.1 mm" color="#FFFFFF"/><hh:rightBorder type="NONE" width="0.1 mm" color="#FFFFFF"/>
+        <hh:topBorder type="NONE" width="0.1 mm" color="#FFFFFF"/><hh:bottomBorder type="NONE" width="0.1 mm" color="#FFFFFF"/>
+        <hh:diagonal type="NONE" width="0.1 mm" color="#FFFFFF"/>
+        <hc:fillBrush><hc:winBrush faceColor="#FFD900" hatchColor="#000000" alpha="0"/></hc:fillBrush>
+      </hh:borderFill>
+      <!-- id=17 표지 [팀명/이름] 칸: 흰 배경(투명), 하단만 실선 -->
+      <hh:borderFill id="17" threeD="0" shadow="0" centerLine="NONE" breakCellSeparateLine="0">
+        <hh:slash type="NONE" Crooked="0" isCounter="0"/><hh:backSlash type="NONE" Crooked="0" isCounter="0"/>
+        <hh:leftBorder type="NONE" width="0.1 mm" color="#FFFFFF"/><hh:rightBorder type="NONE" width="0.1 mm" color="#FFFFFF"/>
+        <hh:topBorder type="NONE" width="0.1 mm" color="#FFFFFF"/><hh:bottomBorder type="SOLID" width="0.2 mm" color="#000000"/>
         <hh:diagonal type="NONE" width="0.1 mm" color="#FFFFFF"/>
       </hh:borderFill>
 ${[...customBfMap.entries()].map(([key, bfId]) => {
@@ -745,28 +754,59 @@ function buildHrPara(contentWidthHwp = 48000) {
 }
 
 /**
- * 표지 장식 밴드 — 지정 borderFill(그라데이션/단색/점선)로 채운 전폭 1×1 표.
- * 글자처럼 취급(treatAsChar)되어 본문 흐름에 한 줄로 들어간다.
- * @param {string|number} bfId  채울 borderFill id (12=청록 13=초록 14=보라→노랑 15=점선)
- * @param {number} heightHwp     밴드 높이(HWPUNIT)
+ * 표지 표 — 상단 색 띠 / 제목 흰칸 / 하단 색 띠 / [팀명·이름] 흰칸(하단 실선)을
+ * 하나의 표로 생성한다. 제목은 중간 흰 칸에 들어간다.
+ *   unit  : 상단 #0080C0 단색 / 하단 #0080C0→#3CBFFF 그라데이션 (1열)
+ *   annual: 상단 #126E3A 단색 / 하단 8:2 분할(#724598 / #FFD900) (2열)
+ * @param {string} style        'unit' | 'annual'
+ * @param {string} titleText    중간 칸에 넣을 제목
+ * @param {number} contentWidthHwp 본문 폭(HWPUNIT)
  */
-function buildCoverBand(bfId, contentWidthHwp = 48000, heightHwp = 250) {
-    const pid = _nextParaId();
-    const w = Math.max(12000, contentWidthHwp);
+function buildCoverTable(style, titleText, contentWidthHwp = 48000) {
+    const pid   = _nextParaId();
+    const W     = Math.min(Math.max(12000, contentWidthHwp), mmToHwp(169));
+    const hThin = mmToHwp(1.35);
+    const hMid  = mmToHwp(style === 'annual' ? 16.46 : 12.04);
+    const hName = mmToHwp(8.22);
+    const totalH = hThin + hMid + hThin + hName;
+
+    const cell = (bf, w, h, colSpan, colAddr, rowAddr, contentXml) =>
+        `<hp:tc name="" header="0" hasMargin="1" protect="0" editable="0" dirty="0" borderFillIDRef="${bf}">` +
+        `<hp:subList id="" textDirection="HORIZONTAL" lineWrap="BREAK" vertAlign="CENTER" ` +
+        `linkListIDRef="0" linkListNextIDRef="0" textWidth="0" textHeight="0" hasTextRef="0" hasNumRef="0">` +
+        contentXml +
+        `</hp:subList><hp:cellAddr colAddr="${colAddr}" rowAddr="${rowAddr}"/><hp:cellSpan colSpan="${colSpan}" rowSpan="1"/>` +
+        `<hp:cellSz width="${w}" height="${h}"/><hp:cellMargin left="280" right="280" top="0" bottom="0"/></hp:tc>`;
+
+    const titlePara = titleText ? buildPara(titleText, '1', '7') : buildBlankPara();  // H1 가운데
+    const namePara  = buildPara('[팀명 / 이름]', '7', '13');                          // 굵게 우측
+
+    let colCnt, rows;
+    if (style === 'annual') {
+        colCnt = 2;
+        const wL = Math.round(W * 0.8), wR = W - wL;
+        rows =
+            `<hp:tr>${cell(14, W, hThin, 2, 0, 0, buildBlankPara())}</hp:tr>` +
+            `<hp:tr>${cell(1,  W, hMid,  2, 0, 1, titlePara)}</hp:tr>` +
+            `<hp:tr>${cell(15, wL, hThin, 1, 0, 2, buildBlankPara())}${cell(16, wR, hThin, 1, 1, 2, buildBlankPara())}</hp:tr>` +
+            `<hp:tr>${cell(17, W, hName, 2, 0, 3, namePara)}</hp:tr>`;
+    } else {
+        colCnt = 1;
+        rows =
+            `<hp:tr>${cell(12, W, hThin, 1, 0, 0, buildBlankPara())}</hp:tr>` +
+            `<hp:tr>${cell(1,  W, hMid,  1, 0, 1, titlePara)}</hp:tr>` +
+            `<hp:tr>${cell(13, W, hThin, 1, 0, 2, buildBlankPara())}</hp:tr>` +
+            `<hp:tr>${cell(17, W, hName, 1, 0, 3, namePara)}</hp:tr>`;
+    }
     return `<hp:p id="${pid}" paraPrIDRef="9" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0"><hp:run charPrIDRef="0">` +
         `<hp:tbl id="0" zOrder="0" numberingType="TABLE" textWrap="TOP_AND_BOTTOM" ` +
         `textFlow="BOTH_SIDES" lock="0" dropcapstyle="None" pageBreak="ROW" ` +
-        `repeatHeader="0" rowCnt="1" colCnt="1" cellSpacing="0" borderFillIDRef="1">` +
-        `<hp:sz width="${w}" widthRelTo="ABSOLUTE" height="${heightHwp}" heightRelTo="ABSOLUTE" protect="0"/>` +
+        `repeatHeader="0" rowCnt="4" colCnt="${colCnt}" cellSpacing="0" borderFillIDRef="1">` +
+        `<hp:sz width="${W}" widthRelTo="ABSOLUTE" height="${totalH}" heightRelTo="ABSOLUTE" protect="0"/>` +
         `<hp:pos treatAsChar="1" affectLSpacing="0" flowWithText="1" allowOverlap="0" holdAnchorAndSO="0" ` +
-        `vertRelTo="PARA" horzRelTo="COLUMN" vertAlign="TOP" horzAlign="LEFT" vertOffset="0" horzOffset="0"/>` +
+        `vertRelTo="PARA" horzRelTo="COLUMN" vertAlign="TOP" horzAlign="CENTER" vertOffset="0" horzOffset="0"/>` +
         `<hp:outMargin left="0" right="0" top="0" bottom="0"/><hp:inMargin left="0" right="0" top="0" bottom="0"/>` +
-        `<hp:tr><hp:tc name="" header="0" hasMargin="0" protect="0" editable="0" dirty="0" borderFillIDRef="${bfId}">` +
-        `<hp:subList id="" textDirection="HORIZONTAL" lineWrap="BREAK" vertAlign="CENTER" ` +
-        `linkListIDRef="0" linkListNextIDRef="0" textWidth="0" textHeight="0" hasTextRef="0" hasNumRef="0">` +
-        buildBlankPara() +
-        `</hp:subList><hp:cellAddr colAddr="0" rowAddr="0"/><hp:cellSpan colSpan="1" rowSpan="1"/>` +
-        `<hp:cellSz width="${w}" height="${heightHwp}"/><hp:cellMargin left="0" right="0" top="0" bottom="0"/></hp:tc></hp:tr>` +
+        rows +
         `</hp:tbl><hp:t></hp:t></hp:run></hp:p>`;
 }
 
@@ -1057,18 +1097,9 @@ function buildSection(ir, marginsHwp, paperKey, landscape = false, customBfMap =
         parts.push(buildHrPara(contentWidthHwp));                     // 구분선
         parts.push(buildBlankPara());
     } else if (docType === 'cover-unit' || docType === 'cover-annual') {
-        // 표지 장식 밴드 2줄 (단위형=12/12, 연간형=13/14) + [팀명/이름] 우측 + 점선
-        if (docType === 'cover-annual') {
-            parts.push(buildCoverBand(13, contentWidthHwp, 220));
-            parts.push(buildCoverBand(14, contentWidthHwp, 220));
-        } else {
-            parts.push(buildCoverBand(12, contentWidthHwp, 220));
-            parts.push(buildCoverBand(12, contentWidthHwp, 220));
-        }
-        parts.push(buildPara('[팀명 / 이름]', '7', '13'));            // 굵게(7) + 오른쪽 정렬(13)
-        parts.push(buildCoverBand(15, contentWidthHwp, 60));          // 점선 구분
+        // 표지: 상단 띠 / 제목 흰칸 / 하단 띠 / [팀명·이름]을 하나의 표로 (제목은 중간 칸)
+        parts.push(buildCoverTable(docType === 'cover-annual' ? 'annual' : 'unit', titleText, contentWidthHwp));
         parts.push(buildBlankPara());
-        if (titleText) { parts.push(buildPara(titleText, '1', '1')); parts.push(buildBlankPara()); }
     } else if (titleText) {
         parts.push(buildPara(titleText, '1', '1'));
         parts.push(buildBlankPara());  // 제목 아래 빈 줄
@@ -1185,7 +1216,7 @@ async function buildHwpx(ir, fontName = '휴먼명조', fontSize = 12, marginsMm
 
     // 표 셀 배경색 수집 → 동적 borderFill 생성용
     const customBfMap = new Map();
-    let nextBfId = 16;   // 1~11 기본 + 12~15 표지 밴드 이후부터 DOCX 셀 배경색
+    let nextBfId = 18;   // 1~11 기본 + 12~17 표지 밴드 이후부터 DOCX 셀 배경색
     for (const block of (ir.blocks || [])) {
         if (block.type !== 'table') continue;
         const allRows = (block.header && block.header.length ? [block.header] : []).concat(block.rows || []);
