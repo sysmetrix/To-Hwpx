@@ -1,6 +1,16 @@
 {
-  "current": "4.3.27",
+  "current": "4.3.28",
   "versions": [
+    {
+      "version": "4.3.28",
+      "date": "2026-06-22",
+      "user": [
+        "모바일에서 즐겨찾기·초기화 등 팝업 안내의 글자가 잘리던 문제를 고쳤습니다 (화면 폭에 맞춰 줄바꿈)"
+      ],
+      "dev": [
+        "[v4.3.28] style.css: .bookmark-toast의 white-space:nowrap 제거, max-width min(92vw,440px)·flex-wrap·overflow-wrap으로 모바일 글자 잘림 해결, 닫기 버튼 margin-left:auto"
+      ]
+    },
     {
       "version": "4.3.27",
       "date": "2026-06-22",
