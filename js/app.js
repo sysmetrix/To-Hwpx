@@ -1640,6 +1640,7 @@ function initModals() {
     document.getElementById('close-pc-guide')?.addEventListener('click', closePcGuide);
     document.getElementById('close-mobile-guide')?.addEventListener('click', closeMobileGuide);
     document.getElementById('close-install-guide')?.addEventListener('click', closeInstallGuide);
+    document.getElementById('close-privacy-guide')?.addEventListener('click', closePrivacyGuide);
     document.getElementById('close-font-guide')?.addEventListener('click', closeFontGuide);
     document.getElementById('recheck-fonts-btn')?.addEventListener('click', () => renderFontGuide());
 
@@ -1648,6 +1649,7 @@ function initModals() {
     document.getElementById('open-pc-guide')?.addEventListener('click', showPcGuide);
     document.getElementById('open-mobile-guide')?.addEventListener('click', showMobileGuide);
     document.getElementById('open-install-guide')?.addEventListener('click', showInstallGuide);
+    document.getElementById('open-privacy-guide')?.addEventListener('click', showPrivacyGuide);
     document.getElementById('open-font-guide')?.addEventListener('click', showFontGuide);
 
     // 오버레이 바깥 클릭으로 닫기
@@ -1666,6 +1668,9 @@ function initModals() {
     document.getElementById('install-guide-modal')?.addEventListener('click', (e) => {
         if (e.target === e.currentTarget) closeInstallGuide();
     });
+    document.getElementById('privacy-guide-modal')?.addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) closePrivacyGuide();
+    });
     document.getElementById('font-guide-modal')?.addEventListener('click', (e) => {
         if (e.target === e.currentTarget) closeFontGuide();
     });
@@ -1678,6 +1683,7 @@ function initModals() {
             closePcGuide();
             closeMobileGuide();
             closeInstallGuide();
+            closePrivacyGuide();
             closeFontGuide();
         }
     });
@@ -1723,6 +1729,16 @@ function showMobileGuide() {
 
 function closeMobileGuide() {
     document.getElementById('mobile-guide-modal')?.classList.remove('open');
+    document.body.style.overflow = '';
+}
+
+function showPrivacyGuide() {
+    document.getElementById('privacy-guide-modal')?.classList.add('open');
+    document.body.style.overflow = 'hidden';
+}
+
+function closePrivacyGuide() {
+    document.getElementById('privacy-guide-modal')?.classList.remove('open');
     document.body.style.overflow = '';
 }
 
