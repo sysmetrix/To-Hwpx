@@ -672,6 +672,26 @@ a:hover { text-decoration: underline; }
 }
 .card-name   { font-size: 0.88rem; font-weight: 600; color: var(--c-text); margin-bottom: 4px; }
 .card-quality { font-size: 0.82rem; color: #f59e0b; margin-bottom: 6px; }
+.card-quality-stars {
+    display: block;
+    color: #f59e0b;
+    font-weight: 800;
+    line-height: 1.2;
+}
+.card-quality-label {
+    display: block;
+    color: var(--c-text-sub);
+    font-size: 0.72rem;
+    font-weight: 700;
+    margin-top: 2px;
+}
+.card-loss-preview {
+    width: 100%;
+    margin-top: 8px;
+    color: var(--c-text-muted);
+    font-size: 0.72rem;
+    line-height: 1.35;
+}
 
 /* 상태 배지 */
 .card-badge {
@@ -1256,12 +1276,21 @@ a:hover { text-decoration: underline; }
     background: var(--c-success-light);
 }
 .result-card.result-card--warn { border-color: var(--c-warning); background: var(--c-warning-light); }
+.result-card.result-card--error { border-color: var(--c-error); background: var(--c-error-light); }
+
+.result-primary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    margin-bottom: 14px;
+}
 
 .result-file-row {
     display: flex;
     align-items: center;
     gap: 12px;
-    margin-bottom: 12px;
+    min-width: 0;
 }
 .result-file-icon { font-size: 1.8rem; }
 .result-file-info strong { display: block; font-size: 0.95rem; }
@@ -1349,10 +1378,37 @@ a:hover { text-decoration: underline; }
     text-decoration: none;
     transform: translateY(-1px);
 }
+.btn-download-primary {
+    flex-shrink: 0;
+    min-height: 44px;
+    padding-inline: 24px;
+    box-shadow: 0 8px 18px rgba(5, 150, 105, 0.22);
+}
 .result-note {
     font-size: 0.76rem;
     color: var(--c-text-muted);
     margin-top: 8px;
+}
+.failure-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+.failure-head strong {
+    color: var(--c-error);
+    font-size: 0.96rem;
+}
+.failure-head span {
+    flex-shrink: 0;
+    padding: 4px 9px;
+    border-radius: 100px;
+    background: #fff;
+    color: var(--c-error);
+    border: 1px solid rgba(220, 38, 38, 0.28);
+    font-size: 0.74rem;
+    font-weight: 800;
 }
 
 
@@ -1564,6 +1620,8 @@ a:hover { text-decoration: underline; }
     .options-2col { grid-template-columns: 1fr; }
     .options-grid-4col { grid-template-columns: repeat(2, 1fr); }
     #pipeline-steps { grid-template-columns: repeat(4, 1fr); }
+    .result-primary { align-items: stretch; flex-direction: column; }
+    .btn-download-primary { justify-content: center; width: 100%; }
 
     /* 포맷 그리드 작은 카드 */
     .format-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }

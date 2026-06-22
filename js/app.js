@@ -537,6 +537,7 @@ const FONT_DOWNLOADS = [
 /** 포맷 카드 클릭 → 상세 정보 팝업 표시 */
 function initFormatCards() {
     document.querySelectorAll('.format-card').forEach(card => {
+        decorateFormatCard(card);
         card.addEventListener('click', () => {
             const ext = card.dataset.ext || '';
             if (ext) openFormatModal(ext);
@@ -556,6 +557,28 @@ function initFormatCards() {
             updateFormatExpectation(ext, true);
             document.getElementById('converter')?.scrollIntoView({ behavior: 'smooth' });
         });
+}
+
+function decorateFormatCard(card) {
+    const ext = card.dataset.ext || '';
+    const info = getFormatInfoForExt(ext);
+    if (!info) return;
+    const summary = getConversionSummaryForExt(ext);
+    const badge = card.querySelector('.card-badge');
+    if (badge && info.available && !info.badge) badge.textContent = '입력 가능';
+    const qualityEl = card.querySelector('.card-quality');
+    if (qualityEl) {
+        qualityEl.innerHTML = `
+            <span class="card-quality-stars">${escHtml(info.quality || '')}</span>
+            <span class="card-quality-label">${escHtml(qualityText(info.quality))}</span>
+        `;
+    }
+    if (!card.querySelector('.card-loss-preview')) {
+        const preview = document.createElement('div');
+        preview.className = 'card-loss-preview';
+        preview.textContent = `제외 가능: ${summary.lossy}`;
+        card.appendChild(preview);
+    }
 }
 
 function openFormatModal(ext) {
@@ -1037,7 +1060,9 @@ async function runConversionPipeline() {
     } catch (err) {
         setProgressPanelState('error');
         setStatusText('실패');
-        showAlert('변환 중 오류가 발생했습니다: ' + err.message);
+        showFailureResult(err);
+        const failure = classifyConversionError(err);
+        showAlert(`${failure.title}\n다음 행동: ${failure.action}`);
         console.error('[To HWPX] 변환 오류:', err);
     } finally {
         state.isConverting = false;
@@ -1067,9 +1092,14 @@ function updateIrPreview(ir) {
 function showResult({ url, fileName, size, validation }) {
     const area = document.getElementById('result-area');
     if (!area) return;
+    const ext = state.file ? getFileExtension(state.file.name) : '';
+    const inputLabel = getInputFormatLabel(ext);
     const summary = getConversionSummary();
     const issues = Array.isArray(validation.issues) ? validation.issues : [];
     const issuePreview = issues.slice(0, 3);
+    const officeCheck = validation.pass
+        ? '권장 — 미리보기와 한컴오피스의 글꼴·여백·표 너비가 다를 수 있습니다.'
+        : '필수 — 구조 검증 경고가 있어 한컴오피스에서 반드시 열어 확인하세요.';
 
     // 검증 결과에 따른 표시 텍스트
     const validText = validation.pass
@@ -1085,12 +1115,21 @@ function showResult({ url, fileName, size, validation }) {
     //         escHtml()로 fileName을 이스케이프하여 XSS 방지
     area.innerHTML = `
         <div class="result-card${cardClass}">
-            <div class="result-file-row">
-                <span class="result-file-icon">📄</span>
-                <div class="result-file-info">
-                    <strong>${escHtml(fileName)}</strong>
-                    <span class="result-file-size">${formatBytes(size)}</span>
+            <div class="result-primary">
+                <div class="result-file-row">
+                    <span class="result-file-icon">📄</span>
+                    <div class="result-file-info">
+                        <strong>${escHtml(fileName)}</strong>
+                        <span class="result-file-size">${formatBytes(size)} · 입력 ${escHtml(inputLabel)}</span>
+                    </div>
                 </div>
+                <a id="download-link"
+                   href="${url}"
+                   download="${escHtml(fileName)}"
+                   type="application/hwp+zip"
+                   class="btn-download btn-download-primary">
+                    ⬇ HWPX 다운로드
+                </a>
             </div>
             <div class="result-validation ${validClass}">
                 ${escHtml(validText)}
@@ -1108,18 +1147,13 @@ function showResult({ url, fileName, size, validation }) {
                 </ul>
             ` : ''}
             <div class="result-summary">
+                <p><strong>변환된 파일명</strong> ${escHtml(fileName)}</p>
+                <p><strong>입력 포맷</strong> ${escHtml(inputLabel)}</p>
                 <p><strong>보존된 요소</strong> ${escHtml(summary.preserved)}</p>
-                <p><strong>손실 가능 요소</strong> ${escHtml(summary.lossy)}</p>
-                <p><strong>확인 필요</strong> 미리보기는 참고용입니다. 최종 서식은 한컴오피스에서 열어 확인해 주세요.</p>
+                <p><strong>제외/손실된 요소</strong> ${escHtml(summary.lossy)}</p>
+                <p><strong>한컴오피스 확인</strong> ${escHtml(officeCheck)}</p>
             </div>
             <div class="result-actions">
-                <a id="download-link"
-                   href="${url}"
-                   download="${escHtml(fileName)}"
-                   type="application/hwp+zip"
-                   class="btn-download">
-                    ⬇ HWPX 다운로드
-                </a>
                 <button class="btn-preview" id="preview-result-btn">
                     👁 미리보기
                 </button>
@@ -1142,6 +1176,84 @@ function showResult({ url, fileName, size, validation }) {
     });
     area.querySelector('#preview-result-btn')?.addEventListener('click', () => openPreview(state.hwpxBlob));
     area.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function showFailureResult(err) {
+    const area = document.getElementById('result-area');
+    if (!area) return;
+    const failure = classifyConversionError(err);
+    const ext = state.file ? getFileExtension(state.file.name) : '';
+    const inputLabel = ext ? getInputFormatLabel(ext) : '선택한 파일';
+    area.innerHTML = `
+        <div class="result-card result-card--error">
+            <div class="failure-head">
+                <strong>${escHtml(failure.title)}</strong>
+                <span>${escHtml(failure.category)}</span>
+            </div>
+            <div class="result-summary">
+                <p><strong>입력 포맷</strong> ${escHtml(inputLabel)}</p>
+                <p><strong>원인</strong> ${escHtml(failure.reason)}</p>
+                <p><strong>다음 행동</strong> ${escHtml(failure.action)}</p>
+            </div>
+        </div>
+    `;
+    area.style.display = 'block';
+    area.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function classifyConversionError(err) {
+    const msg = String(err?.message || err || '');
+    if (/지원하지 않는|unsupported|확장자|format/i.test(msg)) {
+        return {
+            category: '지원하지 않는 포맷',
+            title: '이 파일 형식은 바로 변환할 수 없습니다.',
+            reason: msg,
+            action: `입력 가능 포맷(${SUPPORTED_FORMAT_LABEL})으로 저장한 뒤 다시 선택하세요.`,
+        };
+    }
+    if (/크기 초과|too large|50MB|100MB|용량|size/i.test(msg)) {
+        return {
+            category: '파일 크기',
+            title: '파일이 브라우저에서 처리하기에 너무 큽니다.',
+            reason: msg,
+            action: '문서를 나누거나 이미지·불필요한 시트를 줄인 뒤 다시 변환하세요.',
+        };
+    }
+    if (/파싱|parse|JSON|ZIP|로드 실패|손상|압축/i.test(msg)) {
+        return {
+            category: '파싱 오류',
+            title: '파일 내용을 읽는 중 문제가 생겼습니다.',
+            reason: msg,
+            action: '원본 프로그램에서 파일을 다시 저장하거나, DOCX/HWPX처럼 표준 형식으로 내보낸 뒤 다시 시도하세요.',
+        };
+    }
+    if (/HWP5|바이너리|구조|검증|미지원|unsupported structure/i.test(msg)) {
+        return {
+            category: '지원하지 않는 구조',
+            title: '파일 안의 일부 구조를 변환할 수 없습니다.',
+            reason: msg,
+            action: '한컴오피스에서 HWPX 또는 DOCX로 다시 저장한 뒤 변환하세요.',
+        };
+    }
+    if (/download|다운로드|차단|blocked|not allowed/i.test(msg)) {
+        return {
+            category: '브라우저 다운로드 차단',
+            title: '브라우저가 자동 다운로드를 막았습니다.',
+            reason: msg,
+            action: '완료 카드의 HWPX 다운로드 버튼을 직접 누르거나 브라우저 다운로드 허용 설정을 확인하세요.',
+        };
+    }
+    return {
+        category: '변환 처리',
+        title: '변환을 완료하지 못했습니다.',
+        reason: msg || '알 수 없는 오류가 발생했습니다.',
+        action: '파일을 다시 저장한 뒤 재시도하고, 계속 실패하면 더 단순한 입력 포맷(TXT, MD, DOCX)으로 변환해 보세요.',
+    };
+}
+
+function getInputFormatLabel(ext) {
+    const info = getFormatInfoForExt(ext);
+    return info ? `${info.name} (.${String(ext || '').toUpperCase()})` : `.${String(ext || '').toUpperCase()}`;
 }
 
 function getConversionSummaryForExt(ext) {
