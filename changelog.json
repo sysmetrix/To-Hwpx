@@ -1,6 +1,20 @@
 {
-  "current": "4.3.25",
+  "current": "4.3.26",
   "versions": [
+    {
+      "version": "4.3.26",
+      "date": "2026-06-22",
+      "user": [
+        "나눔고딕을 실제 설치된 글꼴일 때만 설치됨으로 표시하도록 정리했습니다",
+        "초기화 버튼을 누르면 페이지 맨 위까지 확실히 이동하도록 개선했습니다"
+      ],
+      "dev": [
+        "[v4.3.26] app.js: bundled TTF FontFace 로드 기반 사용 가능 표시 제거",
+        "[v4.3.26] app.js: 나눔고딕 보통 및 하이픈 포함 등록명 매칭 보강",
+        "[v4.3.26] app.js: resetConverterState() 스크롤을 hero-title scrollIntoView에서 window.scrollTo top=0으로 변경",
+        "[v4.3.26] sw.js: CACHE_VERSION to-hwpx-v4.3.26"
+      ]
+    },
     {
       "version": "4.3.25",
       "date": "2026-06-22",

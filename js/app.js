@@ -522,9 +522,9 @@ const FONT_DOWNLOADS = [
         name: '나눔고딕',
         family: 'NanumGothic',
         systemNames: [
-            '나눔고딕', '나눔고딕 보통', '나눔고딕 Regular', '나눔고딕OTF', '나눔고딕OTF Regular',
-            'NanumGothic', 'NanumGothic Regular', 'NanumGothicOTF', 'NanumGothicOTF Regular',
-            'Nanum Gothic', 'Nanum Gothic Regular', 'Nanum Gothic OTF', 'Nanum Gothic OTF Regular'
+            '나눔고딕 보통', '나눔고딕', '나눔고딕 Regular', '나눔고딕OTF', '나눔고딕OTF Regular',
+            'NanumGothic', 'NanumGothic Regular', 'NanumGothic-Regular', 'NanumGothicOTF', 'NanumGothicOTF Regular',
+            'Nanum Gothic', 'Nanum Gothic Regular', 'Nanum Gothic-Regular', 'Nanum Gothic OTF', 'Nanum Gothic OTF Regular'
         ],
         desc: '네이버 배포 한글 고딕체입니다. 국내 사용자에게 익숙하고 일반 문서에 잘 맞습니다.',
         local: ['fonts/NanumGothic.ttf', 'Font/NanumGothic.ttf', 'Font/NanumGothic/NanumGothic.ttf'],
@@ -662,22 +662,6 @@ async function findLocalFont(paths) {
     return '';
 }
 
-async function loadBundledFontForPreview(font) {
-    if (!('FontFace' in window) || !font?.family || !font?.local?.length) return false;
-    for (const path of font.local) {
-        try {
-            const res = await fetch(path, { cache: 'no-store' });
-            if (!res.ok) continue;
-            const buffer = await res.arrayBuffer();
-            const face = new FontFace(font.family, buffer);
-            await face.load();
-            document.fonts.add(face);
-            return true;
-        } catch (_) {}
-    }
-    return false;
-}
-
 /**
  * 캔버스 텍스트 폭 비교로 시스템 폰트 설치 여부 감지.
  * 권한(queryLocalFonts)·CDN 불필요, 전 브라우저 동작. 대상 폰트로 렌더한 폭이
@@ -735,7 +719,7 @@ function isFontInstalledByPixels(name) {
 }
 
 async function isSystemFontInstalled(names, localFontsList = null) {
-    const norm = s => String(s || '').toLowerCase().replace(/\s+/g, '');
+    const norm = s => String(s || '').toLowerCase().replace(/[\s_\-()]+/g, '');
     // 1) queryLocalFonts() — 현재 사용자 설치 폰트까지 (공백·대소문자 정규화 + 굵기 접미사 보완)
     if (localFontsList !== null) {
         const pool = [];
@@ -748,7 +732,7 @@ async function isSystemFontInstalled(names, localFontsList = null) {
     // 2) 캔버스 폭 측정 — 권한 없이도 동작하는 신뢰성 높은 방법 (나눔고딕 미인식 문제 해결)
     if (names.some(isFontInstalledByMeasure)) return true;
     if (names.some(isFontInstalledByPixels)) return true;
-    // 3) 폴백: FontFace local()
+    // 3) 폴백: FontFace local() — 설치된 시스템 폰트 이름만 확인한다.
     for (const name of names) {
         try {
             const font = new FontFace('__detect__', `local("${name}")`);
@@ -798,14 +782,9 @@ async function renderFontGuide() {
             isSystemFontInstalled(font.systemNames || [font.name], localFontsList),
             findLocalFont(font.local),
         ]);
-        const isBundledUsable = !isInstalled && font.name === '나눔고딕'
-            ? await loadBundledFontForPreview(font)
-            : false;
         const official = `<a class="font-official-link" href="${escHtml(font.official)}" target="_blank" rel="noopener">공식 사이트</a>`;
         if (isInstalled) {
             box.innerHTML = `<span class="font-installed-badge">설치됨 ✓</span>${official}`;
-        } else if (isBundledUsable) {
-            box.innerHTML = `<span class="font-installed-badge">사용 가능 ✓</span>${official}`;
         } else if (localPath) {
             box.innerHTML = `<a href="${escHtml(localPath)}" download>TTF 다운로드</a>${official}`;
         } else {
@@ -1858,8 +1837,8 @@ function resetConverterState() {
     }
     applyOrientationUi('portrait');
     updateConvertButton(false);
-    document.getElementById('hero-title')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     showAlert('선택 파일과 변환 옵션을 기본값으로 초기화했습니다.');
+    requestAnimationFrame(() => window.scrollTo({ top: 0, left: 0, behavior: 'smooth' }));
 }
 
 
