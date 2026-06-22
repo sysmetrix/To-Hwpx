@@ -1,6 +1,17 @@
 {
-  "current": "4.4.3",
+  "current": "4.4.4",
   "versions": [
+    {
+      "version": "4.4.4",
+      "date": "2026-06-23",
+      "user": [
+        "단축키 안내에서 도움말 열기 키를 Shift + / (?)로 더 정확하게 표기했습니다"
+      ],
+      "dev": [
+        "[v4.4.4] index.html: shortcuts-modal 및 nav shortcut title의 ? 표기를 Shift + / (?)로 변경",
+        "[v4.4.4] sw.js: CACHE_VERSION to-hwpx-v4.4.4"
+      ]
+    },
     {
       "version": "4.4.3",
       "date": "2026-06-23",
