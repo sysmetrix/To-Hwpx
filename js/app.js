@@ -1072,11 +1072,17 @@ function initConvertButton() {
 
 function initKeyboardShortcuts() {
     document.addEventListener('keydown', (e) => {
+        const ae = document.activeElement;
+        const typing = ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.isContentEditable);
+        if (e.key === '?' && !typing) {
+            e.preventDefault();
+            showShortcuts();
+            return;
+        }
+
         if (!((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'o')) return;
         const modalOpen = !!document.querySelector('.modal-overlay.open');
         if (modalOpen) return;
-        const ae = document.activeElement;
-        const typing = ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.isContentEditable);
         if (typing) return;
         e.preventDefault();
         document.getElementById('file-input')?.click();
@@ -1758,6 +1764,7 @@ function initModals() {
     document.getElementById('close-install-guide')?.addEventListener('click', closeInstallGuide);
     document.getElementById('close-privacy-guide')?.addEventListener('click', closePrivacyGuide);
     document.getElementById('close-font-guide')?.addEventListener('click', closeFontGuide);
+    document.getElementById('close-shortcuts')?.addEventListener('click', closeShortcuts);
     document.getElementById('recheck-fonts-btn')?.addEventListener('click', () => renderFontGuide());
 
     // 업데이트 내역 열기 버튼 (유틸리티 바)
@@ -1767,6 +1774,7 @@ function initModals() {
     document.getElementById('open-install-guide')?.addEventListener('click', showInstallGuide);
     document.getElementById('open-privacy-guide')?.addEventListener('click', showPrivacyGuide);
     document.getElementById('open-font-guide')?.addEventListener('click', showFontGuide);
+    document.getElementById('open-shortcuts')?.addEventListener('click', showShortcuts);
     document.getElementById('open-rhwp-precise')?.addEventListener('click', loadRhwpPrecise);
 
     // 오버레이 바깥 클릭으로 닫기
@@ -1791,6 +1799,9 @@ function initModals() {
     document.getElementById('font-guide-modal')?.addEventListener('click', (e) => {
         if (e.target === e.currentTarget) closeFontGuide();
     });
+    document.getElementById('shortcuts-modal')?.addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) closeShortcuts();
+    });
 
     // ESC: 모달이 열려 있으면 닫고, 아니면 초기화 버튼과 동일하게 동작
     document.addEventListener('keydown', (e) => {
@@ -1803,6 +1814,7 @@ function initModals() {
         closeInstallGuide();
         closePrivacyGuide();
         closeFontGuide();
+        closeShortcuts();
         if (modalOpen) return;   // 모달을 닫은 경우엔 초기화하지 않음
         const ae = document.activeElement;
         const typing = ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.isContentEditable);
@@ -1861,6 +1873,16 @@ function showPrivacyGuide() {
 
 function closePrivacyGuide() {
     document.getElementById('privacy-guide-modal')?.classList.remove('open');
+    document.body.style.overflow = '';
+}
+
+function showShortcuts() {
+    document.getElementById('shortcuts-modal')?.classList.add('open');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeShortcuts() {
+    document.getElementById('shortcuts-modal')?.classList.remove('open');
     document.body.style.overflow = '';
 }
 

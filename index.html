@@ -98,7 +98,7 @@
             <span>｢BWYF｣ AX Challenger 2026</span>
             <!-- [주의] id="open-changelog"는 app.js에서 업데이트 내역 모달을 여는 연결값 -->
             <button class="util-changelog-btn" id="open-changelog" aria-label="업데이트 내역 보기">
-                📋 v4.4.2 업데이트 내역
+                📋 v4.4.3 업데이트 내역
             </button>
         </div>
     </div>
@@ -136,6 +136,11 @@
                     <li>
                         <button class="nav-bookmark-btn" id="bookmark-btn" aria-label="즐겨찾기 단축키 안내" title="즐겨찾기 안내 (Ctrl+D / ⌘D)">
                             ★ 즐겨찾기 안내
+                        </button>
+                    </li>
+                    <li>
+                        <button class="nav-shortcut-btn" id="open-shortcuts" aria-label="단축키 도움말 열기" title="단축키 보기 (?)">
+                            ⌨ 단축키
                         </button>
                     </li>
                     <li>
@@ -195,10 +200,8 @@
 <!-- ════════════════════════════════════════════════════════════════
      [변환기 패널]  실제 변환 조작 영역
      ════════════════════════════════════════════════════════════════ -->
-<section class="converter-section" id="converter" aria-labelledby="converter-title">
+<section class="converter-section" id="converter" aria-label="파일 선택 및 변환">
     <div class="container">
-        <h2 class="section-title" id="converter-title">파일 선택 및 변환</h2>
-
         <div class="converter-layout">
 
             <!-- ── 왼쪽: 옵션 패널 ──────────────────────────────── -->
@@ -1056,6 +1059,27 @@
                     <li>한컴오피스에서 사용하려면 한컴오피스 재시작</li>
                 </ol>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     [단축키 안내 모달]
+     ════════════════════════════════════════════════════════════════ -->
+<div id="shortcuts-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="shortcuts-title">
+    <div class="modal-box modal-box--md">
+        <div class="modal-header">
+            <span class="modal-title" id="shortcuts-title">⌨ 단축키</span>
+            <button class="modal-close" id="close-shortcuts" aria-label="단축키 안내 닫기">✕</button>
+        </div>
+        <div class="modal-body">
+            <dl class="shortcut-list">
+                <div><dt>Ctrl/⌘ + O</dt><dd>파일 선택 열기</dd></div>
+                <div><dt>Ctrl/⌘ + Enter</dt><dd>선택한 파일 변환 시작</dd></div>
+                <div><dt>Esc</dt><dd>열린 안내창 닫기, 없으면 초기화</dd></div>
+                <div><dt>Ctrl/⌘ + D</dt><dd>브라우저 즐겨찾기</dd></div>
+                <div><dt>?</dt><dd>이 단축키 안내 열기</dd></div>
+            </dl>
         </div>
     </div>
 </div>

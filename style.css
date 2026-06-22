@@ -262,6 +262,7 @@ a:hover { text-decoration: underline; }
 
 /* 즐겨찾기 버튼 (nav 안) */
 .nav-bookmark-btn,
+.nav-shortcut-btn,
 .nav-reset-btn {
     border: 1.5px solid var(--c-border);
     border-radius: 20px;
@@ -278,6 +279,11 @@ a:hover { text-decoration: underline; }
     background: var(--c-warning-light);
     color: #b45309;
     border-color: #fbbf24;
+}
+.nav-shortcut-btn:hover {
+    background: var(--c-primary-light);
+    color: var(--c-primary);
+    border-color: var(--c-primary);
 }
 .nav-reset-btn:hover {
     background: var(--c-primary-light);
@@ -1866,6 +1872,7 @@ a:hover { text-decoration: underline; }
     }
     #main-nav .main-nav a,
     #main-nav .nav-bookmark-btn,
+    #main-nav .nav-shortcut-btn,
     #main-nav .nav-reset-btn {
         display: flex;
         width: 100%;
@@ -2083,6 +2090,31 @@ a:hover { text-decoration: underline; }
     font-size: 1.05rem;
     font-weight: 700;
     color: var(--c-text);
+}
+
+.shortcut-list {
+    display: grid;
+    gap: 10px;
+    margin: 0;
+}
+.shortcut-list div {
+    display: grid;
+    grid-template-columns: minmax(150px, auto) 1fr;
+    gap: 14px;
+    align-items: center;
+    padding: 10px 12px;
+    border: 1px solid var(--c-border);
+    border-radius: var(--radius-sm);
+    background: var(--c-surface-alt);
+}
+.shortcut-list dt {
+    font-weight: 800;
+    color: var(--c-primary);
+    white-space: nowrap;
+}
+.shortcut-list dd {
+    margin: 0;
+    color: var(--c-text-sub);
 }
 .modal-header-actions {
     display: flex;
