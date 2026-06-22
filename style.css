@@ -844,7 +844,7 @@ a:hover { text-decoration: underline; }
 
 .title-format-row {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(220px, 0.48fr);
+    grid-template-columns: minmax(0, 3fr) minmax(280px, 2fr);
     gap: 14px;
     align-items: start;
 }

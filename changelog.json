@@ -1,6 +1,17 @@
 {
-  "current": "4.3.22",
+  "current": "4.3.23",
   "versions": [
+    {
+      "version": "4.3.23",
+      "date": "2026-06-22",
+      "user": [
+        "문서 제목과 문서 감지 박스의 가로 배치를 6:4 비율로 조정해 감지 박스가 더 넓게 보이도록 했습니다"
+      ],
+      "dev": [
+        "[v4.3.23] style.css: title-format-row를 3fr/2fr 그리드로 변경하고 감지 박스 최소 폭을 280px로 확대",
+        "[v4.3.23] sw.js: CACHE_VERSION to-hwpx-v4.3.23"
+      ]
+    },
     {
       "version": "4.3.22",
       "date": "2026-06-22",
