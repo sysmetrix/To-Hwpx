@@ -1,6 +1,20 @@
 {
-  "current": "4.4.7",
+  "current": "4.4.8",
   "versions": [
+    {
+      "version": "4.4.8",
+      "date": "2026-06-23",
+      "user": [
+        "입력 가능 포맷 안내를 실제 변환 품질 기준에 맞춰 보존되는 요소와 제외될 수 있는 요소 중심으로 다듬었습니다",
+        "HWPX는 출력 형식이라는 점이 헷갈리지 않도록 입력 가능 포맷 안내에서 분리했습니다"
+      ],
+      "dev": [
+        "[v4.4.8] app.js: FORMAT_INFO 문구를 파서 구현 범위 기준으로 재작성하고 DOCX/JSON 보존도 표기를 조정",
+        "[v4.4.8] app.js: getConversionSummaryForExt()의 preserved/lossy 요약을 포맷별 실제 처리 범위에 맞게 갱신",
+        "[v4.4.8] app.js: SUPPORTED_FORMAT_LABEL에서 HWPX 제거, 내부 hwpx 입력 처리는 유지",
+        "[v4.4.8] index.html/package.json/package-lock.json/sw.js: v4.4.8 반영"
+      ]
+    },
     {
       "version": "4.4.7",
       "date": "2026-06-23",

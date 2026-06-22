@@ -56,7 +56,7 @@ const SUPPORTED_EXTENSIONS = new Set([
     'csv', 'xlsx', 'xls', 'json', 'ipynb', 'docx', 'hwp', 'hwpx',
 ]);
 const BINARY_EXTENSIONS = new Set(['xlsx', 'xls', 'docx', 'hwp', 'hwpx']);
-const SUPPORTED_FORMAT_LABEL = 'MD, HTML, TXT, CSV, XLSX, JSON, IPYNB, DOCX, HWP, HWPX';
+const SUPPORTED_FORMAT_LABEL = 'MD, HTML, TXT, CSV, XLSX, JSON, IPYNB, DOCX, HWP';
 
 // ─────────────────────────────────────────────────────────────────────────
 // [DOM 준비 후 초기화]
@@ -477,51 +477,54 @@ const FORMAT_INFO = {
     md: {
         icon: '📝', name: 'Markdown',
         quality: '★★★', available: true,
-        desc: 'Git, Notion 등 개발 문서 도구에서 널리 쓰이는 텍스트 기반 마크업 언어입니다.',
-        tech: 'marked.js → HTML 파싱 → IR(중간 표현) → HWPX',
+        desc: '문서 구조가 텍스트로 명확히 드러나는 형식이라 현재 서비스에서 가장 안정적인 입력 포맷입니다.',
+        tech: 'marked.js 토큰 분석 → 자체 보정 → IR(중간 표현) → HWPX',
         features: [
-            '제목(H1~H6), 굵게/기울임/밑줄/취소선/글자색 지원',
+            '제목(H1~H6), 문단, 목록, 표, 코드블록, 링크 텍스트를 중심으로 보존',
             '구두점에 붙은 **굵게**·따옴표·앰퍼샌드(&)·부등호(<,>)도 정확히 처리',
-            '표(GitHub Flavored Markdown): 머리행 음영·중첩목록 보존',
-            '순서/비순서 목록, 태스크리스트(☑/□), 인용문 지원',
+            'GitHub Flavored Markdown 표와 머리행, 순서/비순서 목록, 태스크리스트(☑/□) 지원',
             '코드블록(검정 배경·흰 글자)·인라인 코드 지원',
-            '이모지, 수평선 지원',
+            '일반적으로 Markdown은 시각 디자인보다 내용 구조 보존에 강함',
         ],
-        limits: ['이미지 미지원', '인라인 HTML 일부 무시'],
+        limits: ['이미지 미지원', '복잡한 인라인 HTML과 사용자 정의 스타일은 제외 가능', '페이지 단위 레이아웃은 새 HWPX 기본 흐름으로 재구성'],
     },
     html: {
         icon: '🌐', name: 'HTML 문서',
         quality: '★★☆', available: true,
-        desc: '웹 브라우저가 렌더링하는 마크업 언어 파일입니다.',
+        desc: '웹 화면 재현이 아니라 문서 본문 구조를 HWPX로 옮기는 용도에 맞춘 입력 포맷입니다.',
         tech: 'DOMParser API → DOM 트리 순회 → IR → HWPX',
         features: [
-            'h1~h6, p, table, ul, ol, strong, em 등 주요 태그 지원',
-            '중첩 구조(리스트·표) 처리',
+            'h1~h6, p, ul/ol, table, strong/em, code 등 문서형 태그 중심 지원',
+            '밑줄, 취소선, 일부 글자색처럼 텍스트에 붙은 인라인 서식 일부 보존',
+            '일반적으로 HTML 변환은 CSS 화면 배치보다 본문 의미 구조 보존이 우선',
         ],
-        limits: ['CSS 레이아웃·색상 대부분 무시', '이미지·SVG 미지원', 'script·style 태그 무시'],
+        limits: ['CSS 레이아웃·반응형 배치·대부분의 디자인 속성 무시', '이미지·SVG 미지원', 'script·style·nav·footer 등 비본문 요소 무시'],
     },
     docx: {
         icon: '📘', name: 'Word 문서 (DOCX)',
-        quality: '★★★', available: true,
-        desc: 'Microsoft Word의 Office Open XML(.docx) 형식입니다. 변환 품질을 대폭 개선했습니다.',
+        quality: '★★☆', available: true,
+        desc: 'Word 문서를 본문 구조 중심으로 재구성합니다. 내용 보존은 계속 강화 중이지만 원본 편집 화면을 그대로 복제하는 용도는 아닙니다.',
         tech: 'JSZip으로 압축 해제 → word/document.xml 본문·표 추출 → IR → HWPX',
         features: [
-            '제목(Title)·소제목, 굵게/기울임/밑줄/취소선/글자색 보존',
-            '표: 가로·세로 병합, 셀 배경색, 셀 글자색까지 보존',
-            '중첩 표·들쭉날쭉한 표도 깨지지 않게 변환',
-            '본문 이미지(PNG·JPG·GIF·BMP) 삽입 지원',
-            '순서/비순서 목록, 각주, 머리글/바닥글 추출',
-            '문단 정렬(가운데·오른쪽) 보존',
+            '문서 순서 기준으로 제목 후보, 문단, 기본 표를 추출',
+            '굵게/기울임/밑줄/취소선/글자색, 가운데·오른쪽 정렬 일부 보존',
+            '표의 가로·세로 병합, 셀 배경색, 셀 글자색 일부 보존',
+            'PNG/JPG/GIF/BMP 본문 이미지, 각주, 첫 머리글/바닥글 텍스트 일부 추출',
+            '일반적으로 DOCX는 작성 도구별 세부 XML 차이가 있어 확인 작업이 필요',
         ],
-        limits: ['WMF/EMF 벡터 이미지 미지원', '세밀한 레이아웃·일부 스타일은 단순화'],
+        limits: ['원본 Word 페이지 배치·섹션·스타일 테마는 단순화', 'WMF/EMF 벡터 이미지 미지원', '주석·변경 추적·복잡한 개체와 일부 목록 번호는 손실 가능'],
     },
     hwp: {
         icon: '🇰🇷', name: '한글 문서 (HWP)',
         quality: '★☆☆', available: true, badge: '베타',
-        desc: '한컴 오피스 한글 파일입니다. HWP(바이너리)와 HWPX(XML) 두 종류가 있습니다.',
+        desc: '구형 HWP는 브라우저에서 안정적으로 해석하기 어려운 베타 입력입니다. HWPX는 변환 대상이 아니라 한컴오피스에서 바로 열 수 있는 출력 형식입니다.',
         tech: 'ZIP 구조 시도 → 내부 XML/텍스트 추출 → IR',
-        features: ['HWPX 파일: 내부 XML 직접 파싱으로 본문 텍스트 추출'],
-        limits: ['HWP5(바이너리) 형식은 파싱이 대폭 제한됨', '서식·이미지·표 복원 불완전'],
+        features: [
+            'HWPX를 잘못 업로드한 경우 내부 XML 본문 텍스트와 일부 표를 읽을 수 있음',
+            '구형 HWP5 바이너리는 현재 안내/제한 처리 중심',
+            '일반적으로 한글 문서는 한컴오피스에서 HWPX로 저장하는 편이 가장 안전',
+        ],
+        limits: ['HWP5(바이너리) 본문 파싱은 대폭 제한됨', '서식·이미지·개체·복잡한 표 복원 불완전', '이미 HWPX인 파일은 변환보다 원본 사용을 권장'],
         tip: {
             title: '💡 한글에서 HWPX로 직접 저장하는 더 쉬운 방법',
             steps: [
@@ -535,51 +538,54 @@ const FORMAT_INFO = {
     txt: {
         icon: '📄', name: '일반 텍스트 (TXT)',
         quality: '★★★', available: true,
-        desc: '서식 없는 순수 텍스트 파일입니다.',
+        desc: '서식이 없는 만큼 내용 누락 위험이 낮고, 문단 중심 HWPX 생성에 적합합니다.',
         tech: '줄바꿈 패턴 분석 → 문단 구분 → IR → HWPX',
         features: [
             '빈 줄로 문단 자동 구분',
             'UTF-8 / EUC-KR 인코딩 자동 감지',
-            '이모지 지원',
+            '한글·영문·특수문자와 일부 이모지 처리',
+            '일반적으로 TXT는 서식보다 원문 텍스트 보존에 가장 유리',
         ],
-        limits: ['서식 정보 없음 (모두 일반 문단으로 처리)'],
+        limits: ['제목·표·굵게 같은 서식 정보 없음', '표처럼 보이는 텍스트도 일반 문단으로 처리될 수 있음'],
     },
     csv: {
         icon: '📊', name: 'CSV / XLSX 스프레드시트',
         quality: '★★☆', available: true,
-        desc: '쉼표 구분 데이터(CSV) 또는 Excel 스프레드시트(XLSX)입니다.',
+        desc: '표 데이터의 행과 열을 HWPX 표로 옮기는 데 초점을 둔 입력 포맷입니다.',
         tech: 'CSV: RFC 4180 파서 / XLSX: SheetJS 라이브러리 → 표 IR → HWPX',
         features: [
-            'CSV 전체 데이터 또는 XLSX 첫 번째 시트를 한글 표로 변환',
-            '첫 행을 표 헤더(진한 배경)로 자동 처리',
-            '텍스트/숫자 셀에 맞춘 기본 정렬 적용',
-            '한글·특수문자 완전 지원',
+            'CSV 전체 데이터 또는 XLSX 첫 번째 시트를 HWPX 표로 변환',
+            '첫 행을 표 머리행으로 처리하고 기본 표 테두리 적용',
+            '빈 셀, 긴 텍스트, 한글·영문·특수문자 처리',
+            '일반적으로 스프레드시트 변환은 데이터 표 보존이 우선이고 시각 서식은 보조',
         ],
-        limits: ['XLSX는 첫 번째 시트만 변환', '셀 병합·색상·폰트·테두리 무시', '수식은 결과값만 변환'],
+        limits: ['XLSX는 첫 번째 시트만 변환', '셀 병합·색상·폰트·차트·이미지 무시', '수식은 계산 결과값 중심으로 변환'],
     },
     json: {
         icon: '{ }', name: 'JSON 데이터',
-        quality: '★★★', available: true,
-        desc: 'JavaScript 객체 표기법 데이터 파일입니다.',
+        quality: '★★☆', available: true,
+        desc: '데이터 구조를 사람이 읽는 문단·목록·표 형태로 펼쳐 쓰는 입력 포맷입니다.',
         tech: 'JSON.parse → 구조 분석 → IR → HWPX (IR 형식이면 직접 사용)',
         features: [
-            '배열 → 표(Table)로 변환',
-            '중첩 객체 → 들여쓰기 목록으로 변환',
+            '객체와 배열을 제목, 목록, 키-값 표 형태로 변환',
+            '배열 안 객체 구조는 표로 정리',
             'IR 형식 JSON을 직접 HWPX로 변환 가능 (고급 사용)',
+            '일반적으로 JSON 변환은 원본 값 보존과 가독성 확보가 목표',
         ],
-        limits: ['매우 큰 JSON(10MB+)은 처리 시간 증가'],
+        limits: ['보고서형 편집 레이아웃을 자동 설계하지 않음', '깊은 중첩은 길게 펼쳐질 수 있음', '매우 큰 JSON(10MB+)은 처리 시간 증가'],
     },
     ipynb: {
         icon: '🔬', name: 'Jupyter Notebook (IPYNB)',
         quality: '★★☆', available: true,
-        desc: 'Python 등 데이터 과학에 쓰이는 노트북 파일 형식입니다.',
+        desc: '노트북의 설명, 코드, 텍스트 출력을 문서로 정리하는 용도에 맞춘 입력 포맷입니다.',
         tech: 'JSON 파싱 → cell_type별 처리(markdown/code/output) → IR → HWPX',
         features: [
             '마크다운 셀: 제목·표·코드블록 변환',
             '코드 셀: 등폭 코드블록으로 변환',
             '텍스트 출력 셀: 그대로 포함',
+            '일반적으로 노트북 변환은 실행 가능한 노트북 보존이 아니라 읽는 문서화가 목표',
         ],
-        limits: ['이미지 출력 셀(PNG/JPEG) 미지원', 'LaTeX 수식 미지원'],
+        limits: ['이미지 출력 셀(PNG/JPEG), 차트, 위젯 출력 미지원', 'LaTeX 수식과 실행 상태·메타데이터 미보존'],
     },
     pdf: {
         icon: '📕', name: 'PDF 문서',
@@ -1422,52 +1428,60 @@ function getInputFormatLabel(ext) {
 function getConversionSummaryForExt(ext) {
     const summaries = {
         md: {
-            preserved: '제목, 본문, 목록, 표, 코드블록, 일부 굵게/기울임, 구분선',
-            lossy: '이미지, 복잡한 HTML, 사용자 정의 스타일, 정교한 페이지 레이아웃',
+            preserved: '제목, 문단, 목록, 표, 코드블록, 링크 텍스트',
+            lossy: '이미지, 복잡한 HTML, 사용자 정의 스타일, 페이지 배치',
         },
         markdown: {
-            preserved: '제목, 본문, 목록, 표, 코드블록, 일부 굵게/기울임, 구분선',
-            lossy: '이미지, 복잡한 HTML, 사용자 정의 스타일, 정교한 페이지 레이아웃',
+            preserved: '제목, 문단, 목록, 표, 코드블록, 링크 텍스트',
+            lossy: '이미지, 복잡한 HTML, 사용자 정의 스타일, 페이지 배치',
         },
         html: {
-            preserved: '텍스트 구조, 제목, 목록, 표, 일부 인라인 서식',
-            lossy: 'CSS 레이아웃, 이미지, 스크립트, 폼, 외부 리소스',
+            preserved: 'h1-h6, p, ul/ol, table, strong/em 중심 구조',
+            lossy: 'CSS 레이아웃, 이미지, SVG, 스크립트, 외부 리소스',
         },
         htm: {
-            preserved: '텍스트 구조, 제목, 목록, 표, 일부 인라인 서식',
-            lossy: 'CSS 레이아웃, 이미지, 스크립트, 폼, 외부 리소스',
+            preserved: 'h1-h6, p, ul/ol, table, strong/em 중심 구조',
+            lossy: 'CSS 레이아웃, 이미지, SVG, 스크립트, 외부 리소스',
         },
         docx: {
-            preserved: '본문 텍스트, 제목 추정, 표, 일부 굵게/기울임',
-            lossy: '이미지, 머리글/바닥글, 각주, 주석, 복잡한 스타일과 레이아웃',
+            preserved: '본문, 제목 후보, 기본 표, 일부 인라인 서식과 이미지',
+            lossy: 'Word 레이아웃, 스타일 테마, 주석, 변경 추적, 복잡한 개체',
+        },
+        txt: {
+            preserved: '원문 텍스트, 줄바꿈, 빈 줄 기준 문단',
+            lossy: '제목 구조, 표 구조, 굵게/색상 같은 서식 정보',
+        },
+        text: {
+            preserved: '원문 텍스트, 줄바꿈, 빈 줄 기준 문단',
+            lossy: '제목 구조, 표 구조, 굵게/색상 같은 서식 정보',
         },
         csv: {
-            preserved: '첫 행 기준 표 머리글, 셀 텍스트, 숫자 셀 정렬',
-            lossy: '셀 병합, 수식, 색상, 시트 서식',
+            preserved: '행/열, 빈 셀, 첫 행 머리글, 긴 텍스트',
+            lossy: '셀 병합, 수식 자체, 색상, 차트, 이미지, 여러 시트',
         },
         xlsx: {
-            preserved: '첫 번째 시트의 표 데이터, 첫 행 머리글, 셀 텍스트',
-            lossy: '여러 시트, 수식 결과 외 수식 자체, 차트, 이미지, 셀 병합과 세부 서식',
+            preserved: '첫 번째 시트의 행/열, 빈 셀, 첫 행 머리글',
+            lossy: '여러 시트, 수식 자체, 차트, 이미지, 셀 병합과 세부 서식',
         },
         xls: {
-            preserved: '첫 번째 시트의 표 데이터, 첫 행 머리글, 셀 텍스트',
-            lossy: '여러 시트, 수식 결과 외 수식 자체, 차트, 이미지, 셀 병합과 세부 서식',
+            preserved: '첫 번째 시트의 행/열, 빈 셀, 첫 행 머리글',
+            lossy: '여러 시트, 수식 자체, 차트, 이미지, 셀 병합과 세부 서식',
         },
         json: {
-            preserved: '제목, 배열 목록, 객체 표, 기본 텍스트 값',
-            lossy: '깊은 중첩 구조, 데이터 타입 의미, 원본 들여쓰기',
+            preserved: '객체/배열 값, 키-값 목록, 배열 표',
+            lossy: '보고서형 레이아웃, 데이터 타입 의미, 원본 들여쓰기',
         },
         ipynb: {
-            preserved: '마크다운 셀, 코드 셀 텍스트, 텍스트 출력 일부',
-            lossy: '실행 상태, 이미지 출력, 위젯, 그래프, 노트북 메타데이터',
+            preserved: '마크다운 셀, 코드 셀, 텍스트 출력',
+            lossy: '실행 상태, 이미지/차트 출력, 위젯, 수식, 메타데이터',
         },
         hwp: {
-            preserved: 'HWPX 계열 XML 텍스트 일부 또는 HWP5 안내 메시지',
-            lossy: 'HWP5 바이너리 본문, 이미지, 복잡한 한글 서식',
+            preserved: 'HWPX 오업로드 시 XML 텍스트와 일부 표',
+            lossy: 'HWP5 본문, 이미지, 개체, 복잡한 한글 서식',
         },
         hwpx: {
-            preserved: 'HWPX 섹션 XML의 텍스트와 일부 표',
-            lossy: '원본 스타일, 이미지, 개체, 머리글/바닥글, 세밀한 레이아웃',
+            preserved: '이미 HWPX이므로 원본 사용 권장, 필요 시 텍스트 일부 재구성',
+            lossy: '재변환 시 원본 스타일, 이미지, 개체, 세밀한 레이아웃',
         },
     };
     return summaries[ext] || {
