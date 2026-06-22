@@ -978,11 +978,35 @@ a:hover { text-decoration: underline; }
 #format-hint {
     display: none;
     font-size: 0.85rem;
-    color: var(--c-accent);
+    color: var(--c-text-sub);
     background: var(--c-accent-light);
     padding: 6px 12px;
     border-radius: var(--radius-sm);
     margin-bottom: 16px;
+}
+.format-hint-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 4px;
+}
+.format-hint-head strong { color: var(--c-text); }
+.format-hint-head span {
+    flex-shrink: 0;
+    color: var(--c-accent);
+    font-size: 0.76rem;
+    font-weight: 700;
+}
+.format-hint-body {
+    display: grid;
+    gap: 3px;
+    font-size: 0.78rem;
+    line-height: 1.45;
+}
+.format-hint-body b {
+    color: var(--c-text);
+    margin-right: 4px;
 }
 
 /* IR 미리보기 토글 */
@@ -1183,6 +1207,43 @@ a:hover { text-decoration: underline; }
 }
 .result-valid { color: var(--c-success); }
 .result-warn  { color: var(--c-warning); }
+
+.result-trust-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 12px;
+}
+.result-trust-list span {
+    border-radius: 100px;
+    padding: 4px 9px;
+    font-size: 0.74rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+.trust-ok {
+    background: var(--c-success-light);
+    color: var(--c-success);
+}
+.trust-warn {
+    background: var(--c-warning-light);
+    color: var(--c-warning);
+}
+.trust-info {
+    background: var(--c-surface-alt);
+    color: var(--c-text-sub);
+    border: 1px solid var(--c-border);
+}
+.result-issues {
+    margin: 0 0 12px;
+    padding: 10px 12px 10px 28px;
+    border: 1px solid rgba(180, 83, 9, 0.32);
+    border-radius: var(--radius-md);
+    background: rgba(248, 239, 218, 0.65);
+    color: var(--c-warning);
+    font-size: 0.78rem;
+    line-height: 1.5;
+}
 
 .result-summary {
     display: grid;

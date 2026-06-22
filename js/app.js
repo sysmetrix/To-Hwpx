@@ -208,6 +208,7 @@ function handleFileSelect(file) {
     revokeDownloadUrl();
     updateDropZoneUI(file, ext);     // 드롭존에 파일 정보 표시
     updateFormatBadge(ext);          // 감지된 포맷 배지 표시
+    updateFormatExpectation(ext);     // 포맷별 보존/손실 기대치 안내
     updateConvertButton(true);       // 변환 버튼 활성화
     hideResult();                    // 이전 변환 결과 숨기기
     resetPipeline();                 // 파이프라인 초기화
@@ -250,6 +251,12 @@ function clearSelectedFile() {
     const cdaLabel = document.getElementById('cda-label');
     if (cda) cda.classList.remove('has-file');
     if (cdaLabel) cdaLabel.textContent = '파일을 드래그하거나 클릭하여 선택';
+
+    const hint = document.getElementById('format-hint');
+    if (hint) {
+        hint.style.display = 'none';
+        hint.innerHTML = '';
+    }
 }
 
 /** 드롭존 내부 UI를 파일 선택 상태로 업데이트 */
@@ -283,6 +290,42 @@ function updateFormatBadge(ext) {
     if (!badge) return;
     badge.textContent   = ext.toUpperCase();
     badge.style.display = 'inline-block';
+}
+
+function qualityText(stars = '') {
+    const count = (String(stars).match(/★/g) || []).length;
+    if (count >= 3) return '보존도 높음';
+    if (count === 2) return '보존도 보통';
+    return '텍스트 중심 변환';
+}
+
+function getFormatInfoForExt(ext) {
+    const aliases = {
+        markdown: 'md',
+        htm: 'html',
+        xls: 'xlsx',
+        hwpx: 'hwp',
+    };
+    return FORMAT_INFO[ext] || FORMAT_INFO[aliases[ext]] || null;
+}
+
+function updateFormatExpectation(ext, waiting = false) {
+    const hint = document.getElementById('format-hint');
+    if (!hint || !ext) return;
+    const info = getFormatInfoForExt(ext) || { name: ext.toUpperCase(), quality: '★☆☆' };
+    const summary = getConversionSummaryForExt(ext);
+    const prefix = waiting ? `.${ext.toUpperCase()} 파일을 업로드하세요` : `${info.name} 감지`;
+    hint.innerHTML = `
+        <div class="format-hint-head">
+            <strong>${escHtml(prefix)}</strong>
+            <span>${escHtml(qualityText(info.quality))}</span>
+        </div>
+        <div class="format-hint-body">
+            <span><b>보존</b> ${escHtml(summary.preserved)}</span>
+            <span><b>확인</b> ${escHtml(summary.lossy)}</span>
+        </div>
+    `;
+    hint.style.display = 'block';
 }
 
 function getFileExtension(fileName) {
@@ -507,11 +550,7 @@ function initFormatCards() {
         ?.addEventListener('click', () => {
             const ext = document.getElementById('fmt-modal-use-btn').dataset.ext || '';
             closeFormatModal();
-            const hint = document.getElementById('format-hint');
-            if (hint && ext) {
-                hint.textContent = `.${ext.toUpperCase()} 파일을 업로드하세요`;
-                hint.style.display = 'block';
-            }
+            updateFormatExpectation(ext, true);
             document.getElementById('converter')?.scrollIntoView({ behavior: 'smooth' });
         });
 }
@@ -1022,11 +1061,13 @@ function showResult({ url, fileName, size, validation }) {
     const area = document.getElementById('result-area');
     if (!area) return;
     const summary = getConversionSummary();
+    const issues = Array.isArray(validation.issues) ? validation.issues : [];
+    const issuePreview = issues.slice(0, 3);
 
     // 검증 결과에 따른 표시 텍스트
     const validText = validation.pass
-        ? '✓ 4개 검증 영역 모두 PASS — 한글 호환 구조 충족'
-        : '⚠ 검증 경고: ' + validation.issues.join(' | ');
+        ? '✓ 주요 구조 검증 PASS — 한글 호환 패키지 조건 충족'
+        : `⚠ 구조 검증 경고 ${issues.length || 1}건 — 다운로드 전 미리보기를 확인하세요`;
     const validClass = validation.pass ? 'result-valid' : 'result-warn';
     const cardClass = validation.pass ? '' : ' result-card--warn';
     const autoText = state.autoDownload
@@ -1047,6 +1088,18 @@ function showResult({ url, fileName, size, validation }) {
             <div class="result-validation ${validClass}">
                 ${escHtml(validText)}
             </div>
+            <div class="result-trust-list" aria-label="산출물 신뢰도 요약">
+                <span class="${validation.pass ? 'trust-ok' : 'trust-warn'}">${validation.pass ? '패키지 구조 통과' : '구조 확인 필요'}</span>
+                <span class="trust-ok">브라우저 내부 처리</span>
+                <span class="trust-info">다운로드 링크 5분 유지</span>
+                <span class="trust-info">최종 서식은 한컴에서 확인</span>
+            </div>
+            ${issuePreview.length ? `
+                <ul class="result-issues">
+                    ${issuePreview.map(issue => `<li>${escHtml(issue)}</li>`).join('')}
+                    ${issues.length > issuePreview.length ? `<li>외 ${issues.length - issuePreview.length}건</li>` : ''}
+                </ul>
+            ` : ''}
             <div class="result-summary">
                 <p><strong>보존된 요소</strong> ${escHtml(summary.preserved)}</p>
                 <p><strong>손실 가능 요소</strong> ${escHtml(summary.lossy)}</p>
@@ -1084,8 +1137,7 @@ function showResult({ url, fileName, size, validation }) {
     area.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
-function getConversionSummary() {
-    const ext = state.file ? getFileExtension(state.file.name) : '';
+function getConversionSummaryForExt(ext) {
     const summaries = {
         md: {
             preserved: '제목, 본문, 목록, 표, 코드블록, 일부 굵게/기울임, 구분선',
@@ -1140,6 +1192,11 @@ function getConversionSummary() {
         preserved: '텍스트 중심 구조',
         lossy: '이미지, 복잡한 서식, 외부 리소스, 정교한 레이아웃',
     };
+}
+
+function getConversionSummary() {
+    const ext = state.file ? getFileExtension(state.file.name) : '';
+    return getConversionSummaryForExt(ext);
 }
 
 /** 결과 영역 숨기기 및 내용 초기화 */
