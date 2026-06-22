@@ -516,7 +516,7 @@ const FONT_DOWNLOADS = [
         systemNames: ['Noto Sans KR', 'NotoSansKR', 'Noto Sans KR Regular'],
         desc: 'Google/Adobe 계열의 넓은 문자 지원 고딕체입니다. 웹 UI 미리보기와 일반 문서용으로 무난합니다.',
         local: ['fonts/NotoSansKR-Regular.ttf', 'Font/NotoSansKR-Regular.ttf', 'Font/Noto_Sans_KR/NotoSansKR-Regular.ttf'],
-        official: 'https://fonts.google.com/selection?preview.script=Kore&preview.lang=ko_Kore',
+        official: 'https://fonts.google.com/noto/specimen/Noto+Sans+KR?preview.script=Kore&preview.lang=ko_Kore',
     },
     {
         name: '나눔고딕',
@@ -1769,31 +1769,38 @@ function initConverterDropArea() {
 // ─────────────────────────────────────────────────────────────────────────
 // [즐겨찾기 안내 버튼]
 // ─────────────────────────────────────────────────────────────────────────
+/**
+ * 화면 하단 중앙 토스트 안내 (즐겨찾기 안내와 동일 스타일).
+ * 한 번에 하나만 표시되며 닫기 버튼·자동 제거를 제공한다.
+ * [보안] 내부 호출 전용 — 신뢰된 HTML 문자열만 전달할 것(사용자 입력 금지).
+ * @param {string} html      토스트 본문 HTML (보통 <strong>·<span> 사용)
+ * @param {object} [opts]    { timeout }  자동 제거(ms), 0이면 수동 닫기만
+ */
+function showToast(html, { timeout = 4000 } = {}) {
+    document.getElementById('app-toast')?.remove();
+    clearTimeout(showToast._timer);
+
+    const toast = document.createElement('div');
+    toast.id        = 'app-toast';
+    toast.className = 'bookmark-toast';
+    toast.innerHTML = `${html}<button class="bookmark-toast-close" aria-label="닫기">✕</button>`;
+    document.body.appendChild(toast);
+
+    const close = () => { clearTimeout(showToast._timer); toast.remove(); };
+    toast.querySelector('.bookmark-toast-close').addEventListener('click', close);
+    if (timeout > 0) showToast._timer = setTimeout(close, timeout);
+    requestAnimationFrame(() => toast.classList.add('bookmark-toast--show'));
+    return toast;
+}
+
 function initBookmarkButton() {
     const btn = document.getElementById('bookmark-btn');
     if (!btn) return;
 
-    let _toastTimer = null;
-
     btn.addEventListener('click', () => {
-        // 기존 토스트 제거
-        document.getElementById('bookmark-toast')?.remove();
-        clearTimeout(_toastTimer);
-
         const isMac = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
         const key   = isMac ? '⌘D' : 'Ctrl+D';
-
-        const toast = document.createElement('div');
-        toast.id        = 'bookmark-toast';
-        toast.className = 'bookmark-toast';
-        toast.innerHTML = `<strong>${key}</strong>를 눌러 즐겨찾기에 추가하세요 <span>브라우저 보안상 자동 추가는 지원되지 않습니다.</span><button class="bookmark-toast-close" aria-label="닫기">✕</button>`;
-        document.body.appendChild(toast);
-
-        toast.querySelector('.bookmark-toast-close').addEventListener('click', () => toast.remove());
-
-        // 4초 후 자동 제거
-        _toastTimer = setTimeout(() => toast.remove(), 4000);
-        requestAnimationFrame(() => toast.classList.add('bookmark-toast--show'));
+        showToast(`<strong>${key}</strong>를 눌러 즐겨찾기에 추가하세요 <span>브라우저 보안상 자동 추가는 지원되지 않습니다.</span>`);
     });
 }
 
@@ -1837,7 +1844,7 @@ function resetConverterState() {
     }
     applyOrientationUi('portrait');
     updateConvertButton(false);
-    showAlert('선택 파일과 변환 옵션을 기본값으로 초기화했습니다.');
+    showToast('<strong>↺ 초기화 완료</strong> <span>선택 파일과 변환 옵션을 기본값으로 되돌렸습니다.</span>');
     requestAnimationFrame(() => window.scrollTo({ top: 0, left: 0, behavior: 'smooth' }));
 }
 
