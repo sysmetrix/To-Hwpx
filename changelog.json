@@ -1,6 +1,21 @@
 {
-  "current": "4.3.39",
+  "current": "4.3.40",
   "versions": [
+    {
+      "version": "4.3.40",
+      "date": "2026-06-22",
+      "user": [
+        "Word(DOCX)를 가져올 때 제목 칸에 'DOCX 문서'가 들어가던 문제를 고쳤습니다 — 문서의 첫 제목을 실제 제목으로 가져옵니다 (없으면 비워둠)",
+        "Word 표의 셀 글자색을 가져옵니다 — 예: 어두운 머리행의 흰 글자가 검정으로 바뀌던 문제 해결"
+      ],
+      "dev": [
+        "[v4.3.40] parsers.js: parseDocx 기본 제목 'DOCX 문서'→'', 본문 첫 제목(레벨1)을 ir.title로 승격·본문에서 제거(MD/HTML과 동일)",
+        "[v4.3.40] parsers.js: extractDocxTable 셀 글자색 추출(docxCellColor) → cell.color 보존",
+        "[v4.3.40] hwpx.js: cellColor 헬퍼, buildTable에 customCharMap 전달·renderCell이 셀 색을 동적 charPr로 적용(머리행 bold+색)",
+        "[v4.3.40] hwpx.js: 동적 charPr 사전 스캔에 표 셀 색 포함(머리행 bold/본문)",
+        "[v4.3.40] sw.js: CACHE_VERSION to-hwpx-v4.3.40, index.html v4.3.40"
+      ]
+    },
     {
       "version": "4.3.39",
       "date": "2026-06-22",

@@ -788,7 +788,8 @@ async function parseDocx(arrayBuffer, docType = 'plain') {
 
     const xmlText = await docFile.async('string');
     const xmlDoc = new DOMParser().parseFromString(xmlText, 'application/xml');
-    const ir = emptyIR('DOCX 문서', docType);
+    // 제목은 본문에서 추출(아래 첫 제목 승격). 못 찾으면 빈 제목으로 둔다("DOCX 문서" 같은 자리표시 방지)
+    const ir = emptyIR('', docType);
 
     // word/_rels/document.xml.rels 로드 → rId → {target, type} 맵
     // 이미지 관계(type ends /image)와 머리글/바닥글 관계(type ends /header, /footer) 모두 수집
@@ -900,6 +901,14 @@ async function parseDocx(arrayBuffer, docType = 'plain') {
             const block = extractDocxTable(node);
             if (block) ir.blocks.push(block);
         }
+    }
+
+    // 첫 번째 제목(레벨1: Title/Heading1/제목)을 문서 제목으로 승격하고 본문에서 제거
+    // (MD/HTML 파서와 동일 동작 — 표지/제목 칸에 실제 제목이 들어가게 함)
+    const h1Idx = ir.blocks.findIndex(b => b.type === 'heading' && b.level === 1);
+    if (h1Idx !== -1) {
+        ir.title = ir.blocks[h1Idx].text;
+        ir.blocks.splice(h1Idx, 1);
     }
 
     return ir;
@@ -1030,6 +1039,15 @@ function docxCellText(tc) {
     return sanitize(parts.join(' ').trim());
 }
 
+/** 셀(w:tc) 글자색 — 셀 안 첫 번째 유효 w:color(run) → #RRGGBB | null (흰 글자 등 보존) */
+function docxCellColor(tc) {
+    for (const r of tc.getElementsByTagNameNS(DOCX_NS, 'r')) {
+        const c = docxRunColor(r);
+        if (c) return c;
+    }
+    return null;
+}
+
 /** w:tbl 표 노드 → IR table 블록 (셀 병합 지원, 중첩 표 무시) */
 function extractDocxTable(tblNode) {
     // 직계 자식 행/셀만 사용 — 중첩 표의 w:tr/w:tc가 그리드에 섞여 들어가
@@ -1044,6 +1062,7 @@ function extractDocxTable(tblNode) {
         const cells = docxDirectChildren(tr, 'tc');
         for (const tc of cells) {
             const text = docxCellText(tc);
+            const color = docxCellColor(tc);
 
             const tcPr = docxDirectChildren(tc, 'tcPr')[0];
             let bg = null, colSpan = 1, vMergeType = null;
@@ -1071,7 +1090,7 @@ function extractDocxTable(tblNode) {
                     vMergeType = (vmVal === 'restart') ? 'restart' : 'continue';
                 }
             }
-            rawCells.push({ text, bg, colSpan, vMergeType });
+            rawCells.push({ text, bg, color, colSpan, vMergeType });
         }
         rawRows.push(rawCells);
     }
@@ -1100,6 +1119,7 @@ function extractDocxTable(tblNode) {
                 // 일반 셀 또는 병합 시작 셀
                 const cell = { text: raw.text, colSpan: raw.colSpan, rowSpan: 1 };
                 if (raw.bg) cell.bg = raw.bg;
+                if (raw.color) cell.color = raw.color;
 
                 if (raw.vMergeType === 'restart') {
                     vMergeStart[logicalCol] = r;
