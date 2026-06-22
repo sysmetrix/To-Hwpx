@@ -1,6 +1,26 @@
 {
-  "current": "4.3.43",
+  "current": "4.3.44",
   "versions": [
+    {
+      "version": "4.3.44",
+      "date": "2026-06-23",
+      "user": [
+        "자동 제목 기준을 '파일 이름 / 문서 첫 제목' 중에서 고를 수 있습니다",
+        "용지 크기에 A3를 추가하고, 용지 방향을 '세로/가로' 버튼으로 분리해 더 명확하게 했습니다",
+        "ESC 키로 초기화(열린 안내창이 있으면 먼저 닫힘)할 수 있습니다",
+        "고급 설정이 더 잘 보이도록 다듬고, 폰트·크기·용지 드롭다운을 현대적으로 개선했습니다",
+        "Word(DOCX)·Markdown 변환 품질이 크게 향상되어 포맷 설명과 별점을 갱신하고, Word 카드를 HTML 앞으로 옮겼습니다"
+      ],
+      "dev": [
+        "[v4.3.44] app.js: state.titleSource(filename/heading) + 변환 시 직접입력>자동기준(파일명/문서첫제목)>파일명 폴백 순으로 제목 결정",
+        "[v4.3.44] hwpx.js: PAPER_SIZES에 A3(297×420mm) 추가, index.html 용지 select A3 옵션",
+        "[v4.3.44] index/app/css: 용지 방향을 .seg-control(세로/가로) 세그먼트로 분리(라벨 '용지 방향'), paper-orient 버튼 핸들러→seg-btn",
+        "[v4.3.44] app.js: ESC 키 — 모달 열림 시 닫기, 아니면 resetConverterState(입력 중이면 blur)",
+        "[v4.3.44] app.js: FORMAT_INFO docx ★☆☆→★★★(병합·셀색·제목·서식 보존 반영), md 기능 설명 갱신; index.html DOCX 카드 ★★★·HTML 앞으로 이동",
+        "[v4.3.44] css: 고급설정 summary 헤더바+원형 셰브런으로 가시성 강화, select 현대화 유지, .title-source-row",
+        "[v4.3.44] sw.js: CACHE_VERSION to-hwpx-v4.3.44, index.html v4.3.44"
+      ]
+    },
     {
       "version": "4.3.43",
       "date": "2026-06-23",

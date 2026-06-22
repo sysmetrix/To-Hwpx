@@ -97,7 +97,7 @@
             <span>｢BWYF｣ AX Challenger 2026</span>
             <!-- [주의] id="open-changelog"는 app.js에서 업데이트 내역 모달을 여는 연결값 -->
             <button class="util-changelog-btn" id="open-changelog" aria-label="업데이트 내역 보기">
-                📋 v4.3.43 업데이트 내역
+                📋 v4.3.44 업데이트 내역
             </button>
         </div>
     </div>
@@ -226,12 +226,19 @@
                 <div class="title-format-row">
                     <!-- 문서 제목 (전체 폭 — 가장 먼저 설정) -->
                     <div class="form-row title-row-main">
-                        <label for="doc-title">문서 제목 <small style="font-weight:400;color:var(--c-text-muted)">(선택 — 비우면 자동 감지)</small></label>
+                        <label for="doc-title">문서 제목 <small style="font-weight:400;color:var(--c-text-muted)">(직접 입력 — 비우면 아래 자동 기준)</small></label>
                         <input type="text"
                                id="doc-title"
                                name="doc-title"
-                               placeholder="파일 선택 시 자동 입력"
+                               placeholder="비우면 자동 채움"
                                maxlength="200">
+                        <div class="title-source-row">
+                            <span>자동 제목</span>
+                            <select id="title-source" name="title-source" aria-label="자동 제목 기준">
+                                <option value="filename" selected>파일 이름</option>
+                                <option value="heading">문서 첫 제목</option>
+                            </select>
+                        </div>
                     </div>
                     <!-- 포맷 힌트 — 파일 선택/포맷 카드 클릭 시 노출 -->
                     <div id="format-hint" role="status" aria-live="polite"></div>
@@ -316,17 +323,18 @@
                                     </div>
                                     <div class="form-row">
                                         <label for="paper-size">용지 크기</label>
-                                        <div class="paper-size-wrap">
-                                            <select id="paper-size" name="paper-size">
-                                                <option value="A4" selected>A4</option>
-                                                <option value="B5">B5</option>
-                                                <option value="Letter">Letter</option>
-                                            </select>
-                                            <button type="button" id="paper-orient" class="paper-orient-btn"
-                                                    aria-label="용지 방향: 세로" title="클릭하여 가로/세로 전환">
-                                                <span class="orient-icon" aria-hidden="true"></span>
-                                                <span class="orient-label">세로</span>
-                                            </button>
+                                        <select id="paper-size" name="paper-size">
+                                            <option value="A4" selected>A4</option>
+                                            <option value="A3">A3</option>
+                                            <option value="B5">B5</option>
+                                            <option value="Letter">Letter</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-row">
+                                        <label>용지 방향</label>
+                                        <div class="seg-control" role="group" aria-label="용지 방향">
+                                            <button type="button" class="seg-btn is-active" data-orient="portrait">세로</button>
+                                            <button type="button" class="seg-btn" data-orient="landscape">가로</button>
                                         </div>
                                     </div>
                                 </div>
@@ -515,21 +523,21 @@
                     <span class="card-badge badge-available">지원됨</span>
                 </div>
 
+                <!-- DOCX (Word) — HTML보다 앞에 배치 -->
+                <div class="format-card" data-ext="docx" role="button" tabindex="0">
+                    <div class="card-icon"><img src="https://api.iconify.design/simple-icons/microsoftword.svg?color=%232b579a" alt="" class="format-brand-icon" loading="lazy" aria-hidden="true"></div>
+                    <div class="card-ext">DOCX</div>
+                    <div class="card-name">Word 문서</div>
+                    <div class="card-quality">★★★</div>
+                    <span class="card-badge badge-available">지원됨</span>
+                </div>
+
                 <!-- HTML -->
                 <div class="format-card" data-ext="html" role="button" tabindex="0">
                     <div class="card-icon"><img src="https://api.iconify.design/simple-icons/html5.svg?color=%23e34f26" alt="" class="format-brand-icon" loading="lazy" aria-hidden="true"></div>
                     <div class="card-ext">HTML</div>
                     <div class="card-name">HTML 문서</div>
                     <div class="card-quality">★★☆</div>
-                    <span class="card-badge badge-available">지원됨</span>
-                </div>
-
-                <!-- DOCX -->
-                <div class="format-card" data-ext="docx" role="button" tabindex="0">
-                    <div class="card-icon"><img src="https://api.iconify.design/simple-icons/microsoftword.svg?color=%232b579a" alt="" class="format-brand-icon" loading="lazy" aria-hidden="true"></div>
-                    <div class="card-ext">DOCX</div>
-                    <div class="card-name">Word 문서</div>
-                    <div class="card-quality">★☆☆</div>
                     <span class="card-badge badge-available">지원됨</span>
                 </div>
 
