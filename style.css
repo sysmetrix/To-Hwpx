@@ -3577,6 +3577,8 @@ a:hover { text-decoration: underline; }
     border: 1px solid var(--c-border);
     border-radius: var(--radius-md);
 }
+/* 실험실 플래그 OFF일 때 탭 숨김 — display 지정이 있어 [hidden]만으로는 안 숨겨지므로 명시 */
+.input-mode-tabs[hidden] { display: none; }
 .input-mode-tab {
     border: none;
     background: transparent;

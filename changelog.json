@@ -1,14 +1,21 @@
 {
-  "current": "4.4.23",
+  "current": "4.4.24",
   "versions": [
+    {
+      "version": "4.4.24",
+      "date": "2026-06-23",
+      "user": [],
+      "dev": [
+        "[v4.4.24] js/app.js: 직접 입력(붙여넣기)을 실험실(lab) 플래그 뒤로 숨김 — isLabEnabled()가 ?lab=1(또는 localStorage 'tohwpx_lab'='1')일 때만 입력 방식 탭을 노출하고 기본 사용자는 파일 업로드만 보인다. HTML 등 일부 형식 변환 품질이 완성될 때까지 비공개 유지(켜는 법은 AGENTS.md '실험실' 절)",
+        "[v4.4.24] js/app.js: sanitizeBaseName 정규식에 섞여 있던 NUL 바이트 제거(소스 정합성, 기능 동일)",
+        "[v4.4.24] style.css: .input-mode-tabs[hidden] 규칙 추가(플래그 OFF 시 탭 숨김)",
+        "[v4.4.24] package.json/package-lock.json/sw.js/index.html: v4.4.24 반영"
+      ]
+    },
     {
       "version": "4.4.23",
       "date": "2026-06-23",
-      "user": [
-        "파일을 올리지 않고도 내용을 바로 붙여넣어 변환할 수 있습니다. 변환기의 '⌨ 직접 입력' 탭을 누르고 형식(Markdown·HTML·텍스트·CSV·JSON)을 고른 뒤 내용을 붙여넣으면 HWPX로 변환됩니다",
-        "직접 입력에서도 문서명·고급 설정(글꼴·용지·여백 등)과 결과 미리보기·다운로드를 그대로 사용할 수 있습니다",
-        "기존 파일 업로드 방식은 '📂 파일 업로드' 탭으로 그대로 유지됩니다"
-      ],
+      "user": [],
       "dev": [
         "[v4.4.23] index.html: 옵션 패널에 입력 방식 탭(#mode-upload/#mode-paste)과 #upload-mode/#paste-mode 패널 추가(직접 입력=형식 select·textarea·문서명)",
         "[v4.4.23] js/app.js: state.inputMode 도입, initInputMode/setInputMode(탭 전환·전환 시 입력 초기화)/runPasteConversion(텍스트를 가짜 File로 감싸 단일 큐로 기존 파이프라인 재사용)/sanitizeBaseName 추가",

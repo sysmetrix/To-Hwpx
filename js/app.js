@@ -1278,7 +1278,42 @@ const PASTE_MIME = {
     json: 'application/json',
 };
 
+/**
+ * 실험실(lab) 기능 활성 여부.
+ * - URL에 ?lab=1 (또는 ?lab=on/true) → localStorage 'tohwpx_lab'='1' 저장 후 활성
+ * - URL에 ?lab=0 (또는 off/false) → 해제
+ * - 파라미터 없으면 저장값을 따른다(한 번 켜면 그 브라우저에서 유지)
+ * ※ 공개 정적 사이트라 "보안"이 아니라 "가림"이다. 미완성 직접 입력을 일반 사용자
+ *    동선에서 숨기는 용도(개발자 본인 테스트용). 켜는 법은 AGENTS.md "실험실" 절 참고.
+ */
+function isLabEnabled() {
+    try {
+        const params = new URLSearchParams(location.search);
+        if (params.has('lab')) {
+            const v = (params.get('lab') || '').toLowerCase();
+            const on = v !== '0' && v !== 'off' && v !== 'false';
+            if (on) localStorage.setItem('tohwpx_lab', '1');
+            else    localStorage.removeItem('tohwpx_lab');
+            return on;
+        }
+        return localStorage.getItem('tohwpx_lab') === '1';
+    } catch (e) {
+        return false;
+    }
+}
+
 function initInputMode() {
+    // 직접 입력은 아직 일부 형식(HTML 등) 변환 품질이 미완성이라 실험실 플래그 뒤로 숨긴다.
+    // 플래그가 꺼져 있으면 탭을 감추고 파일 업로드만 노출한다.
+    if (!isLabEnabled()) {
+        document.querySelector('.input-mode-tabs')?.setAttribute('hidden', '');
+        document.getElementById('paste-mode')?.setAttribute('hidden', '');
+        const upload = document.getElementById('upload-mode');
+        if (upload) upload.hidden = false;
+        state.inputMode = 'upload';
+        return;   // 직접 입력 핸들러를 연결하지 않음
+    }
+
     document.getElementById('mode-upload')?.addEventListener('click', () => setInputMode('upload'));
     document.getElementById('mode-paste')?.addEventListener('click', () => setInputMode('paste'));
 
@@ -1367,7 +1402,7 @@ function runPasteConversion() {
 /** 문서명 입력값에서 경로/제어문자·끝 확장자를 제거해 안전한 베이스 이름으로 */
 function sanitizeBaseName(raw) {
     return String(raw || '')
-        .replace(/[\\/:*?"<>| -]/g, '')   // 파일명 금지 문자
+        .replace(/[\\/:*?"<>|]/g, '')   // 경로 금지 문자(공백·하이픈 유지)
         .replace(/\.(hwpx|md|html?|txt|csv|json|ipynb|docx|xlsx?|hwp)$/i, '')  // 끝 확장자 제거
         .trim()
         .slice(0, 100);
