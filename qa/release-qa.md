@@ -8,7 +8,7 @@ Scope: static browser-only conversion flow from file selection to HWPX download.
 | Severity | 위치 | 문제 | 사용자 영향 | 수정 방향 | 난이도 |
 | --- | --- | --- | --- | --- | --- |
 | Critical | `js/app.js` `handleFileSelect()`, `js/parsers.js` `fileToIR()` | 지원하지 않는 확장자가 오류 문서로 HWPX 생성될 수 있음 | 사용자가 실패를 성공으로 오해 | 선택 단계에서 차단하고 파서 실패는 변환 중단 | Low |
-| High | `js/app.js` 드롭 이벤트 | 다중 파일 드롭 시 첫 파일만 조용히 처리 | 잘못된 파일 변환 가능 | 다중 파일 안내 후 첫 파일만 처리 | Low |
+| High | `js/app.js` 배치 변환 | 다중 파일을 큐로 순차 변환(부분 실패 허용) — 일부 실패가 전체를 막거나 결과 누락될 위험 | 일부 파일 누락/오해 | 파일별 상태 표시 + 실패해도 계속 + 전체 ZIP/개별 다운로드 | Medium |
 | High | `js/app.js` 결과 카드 | 변환 후 보존/손실 가능 요소 안내 부족 | DOCX/HTML/XLSX 서식 손실을 품질 오류로 인식 | 결과 카드에 포맷별 보존/손실 안내 표시 | Medium |
 | High | `js/parsers.js` DOCX/HWPX ZIP 처리 | 손상 ZIP/비정상 구조가 오류 문서로 변환될 수 있음 | 실패 파일을 정상 결과로 오해 | 손상/비정상 ZIP은 파싱 실패로 중단 | Medium |
 | Medium | `index.html` 미리보기 안내 | rhwp 미리보기와 한컴오피스 결과 차이 고지 약함 | 최종 렌더링 오해 | 글꼴/여백/표 너비 차이 가능성 명시 | Low |
@@ -37,7 +37,10 @@ Scope: static browser-only conversion flow from file selection to HWPX download.
 | 잘못된 확장자 | 변환 버튼 비활성화 및 지원 형식 안내 |
 | 손상 ZIP `.docx` | HWPX 생성 없이 파싱 실패 안내 |
 | 대용량 파일 | 텍스트 100MB, 바이너리 50MB 초과 시 사전 차단 |
-| 다중 파일 드롭 | 여러 파일 선택 안내 후 첫 파일만 처리 |
+| 다중 파일 드롭(배치) | 파일별 큐 적재(미지원/초과분 제외 토스트), 순차 변환, 파일별 상태 표시 |
+| 배치 부분 실패 | 일부 파일 실패해도 나머지 변환 완료, 실패 사유 행 표시 |
+| 배치 다운로드 | 전체 ZIP 1회 + 파일별 개별 받기, 중복 파일명 유일화 |
+| 단일 파일 | 큐 길이 1 — 기존 단일 결과 카드 + 자동 다운로드 동작 유지(회귀) |
 | 자동 다운로드 차단 | 완료 카드의 수동 다운로드 버튼 사용 |
 | iPhone Safari / Android Chrome | 다운로드 확장자가 `.hwpx`로 유지되는지 수동 확인 |
 
@@ -74,7 +77,10 @@ Scope: static browser-only conversion flow from file selection to HWPX download.
 - [ ] 각 fixture 업로드 후 변환 완료 카드 표시
 - [ ] unsupported 확장자 업로드 시 변환 버튼 비활성화
 - [ ] 손상 `.docx` 업로드 시 HWPX 파일 미생성
-- [ ] 다중 파일 드롭 시 안내 메시지 표시
+- [ ] 다중 파일 드롭 시 큐 목록 표시 + N개 변환 버튼
+- [ ] 배치 변환 후 파일별 상태(완료/경고/실패) 표시
+- [ ] 전체 ZIP 다운로드 열림 + 파일별 개별 받기 동작
+- [ ] 단일 파일 변환은 기존과 동일(결과 카드 1개 + 자동 다운로드)
 - [ ] HWPX ZIP 구조 검증 PASS
 - [ ] 결과 카드에 보존/손실 가능 요소 표시
 - [ ] 수동 다운로드 버튼으로 `.hwpx` 파일 저장

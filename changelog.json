@@ -1,6 +1,24 @@
 {
-  "current": "4.4.21",
+  "current": "4.4.22",
   "versions": [
+    {
+      "version": "4.4.22",
+      "date": "2026-06-23",
+      "user": [
+        "여러 파일을 한 번에 올려 한꺼번에 변환할 수 있습니다(배치 변환). 파일을 여러 개 선택하면 목록이 표시되고, 각 파일이 개별 HWPX로 변환됩니다",
+        "변환이 끝나면 '전체 ZIP 다운로드'로 한 번에 받거나 파일별로 따로 받을 수 있고, 일부 파일이 실패해도 나머지는 계속 변환되어 파일별 성공/경고/실패 상태가 표시됩니다",
+        "파일 1개만 올렸을 때의 변환·자동 다운로드 동작은 이전과 동일합니다"
+      ],
+      "dev": [
+        "[v4.4.22] index.html: file-input에 multiple 추가, 드롭존/드롭영역 문구를 '여러 개 가능'으로, 옵션 패널에 #file-queue(선택 파일 목록) 컨테이너 추가",
+        "[v4.4.22] js/app.js: state.queue 도입, handleFileList→addFilesToQueue(파일별 확장자/크기 검증·최대 20개·제외 토스트)/onQueueChanged/renderQueueList/removeQueueItem, 배치일 때 드롭존·제목 입력 비활성 처리",
+        "[v4.4.22] js/app.js: runConversionPipeline을 큐 순차 오케스트레이터로 재작성하고 단일 파일 변환을 convertOneFile(file, statusPrefix)로 분리(반환값 기반). 단일=결과 카드+자동 다운로드 유지, 배치=파일별 상태+결과 목록",
+        "[v4.4.22] js/app.js: showBatchResults(파일별 행·미리보기·개별 받기)와 downloadAllAsZip(JSZip, 중복 파일명 유일화, 변환결과_YYYYMMDD.zip), revokeAllQueueUrls로 Blob URL 일괄 해제. 자동 다운로드는 배치에서 ZIP 1회만",
+        "[v4.4.22] style.css: .file-queue/.batch-result-* 등 배치 UI 스타일 추가(전부 디자인 토큰 사용 → 다크 테마 자동 적용)",
+        "[v4.4.22] qa/release-qa.md: 배치 변환 위험 진단·엣지케이스·회귀 체크리스트 갱신",
+        "[v4.4.22] package.json/package-lock.json/sw.js/index.html: v4.4.22 반영"
+      ]
+    },
     {
       "version": "4.4.21",
       "date": "2026-06-23",

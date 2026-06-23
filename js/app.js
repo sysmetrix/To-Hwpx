@@ -19,7 +19,8 @@
 //   [주의] 민감한 문서 내용은 state에 장기 저장하지 않음 (privacy)
 // ─────────────────────────────────────────────────────────────────────────
 const state = {
-    file:         null,                // 선택된 File 객체
+    queue:        [],                  // 배치 변환 큐: [{id, file, ext, status, blob, url, fileName, validation, error}]
+    file:         null,                // 현재 선택/변환 중 File 객체 (단일 참조 — 큐 길이 1과 동일 경로 호환용)
     ir:           null,                // 파싱 완료된 IR JSON
     docType:      'plain',             // 상단 제목 블록: plain(없음)|titleblock(기본)|cover-unit(표지단위)|cover-annual(표지연간)
     customTitle:  '',                  // 사용자가 입력한 제목 (비어 있으면 자동 기준 적용)
@@ -181,66 +182,238 @@ function initDropZone() {
     });
 }
 
+const MAX_BATCH_FILES = 20;
+
+/**
+ * 파일 입력/드롭 진입점 — 선택된 파일들을 검증해 변환 큐에 추가한다.
+ * 단일 파일이면 큐 길이 1로, 기존 단일 변환 흐름과 동일하게 동작한다.
+ */
 function handleFileList(fileList) {
     const files = Array.from(fileList || []);
     if (!files.length) return;
-    if (files.length > 1) {
-        showAlert(`여러 파일이 선택되었습니다. 현재는 한 번에 1개 파일만 변환합니다. 첫 번째 파일 "${files[0].name}"만 사용합니다.`);
+    if (state.isConverting) {
+        showToast('<strong>변환이 진행 중입니다</strong> <span>완료 후 파일을 추가해 주세요.</span>', { timeout: 4000 });
+        return;
     }
-    handleFileSelect(files[0]);
+    addFilesToQueue(files);
+}
+
+/** 확장자/크기를 파일별 검증해 통과분만 큐에 적재 */
+function addFilesToQueue(files) {
+    const skipped = [];
+    const accepted = [];
+
+    for (const file of files) {
+        const ext = getFileExtension(file.name);
+        if (!SUPPORTED_EXTENSIONS.has(ext)) {
+            skipped.push(`${file.name} (미지원 형식)`);
+            continue;
+        }
+        const MAX_MB = BINARY_EXTENSIONS.has(ext) ? 50 : 100;
+        if (file.size > MAX_MB * 1024 * 1024) {
+            skipped.push(`${file.name} (${MAX_MB}MB 초과)`);
+            continue;
+        }
+        accepted.push({ file, ext });
+    }
+
+    // 최대 개수 제한 (이미 큐에 있는 항목 포함)
+    let overflow = 0;
+    const room = MAX_BATCH_FILES - state.queue.length;
+    let toAdd = accepted;
+    if (accepted.length > room) {
+        overflow = accepted.length - Math.max(0, room);
+        toAdd = accepted.slice(0, Math.max(0, room));
+    }
+
+    for (const { file, ext } of toAdd) {
+        state.queue.push({
+            id: `q_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+            file, ext,
+            status: 'pending',   // pending | converting | done | warn | error
+            blob: null, url: null, fileName: null, validation: null, error: null,
+        });
+    }
+
+    // 제외 안내(토스트)
+    const notes = [];
+    if (skipped.length) notes.push(`${skipped.length}개 제외(미지원/용량 초과)`);
+    if (overflow)       notes.push(`최대 ${MAX_BATCH_FILES}개 초과로 ${overflow}개 제외`);
+    if (notes.length) {
+        showToast(`<strong>일부 파일을 제외했습니다</strong> <span>${escHtml(notes.join(' · '))}</span>`, { timeout: 6000 });
+    }
+
+    if (!state.queue.length) {
+        if (!notes.length) {
+            showToast(`<strong>지원하지 않는 파일 형식입니다</strong> <span>${escHtml(SUPPORTED_FORMAT_LABEL)} 파일을 선택해 주세요.</span>`, { timeout: 6000 });
+        }
+        clearSelectedFile();
+        return;
+    }
+
+    onQueueChanged({ scroll: true });
+}
+
+/** 큐에서 항목 제거 (변환 시작 전 사용자 ✕) */
+function removeQueueItem(id) {
+    if (state.isConverting) return;
+    const idx = state.queue.findIndex(q => q.id === id);
+    if (idx === -1) return;
+    const [removed] = state.queue.splice(idx, 1);
+    if (removed?.url) URL.revokeObjectURL(removed.url);
+    if (!state.queue.length) { clearSelectedFile(); return; }
+    onQueueChanged({ scroll: false });
 }
 
 /**
- * 파일 선택 처리
- * 상태 업데이트 → 포맷 감지 → UI 갱신 → 이전 결과 초기화
+ * 큐 변경 후 UI 일괄 동기화.
+ * 길이 1 → 기존 단일 파일 UI / 길이 2+ → 배치 목록 UI
  */
-function handleFileSelect(file) {
-    const ext = getFileExtension(file.name);
-    if (!SUPPORTED_EXTENSIONS.has(ext)) {
-        clearSelectedFile();
-        showToast(
-            `<strong>지원하지 않는 파일 형식입니다</strong> <span>${escHtml(SUPPORTED_FORMAT_LABEL)} 파일을 선택해 주세요.</span>`,
-            { timeout: 6000 }
-        );
-        return;
-    }
-
-    // 포맷별 클라이언트 사이드 크기 사전 검사
-    const isBinary = BINARY_EXTENSIONS.has(ext);
-    const MAX_MB   = isBinary ? 50 : 100;
-    if (file.size > MAX_MB * 1024 * 1024) {
-        clearSelectedFile();
-        showAlert(`파일 크기 초과: ${(file.size / 1024 / 1024).toFixed(1)}MB\n최대 ${MAX_MB}MB까지 변환할 수 있습니다. 큰 문서는 나누어 변환해 주세요.`);
-        return;
-    }
-
-    state.file = file;
-    state.ir   = null;
+function onQueueChanged({ scroll = false } = {}) {
+    const n = state.queue.length;
+    state.file = n ? state.queue[0].file : null;   // 단일 참조 호환
+    state.ir = null;
     state.hwpxBlob = null;
-    revokeDownloadUrl();
-    updateDropZoneUI(file, ext);     // 드롭존에 파일 정보 표시
-    updateFormatBadge(ext);          // 감지된 포맷 배지 표시
-    updateFormatExpectation(ext);     // 포맷별 보존/손실 기대치 안내
-    updateConvertButton(true);       // 변환 버튼 활성화
-    hideResult();                    // 이전 변환 결과 숨기기
-    resetPipeline();                 // 파이프라인 초기화
-    setProgressPanelState('ready');
+    revokeAllQueueUrls();
+    hideResult();
+    resetPipeline();
+    setProgressPanelState(n ? 'ready' : 'empty');
+    updateConvertButton(n > 0);
 
+    if (n === 1) {
+        const { file, ext } = state.queue[0];
+        updateDropZoneUI(file, ext);
+        updateFormatBadge(ext);
+        updateFormatExpectation(ext);
+        setCustomTitleEnabled(true);
+    } else {
+        updateDropZoneMulti(n);
+        setCustomTitleEnabled(false);
+    }
+
+    renderQueueList();
     updateTitlePlaceholder();
 
-    // 변환기 패널로 부드럽게 스크롤
-    document.getElementById('converter')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (scroll) {
+        document.getElementById('converter')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+}
+
+/** 배치(2개 이상)일 때 드롭존/배지/힌트를 '여러 개 선택됨' 상태로 */
+function updateDropZoneMulti(n) {
+    const dz = document.getElementById('drop-zone');
+    if (dz) {
+        dz.innerHTML = `
+            <div class="file-selected-info">
+                <span class="file-emoji">📚</span>
+                <div class="file-meta">
+                    <strong class="file-name">${n}개 파일 선택됨</strong>
+                    <span class="file-size">배치 변환 — 각 파일을 개별 HWPX로 변환합니다</span>
+                </div>
+                <button class="file-change" onclick="document.getElementById('file-input').click()">
+                    파일 추가/변경
+                </button>
+            </div>
+        `;
+    }
+    const cda      = document.getElementById('converter-drop-area');
+    const cdaLabel = document.getElementById('cda-label');
+    if (cda)      cda.classList.add('has-file');
+    if (cdaLabel) cdaLabel.textContent = `${n}개 파일 선택됨 — 파일 추가/변경`;
+
+    const badge = document.getElementById('detected-format');
+    if (badge) { badge.textContent = `${n}개`; badge.style.display = 'inline-block'; }
+
+    // 여러 포맷이 섞일 수 있으므로 포맷 힌트는 일반 배치 안내로
+    const hint = document.getElementById('format-hint');
+    if (hint) {
+        hint.innerHTML = `
+            <div class="format-hint-head">
+                <strong>${n}개 파일 배치 변환</strong>
+                <span>개별 HWPX + ZIP</span>
+            </div>
+            <div class="format-hint-body">
+                <span><b>공통 적용</b> 아래 고급 설정(글꼴·크기·용지·여백)이 모든 파일에 적용됩니다</span>
+                <span><b>제목</b> 파일별 제목 기준 규칙으로 자동 생성됩니다</span>
+            </div>
+        `;
+        hint.style.display = 'block';
+    }
+}
+
+/** 선택한 파일 목록(배치) 렌더 — 2개 이상일 때만 표시 */
+function renderQueueList() {
+    const box = document.getElementById('file-queue');
+    if (!box) return;
+    if (state.queue.length < 2) {
+        box.hidden = true;
+        box.innerHTML = '';
+        return;
+    }
+    box.hidden = false;
+    const canEdit = !state.isConverting;
+    box.innerHTML = `
+        <div class="file-queue-head">
+            <strong>선택한 파일 ${state.queue.length}개</strong>
+            ${canEdit ? '<button type="button" class="file-queue-clear" id="queue-clear-btn">모두 비우기</button>' : ''}
+        </div>
+        <ul class="file-queue-list">
+            ${state.queue.map(item => `
+                <li class="file-queue-item is-${item.status}" data-id="${item.id}">
+                    <span class="fq-icon">${getFormatIcon(item.ext)}</span>
+                    <span class="fq-name" title="${escHtml(item.file.name)}">${escHtml(item.file.name)}</span>
+                    <span class="fq-size">${formatBytes(item.file.size)}</span>
+                    <span class="fq-status">${queueStatusLabel(item)}</span>
+                    ${canEdit ? `<button type="button" class="fq-remove" data-id="${item.id}" aria-label="${escHtml(item.file.name)} 제거">✕</button>` : ''}
+                </li>
+            `).join('')}
+        </ul>
+    `;
+    if (canEdit) {
+        box.querySelector('#queue-clear-btn')?.addEventListener('click', () => { if (!state.isConverting) clearSelectedFile(); });
+        box.querySelectorAll('.fq-remove').forEach(btn => {
+            btn.addEventListener('click', () => removeQueueItem(btn.dataset.id));
+        });
+    }
+}
+
+function queueStatusLabel(item) {
+    switch (item.status) {
+        case 'converting': return '<span class="fq-badge fq-badge--run">변환 중…</span>';
+        case 'done':       return '<span class="fq-badge fq-badge--ok">완료</span>';
+        case 'warn':       return '<span class="fq-badge fq-badge--warn">경고</span>';
+        case 'error':      return '<span class="fq-badge fq-badge--err">실패</span>';
+        default:           return '<span class="fq-badge fq-badge--wait">대기</span>';
+    }
+}
+
+/** 배치일 때 문서 제목 입력 비활성화(파일별 자동 제목 사용) */
+function setCustomTitleEnabled(enabled) {
+    const titleEl = document.getElementById('doc-title');
+    if (titleEl) {
+        titleEl.disabled = !enabled;
+        titleEl.title = enabled ? '' : '여러 파일을 변환할 때는 파일별 제목 기준 규칙이 적용됩니다';
+    }
+    const help = document.querySelector('.title-help');
+    if (help) {
+        help.innerHTML = enabled
+            ? '<b>고급 설정의 상단 제목 블록</b>을 켜면 이 제목이 문서 맨 위에 표시됩니다.'
+            : '여러 파일은 <b>제목 기준 규칙</b>으로 파일마다 제목을 자동 생성합니다.';
+    }
 }
 
 function clearSelectedFile() {
+    state.queue = [];
     state.file = null;
     state.ir = null;
     state.hwpxBlob = null;
-    revokeDownloadUrl();
+    revokeAllQueueUrls();
     hideResult();
     resetPipeline();
     setProgressPanelState('empty');
     updateConvertButton(false);
+    renderQueueList();           // #file-queue 숨김/비움
+    setCustomTitleEnabled(true); // 제목 입력 재활성
 
     const badge = document.getElementById('detected-format');
     if (badge) {
@@ -253,14 +426,14 @@ function clearSelectedFile() {
         dz.innerHTML = `
             <div class="drop-icon">📂</div>
             <div class="drop-title">파일을 여기에 드래그하거나 클릭하세요</div>
-            <div class="drop-sub">입력: MD · HTML · TXT · CSV · XLSX · JSON · IPYNB · DOCX · HWP<br>출력: HWPX</div>
+            <div class="drop-sub">입력: MD · HTML · TXT · CSV · XLSX · JSON · IPYNB · DOCX · HWP (여러 개 가능)<br>출력: HWPX</div>
         `;
     }
 
     const cda = document.getElementById('converter-drop-area');
     const cdaLabel = document.getElementById('cda-label');
     if (cda) cda.classList.remove('has-file');
-    if (cdaLabel) cdaLabel.textContent = '파일을 드래그하거나 클릭하여 선택';
+    if (cdaLabel) cdaLabel.textContent = '파일을 드래그하거나 클릭하여 선택 (여러 개 가능)';
 
     showFormatHintPlaceholder();   // 파일 전: 빈칸 대신 안내 placeholder로 레이아웃 유지
 
@@ -1065,7 +1238,7 @@ function initConvertButton() {
     const btn = document.getElementById('convert-btn');
     if (!btn) return;
     btn.addEventListener('click', () => {
-        if (!state.file || state.isConverting) return;
+        if (!state.queue.length || state.isConverting) return;
         syncMarginInputs();
         runConversionPipeline();
     });
@@ -1073,7 +1246,7 @@ function initConvertButton() {
     // Ctrl+Enter (Windows/Linux) / ⌘+Enter (Mac) 단축키로 변환 시작
     document.addEventListener('keydown', (e) => {
         if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-            if (!state.file || state.isConverting) return;
+            if (!state.queue.length || state.isConverting) return;
             e.preventDefault();
             syncMarginInputs();
             runConversionPipeline();
@@ -1113,8 +1286,11 @@ function initKeyboardShortcuts() {
 function updateConvertButton(enabled) {
     const btn = document.getElementById('convert-btn');
     if (!btn) return;
-    btn.disabled   = !enabled;
-    btn.textContent = enabled ? '변환 시작 →' : '파일을 먼저 선택하세요';
+    btn.disabled = !enabled;
+    const n = state.queue.length;
+    btn.textContent = !enabled
+        ? (state.isConverting ? '변환 중…' : '파일을 먼저 선택하세요')
+        : (n > 1 ? `${n}개 변환 시작 →` : '변환 시작 →');
 }
 
 
@@ -1123,138 +1299,185 @@ function updateConvertButton(enabled) {
 //   비동기(async) 함수 — 각 단계가 순차적으로 실행되며 UI에 진행 상태 표시
 // ─────────────────────────────────────────────────────────────────────────
 async function runConversionPipeline() {
-    if (!state.file || state.isConverting) return;
+    if (!state.queue.length || state.isConverting) return;
 
     state.isConverting = true;
-    resetPipeline();
     setProgressPanelState('converting');
     hideResult();
     hideAlert();
     updateConvertButton(false);
+    revokeAllQueueUrls();          // 이전 변환 결과 URL 정리
+    renderQueueList();             // 변환 중에는 제거/비우기 버튼 숨김
 
     // 변환 시작 시 진행 패널이 보이도록 스크롤
-    const progressPanel = document.querySelector('.progress-panel');
-    if (progressPanel) {
-        progressPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    document.querySelector('.progress-panel')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+    const total = state.queue.length;
+    const batch = total > 1;
+    let okCount = 0, warnCount = 0, errCount = 0;
+
+    // 큐를 순차 처리 — 실패해도 다음 파일을 계속 변환(부분 성공 허용)
+    for (let i = 0; i < total; i++) {
+        const item = state.queue[i];
+        item.status = 'converting';
+        if (batch) renderQueueList();
+        resetPipeline();
+
+        const prefix = batch ? `(${i + 1}/${total}) ${item.file.name} · ` : '';
+        try {
+            const res = await convertOneFile(item.file, prefix);
+            item.blob = res.blob;
+            item.fileName = res.fileName;
+            item.validation = res.validation;
+            item.url = URL.createObjectURL(res.blob);
+            item.status = res.validation.pass ? 'done' : 'warn';
+            if (res.validation.pass) okCount++; else warnCount++;
+        } catch (err) {
+            item.status = 'error';
+            item.error = err;
+            errCount++;
+            console.error('[To HWPX] 변환 오류:', item.file.name, err);
+        }
+        if (batch) renderQueueList();
     }
 
+    setProgress(100);
+
+    if (!batch) {
+        // ── 단일 파일: 기존 동작 유지(결과 카드 1개 + 자동 다운로드) ──
+        const item = state.queue[0];
+        if (item.status === 'error') {
+            setProgressPanelState('error');
+            setStatusText('실패');
+            showFailureResult(item.error);
+            const failure = classifyConversionError(item.error, item.ext);
+            showAlert(`${failure.title}\n다음 행동: ${failure.action}`);
+        } else {
+            state.file = item.file;
+            state.hwpxBlob = item.blob;
+            state.downloadUrl = item.url;   // 미리보기 fallback 등 단일 참조 호환
+            state.downloadTimer = setTimeout(revokeAllQueueUrls, 300_000);
+            setProgressPanelState(item.validation.pass ? 'success' : 'warning');
+            setStatusText('완료!');
+            showResult({ url: item.url, fileName: item.fileName, size: item.blob.size, validation: item.validation });
+            if (state.autoDownload) {
+                triggerDownload(item.url, item.fileName);
+                setStatusText('완료! 다운로드를 시작했습니다.');
+            }
+        }
+    } else {
+        // ── 배치: 파일별 결과 목록 + 전체 ZIP ──
+        const anyOk = (okCount + warnCount) > 0;
+        setProgressPanelState(!anyOk ? 'error' : (warnCount || errCount ? 'warning' : 'success'));
+        setStatusText(`완료 — 성공 ${okCount} · 경고 ${warnCount} · 실패 ${errCount}`);
+        showBatchResults({ okCount, warnCount, errCount, total });
+        state.downloadTimer = setTimeout(revokeAllQueueUrls, 300_000);
+        // 배치는 N회 자동 다운로드 대신 ZIP 1회만 자동 다운로드(자동 다운로드 켜진 경우)
+        if (state.autoDownload && anyOk) {
+            await downloadAllAsZip();
+        }
+    }
+
+    state.isConverting = false;
+    updateConvertButton(state.queue.length > 0);
+    renderQueueList();   // 변환 종료 후 목록 갱신(편집 버튼 복귀)
+}
+
+/**
+ * 파일 1개를 7단계 파이프라인으로 변환하고 결과를 반환한다.
+ * 진행 표시는 "현재 파일" 기준으로 갱신(배치에선 statusPrefix로 "(i/n) 파일명" 표기).
+ * @param {File} file
+ * @param {string} statusPrefix
+ * @returns {Promise<{blob: Blob, fileName: string, validation: object}>}
+ */
+async function convertOneFile(file, statusPrefix = '') {
+    const st = (msg) => setStatusText(statusPrefix + msg);
+    state.file = file;
+    state.ir = null;
+    state.hwpxBlob = null;
+
+    // ═══ 1단계: Ingest (파일 읽기 준비) ═══
+    setStepState('ingest', 'active');
+    setProgress(8);
+    await tick();  // UI 업데이트를 위한 이벤트 루프 양보
+    setStepState('ingest', 'done');
+
+    // ═══ 2단계: Normalize (포맷 파서로 IR 변환) ═══
+    setStepState('normalize', 'active');
+    setProgress(25);
+    st('파일을 분석하는 중...');
+
+    let ir;
     try {
-        // ═══ 1단계: Ingest (파일 읽기 준비) ═══
-        setStepState('ingest', 'active');
-        setProgress(8);
-        await tick();  // UI 업데이트를 위한 이벤트 루프 양보
-        setStepState('ingest', 'done');
-
-        // ═══ 2단계: Normalize (포맷 파서로 IR 변환) ═══
-        setStepState('normalize', 'active');
-        setProgress(25);
-        setStatusText('파일을 분석하는 중...');
-
-        let ir;
-        try {
-            // parsers.js의 fileToIR() 호출 (포맷 자동 감지 + 변환)
-            ir = await fileToIR(state.file, state.docType);
-        } catch (e) {
-            throw new Error('파일 파싱 실패: ' + e.message);
-        }
-
-        // 제목 결정: 직접 입력 > 자동 기준(파일 이름 / 문서 첫 제목) > 파일명 폴백
-        applyDocumentTitlePolicy(ir, state.file, state.customTitle, state.titleSource);
-        state.ir = ir;
-
-        // [보안] IR 미리보기는 textContent로만 표시 (innerHTML 사용 금지)
-        updateIrPreview(ir);
-        setStepState('normalize', 'done');
-        setProgress(42);
-
-        // ═══ 3단계: Generate (HWPX 생성) ═══
-        setStepState('generate', 'active');
-        setProgress(58);
-        setStatusText('HWPX 파일을 생성하는 중...');
-        await tick();
-
-        let hwpxBlob;
-        try {
-            // hwpx.js의 buildHwpx() 호출 (폰트·크기·여백·용지 전달)
-            hwpxBlob = await buildHwpx(ir, state.docFont, state.fontSize, state.pageMargins, state.paperSize, (pct) => {
-                 setProgress(58 + (pct * 0.14)); // 58% ~ 72%
-                 setStatusText(`HWPX 파일을 압축하는 중... ${Math.round(pct)}%`);
-            }, state.orientation);
-        } catch (e) {
-            throw new Error('HWPX 생성 실패: ' + e.message);
-        }
-        setStepState('generate', 'done');
-
-        // ═══ 4단계: Validate (4영역 구조 검증) ═══
-        setStepState('validate', 'active');
-        setProgress(72);
-        setStatusText('HWPX 구조를 검증하는 중...');
-
-        let validation;
-        try {
-            // hwpx.js의 validateHwpx() 호출
-            validation = await validateHwpx(hwpxBlob, state.pageMargins);
-        } catch (e) {
-            validation = { pass: false, issues: ['검증 실행 오류: ' + e.message] };
-        }
-        setStepState('validate', validation.pass ? 'done' : 'error');
-        setProgress(82);
-
-        // ═══ 5단계: Preview (미리보기 준비) ═══
-        setStepState('preview', 'active');
-        setProgress(88);
-        await tick();
-        // [한계] 브라우저에서 HWPX를 직접 렌더링할 수 없음
-        //        IR 미리보기(JSON)만 제공하는 것으로 대체
-        setStepState('preview', 'done');
-
-        // ═══ 6단계: Repair (자동 수정) ═══
-        setStepState('repair', 'active');
-        setProgress(93);
-
-        const finalBlob = ensureHwpxBlob(hwpxBlob);  // 모바일 브라우저가 ZIP로 추론하지 않도록 MIME 고정
-        state.hwpxBlob = finalBlob;  // 미리보기 버튼에서 참조
-        setStepState('repair', 'done');
-
-        // ═══ 7단계: Ship (다운로드 준비) ═══
-        setStepState('ship', 'active');
-        setProgress(98);
-        setStatusText('다운로드를 준비하는 중...');
-        await tick();
-
-        // 출력 파일명: 원본 확장자를 .hwpx로 교체
-        const baseName = state.file.name.replace(/\.[^.]+$/, '');
-        const fileName = `${baseName}.hwpx`;
-
-        // [보안] Blob URL 생성 → 5분 후 자동 해제 (메모리 누수 및 개인정보 보호)
-        revokeDownloadUrl();
-        const downloadUrl = URL.createObjectURL(finalBlob);
-        state.downloadUrl = downloadUrl;
-        state.downloadTimer = setTimeout(revokeDownloadUrl, 300_000);
-
-        setStepState('ship', 'done');
-        setProgress(100);
-        setStatusText('완료!');
-
-        // 결과 카드 표시
-        showResult({ url: downloadUrl, fileName, size: finalBlob.size, validation });
-        setProgressPanelState(validation.pass ? 'success' : 'warning');
-        if (state.autoDownload) {
-            triggerDownload(downloadUrl, fileName);
-            setStatusText('완료! 다운로드를 시작했습니다.');
-        }
-
-    } catch (err) {
-        setProgressPanelState('error');
-        setStatusText('실패');
-        showFailureResult(err);
-        const failure = classifyConversionError(err, state.file ? getFileExtension(state.file.name) : '');
-        showAlert(`${failure.title}\n다음 행동: ${failure.action}`);
-        console.error('[To HWPX] 변환 오류:', err);
-    } finally {
-        state.isConverting = false;
-        updateConvertButton(!!state.file);
+        ir = await fileToIR(file, state.docType);
+    } catch (e) {
+        throw new Error('파일 파싱 실패: ' + e.message);
     }
+
+    // 제목: 단일일 때만 직접 입력(customTitle) 적용, 배치는 파일별 자동 기준 규칙
+    const customTitle = state.queue.length === 1 ? state.customTitle : '';
+    applyDocumentTitlePolicy(ir, file, customTitle, state.titleSource);
+    state.ir = ir;
+
+    // [보안] IR 미리보기는 textContent로만 표시 (innerHTML 사용 금지)
+    updateIrPreview(ir);
+    setStepState('normalize', 'done');
+    setProgress(42);
+
+    // ═══ 3단계: Generate (HWPX 생성) ═══
+    setStepState('generate', 'active');
+    setProgress(58);
+    st('HWPX 파일을 생성하는 중...');
+    await tick();
+
+    let hwpxBlob;
+    try {
+        hwpxBlob = await buildHwpx(ir, state.docFont, state.fontSize, state.pageMargins, state.paperSize, (pct) => {
+            setProgress(58 + (pct * 0.14)); // 58% ~ 72%
+            st(`HWPX 파일을 압축하는 중... ${Math.round(pct)}%`);
+        }, state.orientation);
+    } catch (e) {
+        throw new Error('HWPX 생성 실패: ' + e.message);
+    }
+    setStepState('generate', 'done');
+
+    // ═══ 4단계: Validate (4영역 구조 검증) ═══
+    setStepState('validate', 'active');
+    setProgress(72);
+    st('HWPX 구조를 검증하는 중...');
+
+    let validation;
+    try {
+        validation = await validateHwpx(hwpxBlob, state.pageMargins);
+    } catch (e) {
+        validation = { pass: false, issues: ['검증 실행 오류: ' + e.message] };
+    }
+    setStepState('validate', validation.pass ? 'done' : 'error');
+    setProgress(82);
+
+    // ═══ 5단계: Preview (미리보기 준비) ═══
+    setStepState('preview', 'active');
+    setProgress(88);
+    await tick();
+    setStepState('preview', 'done');
+
+    // ═══ 6단계: Repair (자동 수정) ═══
+    setStepState('repair', 'active');
+    setProgress(93);
+    const finalBlob = ensureHwpxBlob(hwpxBlob);  // 모바일 브라우저가 ZIP로 추론하지 않도록 MIME 고정
+    state.hwpxBlob = finalBlob;  // 미리보기 버튼에서 참조
+    setStepState('repair', 'done');
+
+    // ═══ 7단계: Ship (다운로드 준비) ═══
+    setStepState('ship', 'active');
+    setProgress(98);
+    st('다운로드를 준비하는 중...');
+    await tick();
+    const fileName = `${file.name.replace(/\.[^.]+$/, '')}.hwpx`;
+    setStepState('ship', 'done');
+    setProgress(100);
+
+    return { blob: finalBlob, fileName, validation };
 }
 
 
@@ -1371,6 +1594,140 @@ function showResult({ url, fileName, size, validation }) {
     });
     area.querySelector('#preview-result-btn')?.addEventListener('click', () => openPreview(state.hwpxBlob));
     area.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+/** 배치 변환 결과 — 파일별 행 목록 + 전체 ZIP 다운로드 버튼 */
+function showBatchResults({ okCount, warnCount, errCount, total }) {
+    const area = document.getElementById('result-area');
+    if (!area) return;
+
+    const successCount = okCount + warnCount;
+    const cardClass = (errCount && !successCount) ? ' result-card--error'
+        : ((warnCount || errCount) ? ' result-card--warn' : '');
+
+    const rows = state.queue.map(item => {
+        if (item.status === 'error') {
+            const failure = classifyConversionError(item.error, item.ext);
+            return `
+                <li class="batch-row batch-row--error" data-id="${item.id}">
+                    <span class="batch-row-icon">⚠️</span>
+                    <div class="batch-row-main">
+                        <strong class="batch-row-name">${escHtml(item.file.name)}</strong>
+                        <span class="batch-row-meta">실패 · ${escHtml(failure.category)} — ${escHtml(failure.action)}</span>
+                    </div>
+                    <span class="batch-row-status batch-status--err">실패</span>
+                </li>
+            `;
+        }
+        const warn = item.status === 'warn';
+        const inputLabel = getInputFormatLabel(item.ext);
+        return `
+            <li class="batch-row" data-id="${item.id}">
+                <span class="batch-row-icon">${warn ? '⚠️' : '✅'}</span>
+                <div class="batch-row-main">
+                    <strong class="batch-row-name">${escHtml(item.fileName)}</strong>
+                    <span class="batch-row-meta">${formatBytes(item.blob.size)} · 입력 ${escHtml(inputLabel)}${warn ? ' · 구조 확인 필요' : ''}</span>
+                </div>
+                <div class="batch-row-actions">
+                    <button type="button" class="batch-preview" data-id="${item.id}">👁 미리보기</button>
+                    <a class="batch-download" href="${item.url}" download="${escHtml(item.fileName)}" type="application/hwp+zip">⬇ 받기</a>
+                </div>
+                <span class="batch-row-status ${warn ? 'batch-status--warn' : 'batch-status--ok'}">${warn ? '경고' : '완료'}</span>
+            </li>
+        `;
+    }).join('');
+
+    area.innerHTML = `
+        <div class="result-card${cardClass}">
+            <div class="batch-result-head">
+                <div class="batch-result-title">
+                    <strong>배치 변환 완료 — ${total}개 중 성공 ${okCount} · 경고 ${warnCount} · 실패 ${errCount}</strong>
+                    <span>각 파일은 개별 HWPX로 변환되었습니다. 한컴오피스에서 최종 확인을 권장합니다.</span>
+                </div>
+                ${successCount ? `<button type="button" id="batch-zip-btn" class="btn-download btn-download-primary">⬇ 전체 ZIP 다운로드 (${successCount})</button>` : ''}
+            </div>
+            <ul class="batch-result-list">${rows}</ul>
+            <div class="result-download-location">
+                저장 위치: 브라우저 기본 다운로드 폴더
+                <small>설정에 따라 달라질 수 있습니다 · 다운로드 링크는 5분간 유지됩니다</small>
+            </div>
+        </div>
+    `;
+    area.style.display = 'block';
+
+    area.querySelector('#batch-zip-btn')?.addEventListener('click', downloadAllAsZip);
+    area.querySelectorAll('.batch-preview').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const item = state.queue.find(q => q.id === btn.dataset.id);
+            if (!item || !item.blob) return;
+            // 미리보기는 단일 참조를 사용하므로 선택 항목으로 맞춘다
+            state.file = item.file;
+            state.hwpxBlob = item.blob;
+            state.downloadUrl = item.url;
+            openPreview(item.blob);
+        });
+    });
+    area.querySelectorAll('.batch-download').forEach(a => {
+        a.addEventListener('click', () => {
+            const ind = document.getElementById('dl-indicator');
+            if (ind) { ind.hidden = false; setTimeout(() => { ind.hidden = true; }, 2800); }
+        });
+    });
+    area.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+/** 성공/경고 결과 blob들을 JSZip으로 묶어 한 번에 다운로드 */
+async function downloadAllAsZip() {
+    if (typeof JSZip === 'undefined') {
+        showToast('<strong>ZIP 라이브러리를 불러오지 못했습니다</strong> <span>파일별 받기 버튼을 이용해 주세요.</span>', { timeout: 6000 });
+        return;
+    }
+    const ready = state.queue.filter(q => q.blob && (q.status === 'done' || q.status === 'warn'));
+    if (!ready.length) return;
+
+    const ind = document.getElementById('dl-indicator');
+    if (ind) ind.hidden = false;
+    try {
+        const zip = new JSZip();
+        const used = new Set();
+        for (const item of ready) {
+            zip.file(uniqueZipName(item.fileName, used), item.blob);
+        }
+        const zipBlob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
+        const url = URL.createObjectURL(zipBlob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `변환결과_${ymdStamp()}.zip`;
+        a.style.display = 'none';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch (e) {
+        console.error('[To HWPX] ZIP 생성 오류:', e);
+        showToast('<strong>ZIP 생성 중 오류가 발생했습니다</strong> <span>파일별 받기 버튼을 이용해 주세요.</span>', { timeout: 6000 });
+    } finally {
+        if (ind) setTimeout(() => { ind.hidden = true; }, 1200);
+    }
+}
+
+/** ZIP 내 중복 파일명을 'name (2).hwpx'로 유일화 */
+function uniqueZipName(fileName, used) {
+    const name = normalizeHwpxFileName(fileName);
+    if (!used.has(name)) { used.add(name); return name; }
+    const base = name.replace(/\.hwpx$/i, '');
+    let i = 2;
+    while (used.has(`${base} (${i}).hwpx`)) i++;
+    const unique = `${base} (${i}).hwpx`;
+    used.add(unique);
+    return unique;
+}
+
+/** YYYYMMDD 날짜 스탬프 (ZIP 파일명용) */
+function ymdStamp() {
+    const d = new Date();
+    const p = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}`;
 }
 
 function showFailureResult(err) {
@@ -1590,6 +1947,17 @@ function revokeDownloadUrl() {
     if (state.downloadUrl) {
         URL.revokeObjectURL(state.downloadUrl);
         state.downloadUrl = null;
+    }
+}
+
+/** 단일/배치 모든 결과 Blob URL과 타이머를 해제(메모리 누수·개인정보 보호) */
+function revokeAllQueueUrls() {
+    revokeDownloadUrl();
+    for (const item of state.queue) {
+        if (item.url) {
+            URL.revokeObjectURL(item.url);
+            item.url = null;
+        }
     }
 }
 
