@@ -1,6 +1,17 @@
 {
-  "current": "4.4.13",
+  "current": "4.4.14",
   "versions": [
+    {
+      "version": "4.4.14",
+      "date": "2026-06-23",
+      "user": [
+        "서비스 가치 안내를 AI 시대 작업 방식과 한글 제출 문서 연결 맥락으로 다듬었습니다"
+      ],
+      "dev": [
+        "[v4.4.14] index.html: value-section 문구를 AI 작업물(Markdown·CSV·JSON·노트북)에서 HWPX 제출 문서로 연결하는 메시지로 갱신",
+        "[v4.4.14] package.json/package-lock.json/sw.js/index.html: v4.4.14 반영"
+      ]
+    },
     {
       "version": "4.4.13",
       "date": "2026-06-23",
