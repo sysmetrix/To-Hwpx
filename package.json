@@ -1,6 +1,6 @@
 {
   "name": "to-hwpx",
-  "version": "4.4.18",
+  "version": "4.4.19",
   "private": true,
   "scripts": {
     "test:golden": "node tests/golden.js",

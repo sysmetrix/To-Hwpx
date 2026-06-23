@@ -1682,6 +1682,20 @@ a:hover { text-decoration: underline; }
     overflow-wrap: anywhere;
 }
 .result-file-size { font-size: 0.82rem; color: var(--c-text-sub); }
+.result-download-location {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 4px;
+    color: var(--c-text-sub);
+    font-size: 0.8rem;
+    line-height: 1.35;
+    flex-wrap: wrap;
+}
+.result-download-location small {
+    color: var(--c-text-muted);
+    font-size: 0.76rem;
+}
 
 .result-validation {
     display: inline-flex;
