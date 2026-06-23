@@ -1,6 +1,17 @@
 {
-  "current": "4.4.15",
+  "current": "4.4.16",
   "versions": [
+    {
+      "version": "4.4.16",
+      "date": "2026-06-23",
+      "user": [
+        "서비스 가치 안내에서 HWPX 표현을 한글 문서(hwpx)로 더 쉽게 풀어 썼습니다"
+      ],
+      "dev": [
+        "[v4.4.16] index.html: value-section의 HWPX 필요 문구를 한글 문서(hwpx) 표현으로 수정",
+        "[v4.4.16] package.json/package-lock.json/sw.js/index.html: v4.4.16 반영"
+      ]
+    },
     {
       "version": "4.4.15",
       "date": "2026-06-23",
