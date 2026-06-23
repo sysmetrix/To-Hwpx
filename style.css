@@ -260,8 +260,7 @@ a:hover { text-decoration: underline; }
 }
 .nav-tooltip-wrap:hover .nav-tooltip { display: block; }
 
-/* 즐겨찾기 버튼 (nav 안) */
-.nav-bookmark-btn,
+/* 헤더 유틸리티 버튼 */
 .nav-shortcut-btn,
 .nav-reset-btn {
     border: 1.5px solid var(--c-border);
@@ -275,11 +274,6 @@ a:hover { text-decoration: underline; }
     font-family: var(--font-main);
     transition: background var(--trans), color var(--trans), border-color var(--trans);
 }
-.nav-bookmark-btn:hover {
-    background: var(--c-warning-light);
-    color: #b45309;
-    border-color: #fbbf24;
-}
 .nav-shortcut-btn:hover {
     background: var(--c-primary-light);
     color: var(--c-primary);
@@ -291,8 +285,8 @@ a:hover { text-decoration: underline; }
     border-color: var(--c-primary);
 }
 
-/* 즐겨찾기 토스트 알림 */
-.bookmark-toast {
+/* 공용 토스트 알림 */
+.app-toast {
     position: fixed;
     bottom: 32px;
     left: 50%;
@@ -315,16 +309,16 @@ a:hover { text-decoration: underline; }
     overflow-wrap: anywhere;
     word-break: break-word;
 }
-.bookmark-toast--show {
+.app-toast--show {
     opacity: 1;
     transform: translateX(-50%) translateY(0);
 }
-.bookmark-toast strong { color: #93c5fd; }
-.bookmark-toast span {
+.app-toast strong { color: #93c5fd; }
+.app-toast span {
     color: rgba(255,255,255,0.72);
     font-size: 0.78rem;
 }
-.bookmark-toast-close {
+.app-toast-close {
     background: none;
     border: none;
     color: rgba(255,255,255,0.6);
@@ -335,7 +329,7 @@ a:hover { text-decoration: underline; }
     /* 여러 줄로 줄바꿈돼도 닫기 버튼은 우측에 정렬 */
     margin-left: auto;
 }
-.bookmark-toast-close:hover { color: #fff; }
+.app-toast-close:hover { color: #fff; }
 
 /* 모바일 햄버거 버튼 */
 #menu-toggle {
@@ -1970,7 +1964,6 @@ a:hover { text-decoration: underline; }
         gap: 6px;
     }
     #main-nav .main-nav a,
-    #main-nav .nav-bookmark-btn,
     #main-nav .nav-shortcut-btn,
     #main-nav .nav-reset-btn {
         display: flex;

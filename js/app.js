@@ -80,7 +80,6 @@ document.addEventListener('DOMContentLoaded', () => {
     initMobileMenu();           // 모바일 햄버거 메뉴
     initNavLinks();             // 부드러운 스크롤 네비게이션
     initModals();               // 미리보기·업데이트 내역 모달
-    initBookmarkButton();       // 즐겨찾기 안내 버튼
     initResetButton();          // 현재 선택 파일과 변환 옵션 초기화
     showFormatHintPlaceholder();// 파일 선택 전 포맷 힌트 영역 안내(빈칸 방지)
 });
@@ -1961,10 +1960,10 @@ function initConverterDropArea() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────
-// [즐겨찾기 안내 버튼]
+// [공용 토스트 안내]
 // ─────────────────────────────────────────────────────────────────────────
 /**
- * 화면 하단 중앙 토스트 안내 (즐겨찾기 안내와 동일 스타일).
+ * 화면 하단 중앙 토스트 안내.
  * 한 번에 하나만 표시되며 닫기 버튼·자동 제거를 제공한다.
  * [보안] 내부 호출 전용 — 신뢰된 HTML 문자열만 전달할 것(사용자 입력 금지).
  * @param {string} html      토스트 본문 HTML (보통 <strong>·<span> 사용)
@@ -1976,26 +1975,15 @@ function showToast(html, { timeout = 4000 } = {}) {
 
     const toast = document.createElement('div');
     toast.id        = 'app-toast';
-    toast.className = 'bookmark-toast';
-    toast.innerHTML = `${html}<button class="bookmark-toast-close" aria-label="닫기">✕</button>`;
+    toast.className = 'app-toast';
+    toast.innerHTML = `${html}<button class="app-toast-close" aria-label="닫기">✕</button>`;
     document.body.appendChild(toast);
 
     const close = () => { clearTimeout(showToast._timer); toast.remove(); };
-    toast.querySelector('.bookmark-toast-close').addEventListener('click', close);
+    toast.querySelector('.app-toast-close').addEventListener('click', close);
     if (timeout > 0) showToast._timer = setTimeout(close, timeout);
-    requestAnimationFrame(() => toast.classList.add('bookmark-toast--show'));
+    requestAnimationFrame(() => toast.classList.add('app-toast--show'));
     return toast;
-}
-
-function initBookmarkButton() {
-    const btn = document.getElementById('bookmark-btn');
-    if (!btn) return;
-
-    btn.addEventListener('click', () => {
-        const isMac = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
-        const key   = isMac ? '⌘D' : 'Ctrl+D';
-        showToast(`<strong>${key}</strong>를 눌러 즐겨찾기에 추가하세요 <span>브라우저 보안상 자동 추가는 지원되지 않습니다.</span>`);
-    });
 }
 
 function initResetButton() {
