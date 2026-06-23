@@ -98,7 +98,7 @@
             <span>｢BWYF｣ AX Challenger 2026</span>
             <!-- [주의] id="open-changelog"는 app.js에서 업데이트 내역 모달을 여는 연결값 -->
             <button class="util-changelog-btn" id="open-changelog" aria-label="업데이트 내역 보기">
-                📋 v4.4.17 업데이트 내역
+                📋 v4.4.18 업데이트 내역
             </button>
         </div>
     </div>
@@ -218,13 +218,13 @@
                         <input type="text"
                                id="doc-title"
                                name="doc-title"
-                               placeholder="비워두면 문서에서 자동으로 찾습니다"
+                               placeholder="비워두면 문서에서 제목을 찾습니다"
                                maxlength="200">
                         <p class="form-hint title-help"><b>고급 설정의 상단 제목 블록</b>을 켜면 이 제목이 문서 맨 위에 표시됩니다.</p>
                         <div class="title-source-row">
-                            <span>자동 제목 기준</span>
+                            <span>제목을 비웠을 때</span>
                             <select id="title-source" name="title-source" aria-label="문서 제목을 비워둘 때 적용할 제목 기준">
-                                <option value="heading" selected>문서 첫 문장/제목</option>
+                                <option value="heading" selected>문서 첫 제목/문장 사용</option>
                                 <option value="filename">파일 이름 사용</option>
                             </select>
                         </div>
@@ -466,7 +466,7 @@
             <div class="value-points" aria-label="서비스 가치">
                 <div class="value-point">
                     <strong>AI 결과물을 문서로</strong>
-                    <span>Markdown·표·JSON·노트북(.ipynb) 내용을 HWPX로 재구성합니다.</span>
+                    <span>Markdown·표·JSON·노트북(.ipynb)을 HWPX로 재구성합니다.</span>
                 </div>
                 <div class="value-point">
                     <strong>행정 문서 형식에 맞추기</strong>

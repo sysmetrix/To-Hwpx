@@ -1,6 +1,19 @@
 {
-  "current": "4.4.17",
+  "current": "4.4.18",
   "versions": [
+    {
+      "version": "4.4.18",
+      "date": "2026-06-23",
+      "user": [
+        "결과 카드의 다운로드 만료 안내를 덜어내고, 업데이트 내역과 문서 제목 옵션 안내를 더 읽기 쉽게 정리했습니다"
+      ],
+      "dev": [
+        "[v4.4.18] js/app.js/index.html: 결과 카드 링크 만료 문구 제거, 제목 기준별 placeholder 갱신, 제목 기준 라벨/옵션 문구 정리",
+        "[v4.4.18] style.css: 업데이트 내역 모달 탭 sticky 적용 및 긴 변경사항 줄바꿈/가로 스크롤 방지",
+        "[v4.4.18] index.html: value-section의 노트북 문장을 짧게 정리",
+        "[v4.4.18] package.json/package-lock.json/sw.js/index.html: v4.4.18 반영"
+      ]
+    },
     {
       "version": "4.4.17",
       "date": "2026-06-23",
