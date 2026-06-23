@@ -40,6 +40,13 @@ OWPML은 요소마다 소속 네임스페이스가 정해져 있다. **prefix를
   3. `hc:img`·`hc:pt0` 등 hc: 요소를 쓰므로 **section0 루트에 `xmlns:hc` 선언 필요**.
 - **확인처:** hwpxlib `testFile/reader_writer/SimplePicture.hwpx` (실제 한컴 그림 HWPX 샘플) — GitHub API로 받아 `Contents/section0.xml`의 `hp:pic`, `content.hpf`를 그대로 대조.
 
+### 글꼴(폰트)도 "조용히 무시"의 한 종류 — v4.4.10에서 해결
+
+- **증상:** 특정 글꼴(Pretendard)만 선택해도 한글에서 **적용이 안 됨**. 다른 글꼴은 정상, 파일도 정상 열림.
+- **원인:** 폰트 select의 `value`가 HWPX 글꼴면(fontface) 이름으로 **그대로 박힌다**. 값이 `Pretendard GOV Variable Medium`(가변폰트 풀네임)이라 한컴/Windows에 설치된 실제 패밀리명 `Pretendard GOV`와 **매칭 실패** → 글꼴만 조용히 무시됨.
+- **해결:** [index.html](../../index.html) 폰트 옵션 `value`를 **한컴이 매칭하는 패밀리명**으로. 반드시 [js/app.js](../../js/app.js) `FONT_DOWNLOADS`의 `systemNames`(예: `Pretendard GOV`, `Pretendard`)와 일치시킨다. KoPub처럼 무게를 포함한 이름이 맞는 경우도 있으니(`KoPub돋움체 Medium`) **설치된 등록명 기준**으로 정한다.
+- **교훈:** 네임스페이스뿐 아니라 **"이름 매칭"이 틀려도 동일하게 조용히 무시**된다. 글꼴이 안 먹으면 흐름을 의심하기 전에 **value가 실제 설치 패밀리명인지** 먼저 본다.
+
 ---
 
 ## 2. 정답 확인처 — 추측하지 말고 한컴 호환 라이브러리와 대조
