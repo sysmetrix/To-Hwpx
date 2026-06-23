@@ -1299,6 +1299,10 @@ function showResult({ url, fileName, size, validation }) {
                     <div class="result-file-info">
                         <strong>${escHtml(fileName)}</strong>
                         <span class="result-file-size">${formatBytes(size)} · 입력 ${escHtml(inputLabel)}</span>
+                        <span class="result-download-location">
+                            저장 위치: 브라우저 기본 다운로드 폴더
+                            <small>설정에 따라 달라질 수 있습니다</small>
+                        </span>
                     </div>
                 </div>
                 <div class="result-actions">
