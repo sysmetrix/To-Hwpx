@@ -23,7 +23,7 @@ const state = {
     ir:           null,                // 파싱 완료된 IR JSON
     docType:      'plain',             // 상단 제목 블록: plain(없음)|titleblock(기본)|cover-unit(표지단위)|cover-annual(표지연간)
     customTitle:  '',                  // 사용자가 입력한 제목 (비어 있으면 자동 기준 적용)
-    titleSource:  'heading',           // 자동 제목 기준: 'filename'(파일 이름) | 'heading'(문서 첫 제목)
+    titleSource:  'heading',           // 제목을 비웠을 때: 'filename'(파일 이름) | 'heading'(문서 첫 제목/문장)
     docFont:      '맑은 고딕',          // 출력 폰트 (기본: 맑은 고딕)
     fontSize:     12,                  // 기본 글꼴 크기 (pt)
     paperSize:    'A4',                // 용지 크기: "A4" | "B5" | "Letter"
@@ -225,11 +225,7 @@ function handleFileSelect(file) {
     resetPipeline();                 // 파이프라인 초기화
     setProgressPanelState('ready');
 
-    // 문서 제목 입력 placeholder를 파일명(확장자 제외)으로 설정
-    const titleInput = document.getElementById('doc-title');
-    if (titleInput) {
-        titleInput.placeholder = file.name.replace(/\.[^.]+$/, '');
-    }
+    updateTitlePlaceholder();
 
     // 변환기 패널로 부드럽게 스크롤
     document.getElementById('converter')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -270,7 +266,7 @@ function clearSelectedFile() {
     const titleInput = document.getElementById('doc-title');
     if (titleInput) {
         titleInput.value = '';
-        titleInput.placeholder = '파일 선택 시 자동 입력';
+        updateTitlePlaceholder();
     }
 
     const fileInput = document.getElementById('file-input');
@@ -929,11 +925,13 @@ function initOptions() {
         });
     }
 
-    // 자동 제목 기준 (문서 첫 문장/제목 또는 파일 이름)
+    // 제목을 비웠을 때 적용할 기준 (문서 첫 제목/문장 또는 파일 이름)
     const titleSrcEl = document.getElementById('title-source');
     if (titleSrcEl) {
+        updateTitlePlaceholder(titleSrcEl.value);
         titleSrcEl.addEventListener('change', () => {
             state.titleSource = titleSrcEl.value;
+            updateTitlePlaceholder(titleSrcEl.value);
         });
     }
 
@@ -1048,6 +1046,14 @@ function initOptions() {
             irToggle.setAttribute('aria-expanded', String(isHidden));
         });
     }
+}
+
+function updateTitlePlaceholder(titleSource = state.titleSource) {
+    const titleEl = document.getElementById('doc-title');
+    if (!titleEl) return;
+    titleEl.placeholder = titleSource === 'filename'
+        ? '비워두면 파일 이름을 제목으로 씁니다'
+        : '비워두면 문서에서 제목을 찾습니다';
 }
 
 
@@ -1333,7 +1339,7 @@ function showResult({ url, fileName, size, validation }) {
                 <strong>${escHtml(officeCheckTitle)}</strong>
                 <span>${escHtml(officeCheckDetail)}</span>
             </div>
-            <p class="result-note">${escHtml(autoText)} 다운로드 링크는 5분 후 만료됩니다.</p>
+            <p class="result-note">${escHtml(autoText)}</p>
         </div>
     `;
     area.style.display = 'block';
@@ -2022,6 +2028,7 @@ function resetConverterState() {
     if (plainRadio) plainRadio.checked = true;
     const titleSrc = document.getElementById('title-source');
     if (titleSrc) titleSrc.value = 'heading';
+    updateTitlePlaceholder('heading');
     if (docFont) docFont.value = '맑은 고딕';
     if (fontSize) fontSize.value = '12';
     if (paperSize) paperSize.value = 'A4';

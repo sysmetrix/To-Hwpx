@@ -1073,7 +1073,7 @@ a:hover { text-decoration: underline; }
     border-color: var(--c-primary);
     box-shadow: 0 0 0 3px rgba(56, 108, 255, 0.15);
 }
-/* 자동 제목 기준 (파일 이름 / 문서 첫 제목) */
+/* 제목을 비웠을 때 적용할 기준 */
 .title-source-row {
     display: flex;
     align-items: center;
@@ -2352,6 +2352,7 @@ a:hover { text-decoration: underline; }
 }
 .modal-body {
     overflow-y: auto;
+    overflow-x: hidden;
     flex: 1;
     padding: 20px 24px;
 }
@@ -2912,9 +2913,14 @@ a:hover { text-decoration: underline; }
    [업데이트 내역 모달]
    ───────────────────────────────────────────────────────────────── */
 .changelog-tabs {
+    position: sticky;
+    top: 0;
+    z-index: 2;
     display: flex;
     border-bottom: 2px solid var(--c-border);
     padding: 0 24px;
+    margin: -20px -24px 0;
+    background: var(--c-surface);
     flex-shrink: 0;
 }
 .changelog-tab {
@@ -2937,6 +2943,9 @@ a:hover { text-decoration: underline; }
 }
 .changelog-content {
     padding: 20px 24px;
+    overflow-x: hidden;
+    overflow-wrap: anywhere;
+    word-break: break-word;
 }
 .changelog-date-group {
     margin-bottom: 30px;
@@ -2973,6 +2982,8 @@ a:hover { text-decoration: underline; }
     align-items: center;
     gap: 10px;
     margin-bottom: 12px;
+    min-width: 0;
+    flex-wrap: wrap;
 }
 .changelog-ver-badge {
     background: var(--c-primary);
@@ -2997,6 +3008,8 @@ a:hover { text-decoration: underline; }
     font-size: 0.88rem;
     color: var(--c-text);
     line-height: 1.55;
+    overflow-wrap: anywhere;
+    word-break: break-word;
 }
 
 
