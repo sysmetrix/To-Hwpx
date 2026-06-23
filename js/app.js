@@ -19,6 +19,7 @@
 //   [주의] 민감한 문서 내용은 state에 장기 저장하지 않음 (privacy)
 // ─────────────────────────────────────────────────────────────────────────
 const state = {
+    inputMode:    'upload',            // 입력 방식: 'upload'(파일) | 'paste'(직접 입력)
     queue:        [],                  // 배치 변환 큐: [{id, file, ext, status, blob, url, fileName, validation, error}]
     file:         null,                // 현재 선택/변환 중 File 객체 (단일 참조 — 큐 길이 1과 동일 경로 호환용)
     ir:           null,                // 파싱 완료된 IR JSON
@@ -75,6 +76,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initFormatTabs();           // 포맷 탭 전환 (기본/확장 서비스)
     initFormatCards();          // 포맷 카드 클릭 이벤트
     initOptions();              // 문서 유형·제목·폰트·여백 옵션
+    initInputMode();            // 입력 방식 탭(파일 업로드 / 직접 입력)
     initConvertButton();        // 변환 시작 버튼 + Ctrl/⌘+Enter 단축키
     initKeyboardShortcuts();     // Ctrl/⌘+O 파일 선택 등 공통 단축키
     initScrollBehavior();       // 스크롤 시 헤더 효과
@@ -195,6 +197,8 @@ function handleFileList(fileList) {
         showToast('<strong>변환이 진행 중입니다</strong> <span>완료 후 파일을 추가해 주세요.</span>', { timeout: 4000 });
         return;
     }
+    // 직접 입력 모드에서 파일이 들어오면 업로드 모드로 자동 전환
+    if (state.inputMode === 'paste') setInputMode('upload');
     addFilesToQueue(files);
 }
 
@@ -1237,21 +1241,136 @@ function updateTitlePlaceholder(titleSource = state.titleSource) {
 function initConvertButton() {
     const btn = document.getElementById('convert-btn');
     if (!btn) return;
-    btn.addEventListener('click', () => {
-        if (!state.queue.length || state.isConverting) return;
-        syncMarginInputs();
-        runConversionPipeline();
-    });
+    btn.addEventListener('click', triggerConvert);
 
     // Ctrl+Enter (Windows/Linux) / ⌘+Enter (Mac) 단축키로 변환 시작
     document.addEventListener('keydown', (e) => {
         if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-            if (!state.queue.length || state.isConverting) return;
             e.preventDefault();
-            syncMarginInputs();
-            runConversionPipeline();
+            triggerConvert();
         }
     });
+}
+
+/** 현재 입력 방식(파일/직접 입력)에 맞춰 변환을 시작한다 */
+function triggerConvert() {
+    if (state.isConverting) return;
+    if (state.inputMode === 'paste') {
+        runPasteConversion();
+        return;
+    }
+    if (!state.queue.length) return;
+    syncMarginInputs();
+    runConversionPipeline();
+}
+
+
+// ─────────────────────────────────────────────────────────────────────────
+// [직접 입력 모드]
+//   파일 업로드 대신 텍스트(MD/HTML/TXT/CSV/JSON)를 붙여넣어 변환한다.
+//   붙여넣은 텍스트를 가짜 File로 감싸 기존 큐/파이프라인(길이 1)을 그대로 재사용.
+// ─────────────────────────────────────────────────────────────────────────
+const PASTE_MIME = {
+    md:   'text/markdown',
+    html: 'text/html',
+    txt:  'text/plain',
+    csv:  'text/csv',
+    json: 'application/json',
+};
+
+function initInputMode() {
+    document.getElementById('mode-upload')?.addEventListener('click', () => setInputMode('upload'));
+    document.getElementById('mode-paste')?.addEventListener('click', () => setInputMode('paste'));
+
+    // 입력 형식 선택 — 저장값 복원 + 보존/손실 안내 갱신
+    const fmt = document.getElementById('paste-format');
+    if (fmt) {
+        const saved = localStorage.getItem('tohwpx_pasteFormat');
+        if (saved && Array.from(fmt.options).some(o => o.value === saved)) fmt.value = saved;
+        fmt.addEventListener('change', () => {
+            localStorage.setItem('tohwpx_pasteFormat', fmt.value);
+            if (state.inputMode === 'paste') updateFormatExpectation(fmt.value);
+        });
+    }
+
+    // 텍스트 입력 시 변환 버튼 활성/비활성
+    const ta = document.getElementById('paste-input');
+    ta?.addEventListener('input', () => {
+        if (state.inputMode !== 'paste' || state.isConverting) return;
+        const hasText = !!ta.value.trim();
+        updateConvertButton(hasText);
+        if (hasText) setProgressPanelState('ready');
+    });
+}
+
+/** 입력 방식 전환 (파일 ↔ 직접 입력). 전환 시 진행 중 입력은 초기화한다. */
+function setInputMode(mode) {
+    if (mode !== 'upload' && mode !== 'paste') return;
+    if (mode === state.inputMode) return;
+    if (state.isConverting) return;   // 변환 중에는 전환 금지
+
+    state.inputMode = mode;
+
+    const upload = document.getElementById('upload-mode');
+    const paste  = document.getElementById('paste-mode');
+    if (upload) upload.hidden = mode !== 'upload';
+    if (paste)  paste.hidden  = mode !== 'paste';
+
+    const tabU = document.getElementById('mode-upload');
+    const tabP = document.getElementById('mode-paste');
+    tabU?.classList.toggle('is-active', mode === 'upload');
+    tabP?.classList.toggle('is-active', mode === 'paste');
+    tabU?.setAttribute('aria-selected', String(mode === 'upload'));
+    tabP?.setAttribute('aria-selected', String(mode === 'paste'));
+
+    // 공통 초기화(큐·결과·업로드 UI). clearSelectedFile은 inputMode를 바꾸지 않는다.
+    clearSelectedFile();
+
+    if (mode === 'paste') {
+        const ta  = document.getElementById('paste-input');
+        const fmt = document.getElementById('paste-format');
+        if (fmt) updateFormatExpectation(fmt.value);   // 선택 형식의 보존/손실 안내 표시
+        const hasText = !!ta?.value.trim();
+        updateConvertButton(hasText);
+        if (hasText) setProgressPanelState('ready');
+        ta?.focus();
+    }
+}
+
+/** 직접 입력 텍스트를 가짜 File로 감싸 단일 변환을 실행 */
+function runPasteConversion() {
+    if (state.isConverting) return;
+    const ta = document.getElementById('paste-input');
+    const text = ta ? ta.value : '';
+    if (!text.trim()) {
+        showToast('<strong>입력 내용이 비어 있습니다</strong> <span>변환할 내용을 입력해 주세요.</span>', { timeout: 4000 });
+        ta?.focus();
+        return;
+    }
+    const ext  = document.getElementById('paste-format')?.value || 'md';
+    const mime = PASTE_MIME[ext] || 'text/plain';
+    const baseName = sanitizeBaseName(document.getElementById('paste-name')?.value) || '문서';
+    // 붙여넣은 텍스트를 가짜 File로 감싸면 fileToIR이 확장자로 형식을 인식한다
+    const file = new File([text], `${baseName}.${ext}`, { type: mime });
+
+    syncMarginInputs();
+    revokeAllQueueUrls();   // 재변환 시 이전 결과 URL 정리(큐 교체 전)
+    state.file = file;
+    state.queue = [{
+        id: `q_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+        file, ext,
+        status: 'pending', blob: null, url: null, fileName: null, validation: null, error: null,
+    }];
+    runConversionPipeline();
+}
+
+/** 문서명 입력값에서 경로/제어문자·끝 확장자를 제거해 안전한 베이스 이름으로 */
+function sanitizeBaseName(raw) {
+    return String(raw || '')
+        .replace(/[\\/:*?"<>| -]/g, '')   // 파일명 금지 문자
+        .replace(/\.(hwpx|md|html?|txt|csv|json|ipynb|docx|xlsx?|hwp)$/i, '')  // 끝 확장자 제거
+        .trim()
+        .slice(0, 100);
 }
 
 function initKeyboardShortcuts() {
@@ -1288,9 +1407,15 @@ function updateConvertButton(enabled) {
     if (!btn) return;
     btn.disabled = !enabled;
     const n = state.queue.length;
-    btn.textContent = !enabled
-        ? (state.isConverting ? '변환 중…' : '파일을 먼저 선택하세요')
-        : (n > 1 ? `${n}개 변환 시작 →` : '변환 시작 →');
+    if (state.inputMode === 'paste') {
+        btn.textContent = !enabled
+            ? (state.isConverting ? '변환 중…' : '내용을 입력하세요')
+            : '변환 시작 →';
+    } else {
+        btn.textContent = !enabled
+            ? (state.isConverting ? '변환 중…' : '파일을 먼저 선택하세요')
+            : (n > 1 ? `${n}개 변환 시작 →` : '변환 시작 →');
+    }
 }
 
 
@@ -2462,6 +2587,13 @@ function initTheme() {
 function resetConverterState() {
     clearSelectedFile();
     hideAlert();
+
+    // 직접 입력 내용·모드 초기화 → 파일 업로드 모드로 복귀
+    const pasteInputEl = document.getElementById('paste-input');
+    const pasteNameEl  = document.getElementById('paste-name');
+    if (pasteInputEl) pasteInputEl.value = '';
+    if (pasteNameEl)  pasteNameEl.value = '';
+    if (state.inputMode !== 'upload') setInputMode('upload');
 
     state.docType = 'plain';
     state.customTitle = '';

@@ -1,6 +1,23 @@
 {
-  "current": "4.4.22",
+  "current": "4.4.23",
   "versions": [
+    {
+      "version": "4.4.23",
+      "date": "2026-06-23",
+      "user": [
+        "파일을 올리지 않고도 내용을 바로 붙여넣어 변환할 수 있습니다. 변환기의 '⌨ 직접 입력' 탭을 누르고 형식(Markdown·HTML·텍스트·CSV·JSON)을 고른 뒤 내용을 붙여넣으면 HWPX로 변환됩니다",
+        "직접 입력에서도 문서명·고급 설정(글꼴·용지·여백 등)과 결과 미리보기·다운로드를 그대로 사용할 수 있습니다",
+        "기존 파일 업로드 방식은 '📂 파일 업로드' 탭으로 그대로 유지됩니다"
+      ],
+      "dev": [
+        "[v4.4.23] index.html: 옵션 패널에 입력 방식 탭(#mode-upload/#mode-paste)과 #upload-mode/#paste-mode 패널 추가(직접 입력=형식 select·textarea·문서명)",
+        "[v4.4.23] js/app.js: state.inputMode 도입, initInputMode/setInputMode(탭 전환·전환 시 입력 초기화)/runPasteConversion(텍스트를 가짜 File로 감싸 단일 큐로 기존 파이프라인 재사용)/sanitizeBaseName 추가",
+        "[v4.4.23] js/app.js: 변환 트리거를 triggerConvert로 통합(모드별 분기), updateConvertButton·handleFileList(파일 들어오면 업로드 모드 자동 전환)·resetConverterState를 모드 인식하도록 갱신. 직접 입력 형식은 tohwpx_pasteFormat에 저장, 선택 형식의 보존/손실 안내 표시",
+        "[v4.4.23] style.css: .input-mode-tabs/.paste-textarea/.paste-name-wrap 등 직접 입력 UI(전부 디자인 토큰 → 다크 자동 적용)",
+        "[v4.4.23] qa/release-qa.md: 직접 입력 회귀 체크리스트 추가",
+        "[v4.4.23] package.json/package-lock.json/sw.js/index.html: v4.4.23 반영"
+      ]
+    },
     {
       "version": "4.4.22",
       "date": "2026-06-23",

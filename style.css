@@ -3562,3 +3562,73 @@ a:hover { text-decoration: underline; }
     .batch-row-actions { order: 3; }
     .batch-row-status { order: 1; margin-left: auto; }
 }
+
+
+/* ─────────────────────────────────────────────────────────────────
+   [입력 방식 탭 + 직접 입력]  파일 업로드 / 텍스트 직접 입력 전환
+   - 색은 디자인 토큰 → 다크 테마 자동 적용
+   ───────────────────────────────────────────────────────────────── */
+.input-mode-tabs {
+    display: inline-flex;
+    gap: 4px;
+    padding: 4px;
+    margin-bottom: 14px;
+    background: var(--c-surface-alt);
+    border: 1px solid var(--c-border);
+    border-radius: var(--radius-md);
+}
+.input-mode-tab {
+    border: none;
+    background: transparent;
+    color: var(--c-text-sub);
+    font-family: var(--font-main);
+    font-size: 0.88rem;
+    font-weight: 700;
+    padding: 7px 16px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: background var(--trans), color var(--trans), box-shadow var(--trans);
+}
+.input-mode-tab:hover { color: var(--c-primary); }
+.input-mode-tab.is-active {
+    background: var(--c-surface);
+    color: var(--c-primary);
+    box-shadow: var(--shadow-sm);
+}
+.input-mode-tab:focus-visible { outline: 2px solid var(--c-primary); outline-offset: 2px; }
+
+/* 직접 입력: 텍스트 영역 */
+.paste-textarea {
+    width: 100%;
+    min-height: 220px;
+    resize: vertical;
+    padding: 12px 14px;
+    border: 1.5px solid var(--c-border);
+    border-radius: var(--radius-sm);
+    background: var(--c-surface);
+    color: var(--c-text);
+    font-family: var(--font-mono);
+    font-size: 0.86rem;
+    line-height: 1.6;
+    transition: border-color var(--trans), box-shadow var(--trans);
+}
+.paste-textarea::placeholder { color: var(--c-text-muted); }
+.paste-textarea:focus {
+    outline: none;
+    border-color: var(--c-primary);
+    box-shadow: 0 0 0 3px rgba(56, 108, 255, 0.15);
+}
+
+/* 직접 입력: 문서명 + .hwpx 접미 */
+.paste-name-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.paste-name-wrap input { flex: 1; min-width: 0; }
+.paste-ext {
+    flex-shrink: 0;
+    color: var(--c-text-muted);
+    font-size: 0.9rem;
+    font-weight: 700;
+}
