@@ -1,6 +1,20 @@
 {
-  "current": "4.4.20",
+  "current": "4.4.21",
   "versions": [
+    {
+      "version": "4.4.21",
+      "date": "2026-06-23",
+      "user": [
+        "다크 모드를 추가했습니다. 헤더의 🌙 버튼이나 단축키 Shift + D로 라이트/다크 테마를 전환할 수 있고, 처음 방문 시에는 운영체제 설정을 따릅니다. 선택한 테마는 다음 방문에도 유지됩니다",
+        "다크 모드에서도 문서 미리보기와 표지 색 미리보기는 실제 HWPX 출력 그대로 흰 종이로 보여 결과를 정확히 확인할 수 있습니다"
+      ],
+      "dev": [
+        "[v4.4.21] index.html: <head>에 FOUC 방지용 인라인 테마 선적용 스크립트(저장값→없으면 시스템 해석 후 html[data-theme] 설정), 헤더에 #theme-toggle 버튼, theme-color 메타에 id 부여, 단축키 모달에 Shift+D 항목 추가",
+        "[v4.4.21] style.css: :root[data-theme=\"dark\"] 단일 블록으로 디자인 토큰 다크 재정의(틴트 *-light는 반투명으로), 토스트·툴팁용 --c-inverse-surface 신설, 하드코딩 색(정보/경고 워시·칩·설치 배지)을 토큰화해 라이트 외관은 동일 유지, 미리보기/표지 프리뷰(.preview-ir/.preview-loading/.fallback-preview/.cr-preview)에 라이트 토큰 국소 재선언으로 출력 충실도 보존, @media print에서 핵심 토큰 라이트 복귀",
+        "[v4.4.21] js/app.js: initTheme()/toggleTheme()/getResolvedTheme()/applyTheme() 등 테마 로직 추가(localStorage 'tohwpx_theme', matchMedia 시스템 변경 동기화, theme-color 메타·버튼 aria 갱신), DOMContentLoaded에 initTheme 등록, initKeyboardShortcuts에 Shift+D 처리 추가. 테마는 전역 설정이라 resetConverterState에는 미포함",
+        "[v4.4.21] package.json/package-lock.json/sw.js/index.html: v4.4.21 반영"
+      ]
+    },
     {
       "version": "4.4.20",
       "date": "2026-06-23",

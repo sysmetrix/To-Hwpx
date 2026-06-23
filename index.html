@@ -51,12 +51,31 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700;800&display=swap" rel="stylesheet">
 
+    <!-- ─── 테마(다크/라이트) 선적용 ───────────────────────────────
+         [FOUC 방지] 스타일시트보다 먼저, 첫 페인트 전에 동기 실행해야 한다.
+         저장된 명시적 선택(tohwpx_theme)이 있으면 그 값을, 없으면 시스템 설정을
+         해석해 즉시 <html data-theme="light|dark">로 박는다. 따라서 CSS는
+         [data-theme="dark"] 단일 블록만 필요(미디어쿼리 중복 불필요).
+         (app.js의 initTheme가 토글·시스템 변경 실시간 동기화를 담당) -->
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('tohwpx_theme');
+                var theme = (stored === 'dark' || stored === 'light')
+                    ? stored
+                    : (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+                document.documentElement.setAttribute('data-theme', theme);
+            } catch (e) { /* localStorage/matchMedia 차단 — 기본 라이트 */ }
+        })();
+    </script>
+
     <!-- 서비스 스타일시트 -->
     <link rel="stylesheet" href="style.css">
 
     <!-- PWA 웹 앱 매니페스트 (홈 화면 추가, 앱 이름/아이콘 정의) -->
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#2563eb">
+    <!-- [주의] id="theme-color-meta"는 app.js가 다크/라이트에 맞춰 색을 갱신함 -->
+    <meta name="theme-color" content="#2563eb" id="theme-color-meta">
 
     <!-- ─── CDN 라이브러리 ─────────────────────────────────────────
          [보안] integrity(SRI 해시)와 crossorigin="anonymous" 필수
@@ -98,7 +117,7 @@
             <span>｢BWYF｣ AX Challenger 2026</span>
             <!-- [주의] id="open-changelog"는 app.js에서 업데이트 내역 모달을 여는 연결값 -->
             <button class="util-changelog-btn" id="open-changelog" aria-label="업데이트 내역 보기">
-                📋 v4.4.20 업데이트 내역
+                📋 v4.4.21 업데이트 내역
             </button>
         </div>
     </div>
@@ -136,6 +155,13 @@
                     <li>
                         <button class="nav-shortcut-btn" id="open-shortcuts" aria-label="단축키 도움말 열기" title="단축키 보기 (Shift + /)">
                             ⌨ 단축키
+                        </button>
+                    </li>
+                    <li>
+                        <!-- [주의] id="theme-toggle"은 app.js initTheme가 제어. 아이콘/라벨은 JS가 갱신 -->
+                        <button class="nav-shortcut-btn" id="theme-toggle" aria-pressed="false"
+                                aria-label="다크 모드 켜기" title="테마 전환 (Shift + D)">
+                            <span id="theme-toggle-icon" aria-hidden="true">🌙</span> <span id="theme-toggle-label">다크</span>
                         </button>
                     </li>
                     <li>
@@ -1097,6 +1123,7 @@
                 <div><dt>Ctrl/⌘ + Enter</dt><dd>선택한 파일 변환 시작</dd></div>
                 <div><dt>Esc</dt><dd>열린 안내창 닫기, 없으면 초기화</dd></div>
                 <div><dt>Ctrl/⌘ + D</dt><dd>브라우저 즐겨찾기</dd></div>
+                <div><dt>Shift + D</dt><dd>다크/라이트 테마 전환</dd></div>
                 <div><dt>Shift + / (?)</dt><dd>이 단축키 안내 열기</dd></div>
             </dl>
         </div>

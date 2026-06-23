@@ -81,6 +81,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initNavLinks();             // 부드러운 스크롤 네비게이션
     initModals();               // 미리보기·업데이트 내역 모달
     initResetButton();          // 현재 선택 파일과 변환 옵션 초기화
+    initTheme();                // 다크/라이트 테마 토글·시스템 동기화
     showFormatHintPlaceholder();// 파일 선택 전 포맷 힌트 영역 안내(빈칸 방지)
 });
 
@@ -1090,6 +1091,15 @@ function initKeyboardShortcuts() {
             return;
         }
 
+        // Shift + D — 다크/라이트 테마 전환.
+        // (Ctrl/⌘ + D 브라우저 즐겨찾기와 겹치지 않게 다른 수정자는 모두 제외)
+        if (e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey
+            && e.key.toLowerCase() === 'd' && !typing) {
+            e.preventDefault();
+            toggleTheme();
+            return;
+        }
+
         if (!((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'o')) return;
         const modalOpen = !!document.querySelector('.modal-overlay.open');
         if (modalOpen) return;
@@ -2004,6 +2014,81 @@ function initResetButton() {
     const btn = document.getElementById('reset-btn');
     if (!btn) return;
     btn.addEventListener('click', resetConverterState);
+}
+
+
+// ─────────────────────────────────────────────────────────────────────────
+// [테마 (다크/라이트)]
+//   <head> 인라인 스크립트가 첫 페인트 전에 html[data-theme]를 이미 설정한다(FOUC 방지).
+//   여기서는 토글 버튼·Shift+D 단축키·시스템 변경 동기화와 버튼/메타 UI 갱신만 담당.
+//   저장 키: tohwpx_theme ('dark'|'light'). 저장값이 없으면 시스템 설정(prefers-color-scheme)을 따른다.
+//   ※ 테마는 전역 환경설정이므로 변환 옵션 초기화(↺)에는 일부러 포함하지 않는다.
+// ─────────────────────────────────────────────────────────────────────────
+const THEME_KEY = 'tohwpx_theme';
+
+function systemPrefersDark() {
+    return !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+}
+
+/** 현재 적용 중인(해석된) 테마 — 저장된 명시적 선택 우선, 없으면 시스템 */
+function getResolvedTheme() {
+    const stored = localStorage.getItem(THEME_KEY);
+    if (stored === 'dark' || stored === 'light') return stored;
+    return systemPrefersDark() ? 'dark' : 'light';
+}
+
+/** data-theme 속성 + 토글 버튼 + theme-color 메타를 한 번에 적용 */
+function applyTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    updateThemeToggleUI(theme);
+    updateThemeColorMeta(theme);
+}
+
+function updateThemeToggleUI(theme) {
+    const btn = document.getElementById('theme-toggle');
+    if (!btn) return;
+    const isDark = theme === 'dark';
+    const icon  = document.getElementById('theme-toggle-icon');
+    const label = document.getElementById('theme-toggle-label');
+    // 아이콘/라벨은 "지금 누르면 전환될 방향"을 안내한다.
+    if (icon)  icon.textContent  = isDark ? '☀️' : '🌙';
+    if (label) label.textContent = isDark ? '라이트' : '다크';
+    btn.setAttribute('aria-pressed', String(isDark));
+    btn.setAttribute('aria-label', isDark ? '라이트 모드 켜기' : '다크 모드 켜기');
+}
+
+function updateThemeColorMeta(theme) {
+    const meta = document.getElementById('theme-color-meta');
+    if (!meta) return;
+    // 라이트는 기존 브랜드 블루 유지, 다크는 헤더 표면색(#1c1e26)에 맞춘다.
+    meta.setAttribute('content', theme === 'dark' ? '#1c1e26' : '#2563eb');
+}
+
+/** 토글: 현재 해석된 테마의 반대로 전환하고 명시적으로 저장 */
+function toggleTheme() {
+    const next = getResolvedTheme() === 'dark' ? 'light' : 'dark';
+    localStorage.setItem(THEME_KEY, next);
+    applyTheme(next);
+}
+
+function initTheme() {
+    // 인라인 스크립트가 data-theme를 이미 설정했으므로 여기선 버튼/메타만 동기화.
+    applyTheme(getResolvedTheme());
+
+    const btn = document.getElementById('theme-toggle');
+    if (btn) btn.addEventListener('click', toggleTheme);
+
+    // 저장된 명시적 선택이 없을 때만 OS 테마 변경을 실시간 반영한다.
+    if (window.matchMedia) {
+        const mq = window.matchMedia('(prefers-color-scheme: dark)');
+        const onChange = () => {
+            if (!localStorage.getItem(THEME_KEY)) {
+                applyTheme(systemPrefersDark() ? 'dark' : 'light');
+            }
+        };
+        if (mq.addEventListener)  mq.addEventListener('change', onChange);
+        else if (mq.addListener)  mq.addListener(onChange);   // 구형 사파리 폴백
+    }
 }
 
 function resetConverterState() {

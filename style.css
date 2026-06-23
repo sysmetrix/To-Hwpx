@@ -64,6 +64,21 @@
     --c-error:          #bf362c;
     --c-error-light:    #f9e9e7;
 
+    /* 반전 표면 — 토스트·툴팁처럼 "양 테마에서 항상 어두운 배경 + 밝은 글자"인 요소.
+       라이트 테마에서는 기존의 var(--c-text)와 같은 값. */
+    --c-inverse-surface: #1c1d22;
+
+    /* 정보/경고 워시 + 칩 배지 — 기존 하드코딩 색을 토큰화(라이트 값은 변경 없음).
+       다크 테마에서만 [data-theme="dark"]가 어두운 값으로 덮어쓴다. */
+    --c-info-bg:         rgba(37, 99, 235, 0.05);
+    --c-info-border:     rgba(37, 99, 235, 0.18);
+    --c-warnwash-bg:     rgba(248, 239, 218, 0.65);
+    --c-warnwash-border: rgba(180, 83, 9, 0.32);
+    --c-chip-surface:    #ffffff;
+    --c-installed-bg:     #dcfce7;
+    --c-installed-border: #86efac;
+    --c-installed-text:   #16a34a;
+
     /* 그림자 (짙은 그림자 제거 — 옅은 단계감만) */
     --shadow-sm:   0 1px 2px rgba(20,21,26,.04);
     --shadow-md:   0 4px 16px rgba(20,21,26,.06);
@@ -82,6 +97,82 @@
 
     /* 트랜지션 (호버·포커스 — 160~220ms 부드러운 전환) */
     --trans:        0.18s ease;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   [다크 테마]  data-theme="dark"일 때만 디자인 토큰을 어둡게 덮어쓴다.
+   - <head> 인라인 스크립트가 첫 페인트 전에 data-theme를 항상 설정(저장값 →
+     없으면 시스템 해석)하므로 prefers-color-scheme 미디어쿼리 중복이 불필요.
+   - 틴트 토큰(*-light)은 "어두운 배경 위 진한 글자" 조합이 유지되도록 불투명색이
+     아니라 반투명 틴트로 재정의한다(이게 다크모드에서 가장 깨지기 쉬운 부분).
+   - 문서/표지 미리보기처럼 "실제 HWPX 출력"을 흉내 내는 면은 테마와 무관하게
+     흰 종이로 보여야 하므로 아래에서 라이트 토큰을 국소 재선언한다.
+   ───────────────────────────────────────────────────────────────── */
+:root[data-theme="dark"] {
+    color-scheme: dark;   /* 스크롤바·select·number 스피너를 네이티브 다크로 */
+
+    --c-primary:        #4f8cff;
+    --c-primary-dark:   #6ea2ff;   /* 다크에선 hover가 더 밝아야 자연스럽다 */
+    --c-primary-light:  rgba(79, 140, 255, 0.16);
+
+    --c-accent:         #4f8cff;
+    --c-accent-light:   rgba(79, 140, 255, 0.16);
+
+    --c-bg:             #14151a;
+    --c-surface:        #1c1e26;
+    --c-surface-alt:    #24262f;
+
+    --c-text:           #e7e8ec;
+    --c-text-sub:       #aab0ba;
+    --c-text-muted:     #777c86;
+
+    --c-border:         #2e313b;
+    --c-border-strong:  #3b3f4a;
+    --c-border-focus:   #4f8cff;
+
+    --c-success:        #34d399;
+    --c-success-light:  rgba(52, 211, 153, 0.16);
+    --c-warning:        #fbbf24;
+    --c-warning-light:  rgba(251, 191, 36, 0.16);
+    --c-error:          #f87171;
+    --c-error-light:    rgba(248, 113, 113, 0.16);
+
+    --shadow-sm:   0 1px 2px rgba(0,0,0,.45);
+    --shadow-md:   0 6px 18px rgba(0,0,0,.55);
+    --shadow-lg:   0 18px 48px rgba(0,0,0,.65);
+
+    /* 반전 표면(토스트·툴팁) — 어두운 페이지에서 살짝 떠 보이게 한 단계 밝게 */
+    --c-inverse-surface: #30343f;
+
+    /* 정보/경고 워시 + 칩 — 어두운 배경에 맞춘 반투명 틴트 */
+    --c-info-bg:         rgba(79, 140, 255, 0.12);
+    --c-info-border:     rgba(79, 140, 255, 0.32);
+    --c-warnwash-bg:     rgba(251, 191, 36, 0.10);
+    --c-warnwash-border: rgba(251, 191, 36, 0.30);
+    --c-chip-surface:    var(--c-surface-alt);
+    --c-installed-bg:     rgba(52, 211, 153, 0.14);
+    --c-installed-border: rgba(52, 211, 153, 0.34);
+    --c-installed-text:   #34d399;
+}
+
+/* 다크: 어두운 페이지에서 푸터가 묻히지 않게 경계선 추가 */
+:root[data-theme="dark"] .site-footer { border-top: 1px solid var(--c-border); }
+
+/* ─── 다크에서도 "실제 출력"은 흰 종이로 ───────────────────────────────
+   문서/표지 미리보기 면에 라이트 토큰을 국소 재선언한다. 자식이 var(--c-text)
+   등을 써도 흰 종이 위에서 읽히게 되고, 표지 색 미니 프리뷰의 제목 막대(--c-text-sub
+   배경)도 어두운 막대로 유지된다. (이 면들의 배경·표 색은 대부분 하드코딩 라이트라
+   그대로 흰 종이가 유지된다.) — 프로젝트 철학: 한컴 출력 그대로 보여주기. */
+:root[data-theme="dark"] .preview-ir,
+:root[data-theme="dark"] .preview-loading,
+:root[data-theme="dark"] .fallback-preview,
+:root[data-theme="dark"] .cr-preview {
+    --c-text:        #1c1d22;
+    --c-text-sub:    #565a62;
+    --c-text-muted:  #9a9ea6;
+    --c-border:      #e6e4dd;
+    --c-surface:     #ffffff;
+    --c-surface-alt: #f4f3ef;
 }
 
 /* ─────────────────────────────────────────────────────────────────
@@ -237,7 +328,7 @@ a:hover { text-decoration: underline; }
     top: calc(100% + 8px);
     left: 50%;
     transform: translateX(-50%);
-    background: var(--c-text);
+    background: var(--c-inverse-surface);
     color: #fff;
     font-size: 12px;
     font-weight: 400;
@@ -256,7 +347,7 @@ a:hover { text-decoration: underline; }
     left: 50%;
     transform: translateX(-50%);
     border: 5px solid transparent;
-    border-bottom-color: var(--c-text);
+    border-bottom-color: var(--c-inverse-surface);
 }
 .nav-tooltip-wrap:hover .nav-tooltip { display: block; }
 
@@ -291,7 +382,7 @@ a:hover { text-decoration: underline; }
     bottom: 32px;
     left: 50%;
     transform: translateX(-50%) translateY(20px);
-    background: var(--c-text);
+    background: var(--c-inverse-surface);
     color: #fff;
     padding: 12px 20px;
     border-radius: var(--radius-md);
@@ -1768,9 +1859,9 @@ a:hover { text-decoration: underline; }
 .result-issues {
     margin: 0 0 12px;
     padding: 10px 12px 10px 28px;
-    border: 1px solid rgba(180, 83, 9, 0.32);
+    border: 1px solid var(--c-warnwash-border);
     border-radius: var(--radius-md);
-    background: rgba(248, 239, 218, 0.65);
+    background: var(--c-warnwash-bg);
     color: var(--c-warning);
     font-size: 0.78rem;
     line-height: 1.5;
@@ -1823,9 +1914,9 @@ a:hover { text-decoration: underline; }
     gap: 3px;
     margin: 10px 0 12px;
     padding: 11px 13px;
-    border: 1px solid rgba(37, 99, 235, 0.18);
+    border: 1px solid var(--c-info-border);
     border-radius: var(--radius-md);
-    background: rgba(37, 99, 235, 0.05);
+    background: var(--c-info-bg);
 }
 .result-office-note strong {
     color: var(--c-primary);
@@ -1881,7 +1972,7 @@ a:hover { text-decoration: underline; }
     flex-shrink: 0;
     padding: 4px 9px;
     border-radius: 100px;
-    background: #fff;
+    background: var(--c-chip-surface);
     color: var(--c-error);
     border: 1px solid rgba(220, 38, 38, 0.28);
     font-size: 0.74rem;
@@ -2170,6 +2261,16 @@ a:hover { text-decoration: underline; }
 @media print {
     .site-header, .hero .drop-zone, .converter-section,
     .btn-download, .alert-box { display: none; }
+    /* 인쇄는 항상 라이트 — 다크 텍스트가 흰 종이에서 사라지지 않도록 핵심 토큰만 되돌림 */
+    :root[data-theme="dark"] {
+        --c-bg:          #ffffff;
+        --c-surface:     #ffffff;
+        --c-surface-alt: #f4f3ef;
+        --c-text:        #1c1d22;
+        --c-text-sub:    #565a62;
+        --c-text-muted:  #9a9ea6;
+        --c-border:      #e6e4dd;
+    }
 }
 
 
@@ -2626,12 +2727,12 @@ a:hover { text-decoration: underline; }
     min-height: 30px;
     padding: 0 10px;
     border-radius: var(--radius-sm);
-    border: 1px solid #86efac;
+    border: 1px solid var(--c-installed-border);
     font-size: 0.78rem;
     font-weight: 800;
     white-space: nowrap;
-    background: #dcfce7;
-    color: #16a34a;
+    background: var(--c-installed-bg);
+    color: var(--c-installed-text);
 }
 .font-guide-recheck {
     display: flex;
@@ -2668,8 +2769,8 @@ a:hover { text-decoration: underline; }
     margin-top: 14px;
     padding: 12px 14px;
     border-radius: var(--radius-md);
-    border: 1px solid rgba(37,99,235,0.18);
-    background: rgba(37,99,235,0.05);
+    border: 1px solid var(--c-info-border);
+    background: var(--c-info-bg);
 }
 .font-guide-note strong {
     display: block;
@@ -3171,8 +3272,8 @@ a:hover { text-decoration: underline; }
     line-height: 1.5;
 }
 .fmt-modal-tip {
-    background: rgba(37, 99, 235, 0.05);
-    border: 1px solid rgba(37, 99, 235, 0.18);
+    background: var(--c-info-bg);
+    border: 1px solid var(--c-info-border);
     border-radius: var(--radius-md);
     padding: 14px 16px;
     margin-top: 16px;
