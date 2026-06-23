@@ -48,6 +48,16 @@
 - 포맷 카드와 팝업은 일반론만 쓰지 않는다. [js/app.js](js/app.js)의 `FORMAT_INFO`와 `getConversionSummaryForExt()`는 실제 파서 구현 기준으로 **보존됨 / 제외 가능**을 설명해야 한다. DOCX·JSON처럼 내용은 읽히지만 원본 레이아웃 복제가 아닌 포맷은 보존도를 과장하지 않는다.
 - 포맷 카드 클릭은 변환 모드 선택이 아니다. 파일 형식은 업로드한 파일 확장자로 결정된다. 따라서 “이 포맷으로 변환하기” 같은 버튼은 두지 않는다.
 
+## 지속 개발 메모 규칙
+
+새 변환 품질 이슈를 해결했거나 포맷별 처리 노하우가 생기면 코드만 고치고 끝내지 않는다.
+
+- 파서/HWPX 생성/포맷 안내/테스트 기준이 바뀌면 [format_conversion_playbook.md](hwpx-public-doc/references/format_conversion_playbook.md)의 해당 포맷 섹션을 함께 갱신한다.
+- 한컴 렌더링에서 조용히 사라지는 문제(namespace, IDRef, 글꼴명, 그림, borderFill, fillBrush 등)를 새로 확인하면 [hwpx_rendering_gotchas.md](hwpx-public-doc/references/hwpx_rendering_gotchas.md)에 원인·증상·정답 구조를 남긴다.
+- 새 fixture나 회귀 테스트를 추가하면 플레이북의 `검증` 항목과 [qa/release-qa.md](qa/release-qa.md) 중 관련 위치를 갱신한다.
+- 사용자에게 보이는 품질 기대치가 달라졌다면 `FORMAT_INFO`, `getConversionSummaryForExt()`, 결과 카드 문구, `changelog.json` 사용자 항목이 서로 같은 말을 하게 맞춘다.
+- 문서 업데이트가 코드 변경과 같은 커밋에 들어가도 된다. 단, 원인/결정/검증 기준을 다음 에이전트가 재현할 수 있을 만큼 구체적으로 적는다.
+
 ## 릴리스 절차 (사용자 기대 — 변경 1건 = 1릴리스)
 
 1. 코드 수정.
