@@ -1,6 +1,17 @@
 {
-  "current": "4.4.9",
+  "current": "4.4.10",
   "versions": [
+    {
+      "version": "4.4.10",
+      "date": "2026-06-23",
+      "user": [
+        "Pretendard GOV 글꼴이 적용되지 않던 문제를 고쳤습니다 (글꼴 이름을 한글이 인식하는 이름으로 수정)"
+      ],
+      "dev": [
+        "[v4.4.10] index.html: 폰트 옵션 값 'Pretendard GOV Variable Medium'→'Pretendard GOV' — HWPX에 박히는 글꼴명이 너무 구체적(가변폰트 풀네임)이라 한컴이 매칭 못 하던 문제. systemNames와 일치하는 패밀리명으로 변경",
+        "[v4.4.10] sw.js: CACHE_VERSION to-hwpx-v4.4.10, index.html v4.4.10"
+      ]
+    },
     {
       "version": "4.4.9",
       "date": "2026-06-23",
