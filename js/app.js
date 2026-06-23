@@ -1268,14 +1268,15 @@ function showResult({ url, fileName, size, validation }) {
     const summary = getConversionSummary();
     const issues = Array.isArray(validation.issues) ? validation.issues : [];
     const issuePreview = issues.slice(0, 3);
-    const officeCheck = validation.pass
-        ? '권장 — 미리보기와 한컴오피스의 글꼴·여백·표 너비가 다를 수 있습니다.'
-        : '필수 — 구조 검증 경고가 있어 한컴오피스에서 반드시 열어 확인하세요.';
+    const officeCheckTitle = validation.pass ? '한컴오피스 최종 확인 권장' : '한컴오피스 확인 필수';
+    const officeCheckDetail = validation.pass
+        ? '글꼴·여백·표 너비는 미리보기와 다를 수 있습니다.'
+        : '구조 검증 경고가 있어 한컴오피스에서 반드시 열어 확인하세요.';
 
     // 검증 결과에 따른 표시 텍스트
     const validText = validation.pass
-        ? '✓ 주요 구조 검증 PASS — 한글 호환 패키지 조건 충족'
-        : `⚠ 구조 검증 경고 ${issues.length || 1}건 — 다운로드 전 미리보기를 확인하세요`;
+        ? '주요 구조 검증 PASS — 한글 호환 패키지 조건 충족'
+        : `구조 검증 경고 ${issues.length || 1}건 — 다운로드 전 미리보기를 확인하세요`;
     const validClass = validation.pass ? 'result-valid' : 'result-warn';
     const cardClass = validation.pass ? '' : ' result-card--warn';
     const autoText = state.autoDownload
@@ -1286,7 +1287,7 @@ function showResult({ url, fileName, size, validation }) {
     //         escHtml()로 fileName을 이스케이프하여 XSS 방지
     area.innerHTML = `
         <div class="result-card${cardClass}">
-            <div class="result-primary">
+            <div class="result-topline">
                 <div class="result-file-row">
                     <span class="result-file-icon">📄</span>
                     <div class="result-file-info">
@@ -1294,22 +1295,27 @@ function showResult({ url, fileName, size, validation }) {
                         <span class="result-file-size">${formatBytes(size)} · 입력 ${escHtml(inputLabel)}</span>
                     </div>
                 </div>
-                <a id="download-link"
-                   href="${url}"
-                   download="${escHtml(fileName)}"
-                   type="application/hwp+zip"
-                   class="btn-download btn-download-primary">
-                    ⬇ HWPX 다운로드
-                </a>
+                <div class="result-actions">
+                    <a id="download-link"
+                       href="${url}"
+                       download="${escHtml(fileName)}"
+                       type="application/hwp+zip"
+                       class="btn-download btn-download-primary">
+                        ⬇ HWPX 다운로드
+                    </a>
+                    <button class="btn-preview" id="preview-result-btn">
+                        👁 미리보기
+                    </button>
+                </div>
             </div>
             <div class="result-validation ${validClass}">
-                ${escHtml(validText)}
+                <span class="result-validation-mark">${validation.pass ? '✓' : '!'}</span>
+                <span>${escHtml(validText)}</span>
             </div>
             <div class="result-trust-list" aria-label="산출물 신뢰도 요약">
-                <span class="${validation.pass ? 'trust-ok' : 'trust-warn'}">${validation.pass ? '패키지 구조 통과' : '구조 확인 필요'}</span>
-                <span class="trust-ok">브라우저 내부 처리</span>
-                <span class="trust-info">다운로드 링크 5분 유지</span>
-                <span class="trust-info">최종 서식은 한컴에서 확인</span>
+                <span class="${validation.pass ? 'trust-ok' : 'trust-warn'}"><b>검증</b>${validation.pass ? '패키지 구조 통과' : '구조 확인 필요'}</span>
+                <span class="trust-info"><b>처리</b>브라우저 내부</span>
+                <span class="trust-info"><b>링크</b>5분 유지</span>
             </div>
             ${issuePreview.length ? `
                 <ul class="result-issues">
@@ -1317,17 +1323,15 @@ function showResult({ url, fileName, size, validation }) {
                     ${issues.length > issuePreview.length ? `<li>외 ${issues.length - issuePreview.length}건</li>` : ''}
                 </ul>
             ` : ''}
-            <div class="result-summary">
-                <p><strong>변환된 파일명</strong> ${escHtml(fileName)}</p>
-                <p><strong>입력 포맷</strong> ${escHtml(inputLabel)}</p>
-                <p><strong>보존된 요소</strong> ${escHtml(summary.preserved)}</p>
-                <p><strong>제외/손실된 요소</strong> ${escHtml(summary.lossy)}</p>
-                <p><strong>한컴오피스 확인</strong> ${escHtml(officeCheck)}</p>
-            </div>
-            <div class="result-actions">
-                <button class="btn-preview" id="preview-result-btn">
-                    👁 미리보기
-                </button>
+            <dl class="result-summary">
+                <div><dt>변환된 파일명</dt><dd>${escHtml(fileName)}</dd></div>
+                <div><dt>입력 포맷</dt><dd>${escHtml(inputLabel)}</dd></div>
+                <div><dt>보존된 요소</dt><dd>${escHtml(summary.preserved)}</dd></div>
+                <div><dt>제외/손실된 요소</dt><dd>${escHtml(summary.lossy)}</dd></div>
+            </dl>
+            <div class="result-office-note">
+                <strong>${escHtml(officeCheckTitle)}</strong>
+                <span>${escHtml(officeCheckDetail)}</span>
             </div>
             <p class="result-note">${escHtml(autoText)} 다운로드 링크는 5분 후 만료됩니다.</p>
         </div>
