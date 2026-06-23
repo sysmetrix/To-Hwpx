@@ -3354,3 +3354,211 @@ a:hover { text-decoration: underline; }
     .drop-zone.drag-over,
     .format-card:hover:not(.coming-soon) { transform: none; }
 }
+
+
+/* ─────────────────────────────────────────────────────────────────
+   [배치 변환]  선택한 파일 목록(옵션 패널) + 파일별 결과(진행 패널)
+   - 모든 색은 디자인 토큰 사용 → 다크 테마 자동 적용
+   ───────────────────────────────────────────────────────────────── */
+
+/* 옵션 패널: 선택한 파일 큐 목록 (2개 이상일 때 표시) */
+.file-queue {
+    margin: 0 0 14px;
+    border: 1px solid var(--c-border);
+    border-radius: var(--radius-md);
+    background: var(--c-surface-alt);
+    overflow: hidden;
+}
+.file-queue-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 9px 12px;
+    border-bottom: 1px solid var(--c-border);
+    background: var(--c-surface);
+}
+.file-queue-head strong { font-size: 0.84rem; color: var(--c-text); }
+.file-queue-clear {
+    border: 1px solid var(--c-border);
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--c-text-sub);
+    font-family: var(--font-main);
+    font-size: 0.76rem;
+    font-weight: 700;
+    padding: 4px 10px;
+    cursor: pointer;
+    transition: background var(--trans), border-color var(--trans), color var(--trans);
+}
+.file-queue-clear:hover { background: var(--c-primary-light); border-color: var(--c-primary); color: var(--c-primary); }
+.file-queue-list {
+    list-style: none;
+    margin: 0;
+    padding: 4px;
+    max-height: 240px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.file-queue-item {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 7px 9px;
+    border-radius: var(--radius-sm);
+    font-size: 0.83rem;
+}
+.file-queue-item + .file-queue-item { border-top: 1px solid var(--c-border); }
+.file-queue-item.is-converting { background: var(--c-primary-light); }
+.fq-icon { flex-shrink: 0; font-size: 1.05rem; line-height: 1; }
+.fq-name {
+    flex: 1;
+    min-width: 0;
+    color: var(--c-text);
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.fq-size { flex-shrink: 0; color: var(--c-text-muted); font-size: 0.74rem; }
+.fq-status { flex-shrink: 0; }
+.fq-badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 20px;
+    padding: 2px 8px;
+    border-radius: 100px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    line-height: 1;
+}
+.fq-badge--wait { background: var(--c-surface-alt); color: var(--c-text-muted); border: 1px solid var(--c-border); }
+.fq-badge--run  { background: var(--c-primary-light); color: var(--c-primary); }
+.fq-badge--ok   { background: var(--c-success-light); color: var(--c-success); }
+.fq-badge--warn { background: var(--c-warning-light); color: var(--c-warning); }
+.fq-badge--err  { background: var(--c-error-light);   color: var(--c-error); }
+.fq-remove {
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--c-text-muted);
+    cursor: pointer;
+    font-size: 0.82rem;
+    line-height: 1;
+    transition: background var(--trans), color var(--trans);
+}
+.fq-remove:hover { background: var(--c-error-light); color: var(--c-error); }
+
+/* 진행 패널: 배치 결과 카드 */
+.batch-result-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+}
+.batch-result-title strong {
+    display: block;
+    font-size: 0.95rem;
+    color: var(--c-text);
+    line-height: 1.4;
+}
+.batch-result-title span {
+    display: block;
+    margin-top: 3px;
+    font-size: 0.8rem;
+    color: var(--c-text-sub);
+    line-height: 1.5;
+}
+.batch-result-list {
+    list-style: none;
+    margin: 0 0 12px;
+    padding: 0;
+    border: 1px solid var(--c-border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+}
+.batch-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    background: var(--c-surface);
+    border-bottom: 1px solid var(--c-border);
+}
+.batch-row:last-child { border-bottom: none; }
+.batch-row--error { background: var(--c-error-light); }
+.batch-row-icon { flex-shrink: 0; font-size: 1.1rem; line-height: 1; }
+.batch-row-main { flex: 1; min-width: 0; }
+.batch-row-name {
+    display: block;
+    font-size: 0.86rem;
+    color: var(--c-text);
+    font-weight: 700;
+    overflow-wrap: anywhere;
+    word-break: keep-all;
+}
+.batch-row-meta {
+    display: block;
+    margin-top: 2px;
+    font-size: 0.76rem;
+    color: var(--c-text-sub);
+    line-height: 1.45;
+}
+.batch-row-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+.batch-preview,
+.batch-download {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    min-height: 30px;
+    padding: 0 10px;
+    border-radius: var(--radius-sm);
+    font-family: var(--font-main);
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background var(--trans), border-color var(--trans), color var(--trans);
+}
+.batch-preview {
+    border: 1.5px solid var(--c-border);
+    background: var(--c-surface);
+    color: var(--c-text-sub);
+}
+.batch-preview:hover { border-color: var(--c-primary); color: var(--c-primary); background: var(--c-primary-light); }
+.batch-download {
+    border: none;
+    background: var(--c-success);
+    color: #fff;
+    text-decoration: none;
+}
+.batch-download:hover { background: #047857; color: #fff; text-decoration: none; }
+.batch-row-status {
+    flex-shrink: 0;
+    min-width: 40px;
+    text-align: center;
+    font-size: 0.74rem;
+    font-weight: 800;
+}
+.batch-status--ok   { color: var(--c-success); }
+.batch-status--warn { color: var(--c-warning); }
+.batch-status--err  { color: var(--c-error); }
+
+@media (max-width: 560px) {
+    .batch-row { flex-wrap: wrap; }
+    .batch-row-main { flex-basis: 100%; order: 2; }
+    .batch-row-actions { order: 3; }
+    .batch-row-status { order: 1; margin-left: auto; }
+}

@@ -117,7 +117,7 @@
             <span>｢BWYF｣ AX Challenger 2026</span>
             <!-- [주의] id="open-changelog"는 app.js에서 업데이트 내역 모달을 여는 연결값 -->
             <button class="util-changelog-btn" id="open-changelog" aria-label="업데이트 내역 보기">
-                📋 v4.4.21 업데이트 내역
+                📋 v4.4.22 업데이트 내역
             </button>
         </div>
     </div>
@@ -197,7 +197,7 @@
              aria-label="파일을 드래그하거나 클릭하여 선택">
             <div class="drop-icon">📂</div>
             <div class="drop-title">파일을 여기에 드래그하거나 클릭하세요</div>
-            <div class="drop-sub">입력: MD · HTML · TXT · CSV · XLSX · JSON · IPYNB · DOCX · HWP<br>출력: HWPX</div>
+            <div class="drop-sub">입력: MD · HTML · TXT · CSV · XLSX · JSON · IPYNB · DOCX · HWP (여러 개 가능)<br>출력: HWPX</div>
         </div>
 
         <!-- 보조 안내 버튼 — 첫 행동(파일 선택)을 방해하지 않도록 드롭존 아래에 배치 -->
@@ -211,7 +211,8 @@
 
         <!-- 숨겨진 파일 인풋 (드롭존 클릭 시 트리거됨) -->
         <!-- [포맷 추가 시] accept에 새 확장자를 추가해야 파일 선택창에서 보입니다. -->
-        <input type="file" id="file-input" hidden
+        <!-- multiple: 여러 파일을 한 번에 선택해 배치 변환 -->
+        <input type="file" id="file-input" hidden multiple
                accept=".md,.markdown,.html,.htm,.txt,.csv,.xlsx,.xls,.json,.ipynb,.docx,.hwp,.hwpx">
     </div>
 </section>
@@ -230,13 +231,16 @@
 
                 <!-- 파일 드롭 영역 — 클릭하거나 드래그해서 바로 업로드 -->
                 <div id="converter-drop-area" class="converter-drop-area" role="button" tabindex="0"
-                     aria-label="파일을 드래그하거나 클릭하여 선택">
+                     aria-label="파일을 드래그하거나 클릭하여 선택 (여러 개 가능)">
                     <span class="cda-icon">📂</span>
                     <div class="cda-body">
-                        <span id="cda-label">파일을 드래그하거나 클릭하여 선택</span>
+                        <span id="cda-label">파일을 드래그하거나 클릭하여 선택 (여러 개 가능)</span>
                         <span id="detected-format" aria-live="polite"></span>
                     </div>
                 </div>
+
+                <!-- 선택한 파일 목록(배치) — 2개 이상일 때 app.js renderQueueList()가 채움 -->
+                <div id="file-queue" class="file-queue" hidden aria-label="선택한 파일 목록"></div>
                 <div class="title-format-row">
                     <!-- 문서 제목 (전체 폭 — 가장 먼저 설정) -->
                     <div class="form-row title-row-main">
