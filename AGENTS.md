@@ -14,6 +14,7 @@
 - [index.html](index.html) / [style.css](style.css) — 옵션 UI, 버전 버튼
 - [changelog.json](changelog.json) / [sw.js](sw.js) — 버전·캐시
 - 개발 상세: [DEV.md](DEV.md) / QA: [qa/release-qa.md](qa/release-qa.md)
+- 포맷별 변환 노하우: [hwpx-public-doc/references/format_conversion_playbook.md](hwpx-public-doc/references/format_conversion_playbook.md)
 
 ## ⛔ 변환 품질 불변식 (어기면 "열리는데 한글에서 안 보임")
 
@@ -34,6 +35,7 @@
 - 자동: `node qa/gate.js qa/fixtures/md_hwpx_test.md` → 게이트 ①~⑥(mimetype·필수파일·well‑formed·IDRef⊆정의·itemCnt·표 격자 무결성). `npm run test:golden`도 있음.
 - **자동은 well‑formed/구조만 본다. 렌더링은 못 본다.** 비주얼(색·음영·그림·표지)은 **반드시 한컴에서 눈으로** 확인 → 사용자에게 "캐시 비우고 `📋 vX.Y.Z` 버전 확인 후 보이나요?"로 요청.
 - 회귀 입력·체크리스트: [qa/fixtures/README.md](qa/fixtures/README.md), [qa/release-qa.md](qa/release-qa.md).
+- 포맷 파서·HWPX 생성·포맷 안내 문구를 새로 작업할 때는 먼저 [format_conversion_playbook.md](hwpx-public-doc/references/format_conversion_playbook.md)의 해당 포맷 섹션을 읽고, 보존/손실 안내와 테스트를 함께 갱신한다.
 
 ## UI·기대치 정렬 불변식
 
