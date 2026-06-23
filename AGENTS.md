@@ -5,7 +5,7 @@
 
 ## 이 프로젝트가 뭔가
 
-빌드 과정 없는 **정적 브라우저 앱**. 사용자가 올린 파일(MD/DOCX/HTML/TXT/CSV/XLSX/JSON/IPYNB/HWPX)을 **IR**로 정규화 → **HWPX(한컴 OWPML)** 로 생성·검증·다운로드. 서버 전송 없음.
+빌드 과정 없는 **정적 브라우저 앱**. 사용자가 올린 파일(MD/DOCX/HTML/TXT/CSV/XLSX/JSON/IPYNB/HWP)을 **IR**로 정규화 → **HWPX(한컴 OWPML)** 로 생성·검증·다운로드. 서버 전송 없음. `.hwpx` 업로드 처리는 예외/복구용으로 남겨 두되, 기본 입력 포맷 안내에는 넣지 않는다. **HWPX는 출력 형식**이다.
 
 핵심 파일:
 - [js/parsers.js](js/parsers.js) — 입력 → IR(`{title, doc_type, blocks:[...]}`)
@@ -35,10 +35,21 @@
 - **자동은 well‑formed/구조만 본다. 렌더링은 못 본다.** 비주얼(색·음영·그림·표지)은 **반드시 한컴에서 눈으로** 확인 → 사용자에게 "캐시 비우고 `📋 vX.Y.Z` 버전 확인 후 보이나요?"로 요청.
 - 회귀 입력·체크리스트: [qa/fixtures/README.md](qa/fixtures/README.md), [qa/release-qa.md](qa/release-qa.md).
 
+## UI·기대치 정렬 불변식
+
+변환 품질만큼 중요한 것은 사용자가 **무엇이 보존되고 무엇이 빠지는지** 미리 알게 하는 것이다. 최근 UX 기준은 아래를 유지한다.
+
+- 첫 화면의 주 행동은 **파일 선택/드롭존**이다. PC/모바일/설치/개인정보 같은 보조 안내 버튼은 드롭존보다 먼저 시선을 빼앗지 않게 둔다.
+- 드롭존 문구는 `입력: MD · HTML · TXT · CSV · XLSX · JSON · IPYNB · DOCX · HWP` / `출력: HWPX`처럼 입력과 출력을 분리한다. HWPX를 입력 가능 포맷처럼 쓰지 않는다.
+- 지원하지 않는 파일을 넣었을 때는 흐름을 막는 alert보다 **토스트 안내**를 우선한다. 변환 도중 실패는 결과 카드/실패 카드로 다음 행동을 제시한다.
+- `문서 제목`은 선택 사항이다. 비워두면 기본값 `heading`(문서 첫 문장/제목)을 쓰고, 사용자가 원하면 `filename`(파일 이름 사용)을 고른다. 초기화 후에도 `heading`을 기본값으로 되돌린다.
+- 포맷 카드와 팝업은 일반론만 쓰지 않는다. [js/app.js](js/app.js)의 `FORMAT_INFO`와 `getConversionSummaryForExt()`는 실제 파서 구현 기준으로 **보존됨 / 제외 가능**을 설명해야 한다. DOCX·JSON처럼 내용은 읽히지만 원본 레이아웃 복제가 아닌 포맷은 보존도를 과장하지 않는다.
+- 포맷 카드 클릭은 변환 모드 선택이 아니다. 파일 형식은 업로드한 파일 확장자로 결정된다. 따라서 “이 포맷으로 변환하기” 같은 버튼은 두지 않는다.
+
 ## 릴리스 절차 (사용자 기대 — 변경 1건 = 1릴리스)
 
 1. 코드 수정.
-2. **버전 범프**: `node qa/bump-version.js --write` → package/lock/sw(`CACHE_VERSION`)/index(버전 버튼) 자동 갱신. **단 [changelog.json](changelog.json)은 수동**: `current`를 새 버전으로 바꾸고 `versions[]` 맨 앞에 `{version,date,user[],dev[]}` 항목 추가. (날짜 같으면 patch+1, 다르면 minor+1.0 규칙.)
+2. **버전 범프**: `node qa/bump-version.js --write` → package/lock/sw(`CACHE_VERSION`)/index(버전 버튼) 자동 갱신. **단 [changelog.json](changelog.json)은 수동**: `current`를 새 버전으로 바꾸고 `versions[]` 맨 앞에 `{version,date,user[],dev[]}` 항목 추가. (날짜 같으면 patch+1, 다르면 minor+1.0 규칙.) 릴리스 전 `package.json`/`package-lock.json`/`sw.js`/`index.html` 버튼/[changelog.json](changelog.json) `current`가 같은 버전인지 확인한다.
 3. 브랜치 → 커밋(트레일러 `Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>`) → 푸시.
 4. **PR 생성·머지는 `gh` 없이 GitHub API**로(토큰은 `git credential fill`). `/tmp`는 node(Windows)와 curl이 다르게 해석하니 **JSON은 stdin 파이프**(`node -e '...JSON.stringify...' | curl ... -d @-`)로 넘긴다. 머지 405("Base branch was modified")는 재시도.
 5. main 동기화 → 브랜치 정리.
