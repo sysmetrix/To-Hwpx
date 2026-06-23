@@ -16,4 +16,7 @@ const message = "코드블록 Alpha & Beta";
 console.log(message);
 ```
 
+> Quoted Alpha line
+> with **bold quote** text
+
 [링크 텍스트](https://example.com)을 본문 텍스트로 보존해야 합니다.

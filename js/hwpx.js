@@ -284,7 +284,7 @@ function getBoldFontName(name) {
  * @param {object}   docHeaderFooter  {header?, footer?} 머리글/바닥글 텍스트
  *
  * [charPr ID]  0=본문, 1=H1, 2=H2, 3=H3, 4=H4, 5=표머리, 6=코드, 7=본문bold, 8=본문italic
- * [paraPr ID]  0=본문, 1=H1, 2=H2, 3=H3, 4=H4, 5=목록, 6=코드블록, 7=표셀(CENTER)
+ * [paraPr ID]  0=본문, 1=H1, 2=H2, 3=H3, 4=H4, 5=목록, 6=코드블록, 7=표셀(CENTER), 19=인용
  * [borderFill] 1=테두리없음, 2=실선(표셀), 3=실선+회색음영(표머리)
  *              4~9=표 좌/우 바깥 테두리 제거 변형
  */
@@ -389,7 +389,7 @@ ${[...customCharMap.entries()].map(([key, cid]) => {
         { underline: flags[2] === '1', strike: flags[3] === '1', color });
 }).join('\n')}
     </hh:charProperties>
-    <hh:paraProperties itemCnt="19">
+    <hh:paraProperties itemCnt="20">
       <!-- id  정렬    행간  전    후   들여  테두리참조 -->
 ${paraBase(0, 'JUSTIFY', 160,   0,  850,    0)}
 ${paraBase(1, 'LEFT',    180, 850,  567,    0)}
@@ -418,8 +418,10 @@ ${paraBase(16, 'LEFT',   160, 200,  100,    0)}
       <!-- id=17/18  중첩 목록 들여쓰기 (레벨1/레벨2). 레벨0은 id=5 사용 -->
 ${paraBase(17, 'LEFT',   160,   0,  100, 1200)}
 ${paraBase(18, 'LEFT',   160,   0,  100, 1800)}
+      <!-- id=19  인용구: 왼쪽 선+옅은 배경, 본문보다 조금 들여쓰기 -->
+${paraBase(19, 'LEFT',   160, 300,  300,  900, '19')}
     </hh:paraProperties>
-    <hh:borderFills itemCnt="${18 + customBfMap.size}">
+    <hh:borderFills itemCnt="${19 + customBfMap.size}">
       <!-- id=1 테두리 없음 -->
       <hh:borderFill id="1" threeD="0" shadow="0" centerLine="NONE" breakCellSeparateLine="0">
         <hh:slash type="NONE" Crooked="0" isCounter="0"/><hh:backSlash type="NONE" Crooked="0" isCounter="0"/>
@@ -579,6 +581,16 @@ ${paraBase(18, 'LEFT',   160,   0,  100, 1800)}
         <hh:topBorder type="NONE" width="0.1 mm" color="#FFFFFF"/><hh:bottomBorder type="NONE" width="0.1 mm" color="#FFFFFF"/>
         <hh:diagonal type="NONE" width="0.1 mm" color="#FFFFFF"/>
         <hc:fillBrush><hc:winBrush faceColor="#808080" hatchColor="#000000" alpha="0"/></hc:fillBrush>
+      </hh:borderFill>
+      <!-- id=19 인용구: 왼쪽 강조선 + 옅은 배경 -->
+      <hh:borderFill id="19" threeD="0" shadow="0" centerLine="NONE" breakCellSeparateLine="0">
+        <hh:slash type="NONE" Crooked="0" isCounter="0"/><hh:backSlash type="NONE" Crooked="0" isCounter="0"/>
+        <hh:leftBorder type="SOLID" width="0.5 mm" color="#64748B"/>
+        <hh:rightBorder type="NONE" width="0.1 mm" color="#000000"/>
+        <hh:topBorder type="NONE" width="0.1 mm" color="#000000"/>
+        <hh:bottomBorder type="NONE" width="0.1 mm" color="#000000"/>
+        <hh:diagonal type="NONE" width="0.1 mm" color="#000000"/>
+        <hc:fillBrush><hc:winBrush faceColor="#F8FAFC" hatchColor="#000000" alpha="0"/></hc:fillBrush>
       </hh:borderFill>
 ${[...customBfMap.entries()].map(([key, bfId]) => {
     const [color, variant = 'full'] = String(key).split(':');
@@ -1155,6 +1167,52 @@ function buildSection(ir, marginsHwp, paperKey, landscape = false, customBfMap =
         parts.push(buildBlankPara());  // 제목 아래 빈 줄
     }
 
+    const pushQuoteBlocks = (quoteBlocks) => {
+        for (const quoteBlock of (quoteBlocks || [])) {
+            const qType = quoteBlock.type;
+            if (qType === 'para') {
+                if (quoteBlock.runs && quoteBlock.runs.length > 0) {
+                    const hasText = quoteBlock.runs.some(r => r.text && r.text.trim());
+                    parts.push(hasText ? buildParaRuns(quoteBlock.runs, '19', customCharMap) : buildBlankPara());
+                } else if (quoteBlock.text && quoteBlock.text.trim()) {
+                    parts.push(buildPara(quoteBlock.text, '0', '19'));
+                } else {
+                    parts.push(buildBlankPara());
+                }
+            } else if (qType === 'heading') {
+                const { charId } = headingIds(quoteBlock.level);
+                parts.push(buildPara(quoteBlock.text || '', quoteBlock._cId || charId, '19'));
+            } else if (qType === 'list') {
+                const blockOrdered = !!quoteBlock.ordered;
+                let autoNum = 0;
+                (quoteBlock.items || []).forEach((rawItem) => {
+                    const item = typeof rawItem === 'object' ? rawItem : { text: rawItem };
+                    const level = Math.max(0, Math.min(item.level || 0, 2));
+                    const ordered = item.ordered != null ? item.ordered : blockOrdered;
+                    const bullets = ['· ', '◦ ', '▪ '];
+                    let marker;
+                    if (item.task) marker = item.checked ? '▣ ' : '□ ';
+                    else if (ordered) marker = `${item.marker != null ? item.marker : (++autoNum)}. `;
+                    else marker = bullets[level];
+                    if (item.text) parts.push(buildPara(marker + item.text, '0', '19'));
+                    for (const codeBlock of (item.codeBlocks || [])) {
+                        parts.push(buildCodeBlock(codeBlock, '', contentWidthHwp));
+                    }
+                });
+            } else if (qType === 'code') {
+                parts.push(buildCodeBlock(quoteBlock, '', contentWidthHwp));
+            } else if (qType === 'table') {
+                parts.push(buildTable(quoteBlock.header, quoteBlock.rows, contentWidthHwp, customBfMap, customCharMap));
+            } else if (qType === 'hr') {
+                parts.push(buildHrPara(contentWidthHwp));
+            } else if (qType === 'quote') {
+                pushQuoteBlocks(quoteBlock.blocks || []);
+            } else if (quoteBlock.text) {
+                parts.push(buildPara(quoteBlock.text, '0', '19'));
+            }
+        }
+    };
+
     // ── 본문 블록 ──────────────────────────────────────────────────────
     for (const block of (ir.blocks || [])) {
         const bt = block.type;
@@ -1214,16 +1272,7 @@ function buildSection(ir, marginsHwp, paperKey, landscape = false, customBfMap =
             parts.push(buildCodeBlock(block, '', contentWidthHwp));
 
         } else if (bt === 'quote') {
-            for (const quoteBlock of (block.blocks || [])) {
-                if (quoteBlock.type === 'code') {
-                    parts.push(buildCodeBlock(quoteBlock, '> ', contentWidthHwp));
-                } else if (quoteBlock.type === 'para') {
-                    const text = quoteBlock.text || (quoteBlock.runs || []).map(r => r.text || '').join('');
-                    parts.push(buildPara('▶ ' + text, '0', '5'));
-                } else {
-                    parts.push(buildPara('▶ ' + (quoteBlock.text || ''), '0', '5'));
-                }
-            }
+            pushQuoteBlocks(block.blocks || []);
 
         } else if (bt === 'image') {
             const imgIndex = imageBlocks.indexOf(block);
@@ -1267,19 +1316,27 @@ async function buildHwpx(ir, fontName = '휴먼명조', fontSize = 12, marginsMm
 
     // 표 셀 배경색 수집 → 동적 borderFill 생성용
     const customBfMap = new Map();
-    let nextBfId = 19;   // 1~11 기본 + 12~18 표지 밴드 이후부터 DOCX 셀 배경색
-    for (const block of (ir.blocks || [])) {
-        if (block.type !== 'table') continue;
-        const allRows = (block.header && block.header.length ? [block.header] : []).concat(block.rows || []);
-        for (const row of allRows) {
-            for (const cell of (row || [])) {
-                const bg = cellBg(cell);
-                if (bg) {
-                    nextBfId = addBgBorderFillVariants(customBfMap, bg, nextBfId);
+    let nextBfId = 20;   // 1~11 기본 + 12~18 표지 밴드 + 19 인용구 이후부터 DOCX 셀 배경색
+    const scanBorderFills = (blocks) => {
+        for (const block of (blocks || [])) {
+            if (block.type === 'table') {
+                const allRows = (block.header && block.header.length ? [block.header] : []).concat(block.rows || []);
+                for (const row of allRows) {
+                    for (const cell of (row || [])) {
+                        const bg = cellBg(cell);
+                        if (bg) {
+                            nextBfId = addBgBorderFillVariants(customBfMap, bg, nextBfId);
+                        }
+                    }
                 }
+            } else if (block.type === 'quote') {
+                scanBorderFills(block.blocks || []);
+            } else if (block.type === 'list') {
+                for (const item of (block.items || [])) scanBorderFills(item.codeBlocks || []);
             }
         }
-    }
+    };
+    scanBorderFills(ir.blocks || []);
 
     // 인라인 확장 서식(밑줄/취소선/글자색) 수집 → 동적 charPr 생성용
     // (header가 section보다 먼저 빌드되므로 customBfMap과 동일하게 사전 스캔)
@@ -1297,19 +1354,26 @@ async function buildHwpx(ir, fontName = '휴먼명조', fontSize = 12, marginsMm
         1: (_bp + 6) * 100, 2: (_bp + 4) * 100, 3: (_bp + 2) * 100,
         4: (_bp + 1) * 100, 5: _bp * 100, 6: Math.max((_bp - 1) * 100, 800),
     }[lvl] || _bp * 100);
-    for (const block of (ir.blocks || [])) {
-        if (block.type === 'para' && Array.isArray(block.runs)) {
-            for (const run of block.runs) if (run.text) addExtChar(run);
-        } else if (block.type === 'heading' && block.color) {
-            // 색 있는 제목: 제목 크기 + bold + 색으로 동적 charPr 생성 후 블록에 charId 주석
-            const cid = addExtChar({ bold: true, color: block.color, height: headingHeightHwp(block.level || 1) });
-            if (cid != null) block._cId = String(cid);
-        } else if (block.type === 'table') {
-            // 표 셀 글자색(예: 흰 글자 머리행)도 동적 charPr 대상 — 머리행은 bold
-            (block.header || []).forEach(c => { const col = cellColor(c); if (col) addExtChar({ color: col, bold: true }); });
-            (block.rows || []).forEach(row => (row || []).forEach(c => { const col = cellColor(c); if (col) addExtChar({ color: col, bold: false }); }));
+    const scanCharProps = (blocks) => {
+        for (const block of (blocks || [])) {
+            if (block.type === 'para' && Array.isArray(block.runs)) {
+                for (const run of block.runs) if (run.text) addExtChar(run);
+            } else if (block.type === 'heading' && block.color) {
+                // 색 있는 제목: 제목 크기 + bold + 색으로 동적 charPr 생성 후 블록에 charId 주석
+                const cid = addExtChar({ bold: true, color: block.color, height: headingHeightHwp(block.level || 1) });
+                if (cid != null) block._cId = String(cid);
+            } else if (block.type === 'table') {
+                // 표 셀 글자색(예: 흰 글자 머리행)도 동적 charPr 대상 — 머리행은 bold
+                (block.header || []).forEach(c => { const col = cellColor(c); if (col) addExtChar({ color: col, bold: true }); });
+                (block.rows || []).forEach(row => (row || []).forEach(c => { const col = cellColor(c); if (col) addExtChar({ color: col, bold: false }); }));
+            } else if (block.type === 'quote') {
+                scanCharProps(block.blocks || []);
+            } else if (block.type === 'list') {
+                for (const item of (block.items || [])) scanCharProps(item.codeBlocks || []);
+            }
         }
-    }
+    };
+    scanCharProps(ir.blocks || []);
 
     // 이미지 블록 수집
     const imageBlocks = (ir.blocks || []).filter(b => b.type === 'image');
