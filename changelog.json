@@ -1,6 +1,37 @@
 {
-  "current": "4.4.10",
+  "current": "4.4.12",
   "versions": [
+    {
+      "version": "4.4.12",
+      "date": "2026-06-23",
+      "user": [
+        "README와 QA 문서의 DOCX·JSON 안내를 실제 변환 범위에 맞게 정리했습니다",
+        "헤더 연계 서비스 코드와 주석에 남아 있던 이전 명칭을 연계/related 표현으로 통일했습니다",
+        "이전 변경의 서비스 가치 안내와 포맷별 실패 안내를 포함해 최신 버전으로 배포 준비했습니다"
+      ],
+      "dev": [
+        "[v4.4.12] index.html/style.css: 헤더 연계 링크 클래스를 nav-related-link로 교체하고 주석을 연계 링크 기준으로 정리",
+        "[v4.4.12] README.md/qa/release-qa.md/qa/fixtures/README.md: DOCX 이미지·머리글·각주 지원 범위와 JSON 보존도 설명을 최신 구현에 맞게 갱신",
+        "[v4.4.12] changelog.json: 과거 사용자 노출 문구를 연계 서비스 기준으로 정리",
+        "[v4.4.12] package.json/package-lock.json/sw.js/index.html: v4.4.12 반영"
+      ]
+    },
+    {
+      "version": "4.4.11",
+      "date": "2026-06-23",
+      "user": [
+        "첫 화면 문구를 '한글로, TO HWPX'로 더 간결하게 다듬었습니다",
+        "공공 문서의 형식 장벽을 낮춘다는 서비스 가치와 로컬 처리 장점을 짧게 안내합니다",
+        "변환 실패 시 파일 형식별로 더 구체적인 다음 행동을 안내합니다",
+        "지원 현황 표의 DOCX·JSON 설명을 실제 포맷 안내와 맞췄습니다"
+      ],
+      "dev": [
+        "[v4.4.11] index.html/style.css: value-section 추가, hero-title '그냥 한글로'→'한글로' 문구 수정",
+        "[v4.4.11] index.html: 지원 현황 표의 DOCX/JSON 품질·제한사항을 FORMAT_INFO 기준과 동기화",
+        "[v4.4.11] js/app.js: classifyConversionError()에 포맷별 recovery 안내를 추가해 실패 카드와 상단 알림에 반영",
+        "[v4.4.11] package.json/package-lock.json/sw.js/index.html: v4.4.11 반영"
+      ]
+    },
     {
       "version": "4.4.10",
       "date": "2026-06-23",
@@ -1130,7 +1161,7 @@
         "용지 방향 전환 버튼 추가 — 용지 크기 옆에서 세로/가로 전환, 재방문 시 복원",
         "긴 표가 다음 페이지로 넘어가도록 개선 (행 단위 쪽 넘김 허용)",
         "파일 크기 제한 조정 — 텍스트 파일 최대 100MB, 이진 파일(DOCX·XLSX 등) 최대 50MB",
-        "서비스 내 '자매 서비스' 표현을 '연계 서비스'로 통일"
+        "서비스 내 '연계 서비스' 표현을 통일"
       ],
       "dev": [
         "[v3.9.2] index.html: paper-size select 옆 #paper-orient 버튼 추가 — 세로/가로 토글, .paper-size-wrap flex 레이아웃",
@@ -1139,7 +1170,7 @@
         "[v3.9.2] hwpx.js: buildTable() pageBreak='TABLE' → 'ROW' — 표 행 단위 쪽 넘김 허용",
         "[v3.9.2] parsers.js: fileToIR() 크기 제한 20MB → buffer 50MB / text 100MB 포맷별 차등",
         "[v3.9.2] app.js: handleFileSelect() 크기 체크 포맷별 차등 (isBinary ? 50MB : 100MB)",
-        "[v3.9.2] index.html/style.css/changelog.json: '자매' → '연계' 텍스트 전체 교체",
+        "[v3.9.2] index.html/style.css/changelog.json: 연계 서비스 표현 정리",
         "[v3.9.2] sw.js: CACHE_VERSION to-hwpx-v3.9.2"
       ]
     },
@@ -1228,7 +1259,7 @@
         "[v3.6.0] .nav-bookmark-btn + initBookmarkButton() + .bookmark-toast 즐겨찾기 안내 토스트",
         "[v3.5.0] FORMAT_INFO 상수 추가 — 12개 포맷별 desc·tech·features·limits·tip 구조화",
         "[v3.5.0] initFormatCards() 재작성 — openFormatModal(ext) 팝업으로 교체",
-        "[v3.5.0] .nav-sister-link 스타일 추가, nav 앵커 링크를 자매 서비스 외부 링크로 교체",
+        "[v3.5.0] nav 연계 서비스 외부 링크 배지 스타일 추가",
         "[v3.4.0] hp:secPr 문단 id, lineseg horzsize, page.width - margin 기반 본문 폭 검증 추가",
         "[v3.4.0] buildTable pageBreak, repeatHeader, contentWidth 계산 및 paraPr/charPr 참조 안정화",
         "[v3.4.0] RhwpEditorClient timeout 분리 및 HWPX ZIP 내부 XML 기반 fallback preview 추가",
