@@ -98,7 +98,7 @@
             <span>｢BWYF｣ AX Challenger 2026</span>
             <!-- [주의] id="open-changelog"는 app.js에서 업데이트 내역 모달을 여는 연결값 -->
             <button class="util-changelog-btn" id="open-changelog" aria-label="업데이트 내역 보기">
-                📋 v4.4.10 업데이트 내역
+                📋 v4.4.13 업데이트 내역
             </button>
         </div>
     </div>
@@ -120,23 +120,18 @@
             <nav id="main-nav" role="navigation" aria-label="주 메뉴">
                 <ul class="main-nav">
                     <li>
-                        <a class="nav-sister-link nav-tooltip-wrap" href="https://md-to-hwpx.vercel.app/" target="_blank" rel="noopener"
+                        <a class="nav-related-link nav-tooltip-wrap" href="https://md-to-hwpx.vercel.app/" target="_blank" rel="noopener"
                            aria-label="MD→HWPX 직접 입력 변환기 열기">
                             MD→HWPX <span aria-hidden="true">↗</span>
                             <span class="nav-tooltip">Markdown을 HWPX로 실시간 변환하는<br> 연계 서비스입니다</span>
                         </a>
                     </li>
                     <li>
-                        <a class="nav-sister-link nav-tooltip-wrap" href="https://md-to-html-seven.vercel.app/" target="_blank" rel="noopener"
+                        <a class="nav-related-link nav-tooltip-wrap" href="https://md-to-html-seven.vercel.app/" target="_blank" rel="noopener"
                            aria-label="MD→HTML 변환기 열기">
                             MD→HTML <span aria-hidden="true">↗</span>
                             <span class="nav-tooltip">Markdown을 HTML로 실시간 변환하는<br> 연계 서비스입니다</span>
                         </a>
-                    </li>
-                    <li>
-                        <button class="nav-bookmark-btn" id="bookmark-btn" aria-label="즐겨찾기 단축키 안내" title="즐겨찾기 안내 (Ctrl+D / ⌘D)">
-                            ★ 즐겨찾기 안내
-                        </button>
                     </li>
                     <li>
                         <button class="nav-shortcut-btn" id="open-shortcuts" aria-label="단축키 도움말 열기" title="단축키 보기 (Shift + /)">
@@ -169,7 +164,7 @@
     <div class="container">
         <!-- 메인 제목 -->
         <!-- [문구 수정 가능] h1 안의 글자와 줄바꿈(<br>)만 수정. id="hero-title"은 유지 -->
-        <h1 id="hero-title">그냥 한글로,<br>TO HWPX</h1>
+        <h1 id="hero-title">한글로,<br>TO HWPX</h1>
 
         <!-- 파일 드롭존 (app.js의 initDropZone에서 이벤트 연결) -->
         <div id="drop-zone" class="drop-zone" role="button" tabindex="0"
@@ -452,6 +447,40 @@
 
 
 <!-- ════════════════════════════════════════════════════════════════
+     [서비스 가치]  공공 문서 개방성과 로컬 처리 가치 안내
+     ════════════════════════════════════════════════════════════════ -->
+<section class="value-section" aria-labelledby="value-title">
+    <div class="container">
+        <div class="value-layout">
+            <div class="value-copy">
+                <span class="value-kicker">왜 To HWPX인가</span>
+                <h2 id="value-title">공공 문서의 형식 장벽을 낮춥니다</h2>
+                <p>
+                    공공 문서는 더 많은 사람이 읽고, 옮기고, 보존할 수 있어야 합니다.
+                    To HWPX는 Markdown, DOCX, CSV, JSON 같은 작업 형식을 한컴 HWPX로 바꿔
+                    제출·공유 과정의 불편을 줄입니다.
+                </p>
+            </div>
+            <div class="value-points" aria-label="서비스 가치">
+                <div class="value-point">
+                    <strong>열린 작업 흐름</strong>
+                    <span>여러 입력 형식을 한컴 호환 출력으로 정리합니다.</span>
+                </div>
+                <div class="value-point">
+                    <strong>로컬 처리</strong>
+                    <span>원본 파일과 결과물이 서버로 전송되지 않습니다.</span>
+                </div>
+                <div class="value-point">
+                    <strong>기대치 안내</strong>
+                    <span>포맷별 보존 범위와 손실 가능성을 먼저 보여줍니다.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<!-- ════════════════════════════════════════════════════════════════
      [입력 가능 포맷 + 동작 원리 + 지원 현황]  탭 전환
      ════════════════════════════════════════════════════════════════ -->
 <section class="formats-section" id="formats" aria-labelledby="formats-title">
@@ -677,7 +706,7 @@
                             <td><strong>MD (Markdown)</strong></td>
                             <td>★★★</td>
                             <td><span class="card-badge badge-available">지원됨</span></td>
-                            <td>marked.js → HTML → IR</td>
+                            <td>marked.js 토큰 분석 → IR</td>
                             <td>이미지 미지원</td>
                         </tr>
                         <tr>
@@ -689,10 +718,10 @@
                         </tr>
                         <tr>
                             <td><strong>DOCX</strong></td>
-                            <td>★☆☆</td>
+                            <td>★★☆</td>
                             <td><span class="card-badge badge-available">지원됨</span></td>
-                            <td>JSZip → word/document.xml → IR</td>
-                            <td>이미지·머리글·바닥글·복잡한 서식 미지원</td>
+                            <td>JSZip → OOXML 본문·표·관계 파일 → IR</td>
+                            <td>페이지 배치·스타일 테마·주석·변경 추적 손실 가능</td>
                         </tr>
                         <tr>
                             <td><strong>HWP</strong></td>
@@ -724,10 +753,10 @@
                         </tr>
                         <tr>
                             <td><strong>JSON</strong></td>
-                            <td>★★★</td>
+                            <td>★★☆</td>
                             <td><span class="card-badge badge-available">지원됨</span></td>
                             <td>JSON.parse → 구조 분석 → IR</td>
-                            <td>IR 형식이면 직접 사용</td>
+                            <td>보고서형 레이아웃 자동 설계 없음</td>
                         </tr>
                         <tr>
                             <td><strong>IPYNB</strong></td>

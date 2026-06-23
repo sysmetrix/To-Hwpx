@@ -21,7 +21,7 @@ Scope: static browser-only conversion flow from file selection to HWPX download.
 | --- | --- | --- |
 | MD | `qa/fixtures/sample.md` | 제목, 본문, 목록, 표, 코드블록, 구분선 생성. 이미지/복잡 CSS 없음 안내 |
 | HTML | `qa/fixtures/sample.html` | 스크립트 미실행, 텍스트/표/목록만 추출 |
-| DOCX | 수동 DOCX 샘플 | 본문, 표, 일부 굵게/기울임 보존. 이미지/머리글/각주 손실 안내 |
+| DOCX | 수동 DOCX 샘플 | 본문, 표, 일부 굵게/기울임, 이미지, 첫 머리글/바닥글, 각주 텍스트 보존. 페이지 배치·복잡 개체 손실 안내 |
 | TXT | `qa/fixtures/sample.txt`, `empty.txt` | 순수 텍스트 변환, 빈 문서도 오류 없이 처리 |
 | CSV/XLSX | `sample.csv`, 수동 XLSX 샘플 | 첫 행 머리글, 숫자 오른쪽 정렬, 복잡 서식 손실 안내 |
 | JSON | `qa/fixtures/sample.json` | 제목, 목록, 객체 표 또는 텍스트 단순화 |
@@ -88,7 +88,7 @@ Scope: static browser-only conversion flow from file selection to HWPX download.
 
 ## 9. Remaining Risks
 
-1. DOCX의 이미지, 머리글/바닥글, 각주, 복잡 스타일은 손실될 수 있어 사용자가 원본과 다르다고 느낄 수 있음.
+1. DOCX의 페이지 배치, 스타일 테마, 주석, 변경 추적, 복잡 개체는 손실될 수 있어 사용자가 원본과 다르다고 느낄 수 있음.
 2. XLSX의 여러 시트, 병합 셀, 수식, 차트는 보존되지 않아 표 중심 문서 외 품질 기대를 낮춰야 함.
 3. rhwp 미리보기와 한컴오피스 렌더링 차이로 최종 여백/표 너비 확인이 필요함.
 4. 모바일 브라우저 다운로드 UI는 OS 정책 영향을 받아 자동 다운로드가 차단될 수 있음.

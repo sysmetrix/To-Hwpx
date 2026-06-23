@@ -213,7 +213,7 @@ a:hover { text-decoration: underline; }
 }
 
 /* 연계 서비스 링크 (헤더 내 외부 링크 배지 스타일) */
-.nav-sister-link {
+.nav-related-link {
     border: 1.5px solid var(--c-border) !important;
     border-radius: 20px !important;
     padding: 4px 12px !important;
@@ -223,13 +223,13 @@ a:hover { text-decoration: underline; }
     background: transparent;
     transition: background var(--trans), color var(--trans), border-color var(--trans) !important;
 }
-.nav-sister-link:hover {
+.nav-related-link:hover {
     background: var(--c-primary) !important;
     color: #fff !important;
     border-color: var(--c-primary) !important;
 }
 
-/* 자매 링크 커스텀 툴팁 */
+/* 연계 링크 커스텀 툴팁 */
 .nav-tooltip-wrap { position: relative; }
 .nav-tooltip {
     display: none;
@@ -260,8 +260,7 @@ a:hover { text-decoration: underline; }
 }
 .nav-tooltip-wrap:hover .nav-tooltip { display: block; }
 
-/* 즐겨찾기 버튼 (nav 안) */
-.nav-bookmark-btn,
+/* 헤더 유틸리티 버튼 */
 .nav-shortcut-btn,
 .nav-reset-btn {
     border: 1.5px solid var(--c-border);
@@ -275,11 +274,6 @@ a:hover { text-decoration: underline; }
     font-family: var(--font-main);
     transition: background var(--trans), color var(--trans), border-color var(--trans);
 }
-.nav-bookmark-btn:hover {
-    background: var(--c-warning-light);
-    color: #b45309;
-    border-color: #fbbf24;
-}
 .nav-shortcut-btn:hover {
     background: var(--c-primary-light);
     color: var(--c-primary);
@@ -291,8 +285,8 @@ a:hover { text-decoration: underline; }
     border-color: var(--c-primary);
 }
 
-/* 즐겨찾기 토스트 알림 */
-.bookmark-toast {
+/* 공용 토스트 알림 */
+.app-toast {
     position: fixed;
     bottom: 32px;
     left: 50%;
@@ -315,16 +309,16 @@ a:hover { text-decoration: underline; }
     overflow-wrap: anywhere;
     word-break: break-word;
 }
-.bookmark-toast--show {
+.app-toast--show {
     opacity: 1;
     transform: translateX(-50%) translateY(0);
 }
-.bookmark-toast strong { color: #93c5fd; }
-.bookmark-toast span {
+.app-toast strong { color: #93c5fd; }
+.app-toast span {
     color: rgba(255,255,255,0.72);
     font-size: 0.78rem;
 }
-.bookmark-toast-close {
+.app-toast-close {
     background: none;
     border: none;
     color: rgba(255,255,255,0.6);
@@ -335,7 +329,7 @@ a:hover { text-decoration: underline; }
     /* 여러 줄로 줄바꿈돼도 닫기 버튼은 우측에 정렬 */
     margin-left: auto;
 }
-.bookmark-toast-close:hover { color: #fff; }
+.app-toast-close:hover { color: #fff; }
 
 /* 모바일 햄버거 버튼 */
 #menu-toggle {
@@ -536,6 +530,63 @@ a:hover { text-decoration: underline; }
     content: "🔒";
     font-size: 0.86rem;
     line-height: 1;
+}
+
+
+/* ─────────────────────────────────────────────────────────────────
+   [서비스 가치]  공공 문서 개방성과 로컬 처리 안내
+   ───────────────────────────────────────────────────────────────── */
+.value-section {
+    padding: clamp(44px, 6vw, 72px) 0;
+    background: var(--c-surface);
+    border-bottom: 1px solid var(--c-border);
+}
+.value-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
+    gap: clamp(28px, 5vw, 56px);
+    align-items: center;
+    max-width: var(--max-w-work);
+    margin: 0 auto;
+}
+.value-kicker {
+    display: inline-flex;
+    margin-bottom: 10px;
+    color: var(--c-primary);
+    font-size: 0.78rem;
+    font-weight: 800;
+}
+.value-copy h2 {
+    font-size: clamp(1.6rem, 3vw, 2.2rem);
+    line-height: 1.25;
+    margin-bottom: 12px;
+    word-break: keep-all;
+}
+.value-copy p {
+    color: var(--c-text-sub);
+    font-size: 0.98rem;
+    line-height: 1.78;
+    word-break: keep-all;
+}
+.value-points {
+    display: grid;
+    gap: 10px;
+}
+.value-point {
+    padding: 14px 0;
+    border-bottom: 1px solid var(--c-border);
+}
+.value-point:last-child { border-bottom: none; }
+.value-point strong {
+    display: block;
+    margin-bottom: 3px;
+    color: var(--c-text);
+    font-size: 0.93rem;
+}
+.value-point span {
+    color: var(--c-text-sub);
+    font-size: 0.86rem;
+    line-height: 1.55;
 }
 
 
@@ -1913,7 +1964,6 @@ a:hover { text-decoration: underline; }
         gap: 6px;
     }
     #main-nav .main-nav a,
-    #main-nav .nav-bookmark-btn,
     #main-nav .nav-shortcut-btn,
     #main-nav .nav-reset-btn {
         display: flex;
@@ -1932,6 +1982,7 @@ a:hover { text-decoration: underline; }
     #pipeline-steps { grid-template-columns: repeat(4, 1fr); }
     .result-primary { align-items: stretch; flex-direction: column; }
     .btn-download-primary { justify-content: center; width: 100%; }
+    .value-layout { grid-template-columns: 1fr; gap: 20px; }
 
     /* 포맷 그리드 작은 카드 */
     .format-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
@@ -1963,9 +2014,11 @@ a:hover { text-decoration: underline; }
         text-align: center;
     }
     .formats-section,
+    .value-section,
     .converter-section,
     .how-section,
     .support-section { padding: 48px 0; }
+    .value-point { padding: 12px 0; }
     .format-grid { grid-template-columns: repeat(2, 1fr); }
     .format-card { padding: 16px 10px; }
     .card-name,

@@ -80,7 +80,6 @@ document.addEventListener('DOMContentLoaded', () => {
     initMobileMenu();           // 모바일 햄버거 메뉴
     initNavLinks();             // 부드러운 스크롤 네비게이션
     initModals();               // 미리보기·업데이트 내역 모달
-    initBookmarkButton();       // 즐겨찾기 안내 버튼
     initResetButton();          // 현재 선택 파일과 변환 옵션 초기화
     showFormatHintPlaceholder();// 파일 선택 전 포맷 힌트 영역 안내(빈칸 방지)
 });
@@ -1233,7 +1232,7 @@ async function runConversionPipeline() {
         setProgressPanelState('error');
         setStatusText('실패');
         showFailureResult(err);
-        const failure = classifyConversionError(err);
+        const failure = classifyConversionError(err, state.file ? getFileExtension(state.file.name) : '');
         showAlert(`${failure.title}\n다음 행동: ${failure.action}`);
         console.error('[To HWPX] 변환 오류:', err);
     } finally {
@@ -1353,8 +1352,8 @@ function showResult({ url, fileName, size, validation }) {
 function showFailureResult(err) {
     const area = document.getElementById('result-area');
     if (!area) return;
-    const failure = classifyConversionError(err);
     const ext = state.file ? getFileExtension(state.file.name) : '';
+    const failure = classifyConversionError(err, ext);
     const inputLabel = ext ? getInputFormatLabel(ext) : '선택한 파일';
     area.innerHTML = `
         <div class="result-card result-card--error">
@@ -1373,8 +1372,29 @@ function showFailureResult(err) {
     area.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
-function classifyConversionError(err) {
+function formatSpecificRecovery(ext) {
+    const map = {
+        docx: 'Word에서 파일을 다시 저장한 뒤 시도하세요. 표·이미지가 복잡하면 DOCX를 단순화하거나 한컴에서 직접 HWPX로 저장해 보세요.',
+        hwp: 'HWP는 베타 입력입니다. 한컴오피스에서 HWPX 또는 DOCX로 다시 저장한 파일을 사용하면 성공 가능성이 높습니다.',
+        hwpx: '이미 HWPX인 파일은 변환보다 원본 사용을 권장합니다. 복구가 목적이면 한컴에서 열리는지 먼저 확인하세요.',
+        json: 'JSON 문법 오류가 없는지 확인하고, 너무 깊은 중첩이나 큰 배열은 나누어 변환해 보세요.',
+        ipynb: '노트북 JSON 구조가 깨지지 않았는지 확인하고, 이미지·차트 출력이 많다면 Markdown 또는 DOCX로 내보낸 뒤 변환해 보세요.',
+        xlsx: '첫 번째 시트만 변환됩니다. 필요한 시트를 맨 앞으로 옮기고, 병합 셀·차트·이미지를 줄인 뒤 다시 시도하세요.',
+        xls: '가능하면 XLSX로 다시 저장하고, 필요한 시트를 맨 앞으로 옮긴 뒤 다시 시도하세요.',
+        csv: '구분자와 따옴표가 깨지지 않았는지 확인하고, Excel에서 CSV UTF-8로 다시 저장해 보세요.',
+        md: 'Markdown 문법을 단순화하고, 복잡한 인라인 HTML이나 이미지가 많으면 제거한 뒤 다시 시도하세요.',
+        markdown: 'Markdown 문법을 단순화하고, 복잡한 인라인 HTML이나 이미지가 많으면 제거한 뒤 다시 시도하세요.',
+        html: '본문만 남긴 HTML로 다시 저장해 보세요. script, style, 외부 리소스, 복잡한 CSS 레이아웃은 변환 대상이 아닙니다.',
+        htm: '본문만 남긴 HTML로 다시 저장해 보세요. script, style, 외부 리소스, 복잡한 CSS 레이아웃은 변환 대상이 아닙니다.',
+        txt: '파일 인코딩을 UTF-8 또는 EUC-KR로 다시 저장한 뒤 시도하세요.',
+        text: '파일 인코딩을 UTF-8 또는 EUC-KR로 다시 저장한 뒤 시도하세요.',
+    };
+    return map[ext] || '파일을 다시 저장한 뒤 재시도하고, 계속 실패하면 더 단순한 입력 포맷(TXT, MD, DOCX)으로 변환해 보세요.';
+}
+
+function classifyConversionError(err, ext = '') {
     const msg = String(err?.message || err || '');
+    const recovery = formatSpecificRecovery(ext);
     if (/지원하지 않는|unsupported|확장자|format/i.test(msg)) {
         return {
             category: '지원하지 않는 포맷',
@@ -1388,7 +1408,7 @@ function classifyConversionError(err) {
             category: '파일 크기',
             title: '파일이 브라우저에서 처리하기에 너무 큽니다.',
             reason: msg,
-            action: '문서를 나누거나 이미지·불필요한 시트를 줄인 뒤 다시 변환하세요.',
+            action: `${recovery} 문서가 크다면 나누거나 이미지·불필요한 시트를 줄여 주세요.`,
         };
     }
     if (/파싱|parse|JSON|ZIP|로드 실패|손상|압축/i.test(msg)) {
@@ -1396,7 +1416,7 @@ function classifyConversionError(err) {
             category: '파싱 오류',
             title: '파일 내용을 읽는 중 문제가 생겼습니다.',
             reason: msg,
-            action: '원본 프로그램에서 파일을 다시 저장하거나, DOCX/HWPX처럼 표준 형식으로 내보낸 뒤 다시 시도하세요.',
+            action: recovery,
         };
     }
     if (/HWP5|바이너리|구조|검증|미지원|unsupported structure/i.test(msg)) {
@@ -1404,7 +1424,7 @@ function classifyConversionError(err) {
             category: '지원하지 않는 구조',
             title: '파일 안의 일부 구조를 변환할 수 없습니다.',
             reason: msg,
-            action: '한컴오피스에서 HWPX 또는 DOCX로 다시 저장한 뒤 변환하세요.',
+            action: recovery,
         };
     }
     if (/download|다운로드|차단|blocked|not allowed/i.test(msg)) {
@@ -1419,7 +1439,7 @@ function classifyConversionError(err) {
         category: '변환 처리',
         title: '변환을 완료하지 못했습니다.',
         reason: msg || '알 수 없는 오류가 발생했습니다.',
-        action: '파일을 다시 저장한 뒤 재시도하고, 계속 실패하면 더 단순한 입력 포맷(TXT, MD, DOCX)으로 변환해 보세요.',
+        action: recovery,
     };
 }
 
@@ -1940,10 +1960,10 @@ function initConverterDropArea() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────
-// [즐겨찾기 안내 버튼]
+// [공용 토스트 안내]
 // ─────────────────────────────────────────────────────────────────────────
 /**
- * 화면 하단 중앙 토스트 안내 (즐겨찾기 안내와 동일 스타일).
+ * 화면 하단 중앙 토스트 안내.
  * 한 번에 하나만 표시되며 닫기 버튼·자동 제거를 제공한다.
  * [보안] 내부 호출 전용 — 신뢰된 HTML 문자열만 전달할 것(사용자 입력 금지).
  * @param {string} html      토스트 본문 HTML (보통 <strong>·<span> 사용)
@@ -1955,26 +1975,15 @@ function showToast(html, { timeout = 4000 } = {}) {
 
     const toast = document.createElement('div');
     toast.id        = 'app-toast';
-    toast.className = 'bookmark-toast';
-    toast.innerHTML = `${html}<button class="bookmark-toast-close" aria-label="닫기">✕</button>`;
+    toast.className = 'app-toast';
+    toast.innerHTML = `${html}<button class="app-toast-close" aria-label="닫기">✕</button>`;
     document.body.appendChild(toast);
 
     const close = () => { clearTimeout(showToast._timer); toast.remove(); };
-    toast.querySelector('.bookmark-toast-close').addEventListener('click', close);
+    toast.querySelector('.app-toast-close').addEventListener('click', close);
     if (timeout > 0) showToast._timer = setTimeout(close, timeout);
-    requestAnimationFrame(() => toast.classList.add('bookmark-toast--show'));
+    requestAnimationFrame(() => toast.classList.add('app-toast--show'));
     return toast;
-}
-
-function initBookmarkButton() {
-    const btn = document.getElementById('bookmark-btn');
-    if (!btn) return;
-
-    btn.addEventListener('click', () => {
-        const isMac = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
-        const key   = isMac ? '⌘D' : 'Ctrl+D';
-        showToast(`<strong>${key}</strong>를 눌러 즐겨찾기에 추가하세요 <span>브라우저 보안상 자동 추가는 지원되지 않습니다.</span>`);
-    });
 }
 
 function initResetButton() {
