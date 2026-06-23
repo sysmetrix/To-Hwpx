@@ -26,8 +26,11 @@ const CASES = [
       '목록 항목 하나',
       '표 값 한글',
       'console.log',
+      'Quoted Alpha line',
+      'bold quote',
       '링크 텍스트',
     ],
+    mustNotContain: ['▶ Quoted Alpha line'],
   },
   {
     name: 'html',
@@ -43,7 +46,9 @@ const CASES = [
       '비순서 목록 하나',
       '순서 목록 첫째',
       '표 값 한글',
+      'HTML Quote Alpha',
     ],
+    mustNotContain: ['▶ HTML Quote Alpha'],
   },
   {
     name: 'csv',
@@ -201,9 +206,17 @@ async function validateHwpxPackage(page, zip, testCase) {
   for (const expected of testCase.mustContain) {
     assert(text.includes(expected), `${testCase.name}: 텍스트 누락 "${expected}"`);
   }
+  for (const unexpected of (testCase.mustNotContain || [])) {
+    assert(!text.includes(unexpected), `${testCase.name}: 예전 인용구 마커가 남음 "${unexpected}"`);
+  }
 
   const tableCount = (sectionXml.match(/<hp:tbl\b/g) || []).length;
   assert(tableCount >= testCase.minTables, `${testCase.name}: 표 개수 부족 (${tableCount} < ${testCase.minTables})`);
+  if (testCase.name === 'markdown' || testCase.name === 'html') {
+    assert(headerXml.includes('<hh:paraPr id="19"'), `${testCase.name}: 인용구 문단 모양 paraPr id=19 누락`);
+    assert(headerXml.includes('<hh:borderFill id="19"'), `${testCase.name}: 인용구 borderFill id=19 누락`);
+    assert(sectionXml.includes('paraPrIDRef="19"'), `${testCase.name}: 인용구 문단 paraPrIDRef=19 누락`);
+  }
 }
 
 async function runCase(page, testCase) {

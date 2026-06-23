@@ -47,6 +47,14 @@ OWPML은 요소마다 소속 네임스페이스가 정해져 있다. **prefix를
 - **해결:** [index.html](../../index.html) 폰트 옵션 `value`를 **한컴이 매칭하는 패밀리명**으로. 반드시 [js/app.js](../../js/app.js) `FONT_DOWNLOADS`의 `systemNames`(예: `Pretendard GOV`, `Pretendard`)와 일치시킨다. KoPub처럼 무게를 포함한 이름이 맞는 경우도 있으니(`KoPub돋움체 Medium`) **설치된 등록명 기준**으로 정한다.
 - **교훈:** 네임스페이스뿐 아니라 **"이름 매칭"이 틀려도 동일하게 조용히 무시**된다. 글꼴이 안 먹으면 흐름을 의심하기 전에 **value가 실제 설치 패밀리명인지** 먼저 본다.
 
+### 새 borderFill/paraPr을 추가할 때 ID 충돌도 조용히 망가진다 — v4.4.20 인용구
+
+- **증상:** Markdown 인용구(`>`)가 HWPX에서 인용 모양이 아니라 `▶`로 시작하는 일반 목록처럼 보임.
+- **원인:** 파서는 `quote` IR을 만들었지만 HWPX 출력에서 `▶ ` 텍스트를 붙인 일반 문단으로 내려보냈다. 인용 전용 `paraPr`/`borderFill`이 없었다.
+- **해결:** `header.xml`에 `hh:paraPr id="19"`와 `hh:borderFill id="19"`를 추가하고, `section0.xml`의 인용 문단을 `paraPrIDRef="19"`로 출력한다. 인용 배경 채우기는 `hc:fillBrush`/`hc:winBrush`를 쓴다.
+- **주의:** 새 고정 borderFill을 추가하면 DOCX 셀 배경색 같은 동적 borderFill 시작 번호도 함께 밀어야 한다. 이번 인용구 추가 후 동적 borderFill은 20번부터 시작한다.
+- **검증:** `tests/fixtures/sample.md`에 인용구 fixture를 두고, `tests/golden.js`에서 `paraPrIDRef="19"` 존재와 `▶ Quoted Alpha line` 부재를 함께 확인한다.
+
 ---
 
 ## 2. 정답 확인처 — 추측하지 말고 한컴 호환 라이브러리와 대조

@@ -395,9 +395,15 @@ function extractFromNode(node, blocks) {
             if (text) blocks.push({ type: 'para', text: '`' + text + '`' });
 
         } else if (tag === 'blockquote') {
-            // 인용 → 들여쓰기 para (▶ 접두어)
-            const text = sanitize(child.textContent.trim());
-            if (text) blocks.push({ type: 'para', text: '▶ ' + text });
+            // 인용 → quote IR. HWPX 출력에서 전용 문단 모양(왼쪽 선+배경)을 적용한다.
+            const quoteBlocks = [];
+            extractFromNode(child, quoteBlocks);
+            if (quoteBlocks.length) {
+                blocks.push({ type: 'quote', blocks: quoteBlocks });
+            } else {
+                const text = sanitize(child.textContent.trim());
+                if (text) blocks.push({ type: 'quote', blocks: [{ type: 'para', text }] });
+            }
 
         } else if (tag === 'hr') {
             // 수평선 → HR 블록 (hwpx.js buildHrPara()에서 단락 하단 테두리 선으로 렌더링)

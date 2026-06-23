@@ -26,7 +26,7 @@
 
 목표:
 - 현재 가장 안정적인 구조형 입력이다.
-- 제목, 문단, 목록, 표, 코드블록, 링크 텍스트를 안정적으로 HWPX로 옮긴다.
+- 제목, 문단, 목록, 표, 코드블록, 인용구, 링크 텍스트를 안정적으로 HWPX로 옮긴다.
 
 보존:
 - H1-H6 제목
@@ -35,17 +35,19 @@
 - GFM 표와 머리행
 - 코드블록, 인라인 코드
 - bold/italic/strike 일부와 엔티티(`&`, `<`, `>`, quotes)
-- 인용문과 수평선
+- 인용문(왼쪽 강조선+옅은 배경)과 수평선
 
 주의:
 - `marked.lexer()` 경로가 우선이다. 실패하면 HTML 파서로 폴백한다.
 - marked가 구두점 인접 강조를 놓치는 경우가 있어 `splitInlineEmphasis()` 보정이 있다.
 - 링크 URL 자체보다 링크 텍스트 보존이 우선이다.
+- 인용구는 `quote` IR → HWPX `paraPrIDRef="19"`로 출력한다. 예전처럼 `▶` 텍스트를 붙이면 안 된다.
 - 이미지와 복잡한 인라인 HTML은 지원 범위 밖으로 안내한다.
 
 검증:
 - `tests/fixtures/sample.md`
-- 코드블록, 목록, 표, 한글/영문 혼합, 특수문자가 `section0.xml`에 남는지 본다.
+- 코드블록, 목록, 표, 인용구, 한글/영문 혼합, 특수문자가 `section0.xml`에 남는지 본다.
+- 인용구 회귀는 `section0.xml`에 `paraPrIDRef="19"`가 있고 `▶ Quoted Alpha line`이 없어야 한다.
 
 ## HTML
 
@@ -56,6 +58,7 @@
 
 보존:
 - `h1`-`h6`, `p`, `ul`, `ol`, `li`, `table`
+- `blockquote`(Markdown 인용구와 같은 HWPX 인용 문단)
 - `strong`, `em`, `code`, `u`, `ins`, `s`, `strike`, `del`
 - 일부 글자색(`style="color:"`, `<font color>`)
 

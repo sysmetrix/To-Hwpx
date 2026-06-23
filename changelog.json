@@ -1,6 +1,20 @@
 {
-  "current": "4.4.19",
+  "current": "4.4.20",
   "versions": [
+    {
+      "version": "4.4.20",
+      "date": "2026-06-23",
+      "user": [
+        "Markdown과 HTML 인용구가 더 이상 ▶ 텍스트로 시작하지 않고, 왼쪽 강조선과 옅은 배경을 가진 인용 문단으로 변환됩니다"
+      ],
+      "dev": [
+        "[v4.4.20] js/hwpx.js: 인용구 전용 paraPr/borderFill(id=19)을 추가하고 quote IR을 paraPrIDRef=19로 출력",
+        "[v4.4.20] js/parsers.js: HTML blockquote를 일반 문단이 아닌 quote IR로 변환",
+        "[v4.4.20] tests/fixtures/tests/golden.js: Markdown/HTML 인용구 fixture와 paraPrIDRef=19, ▶ 마커 제거 회귀 검증 추가",
+        "[v4.4.20] js/app.js/format_conversion_playbook.md/hwpx_rendering_gotchas.md: 인용구 지원 범위와 HWPX ID 충돌 주의사항 문서화",
+        "[v4.4.20] package.json/package-lock.json/sw.js/index.html: v4.4.20 반영"
+      ]
+    },
     {
       "version": "4.4.19",
       "date": "2026-06-23",
