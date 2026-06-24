@@ -44,7 +44,8 @@ OWPML은 요소마다 소속 네임스페이스가 정해져 있다. **prefix를
 
 - **증상:** 특정 글꼴(Pretendard)만 선택해도 한글에서 **적용이 안 됨**. 다른 글꼴은 정상, 파일도 정상 열림.
 - **원인:** 폰트 select의 `value`가 HWPX 글꼴면(fontface) 이름으로 **그대로 박힌다**. 값이 `Pretendard GOV Variable Medium`(가변폰트 풀네임)이라 한컴/Windows에 설치된 실제 패밀리명 `Pretendard GOV`와 **매칭 실패** → 글꼴만 조용히 무시됨.
-- **해결:** [index.html](../../index.html)에는 실제 가변 TTF의 내부 패밀리명인 `Pretendard GOV Variable` 하나만 제공한다. HWPX의 각 언어 `hh:font`에는 주 이름을 `Pretendard GOV Variable`로 두고, 그 바로 아래(`hh:typeInfo`보다 앞)에 `<hh:substFont face="Pretendard GOV" type="TTF" isEmbedded="0"/>`를 기록해 PC별 등록명 차이를 흡수한다. [js/app.js](../../js/app.js) `FONT_DOWNLOADS.systemNames`에는 설치 감지를 위해 두 패밀리명을 모두 둔다. KoPub처럼 무게를 포함한 이름이 맞는 경우도 있으니(`KoPub돋움체 Medium`) **설치된 등록명 기준**으로 정한다.
+- **1차 해결과 실기기 결과(v4.5.10):** UI에는 실제 가변 TTF 내부 패밀리명인 `Pretendard GOV Variable` 하나만 제공하고, 주 이름 Variable 아래에 `<hh:substFont face="Pretendard GOV" .../>`를 기록했다. Variable 설치 PC는 글꼴 적용과 한컴 글꼴란이 모두 정상. GOV 설치 PC는 대체 글꼴로 화면 렌더링은 됐지만 한컴 글꼴란이 빈칸이었다. 즉 `substFont`는 누락 글꼴의 렌더링 대체이지 선택 글꼴 메타데이터 치환이 아니다.
+- **최종 해결(v4.5.11):** 변환 직전 [js/app.js](../../js/app.js)가 `queryLocalFonts()`의 정확한 family/fullName/PostScript 이름으로 실제 등록명을 판별한다. Variable 설치 시 주 이름 Variable + 대체 GOV, GOV 설치 시 주 이름 GOV + 대체 Variable로 기록한다. 권한 거부·API 미지원·미설치로 판별할 수 없으면 배포 TTF 내부 이름인 Variable을 기본값으로 쓴다. `hh:substFont`는 반드시 `hh:typeInfo`보다 앞에 둔다.
 - **교훈:** 네임스페이스뿐 아니라 **"이름 매칭"이 틀려도 동일하게 조용히 무시**된다. 글꼴이 안 먹으면 흐름을 의심하기 전에 **value가 실제 설치 패밀리명인지** 먼저 본다.
 
 ### 새 borderFill/paraPr을 추가할 때 ID 충돌도 조용히 망가진다 — v4.4.20 인용구

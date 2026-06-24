@@ -25,7 +25,7 @@
 세 가지만 외우면 대부분 막는다:
 
 1. **네임스페이스**: 테두리·borderFill·charPr·paraPr·fontfaces = `hh:`(head). **채우기**(fillBrush/winBrush/gradation/imgBrush)·그림(`hc:img`)·공통 좌표(`hc:pt0`) = `hc:`(core). `hc:`를 쓰면 그 **루트(header·section0)에 `xmlns:hc="http://www.hancom.co.kr/hwpml/2011/core"` 선언 필수.** (`alpha="0"`이 불투명=정상값.)
-2. **글꼴 이름 = 한컴이 매칭하는 패밀리명**: 폰트 select의 `value`가 HWPX 글꼴면 이름으로 **그대로 박힌다**. 가변폰트의 무게까지 붙은 풀네임(예: `Pretendard GOV Variable Medium`)을 넣으면 매칭 실패 → 미적용. Pretendard GOV 가변 폰트는 주 이름 `Pretendard GOV Variable` 아래에 `<hh:substFont face="Pretendard GOV" .../>`를 `hh:typeInfo`보다 먼저 기록해 PC별 등록명 차이를 흡수한다. UI에는 주 이름 하나만 노출하고 [js/app.js](js/app.js) `FONT_DOWNLOADS.systemNames`에는 두 이름을 모두 둔다. (v4.4.10, v4.5.10에서 확인.)
+2. **글꼴 이름 = 한컴이 매칭하는 패밀리명**: 폰트 select의 `value`가 HWPX 글꼴면 이름으로 기록된다. 가변폰트의 무게까지 붙은 풀네임(예: `Pretendard GOV Variable Medium`)은 매칭 실패한다. Pretendard GOV는 UI에 `Pretendard GOV Variable` 하나만 노출하되, 변환 직전 `queryLocalFonts()`의 정확한 family/fullName/PostScript 이름으로 실제 등록명을 판별한다. Variable 설치 PC는 주 이름 `Pretendard GOV Variable`, GOV 설치 PC는 주 이름 `Pretendard GOV`를 기록하고 반대 이름을 `<hh:substFont .../>`로 `hh:typeInfo`보다 먼저 둔다. 감지 불가 시 배포 TTF 내부 이름인 Variable을 기본값으로 쓴다. 대체 글꼴만으로 렌더링하면 글꼴은 적용돼도 한컴 글꼴란이 빈칸이 될 수 있다. (v4.4.10, v4.5.10~11에서 확인.)
 3. **그림**: `hc:img@binaryItemIDRef`(문자열 id)는 header가 아니라 **`content.hpf`의 `opf:item id`** 와 매칭. `hp:pic` 구조는 hwpxlib `testFile/reader_writer/SimplePicture.hwpx`를 정답으로 대조.
 
 **진단 순서(안 보일 때):** ①네임스페이스/요소명·이름 매칭 → ②`xmlns` 선언 → ③IDRef 무결성 → ④속성값(alpha 등은 **마지막**). 추측 금지, **hwpxlib와 대조**(gotchas 2절).

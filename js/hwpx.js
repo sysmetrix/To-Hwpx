@@ -292,8 +292,10 @@ function buildHeaderXml(fontName, basePt, customBfMap = new Map(), imageBlocks =
     const fn = xmlEsc(resolvedFontName);
     const bp = Math.max(6, Math.min(36, parseInt(basePt, 10) || 12));
     const { familyType, weight, type } = getFontMeta(resolvedFontName);
-    // Pretendard GOV 가변 폰트는 PC별 등록명 차이를 OWPML 대체 글꼴로 흡수한다.
-    const substFontName = resolvedFontName === 'Pretendard GOV Variable' ? 'Pretendard GOV' : null;
+    // 현재 PC의 실제 등록명을 주 글꼴로 쓰고 반대 등록명을 OWPML 대체 글꼴로 둔다.
+    const substFontName = resolvedFontName === 'Pretendard GOV Variable'
+        ? 'Pretendard GOV'
+        : (resolvedFontName === 'Pretendard GOV' ? 'Pretendard GOV Variable' : null);
     const substFontTag = substFontName
         ? `\n          <hh:substFont face="${xmlEsc(substFontName)}" type="TTF" isEmbedded="0"/>`
         : '';

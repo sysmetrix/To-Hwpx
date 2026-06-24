@@ -1043,6 +1043,51 @@ async function isSystemFontInstalled(names, localFontsList = null) {
     return false;
 }
 
+function normalizeFontRegistrationName(value) {
+    return String(value || '').toLowerCase().replace(/[\s_\-()]+/g, '');
+}
+
+function hasExactLocalFontName(localFontsList, name) {
+    const target = normalizeFontRegistrationName(name);
+    return Array.from(localFontsList || []).some(font =>
+        [font.family, font.fullName, font.postscriptName]
+            .some(value => normalizeFontRegistrationName(value) === target));
+}
+
+async function canLoadExactLocalFont(name) {
+    try {
+        const font = new FontFace('__tohwpx_exact_font__', `local("${name}")`);
+        await font.load();
+        return true;
+    } catch (_) {
+        return false;
+    }
+}
+
+/**
+ * Pretendard GOV Variable 선택 시 현재 PC의 실제 등록명을 HWPX 주 글꼴명으로 결정한다.
+ * queryLocalFonts가 허용되면 정확한 등록명을 우선하고, 미지원/거부 시 local()로 보조 감지한다.
+ * 둘 다 판별할 수 없으면 배포 TTF의 내부 패밀리명인 Variable을 기본값으로 사용한다.
+ */
+async function resolveOutputFontName(selectedName, localFontsOverride) {
+    if (selectedName !== 'Pretendard GOV Variable') return selectedName;
+
+    let localFontsList = localFontsOverride;
+    if (localFontsList === undefined && 'queryLocalFonts' in window) {
+        try { localFontsList = await window.queryLocalFonts(); } catch (_) { localFontsList = null; }
+    }
+
+    if (localFontsList !== null && localFontsList !== undefined) {
+        if (hasExactLocalFontName(localFontsList, 'Pretendard GOV Variable')) return 'Pretendard GOV Variable';
+        if (hasExactLocalFontName(localFontsList, 'Pretendard GOV')) return 'Pretendard GOV';
+        return 'Pretendard GOV Variable';
+    }
+
+    if (await canLoadExactLocalFont('Pretendard GOV Variable')) return 'Pretendard GOV Variable';
+    if (await canLoadExactLocalFont('Pretendard GOV')) return 'Pretendard GOV';
+    return 'Pretendard GOV Variable';
+}
+
 function formatFontDescription(desc) {
     const splitAt = desc.indexOf('. ');
     if (splitAt === -1) return escHtml(desc);
@@ -1548,6 +1593,7 @@ async function runConversionPipeline() {
 
     const total = state.queue.length;
     const batch = total > 1;
+    const outputFontName = await resolveOutputFontName(state.docFont);
     let okCount = 0, warnCount = 0, errCount = 0;
 
     // 큐를 순차 처리 — 실패해도 다음 파일을 계속 변환(부분 성공 허용)
@@ -1559,7 +1605,7 @@ async function runConversionPipeline() {
 
         const prefix = batch ? `(${i + 1}/${total}) ${item.file.name} · ` : '';
         try {
-            const res = await convertOneFile(item.file, prefix);
+            const res = await convertOneFile(item.file, prefix, outputFontName);
             item.blob = res.blob;
             item.fileName = res.fileName;
             item.validation = res.validation;
@@ -1624,9 +1670,10 @@ async function runConversionPipeline() {
  * 진행 표시는 "현재 파일" 기준으로 갱신(배치에선 statusPrefix로 "(i/n) 파일명" 표기).
  * @param {File} file
  * @param {string} statusPrefix
+ * @param {string} outputFontName 현재 PC 등록명으로 해석한 실제 HWPX 글꼴명
  * @returns {Promise<{blob: Blob, fileName: string, validation: object}>}
  */
-async function convertOneFile(file, statusPrefix = '') {
+async function convertOneFile(file, statusPrefix = '', outputFontName = state.docFont) {
     const st = (msg) => setStatusText(statusPrefix + msg);
     state.file = file;
     state.ir = null;
@@ -1668,7 +1715,7 @@ async function convertOneFile(file, statusPrefix = '') {
 
     let hwpxBlob;
     try {
-        hwpxBlob = await buildHwpx(ir, state.docFont, state.fontSize, state.pageMargins, state.paperSize, (pct) => {
+        hwpxBlob = await buildHwpx(ir, outputFontName, state.fontSize, state.pageMargins, state.paperSize, (pct) => {
             setProgress(58 + (pct * 0.14)); // 58% ~ 72%
             st(`HWPX 파일을 압축하는 중... ${Math.round(pct)}%`);
         }, state.orientation);
