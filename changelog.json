@@ -1,6 +1,20 @@
 {
-  "current": "4.5.7",
+  "current": "4.5.8",
   "versions": [
+    {
+      "version": "4.5.8",
+      "date": "2026-06-25",
+      "user": [
+        "긴 문서 미리보기에서 종이 안쪽에 별도 스크롤이 생기고 내용이 잘려 보이던 문제를 수정했습니다.",
+        "가로 용지는 실제 가로 비율을 유지하고, 넘치는 내용은 다음 미리보기 페이지로 나누어 표시합니다."
+      ],
+      "dev": [
+        "[v4.5.8] app.js/style.css: 미리보기 폭 계산을 픽셀 기준으로 복원하고 용지 비율 고정 페이지 분할 적용",
+        "[v4.5.8] tests/golden.js/tests/orientation-e2e.js: 긴 가로 문서가 내부 스크롤·잘림 없이 여러 페이지로 나뉘는지 회귀 검사",
+        "[v4.5.8] AGENTS.md/playbook/release-qa: 미리보기 불변식·v4.5.7 오답 패턴·릴리스 중단 조건 기록",
+        "[v4.5.8] package.json/package-lock.json/sw.js/index.html: v4.5.8 반영"
+      ]
+    },
     {
       "version": "4.5.7",
       "date": "2026-06-25",

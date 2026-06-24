@@ -389,30 +389,38 @@ async function runCase(page, testCase) {
   await validateHwpxPackage(page, zip, testCase);
   if (testCase.previewPaper) {
     await page.locator('#preview-result-btn').click();
-    const previewState = await page.locator('#preview-ir .ir-page').evaluate(el => ({
+    const previewState = await page.locator('#preview-ir').evaluate(host => {
+      const pages = [...host.querySelectorAll('.ir-page')];
+      const el = pages[0];
+      return {
       paper: el.dataset.paper,
       orientation: el.dataset.orientation,
       width: el.style.getPropertyValue('--preview-page-width'),
       ratio: el.style.getPropertyValue('--preview-page-ratio'),
-      inlineCodeParagraphs: [...el.querySelectorAll('p')].filter(p =>
+      pageCount: pages.length,
+      inlineCodeParagraphs: pages.flatMap(page => [...page.querySelectorAll('p')]).filter(p =>
         p.textContent.includes('문장 안의 인라인 코드는 앞뒤 문장과 같은 문단에 자연스럽게 이어집니다.')
         && p.querySelector('code')?.textContent === '인라인 코드'
       ).length,
       renderedWidth: el.getBoundingClientRect().width,
       renderedHeight: el.getBoundingClientRect().height,
-    }));
+      overflow: getComputedStyle(el).overflow,
+      clippedPages: pages.filter(page => page.scrollHeight > page.clientHeight + 1).length,
+    }});
     assert(previewState.paper === testCase.previewPaper,
       `${testCase.name}: 미리보기에 용지 크기가 반영되지 않음`);
     assert(previewState.orientation === testCase.previewOrientation,
       `${testCase.name}: 미리보기에 용지 방향이 반영되지 않음`);
-    assert(previewState.width === '100.000%' && previewState.ratio === '420 / 297',
+    assert(previewState.width === '1440px' && previewState.ratio === '420 / 297',
       `${testCase.name}: A3 가로 미리보기 페이지 비율/폭이 잘못됨`);
     assert(previewState.inlineCodeParagraphs === 1,
       `${testCase.name}: 미리보기에서 인라인 코드가 앞뒤 문장과 분리됨`);
-    assert(previewState.renderedWidth > previewState.renderedHeight,
-      `${testCase.name}: 가로 미리보기 실제 렌더 영역이 세로로 늘어남`);
+    assert(previewState.renderedWidth > previewState.renderedHeight && previewState.pageCount > 1,
+      `${testCase.name}: 긴 가로 문서가 가로 비율의 여러 페이지로 나뉘지 않음`);
+    assert(previewState.overflow === 'hidden' && previewState.clippedPages === 0,
+      `${testCase.name}: 미리보기 페이지에서 내용이 잘림`);
     const pageInfo = await page.locator('#preview-pagecount').textContent();
-    assert(pageInfo.trim() === 'A3 · 가로', `${testCase.name}: 미리보기 용지 안내가 잘못됨`);
+    assert(/^A3 · 가로 · \d+쪽$/.test(pageInfo.trim()), `${testCase.name}: 미리보기 용지 안내가 잘못됨`);
   }
   console.log(`PASS ${testCase.format.padEnd(5)} ${testCase.file}`);
 }
@@ -555,7 +563,7 @@ async function validatePaperMatrix(page) {
       const result = await page.evaluate(async ({ paper, orientation }) => {
         const host = document.createElement('div');
         host.className = 'preview-ir';
-        host.style.cssText = 'position:fixed;left:-9999px;top:0;width:900px;height:900px;display:block';
+        host.style.cssText = 'position:fixed;left:-9999px;top:0;width:1600px;height:900px;display:block';
         const sheet = document.createElement('div');
         sheet.className = 'ir-page';
         sheet.textContent = 'paper matrix';

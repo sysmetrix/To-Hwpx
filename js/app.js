@@ -3038,14 +3038,46 @@ function applyPreviewPaper(pageEl) {
     const landscape = state.orientation === 'landscape';
     const widthMm = landscape ? base.height : base.width;
     const heightMm = landscape ? base.width : base.height;
-    // 가장 큰 A3 가로(420mm)를 100%로 두고 실제 용지 폭 비율을 화면에도 반영한다.
-    // 픽셀 고정값은 A4/A3/가로가 모두 컨테이너 최대 폭에 걸려 같은 크기로 보이는 문제가 있었다.
-    const widthPercent = Math.min(100, (widthMm / PREVIEW_PAPER_MM.A3.height) * 100);
+    const widthPx = Math.round(720 * (widthMm / PREVIEW_PAPER_MM.A4.width));
 
-    pageEl.style.setProperty('--preview-page-width', `${widthPercent.toFixed(3)}%`);
+    pageEl.style.setProperty('--preview-page-width', `${widthPx}px`);
     pageEl.style.setProperty('--preview-page-ratio', `${widthMm} / ${heightMm}`);
     pageEl.dataset.paper = state.paperSize || 'A4';
     pageEl.dataset.orientation = landscape ? 'landscape' : 'portrait';
+}
+
+function paginatePreview(irBox) {
+    const firstPage = irBox?.querySelector('.ir-page');
+    if (!firstPage) return 0;
+
+    const content = Array.from(firstPage.children);
+    firstPage.replaceChildren();
+    const pages = [firstPage];
+
+    const sizePage = page => {
+        applyPreviewPaper(page);
+        const base = PREVIEW_PAPER_MM[state.paperSize] || PREVIEW_PAPER_MM.A4;
+        const widthMm = state.orientation === 'landscape' ? base.height : base.width;
+        const heightMm = state.orientation === 'landscape' ? base.width : base.height;
+        page.style.height = `${Math.round(page.getBoundingClientRect().width * heightMm / widthMm)}px`;
+    };
+    sizePage(firstPage);
+
+    for (const node of content) {
+        let page = pages[pages.length - 1];
+        page.appendChild(node);
+        if (page.scrollHeight <= page.clientHeight + 1 || page.children.length === 1) continue;
+
+        node.remove();
+        page = document.createElement('div');
+        page.className = 'ir-page';
+        irBox.appendChild(page);
+        pages.push(page);
+        sizePage(page);
+        page.appendChild(node);
+    }
+
+    return pages.length;
 }
 
 /** 미리보기 모달 열기 — 기본은 IR을 HTML로 즉시 렌더(빠르고 100% 로컬) */
@@ -3065,9 +3097,12 @@ function openPreview(blob) {
             ? `<div class="ir-page">${state.ir.title && state.ir.title.trim()
                 ? `<h1 class="ir-title">${escHtml(state.ir.title.trim())}</h1>` : ''}${irBlocksToHtml(state.ir.blocks)}</div>`
             : '<p class="preview-empty">미리보기할 내용이 없습니다. 먼저 파일을 변환해 주세요.</p>';
-        applyPreviewPaper(irBox.querySelector('.ir-page'));
+        const pageCount = paginatePreview(irBox);
+        if (countEl && pageCount > 1) {
+            countEl.textContent = `${state.paperSize || 'A4'} · ${state.orientation === 'landscape' ? '가로' : '세로'} · ${pageCount}쪽`;
+        }
     }
-    if (countEl) {
+    if (countEl && !countEl.textContent) {
         countEl.textContent = `${state.paperSize || 'A4'} · ${state.orientation === 'landscape' ? '가로' : '세로'}`;
     }
 }
