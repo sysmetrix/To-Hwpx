@@ -55,6 +55,15 @@ OWPML은 요소마다 소속 네임스페이스가 정해져 있다. **prefix를
 - **주의:** 새 고정 borderFill을 추가하면 DOCX 셀 배경색 같은 동적 borderFill 시작 번호도 함께 밀어야 한다. 이번 인용구 추가 후 동적 borderFill은 20번부터 시작한다.
 - **검증:** `tests/fixtures/sample.md`에 인용구 fixture를 두고, `tests/golden.js`에서 `paraPrIDRef="19"` 존재와 `▶ Quoted Alpha line` 부재를 함께 확인한다.
 
+### 긴 표가 쪽 경계에서 잘리는 경우 — 여러 쪽 지원·개체 배치 값을 함께 본다
+
+- **증상:** 행이 많은 표가 다음 쪽으로 이어지지 않거나, 다음 쪽에서 제목 줄이 반복되지 않는다. 파일은 정상으로 열린다.
+- **원인:** 일반 표가 `pageBreak="ROW"`처럼 OWPML에 없는 값을 쓰거나 `treatAsChar="1"`로 글자처럼 취급되어, 한컴의 여러 쪽 표 동작이 적용되지 않는다.
+- **정답 구조:** 일반 데이터 표는 `pageBreak="TABLE"`(나눔), `repeatHeader="1"`, `hp:pos@treatAsChar="0"`, `flowWithText="1"`을 사용한다. 첫 행의 실제 `hp:tc`에는 모두 `header="1"`이 필요하다.
+- **배치:** `horzRelTo="COLUMN"` + `horzAlign="RIGHT"`는 표의 가로 배치 기준만 정한다. 현재처럼 표 너비가 단 전체 폭이면 화면상 차이가 없으며 행 높이·열 너비·병합 계산에는 영향을 주지 않는다.
+- **제외:** 표지·구분선·코드 블록처럼 표를 레이아웃 개체로 사용하는 경로에는 일반 데이터 표 설정을 일괄 적용하지 않는다.
+- **검증:** `tests/fixtures/long-table.csv`와 `tests/golden.js`로 XML 속성을 검사하고, 한컴에서 두 쪽 이상으로 나뉘는지와 매 쪽 첫 줄에 제목 행이 반복되는지 눈으로 확인한다.
+
 ---
 
 ## 2. 정답 확인처 — 추측하지 말고 한컴 호환 라이브러리와 대조

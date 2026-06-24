@@ -1065,15 +1065,17 @@ function buildTable(header, rows, contentWidthHwp = 48000, customBfMap = new Map
         rowsXml += `<hp:tr>${rowCells.map(x => x.xml).join('')}</hp:tr>`;
     }
 
-    // pageBreak="ROW" → 행 경계에서 쪽 넘김 허용 (긴 표가 다음 페이지로 이어짐)
-    //      height="0" → HWP이 셀 내용 기준으로 자동 계산 (고정값 제거)
+    // 일반 데이터 표는 글자처럼 취급하지 않는 본문 개체로 배치한다.
+    // pageBreak="TABLE" → 여러 쪽 지원 '나눔', repeatHeader="1" + 첫 행 header="1" → 제목 줄 자동 반복.
+    // 오른쪽 정렬은 단 전체 폭 표에서는 위치 변화가 없고, 표 폭이 작아질 경우 단 오른쪽을 기준으로 배치한다.
+    // height="0" → HWP이 셀 내용 기준으로 자동 계산 (고정값 제거)
     return `<hp:p id="${pid}" paraPrIDRef="0" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0"><hp:run charPrIDRef="0">` +
         `<hp:tbl id="0" zOrder="0" numberingType="TABLE" textWrap="TOP_AND_BOTTOM" ` +
-        `textFlow="BOTH_SIDES" lock="0" dropcapstyle="None" pageBreak="ROW" ` +
+        `textFlow="BOTH_SIDES" lock="0" dropcapstyle="None" pageBreak="TABLE" ` +
         `repeatHeader="1" rowCnt="${nRows}" colCnt="${nCols}" cellSpacing="0" borderFillIDRef="1">` +
         `<hp:sz width="${tableWidth}" widthRelTo="ABSOLUTE" height="0" heightRelTo="ABSOLUTE" protect="0"/>` +
-        `<hp:pos treatAsChar="1" affectLSpacing="0" flowWithText="1" allowOverlap="0" holdAnchorAndSO="0" ` +
-        `vertRelTo="PARA" horzRelTo="COLUMN" vertAlign="TOP" horzAlign="LEFT" vertOffset="0" horzOffset="0"/>` +
+        `<hp:pos treatAsChar="0" affectLSpacing="0" flowWithText="1" allowOverlap="0" holdAnchorAndSO="0" ` +
+        `vertRelTo="PARA" horzRelTo="COLUMN" vertAlign="TOP" horzAlign="RIGHT" vertOffset="0" horzOffset="0"/>` +
         `<hp:outMargin left="0" right="0" top="0" bottom="0"/>` +
         `<hp:inMargin left="650" right="650" top="220" bottom="220"/>` +
         `${rowsXml}` +

@@ -70,6 +70,17 @@ const CASES = [
     ],
   },
   {
+    name: 'long-table',
+    file: 'long-table.csv',
+    format: 'CSV',
+    minTables: 1,
+    mustContain: [
+      '긴 표 제목',
+      '첫 번째 행',
+      '마지막 행',
+    ],
+  },
+  {
     name: 'json',
     file: 'sample.json',
     format: 'JSON',
@@ -222,6 +233,24 @@ async function validateHwpxPackage(page, zip, testCase) {
 
   const tableCount = (sectionXml.match(/<hp:tbl\b/g) || []).length;
   assert(tableCount >= testCase.minTables, `${testCase.name}: 표 개수 부족 (${tableCount} < ${testCase.minTables})`);
+  const dataTables = [...sectionXml.matchAll(/<hp:tbl\b[\s\S]*?<\/hp:tbl>/g)]
+    .map(match => match[0])
+    .filter(table => /<hp:tbl\b[^>]*\brepeatHeader="1"/.test(table));
+  assert(dataTables.length >= 1, `${testCase.name}: 일반 데이터 표를 찾지 못함`);
+  for (const table of dataTables) {
+    const tableOpen = (/<hp:tbl\b[^>]*>/.exec(table) || [])[0] || '';
+    const posOpen = (/<hp:pos\b[^>]*\/>/.exec(table) || [])[0] || '';
+    const firstRow = (/<hp:tr>[\s\S]*?<\/hp:tr>/.exec(table) || [])[0] || '';
+    const headerFlags = [...firstRow.matchAll(/<hp:tc\b[^>]*\bheader="([^"]+)"/g)].map(match => match[1]);
+    assert(/\bpageBreak="TABLE"/.test(tableOpen), `${testCase.name}: 일반 표 여러 쪽 지원이 '나눔(TABLE)'이 아님`);
+    assert(/\brepeatHeader="1"/.test(tableOpen), `${testCase.name}: 일반 표 제목 줄 자동 반복이 꺼져 있음`);
+    assert(/\btreatAsChar="0"/.test(posOpen), `${testCase.name}: 일반 표가 글자처럼 취급됨`);
+    assert(/\bflowWithText="1"/.test(posOpen), `${testCase.name}: 일반 표가 본문 흐름을 따르지 않음`);
+    assert(/\bhorzRelTo="COLUMN"/.test(posOpen), `${testCase.name}: 일반 표 가로 기준이 단(COLUMN)이 아님`);
+    assert(/\bhorzAlign="RIGHT"/.test(posOpen), `${testCase.name}: 일반 표가 단 오른쪽 정렬이 아님`);
+    assert(headerFlags.length > 0 && headerFlags.every(flag => flag === '1'),
+      `${testCase.name}: 일반 표 첫 행이 제목 셀로 지정되지 않음`);
+  }
   if (testCase.name === 'markdown' || testCase.name === 'html') {
     assert(headerXml.includes('<hh:paraPr id="19"'), `${testCase.name}: 인용구 문단 모양 paraPr id=19 누락`);
     assert(headerXml.includes('<hh:borderFill id="19"'), `${testCase.name}: 인용구 borderFill id=19 누락`);

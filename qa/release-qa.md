@@ -51,6 +51,7 @@ Scope: static browser-only conversion flow from file selection to HWPX download.
 - `META-INF/container.xml`, `META-INF/manifest.xml`, `Contents/header.xml`, `Contents/section0.xml`, `Preview/PrvText.txt` 존재 확인
 - `section0.xml` 네임스페이스와 XML 파싱 오류 확인
 - `charPrIDRef`, `paraPrIDRef`, `borderFillIDRef` 참조 무결성 확인
+- 일반 데이터 표가 `pageBreak="TABLE"`, `repeatHeader="1"`, `treatAsChar="0"`이고 첫 행 셀이 `header="1"`인지 확인
 - 다운로드 링크의 파일명과 `type="application/hwp+zip"` 확인
 
 ## 5. Security and Privacy Checks
@@ -84,6 +85,8 @@ Scope: static browser-only conversion flow from file selection to HWPX download.
 - [ ] 직접 입력 탭: 형식 선택 + 내용 붙여넣기 → 변환·다운로드 동작
 - [ ] 직접 입력 ↔ 파일 업로드 탭 전환 시 입력·결과 초기화, 파일 드롭 시 업로드 모드 자동 전환
 - [ ] HWPX ZIP 구조 검증 PASS
+- [ ] `long-table.csv` 변환 후 한컴에서 표가 두 쪽 이상으로 나뉘고, 다음 쪽에도 제목 줄이 자동 반복됨
+- [ ] 긴 표가 글자처럼 취급되지 않으며 단 오른쪽 정렬로 설정되고, 행 높이·열 너비·병합 셀이 깨지지 않음
 - [ ] 결과 카드에 보존/손실 가능 요소 표시
 - [ ] 수동 다운로드 버튼으로 `.hwpx` 파일 저장
 - [ ] 한컴오피스에서 실제 열기 확인
