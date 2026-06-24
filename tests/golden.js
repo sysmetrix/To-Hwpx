@@ -29,8 +29,12 @@ const CASES = [
       'Quoted Alpha line',
       'bold quote',
       '링크 텍스트',
+      "작은따옴표 회귀: don't, 사용자의 '문서', ",
+      "it's bold",
     ],
     mustNotContain: ['▶ Quoted Alpha line'],
+    rawMustContain: ["don't", "사용자의 '문서'", "it's bold"],
+    rawMustNotContain: ['&apos;'],
   },
   {
     name: 'html',
@@ -208,6 +212,12 @@ async function validateHwpxPackage(page, zip, testCase) {
   }
   for (const unexpected of (testCase.mustNotContain || [])) {
     assert(!text.includes(unexpected), `${testCase.name}: 예전 인용구 마커가 남음 "${unexpected}"`);
+  }
+  for (const expected of (testCase.rawMustContain || [])) {
+    assert(sectionXml.includes(expected), `${testCase.name}: section0.xml 원문 누락 "${expected}"`);
+  }
+  for (const unexpected of (testCase.rawMustNotContain || [])) {
+    assert(!sectionXml.includes(unexpected), `${testCase.name}: section0.xml에 금지된 XML 엔티티가 남음 "${unexpected}"`);
   }
 
   const tableCount = (sectionXml.match(/<hp:tbl\b/g) || []).length;
