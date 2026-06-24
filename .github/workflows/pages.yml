@@ -42,17 +42,41 @@ jobs:
       - name: 소스 코드 체크아웃
         uses: actions/checkout@v4
 
+      - name: Node.js 설정
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: 테스트 의존성 설치
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+
+      - name: Golden 회귀 검사
+        run: npm run test:golden
+
+      - name: HWPX 패키지 게이트
+        run: |
+          node qa/gate.js qa/fixtures/md_hwpx_test.md
+          node qa/gate.js qa/fixtures/sample.docx
+
       # 2) GitHub Pages 설정
       #    정적 HTML/CSS/JS 파일만 있으므로 별도 빌드 불필요
       - name: GitHub Pages 설정
         uses: actions/configure-pages@v4
 
-      # 3) 정적 파일 아티팩트 업로드
-      #    전체 저장소 루트를 업로드 (index.html이 루트에 있음)
+      # 3) 운영에 필요한 정적 파일만 구성·업로드
+      - name: 배포 파일 구성
+        run: |
+          mkdir _site
+          cp index.html style.css sw.js manifest.json changelog.json _site/
+          cp -R js fonts icons _site/
+
       - name: 정적 파일 업로드
         uses: actions/upload-pages-artifact@v3
         with:
-          path: "."       # 저장소 루트 전체 (index.html 위치)
+          path: "_site"
 
       # 4) Pages에 배포
       - name: GitHub Pages 배포

@@ -1,6 +1,24 @@
 {
-  "current": "4.5.3",
+  "current": "4.5.4",
   "versions": [
+    {
+      "version": "4.5.4",
+      "date": "2026-06-24",
+      "user": [
+        "모바일 모달을 화면 안전 영역에 맞추고 닫기 버튼과 메뉴의 터치 영역을 넓혔습니다.",
+        "키보드로 포맷 카드·탭·모달을 이용할 때 조작과 포커스 이동이 자연스럽도록 개선했습니다.",
+        "HWPX 구조 검증 경고가 있으면 자동 다운로드를 중지해 결과를 확인한 뒤 수동으로 받을 수 있도록 했습니다."
+      ],
+      "dev": [
+        "[v4.5.4] js/app.js: 공통 모달 포커스 관리·포커스 트랩·ESC 복귀, 포맷 카드 Enter/Space 및 탭 방향키 탐색, 모바일 메뉴 ARIA 동기화",
+        "[v4.5.4] js/app.js: 단일·배치 변환의 구조 검증 경고 산출물 자동 다운로드 차단",
+        "[v4.5.4] style.css: safe-area, dvh, 44px 터치 타깃, 모바일 2열 진행 단계 적용",
+        "[v4.5.4] manifest.json/index.html: GitHub Pages 하위 경로 PWA 실행 보정 및 외부 rhwp iframe 권한 최소화",
+        "[v4.5.4] tests/golden.js: 모달 포커스·포맷 키보드·검증 경고 자동 다운로드 차단·PWA 경로 회귀 검사 추가",
+        "[v4.5.4] pages.yml: golden·HWPX 패키지 게이트 통과 후 운영 파일만 배포하는 CI 관문 추가",
+        "[v4.5.4] package.json/package-lock.json/sw.js/index.html: v4.5.4 반영"
+      ]
+    },
     {
       "version": "4.5.3",
       "date": "2026-06-24",

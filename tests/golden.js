@@ -371,6 +371,52 @@ async function validateLabControl(page) {
   console.log('PASS LAB   changelog toggle');
 }
 
+async function validateCommercialUx(page) {
+  const baseUrl = `http://127.0.0.1:${PORT}/index.html`;
+  await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => window.JSZip && window.marked && window.XLSX, null, { timeout: 30000 });
+
+  const pcGuide = page.locator('#open-pc-guide');
+  await pcGuide.focus();
+  await pcGuide.press('Enter');
+  assert(await page.locator('#pc-guide-modal').isVisible(), 'ux: PC 안내 모달이 키보드로 열리지 않음');
+  await page.keyboard.press('Tab');
+  assert(await page.locator('#pc-guide-modal').evaluate(modal => modal.contains(document.activeElement)),
+    'ux: 모달 Tab 포커스가 배경으로 이탈함');
+  await page.keyboard.press('Escape');
+  assert(await pcGuide.evaluate(el => document.activeElement === el), 'ux: 모달 종료 후 열기 버튼으로 포커스가 복귀하지 않음');
+
+  const mdCard = page.locator('.format-card[data-ext="md"]');
+  await mdCard.focus();
+  await mdCard.press('Enter');
+  assert(await page.locator('#format-modal').isVisible(), 'ux: 포맷 카드 Enter 조작 실패');
+  await page.keyboard.press('Escape');
+  assert(await mdCard.evaluate(el => document.activeElement === el), 'ux: 포맷 모달 종료 후 카드로 포커스가 복귀하지 않음');
+
+  const tabs = page.locator('.service-info .format-tab');
+  await tabs.first().focus();
+  await tabs.first().press('ArrowRight');
+  assert(await tabs.nth(1).getAttribute('aria-selected') === 'true', 'ux: 포맷 탭 방향키 전환 실패');
+
+  await page.evaluate(() => {
+    validateHwpx = async () => ({ pass: false, issues: ['golden warning'] });
+  });
+  let downloaded = false;
+  page.once('download', () => { downloaded = true; });
+  await page.setInputFiles('#file-input', path.join(FIXTURES, 'sample.md'));
+  await page.locator('#convert-btn').click();
+  await page.locator('.result-card--warn').waitFor({ state: 'visible', timeout: 30000 });
+  await page.waitForTimeout(1000);
+  assert(!downloaded, 'ux: 구조 검증 경고 산출물이 자동 다운로드됨');
+  assert((await page.locator('.result-note').textContent()).includes('자동 다운로드를 중지'),
+    'ux: 자동 다운로드 중지 안내 누락');
+
+  const manifest = JSON.parse(fs.readFileSync(path.join(ROOT, 'manifest.json'), 'utf8'));
+  assert(manifest.id === './' && manifest.start_url === './' && manifest.scope === './',
+    'pwa: 하위 경로용 id/start_url/scope 불일치');
+  console.log('PASS UX    keyboard, modal, warning download, PWA scope');
+}
+
 (async () => {
   const docxPath = path.join(FIXTURES, 'sample.docx');
   if (!fs.existsSync(docxPath)) {
@@ -397,6 +443,7 @@ async function validateLabControl(page) {
       await runCase(page, testCase);
     }
     await validateLabControl(page);
+    await validateCommercialUx(page);
     assert(pageErrors.length === 0, `브라우저 오류 발생: ${pageErrors.join(' | ')}`);
     console.log(`\nGOLDEN: ${CASES.length} cases passed`);
   } finally {
