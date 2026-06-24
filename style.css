@@ -2819,6 +2819,7 @@ a:hover { text-decoration: underline; }
 .preview-ir .ir-page {
     width: min(100%, var(--preview-page-width, 720px));
     aspect-ratio: var(--preview-page-ratio, 210 / 297);
+    overflow: auto;
     box-sizing: border-box;
     margin: 0 auto;
     background: #fff;

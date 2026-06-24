@@ -3038,9 +3038,11 @@ function applyPreviewPaper(pageEl) {
     const landscape = state.orientation === 'landscape';
     const widthMm = landscape ? base.height : base.width;
     const heightMm = landscape ? base.width : base.height;
-    const widthPx = Math.round(720 * (widthMm / PREVIEW_PAPER_MM.A4.width));
+    // 가장 큰 A3 가로(420mm)를 100%로 두고 실제 용지 폭 비율을 화면에도 반영한다.
+    // 픽셀 고정값은 A4/A3/가로가 모두 컨테이너 최대 폭에 걸려 같은 크기로 보이는 문제가 있었다.
+    const widthPercent = Math.min(100, (widthMm / PREVIEW_PAPER_MM.A3.height) * 100);
 
-    pageEl.style.setProperty('--preview-page-width', `${widthPx}px`);
+    pageEl.style.setProperty('--preview-page-width', `${widthPercent.toFixed(3)}%`);
     pageEl.style.setProperty('--preview-page-ratio', `${widthMm} / ${heightMm}`);
     pageEl.dataset.paper = state.paperSize || 'A4';
     pageEl.dataset.orientation = landscape ? 'landscape' : 'portrait';

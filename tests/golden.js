@@ -291,12 +291,11 @@ async function validateHwpxPackage(page, zip, testCase) {
 
   const pagePr = (/<hp:pagePr\b[^>]*>/.exec(sectionXml) || [])[0] || '';
   const expectedLandscape = testCase.previewOrientation === 'landscape';
-  // 한컴 실렌더링 회귀 기준: landscape 속성은 WIDELY를 유지하고 폭/높이로 방향을 결정한다.
-  assert(/landscape="WIDELY"/.test(pagePr), `${testCase.name}: 한컴 호환 landscape 값 불일치`);
+  assert(new RegExp(`landscape="${expectedLandscape ? 'NARROWLY' : 'WIDELY'}"`).test(pagePr),
+    `${testCase.name}: 한컴 호환 landscape 값 불일치`);
   const pageWidth = +((/\bwidth="(\d+)"/.exec(pagePr) || [])[1]);
   const pageHeight = +((/\bheight="(\d+)"/.exec(pagePr) || [])[1]);
-  assert(expectedLandscape ? pageWidth > pageHeight : pageWidth < pageHeight,
-    `${testCase.name}: HWPX 용지 폭/높이 방향 불일치`);
+  assert(pageWidth < pageHeight, `${testCase.name}: HWPX 기본 용지 폭/높이를 회전 전에 유지하지 않음`);
   if (testCase.name === 'ipynb') {
     const codeTable = [...sectionXml.matchAll(/<hp:tbl\b[\s\S]*?<\/hp:tbl>/g)]
       .map(match => match[0])
@@ -399,15 +398,19 @@ async function runCase(page, testCase) {
         p.textContent.includes('문장 안의 인라인 코드는 앞뒤 문장과 같은 문단에 자연스럽게 이어집니다.')
         && p.querySelector('code')?.textContent === '인라인 코드'
       ).length,
+      renderedWidth: el.getBoundingClientRect().width,
+      renderedHeight: el.getBoundingClientRect().height,
     }));
     assert(previewState.paper === testCase.previewPaper,
       `${testCase.name}: 미리보기에 용지 크기가 반영되지 않음`);
     assert(previewState.orientation === testCase.previewOrientation,
       `${testCase.name}: 미리보기에 용지 방향이 반영되지 않음`);
-    assert(previewState.width === '1440px' && previewState.ratio === '420 / 297',
+    assert(previewState.width === '100.000%' && previewState.ratio === '420 / 297',
       `${testCase.name}: A3 가로 미리보기 페이지 비율/폭이 잘못됨`);
     assert(previewState.inlineCodeParagraphs === 1,
       `${testCase.name}: 미리보기에서 인라인 코드가 앞뒤 문장과 분리됨`);
+    assert(previewState.renderedWidth > previewState.renderedHeight,
+      `${testCase.name}: 가로 미리보기 실제 렌더 영역이 세로로 늘어남`);
     const pageInfo = await page.locator('#preview-pagecount').textContent();
     assert(pageInfo.trim() === 'A3 · 가로', `${testCase.name}: 미리보기 용지 안내가 잘못됨`);
   }
@@ -532,6 +535,73 @@ async function validateRejectedInputs(page) {
   console.log(`PASS FAIL  ${cases.length} malformed/unsupported inputs rejected`);
 }
 
+async function validatePaperMatrix(page) {
+  const baseUrl = `http://127.0.0.1:${PORT}/index.html`;
+  const papers = {
+    A3: [84189, 119055],
+    A4: [59528, 84188],
+    B5: [51430, 72817],
+    Letter: [61920, 80136],
+  };
+  const previewWidths = {};
+  await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => window.JSZip && window.marked && window.XLSX, null, { timeout: 30000 });
+  await page.locator('.advanced-settings > summary').click();
+
+  for (const [paper, [rawWidth, rawHeight]] of Object.entries(papers)) {
+    for (const orientation of ['portrait', 'landscape']) {
+      await page.locator('#paper-size').selectOption(paper);
+      await page.locator(`[data-orient="${orientation}"]`).click();
+      const result = await page.evaluate(async ({ paper, orientation }) => {
+        const host = document.createElement('div');
+        host.className = 'preview-ir';
+        host.style.cssText = 'position:fixed;left:-9999px;top:0;width:900px;height:900px;display:block';
+        const sheet = document.createElement('div');
+        sheet.className = 'ir-page';
+        sheet.textContent = 'paper matrix';
+        host.appendChild(sheet);
+        document.body.appendChild(host);
+        applyPreviewPaper(sheet);
+        const rect = sheet.getBoundingClientRect();
+        const preview = {
+          paper: sheet.dataset.paper,
+          orientation: sheet.dataset.orientation,
+          width: Math.round(rect.width),
+          height: Math.round(rect.height),
+        };
+        host.remove();
+
+        const blob = await buildHwpx({ title: 'paper matrix', doc_type: 'plain', blocks: [{ type: 'para', text: 'test' }] },
+          '휴먼명조', 12, null, paper, null, orientation);
+        const zip = await JSZip.loadAsync(await blob.arrayBuffer());
+        const section = await zip.file('Contents/section0.xml').async('string');
+        const pagePr = (section.match(/<hp:pagePr\b[^>]*>/) || [])[0] || '';
+        const lineSeg = (section.match(/<hp:lineseg\b[^>]*>/) || [])[0] || '';
+        return { preview, pagePr, lineSeg };
+      }, { paper, orientation });
+
+      const landscape = orientation === 'landscape';
+      assert(result.preview.paper === paper && result.preview.orientation === orientation,
+        `paper matrix: ${paper} ${orientation} 미리보기 상태 불일치`);
+      assert(landscape ? result.preview.width > result.preview.height : result.preview.width < result.preview.height,
+        `paper matrix: ${paper} ${orientation} 미리보기 실제 비율 불일치`);
+      previewWidths[`${paper}:${orientation}`] = result.preview.width;
+      assert(result.pagePr.includes(`landscape="${landscape ? 'NARROWLY' : 'WIDELY'}"`),
+        `paper matrix: ${paper} ${orientation} pagePr 방향 불일치`);
+      assert(result.pagePr.includes(`width="${rawWidth}"`) && result.pagePr.includes(`height="${rawHeight}"`),
+        `paper matrix: ${paper} 기본 용지 치수 불일치`);
+      const expectedContentWidth = (landscape ? rawHeight : rawWidth) - 2 * Math.round(20 * 283.465);
+      assert(result.lineSeg.includes(`horzsize="${expectedContentWidth}"`),
+        `paper matrix: ${paper} ${orientation} 회전 후 본문 폭 불일치`);
+    }
+  }
+  assert(previewWidths['A3:landscape'] > previewWidths['A4:landscape']
+      && previewWidths['A4:landscape'] > previewWidths['A4:portrait']
+      && previewWidths['A4:portrait'] > previewWidths['B5:portrait'],
+    'paper matrix: 미리보기에서 용지 크기·방향별 상대 크기가 구분되지 않음');
+  console.log('PASS PAPER  A3/A4/B5/Letter × portrait/landscape');
+}
+
 (async () => {
   const docxPath = path.join(FIXTURES, 'sample.docx');
   if (!fs.existsSync(docxPath)) {
@@ -568,6 +638,7 @@ async function validateRejectedInputs(page) {
     await validateLabControl(page);
     await validateCommercialUx(page);
     await validateRejectedInputs(page);
+    await validatePaperMatrix(page);
     assert(pageErrors.length === 0, `브라우저 오류 발생: ${pageErrors.join(' | ')}`);
     console.log(`\nGOLDEN: ${CASES.length} cases passed`);
   } finally {

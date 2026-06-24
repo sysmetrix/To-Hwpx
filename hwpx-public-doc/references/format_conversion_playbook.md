@@ -230,7 +230,7 @@
 - 새 borderFill, charPr, paraPr를 만들면 IDRef 검증과 namespace를 같이 본다.
 - 표는 grid, row, cell span이 맞지 않으면 한컴에서 조용히 깨진다.
 - 그림은 `BinData`, manifest, content.hpf, `hp:pic/hc:img`가 모두 맞아야 한다.
-- 한컴 실렌더링 기준 `hp:pagePr@landscape="WIDELY"`를 유지하고, 세로는 `width < height`, 가로는 `width > height`로 용지 방향을 결정한다. `NARROWLY`로 바꾸면 페이지는 세로에 남고 콘텐츠 폭만 가로로 계산되는 회귀가 발생하므로 사용하지 않는다.
+- HWPX에는 회전 전 기본 용지 치수(`width < height`)를 기록한다. 세로는 `landscape="WIDELY"`, 가로는 `landscape="NARROWLY"`로 회전하고, 본문·표 폭 계산만 회전 후 유효 폭(가로에서는 기본 `height`)을 사용한다. enum과 폭·높이를 동시에 뒤집으면 이중 회전되어 페이지와 콘텐츠 폭이 분리된다.
 
 ## 포맷 안내 문구 작성 규칙
 

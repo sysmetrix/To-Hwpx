@@ -1,6 +1,23 @@
 {
-  "current": "4.5.6",
+  "current": "4.5.7",
   "versions": [
+    {
+      "version": "4.5.7",
+      "date": "2026-06-25",
+      "user": [
+        "가로 용지에서 페이지와 표 방향이 분리되던 문제를 HWPX 회전 규칙에 맞게 근본 수정했습니다.",
+        "미리보기가 내용 높이에 밀려 세로처럼 보이던 문제를 수정하고, A3·A4·B5·Letter의 실제 크기 차이를 화면에 반영했습니다."
+      ],
+      "dev": [
+        "[v4.5.7] hwpx.js: 회전 전 기본 용지 치수 유지 + 세로 WIDELY/가로 NARROWLY + 회전 후 본문 폭 계산·검증 일치",
+        "[v4.5.7] app.js/style.css: A3 가로 100% 기준 실제 mm 상대 폭 미리보기와 고정 aspect-ratio 내부 스크롤 적용",
+        "[v4.5.7] tests/golden.js: A3/A4/B5/Letter × 세로/가로 8조합 enum·치수·본문 폭·미리보기 비율/크기 행렬 검사",
+        "[v4.5.7] tests/orientation-e2e.js: 라이브 UI 클릭→변환→미리보기→HWPX XML 통합 진단 추가",
+        "[v4.5.7] bump-version.js: UTC 날짜로 자정 무렵 minor 버전이 잘못 증가하던 문제를 로컬 날짜 기준으로 수정",
+        "[v4.5.7] playbook/gotchas/audit/release-qa: 이중 회전 원인과 정답 구조 기록",
+        "[v4.5.7] package.json/package-lock.json/sw.js/index.html: v4.5.7 반영"
+      ]
+    },
     {
       "version": "4.5.6",
       "date": "2026-06-25",

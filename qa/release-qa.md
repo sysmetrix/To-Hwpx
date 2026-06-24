@@ -148,5 +148,13 @@ Scope: static browser-only conversion flow from file selection to HWPX download.
 - [x] DOCX 병합·중첩 표 격자 게이트 PASS
 - [x] DOCX 그림 `hc:img → content.hpf → BinData → manifest` 참조 게이트 PASS
 - [x] XLSX 첫 시트 HWPX 표 패키지 게이트 PASS
-- [x] 한컴 실렌더링 기준 `WIDELY` 유지, 세로 `width < height`/가로 `width > height` 자동 검사 PASS
+- [x] 회전 전 `width < height` 유지, 세로 `WIDELY`/가로 `NARROWLY`, 회전 후 본문 폭 자동 검사 PASS
 - [ ] 한컴오피스에서 A3 가로, DOCX 그림, 병합 표, IPYNB 코드 배경을 시각 확인
+
+## 12. v4.5.7 용지 방향 회귀 교정
+
+- [x] A3/A4/B5/Letter × 세로/가로 8조합 pagePr enum·기본 치수 검사
+- [x] 가로 본문/표 폭이 회전 후 유효 폭을 사용하고 내부 검증과 일치
+- [x] 기본 미리보기 실제 렌더 폭·높이와 용지별 상대 크기 검사
+- [x] 라이브 흐름 진단 스크립트 `tests/orientation-e2e.js` 추가
+- [ ] 배포 후 동일 사용자 문서로 한컴 가로 페이지와 표 경계 확인
