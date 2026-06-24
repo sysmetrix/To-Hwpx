@@ -148,5 +148,5 @@ Scope: static browser-only conversion flow from file selection to HWPX download.
 - [x] DOCX 병합·중첩 표 격자 게이트 PASS
 - [x] DOCX 그림 `hc:img → content.hpf → BinData → manifest` 참조 게이트 PASS
 - [x] XLSX 첫 시트 HWPX 표 패키지 게이트 PASS
-- [x] 세로 `WIDELY`/가로 `NARROWLY`와 폭·높이 관계 자동 검사 PASS
+- [x] 한컴 실렌더링 기준 `WIDELY` 유지, 세로 `width < height`/가로 `width > height` 자동 검사 PASS
 - [ ] 한컴오피스에서 A3 가로, DOCX 그림, 병합 표, IPYNB 코드 배경을 시각 확인

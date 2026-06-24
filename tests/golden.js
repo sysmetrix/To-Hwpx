@@ -291,8 +291,8 @@ async function validateHwpxPackage(page, zip, testCase) {
 
   const pagePr = (/<hp:pagePr\b[^>]*>/.exec(sectionXml) || [])[0] || '';
   const expectedLandscape = testCase.previewOrientation === 'landscape';
-  assert(new RegExp(`landscape="${expectedLandscape ? 'NARROWLY' : 'WIDELY'}"`).test(pagePr),
-    `${testCase.name}: HWPX 용지 방향 enum 불일치`);
+  // 한컴 실렌더링 회귀 기준: landscape 속성은 WIDELY를 유지하고 폭/높이로 방향을 결정한다.
+  assert(/landscape="WIDELY"/.test(pagePr), `${testCase.name}: 한컴 호환 landscape 값 불일치`);
   const pageWidth = +((/\bwidth="(\d+)"/.exec(pagePr) || [])[1]);
   const pageHeight = +((/\bheight="(\d+)"/.exec(pagePr) || [])[1]);
   assert(expectedLandscape ? pageWidth > pageHeight : pageWidth < pageHeight,
