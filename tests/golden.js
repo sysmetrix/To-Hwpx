@@ -610,6 +610,37 @@ async function validatePaperMatrix(page) {
   console.log('PASS PAPER  A3/A4/B5/Letter × portrait/landscape');
 }
 
+async function validatePretendardCompatibility(page) {
+  const baseUrl = `http://127.0.0.1:${PORT}/index.html`;
+  await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => window.JSZip && window.marked && window.XLSX, null, { timeout: 30000 });
+
+  const options = await page.locator('#doc-font option').evaluateAll(nodes =>
+    nodes.map(node => ({ value: node.value, text: node.textContent.trim() })));
+  for (const name of ['Pretendard GOV Variable', 'Pretendard GOV']) {
+    assert(options.some(option => option.value === name && option.text === name),
+      `font: ${name} 선택 항목 누락`);
+    const header = await page.evaluate(async fontName => {
+      const blob = await buildHwpx(
+        { title: 'font compatibility', doc_type: 'plain', blocks: [{ type: 'para', text: '글꼴 호환성' }] },
+        fontName
+      );
+      const zip = await JSZip.loadAsync(await blob.arrayBuffer());
+      return zip.file('Contents/header.xml').async('string');
+    }, name);
+    assert(header.includes(`face="${name}"`), `font: ${name} HWPX fontface 이름 불일치`);
+  }
+
+  await page.locator('.advanced-settings > summary').click();
+  await page.locator('#open-font-guide').click();
+  const guideText = await page.locator('#font-guide-modal').textContent();
+  assert(guideText.includes('Pretendard GOV Variable'), 'font: 안내 페이지 대표 명칭 누락');
+  const downloadHref = await page.locator('#font-guide-modal a[download]').evaluateAll(links =>
+    links.map(link => link.getAttribute('href')).find(href => /Pretendard/i.test(href || '')) || '');
+  assert(downloadHref === 'fonts/PretendardGOVVariable.ttf', 'font: Variable 다운로드 링크 불일치');
+  console.log('PASS FONT   Pretendard GOV Variable/GOV compatibility');
+}
+
 (async () => {
   const docxPath = path.join(FIXTURES, 'sample.docx');
   if (!fs.existsSync(docxPath)) {
@@ -647,6 +678,7 @@ async function validatePaperMatrix(page) {
     await validateCommercialUx(page);
     await validateRejectedInputs(page);
     await validatePaperMatrix(page);
+    await validatePretendardCompatibility(page);
     assert(pageErrors.length === 0, `브라우저 오류 발생: ${pageErrors.join(' | ')}`);
     console.log(`\nGOLDEN: ${CASES.length} cases passed`);
   } finally {

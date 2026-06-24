@@ -25,7 +25,7 @@
 세 가지만 외우면 대부분 막는다:
 
 1. **네임스페이스**: 테두리·borderFill·charPr·paraPr·fontfaces = `hh:`(head). **채우기**(fillBrush/winBrush/gradation/imgBrush)·그림(`hc:img`)·공통 좌표(`hc:pt0`) = `hc:`(core). `hc:`를 쓰면 그 **루트(header·section0)에 `xmlns:hc="http://www.hancom.co.kr/hwpml/2011/core"` 선언 필수.** (`alpha="0"`이 불투명=정상값.)
-2. **글꼴 이름 = 한컴이 매칭하는 패밀리명**: 폰트 select의 `value`가 HWPX 글꼴면 이름으로 **그대로 박힌다**. 가변폰트 풀네임(예: `Pretendard GOV Variable Medium`)을 넣으면 매칭 실패 → 미적용. 반드시 [js/app.js](js/app.js) `FONT_DOWNLOADS`의 `systemNames`와 일치하는 **패밀리명**(예: `Pretendard GOV`)을 쓴다. (v4.4.10에서 이걸로 한 번 데임.)
+2. **글꼴 이름 = 한컴이 매칭하는 패밀리명**: 폰트 select의 `value`가 HWPX 글꼴면 이름으로 **그대로 박힌다**. 가변폰트의 무게까지 붙은 풀네임(예: `Pretendard GOV Variable Medium`)을 넣으면 매칭 실패 → 미적용. Pretendard GOV 가변 폰트는 PC에 따라 패밀리명이 `Pretendard GOV Variable` 또는 `Pretendard GOV`로 등록되므로 두 선택지를 유지하고, [js/app.js](js/app.js) `FONT_DOWNLOADS.systemNames`에도 둘 다 둔다. (v4.4.10, v4.5.9에서 확인.)
 3. **그림**: `hc:img@binaryItemIDRef`(문자열 id)는 header가 아니라 **`content.hpf`의 `opf:item id`** 와 매칭. `hp:pic` 구조는 hwpxlib `testFile/reader_writer/SimplePicture.hwpx`를 정답으로 대조.
 
 **진단 순서(안 보일 때):** ①네임스페이스/요소명·이름 매칭 → ②`xmlns` 선언 → ③IDRef 무결성 → ④속성값(alpha 등은 **마지막**). 추측 금지, **hwpxlib와 대조**(gotchas 2절).
