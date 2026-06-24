@@ -1,6 +1,21 @@
 {
-  "current": "4.5.9",
+  "current": "4.5.10",
   "versions": [
+    {
+      "version": "4.5.10",
+      "date": "2026-06-25",
+      "user": [
+        "글꼴 선택을 `Pretendard GOV Variable` 하나로 단순화했습니다.",
+        "PC에서 글꼴이 `Pretendard GOV`로 등록된 경우에도 자동으로 찾도록 HWPX 대체 글꼴 정보를 추가했습니다."
+      ],
+      "dev": [
+        "[v4.5.10] hwpx.js: Pretendard GOV Variable의 7개 언어 fontface에 hh:substFont(face=Pretendard GOV)를 typeInfo 앞에 기록",
+        "[v4.5.10] index.html: 중복 Pretendard GOV 선택지 제거",
+        "[v4.5.10] tests/golden.js: 단일 UI 선택지, 주 글꼴 7개, 대체 글꼴 7개, substFont 요소 순서 회귀 검사",
+        "[v4.5.10] AGENTS.md/gotchas/fonts README: OWPML 대체 글꼴 방식과 PC별 등록명 대응 기준 기록",
+        "[v4.5.10] package.json/package-lock.json/sw.js/index.html: v4.5.10 반영"
+      ]
+    },
     {
       "version": "4.5.9",
       "date": "2026-06-25",

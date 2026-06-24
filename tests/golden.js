@@ -617,19 +617,24 @@ async function validatePretendardCompatibility(page) {
 
   const options = await page.locator('#doc-font option').evaluateAll(nodes =>
     nodes.map(node => ({ value: node.value, text: node.textContent.trim() })));
-  for (const name of ['Pretendard GOV Variable', 'Pretendard GOV']) {
-    assert(options.some(option => option.value === name && option.text === name),
-      `font: ${name} 선택 항목 누락`);
-    const header = await page.evaluate(async fontName => {
-      const blob = await buildHwpx(
-        { title: 'font compatibility', doc_type: 'plain', blocks: [{ type: 'para', text: '글꼴 호환성' }] },
-        fontName
-      );
-      const zip = await JSZip.loadAsync(await blob.arrayBuffer());
-      return zip.file('Contents/header.xml').async('string');
-    }, name);
-    assert(header.includes(`face="${name}"`), `font: ${name} HWPX fontface 이름 불일치`);
-  }
+  assert(options.some(option => option.value === 'Pretendard GOV Variable'
+      && option.text === 'Pretendard GOV Variable'), 'font: Pretendard GOV Variable 선택 항목 누락');
+  assert(!options.some(option => option.value === 'Pretendard GOV'),
+    'font: 사용자 선택지에 대체 등록명이 중복 노출됨');
+  const header = await page.evaluate(async () => {
+    const blob = await buildHwpx(
+      { title: 'font compatibility', doc_type: 'plain', blocks: [{ type: 'para', text: '글꼴 호환성' }] },
+      'Pretendard GOV Variable'
+    );
+    const zip = await JSZip.loadAsync(await blob.arrayBuffer());
+    return zip.file('Contents/header.xml').async('string');
+  });
+  const primaryFonts = header.match(/<hh:font id="0" face="Pretendard GOV Variable" type="TTF" isEmbedded="0">/g) || [];
+  const substituteFonts = header.match(/<hh:substFont face="Pretendard GOV" type="TTF" isEmbedded="0"\/>/g) || [];
+  assert(primaryFonts.length === 7, 'font: 7개 언어 fontface의 주 글꼴 이름 불일치');
+  assert(substituteFonts.length === 7, 'font: 7개 언어 fontface의 대체 글꼴 누락');
+  assert(/<hh:font id="0" face="Pretendard GOV Variable"[^>]*>\s*<hh:substFont[^>]*\/>\s*<hh:typeInfo/.test(header),
+    'font: substFont가 typeInfo보다 앞에 기록되지 않음');
 
   await page.locator('.advanced-settings > summary').click();
   await page.locator('#open-font-guide').click();
@@ -638,7 +643,7 @@ async function validatePretendardCompatibility(page) {
   const downloadHref = await page.locator('#font-guide-modal a[download]').evaluateAll(links =>
     links.map(link => link.getAttribute('href')).find(href => /Pretendard/i.test(href || '')) || '');
   assert(downloadHref === 'fonts/PretendardGOVVariable.ttf', 'font: Variable 다운로드 링크 불일치');
-  console.log('PASS FONT   Pretendard GOV Variable/GOV compatibility');
+  console.log('PASS FONT   Pretendard GOV Variable + GOV substFont');
 }
 
 (async () => {
