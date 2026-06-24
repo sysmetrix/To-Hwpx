@@ -341,6 +341,7 @@ async function validateHwpxPackage(page, zip, testCase) {
   for (const table of dataTables) {
     const tableOpen = (/<hp:tbl\b[^>]*>/.exec(table) || [])[0] || '';
     const posOpen = (/<hp:pos\b[^>]*\/>/.exec(table) || [])[0] || '';
+    const outMarginOpen = (/<hp:outMargin\b[^>]*\/>/.exec(table) || [])[0] || '';
     const firstRow = (/<hp:tr>[\s\S]*?<\/hp:tr>/.exec(table) || [])[0] || '';
     const headerFlags = [...firstRow.matchAll(/<hp:tc\b[^>]*\bheader="([^"]+)"/g)].map(match => match[1]);
     assert(/\bpageBreak="TABLE"/.test(tableOpen), `${testCase.name}: 일반 표 여러 쪽 지원이 '나눔(TABLE)'이 아님`);
@@ -349,6 +350,7 @@ async function validateHwpxPackage(page, zip, testCase) {
     assert(/\bflowWithText="1"/.test(posOpen), `${testCase.name}: 일반 표가 본문 흐름을 따르지 않음`);
     assert(/\bhorzRelTo="COLUMN"/.test(posOpen), `${testCase.name}: 일반 표 가로 기준이 단(COLUMN)이 아님`);
     assert(/\bhorzAlign="RIGHT"/.test(posOpen), `${testCase.name}: 일반 표가 단 오른쪽 정렬이 아님`);
+    assert(/\bbottom="850"/.test(outMarginOpen), `${testCase.name}: 일반 표 아래쪽 바깥 여백이 3mm가 아님`);
     assert(headerFlags.length > 0 && headerFlags.every(flag => flag === '1'),
       `${testCase.name}: 일반 표 첫 행이 제목 셀로 지정되지 않음`);
   }

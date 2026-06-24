@@ -1084,7 +1084,7 @@ function buildTable(header, rows, contentWidthHwp = 48000, customBfMap = new Map
         `<hp:sz width="${tableWidth}" widthRelTo="ABSOLUTE" height="0" heightRelTo="ABSOLUTE" protect="0"/>` +
         `<hp:pos treatAsChar="0" affectLSpacing="0" flowWithText="1" allowOverlap="0" holdAnchorAndSO="0" ` +
         `vertRelTo="PARA" horzRelTo="COLUMN" vertAlign="TOP" horzAlign="RIGHT" vertOffset="0" horzOffset="0"/>` +
-        `<hp:outMargin left="0" right="0" top="0" bottom="0"/>` +
+        `<hp:outMargin left="0" right="0" top="0" bottom="${mmToHwp(3)}"/>` +
         `<hp:inMargin left="650" right="650" top="220" bottom="220"/>` +
         `${rowsXml}` +
         `</hp:tbl><hp:t></hp:t></hp:run></hp:p>`;
