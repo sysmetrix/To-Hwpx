@@ -1,6 +1,20 @@
 {
-  "current": "4.5.0",
+  "current": "4.5.1",
   "versions": [
+    {
+      "version": "4.5.1",
+      "date": "2026-06-24",
+      "user": [
+        "행이 많은 표가 여러 쪽으로 자연스럽게 나뉘고, 다음 쪽마다 첫 번째 제목 줄이 자동 반복되도록 표 속성을 개선했습니다."
+      ],
+      "dev": [
+        "[v4.5.1] js/hwpx.js: 일반 데이터 표를 pageBreak=TABLE(나눔), repeatHeader=1, treatAsChar=0, flowWithText=1, 단 기준 오른쪽 정렬로 출력하고 첫 행 header=1 유지. 표지·구분선·코드 블록용 표는 기존 정책 유지",
+        "[v4.5.1] tests/fixtures/long-table.csv/tests/golden.js: 60행 긴 표 fixture와 여러 쪽 지원·제목 줄 반복·글자처럼 취급 해제·단 오른쪽 정렬 XML 회귀 검증 추가",
+        "[v4.5.1] format_conversion_playbook.md/hwpx_rendering_gotchas.md/qa/release-qa.md: 긴 표 쪽 나눔 정답 구조와 한컴 시각 확인 기준 기록",
+        "[v4.5.1] AGENTS.md: 특정 AI 공동 작성자 트레일러를 강제하던 릴리스 규칙 제거",
+        "[v4.5.1] package.json/package-lock.json/sw.js/index.html: v4.5.1 반영"
+      ]
+    },
     {
       "version": "4.5.0",
       "date": "2026-06-24",
