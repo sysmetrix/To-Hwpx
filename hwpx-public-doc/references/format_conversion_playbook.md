@@ -120,6 +120,7 @@
 - 수식 자체가 아니라 계산된 표시 값 중심으로 안내한다.
 - 표 폭/열 너비 변경은 HWPX 렌더링에 민감하므로 `buildTable()`의 grid/rowSpan/colSpan 무결성을 확인한다.
 - 일반 데이터 표는 `pageBreak="TABLE"`(여러 쪽 지원: 나눔), `treatAsChar="0"`(글자처럼 취급 해제), `flowWithText="1"`로 출력한다. 단 기준 오른쪽 정렬은 배치만 바꾸며 행 높이·열 너비·병합 계산에는 관여하지 않는다.
+- 일반 데이터 표의 `hp:outMargin` 아래쪽은 `mmToHwp(3)`(XML 값 850, 약 3mm)로 둬서 다음 본문 블록과 시각적으로 분리한다. 셀 내부 여백인 `hp:cellMargin`과 혼동하지 않으며, 표지·구분선·코드 블록용 표에는 일괄 적용하지 않는다.
 - 제목 줄 자동 반복은 표의 `repeatHeader="1"`만으로 부족하다. 첫 행의 모든 실제 셀을 `header="1"`로 함께 지정해야 한다.
 
 검증:
@@ -127,7 +128,7 @@
 - `tests/fixtures/long-table.csv`
 - `tests/fixtures/sample.xlsx`
 - 빈 셀, 열 개수, 긴 텍스트, 표 존재 여부를 본다.
-- 일반 표의 `pageBreak="TABLE"`, `repeatHeader="1"`, `treatAsChar="0"`, 단 오른쪽 정렬, 첫 행 제목 셀 지정을 XML로 검사하고 긴 표는 한컴에서 실제 쪽 나눔과 제목 줄 반복을 확인한다.
+- 일반 표의 `pageBreak="TABLE"`, `repeatHeader="1"`, `treatAsChar="0"`, 단 오른쪽 정렬, `hp:outMargin@bottom="850"`, 첫 행 제목 셀 지정을 XML로 검사한다. 한컴에서는 짧은 표 뒤 3mm 간격과 긴 표의 실제 쪽 나눔·제목 줄 반복을 함께 확인한다.
 
 ## JSON
 

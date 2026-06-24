@@ -1,6 +1,19 @@
 {
-  "current": "4.5.11",
+  "current": "4.5.12",
   "versions": [
+    {
+      "version": "4.5.12",
+      "date": "2026-06-25",
+      "user": [
+        "변환된 일반 표 아래에 3mm 바깥 여백을 적용해 표와 다음 본문이 붙어 보이지 않도록 개선했습니다."
+      ],
+      "dev": [
+        "[v4.5.12] hwpx.js: 일반 데이터 표 buildTable()의 hp:outMargin 아래쪽을 mmToHwp(3)(850 HWPUNIT)로 설정",
+        "[v4.5.12] tests/golden.js: 모든 일반 데이터 표의 hp:outMargin@bottom=850 회귀 검사 추가",
+        "[v4.5.12] AGENTS.md/playbook/gotchas/release-qa: 일반 표 3mm 아래 바깥 여백, 레이아웃용 표 제외 범위, 자동·한컴 시각 검증 기준 기록",
+        "[v4.5.12] package.json/package-lock.json/sw.js/index.html: v4.5.12 반영"
+      ]
+    },
     {
       "version": "4.5.11",
       "date": "2026-06-25",

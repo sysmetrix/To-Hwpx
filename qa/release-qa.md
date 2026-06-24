@@ -54,7 +54,7 @@ Scope: static browser-only conversion flow from file selection to HWPX download.
 - `section0.xml` 네임스페이스와 XML 파싱 오류 확인
 - `charPrIDRef`, `paraPrIDRef`, `borderFillIDRef` 참조 무결성 확인
 - `hc:img@binaryItemIDRef`가 `content.hpf` item, `BinData`, package manifest와 연결되는지 확인
-- 일반 데이터 표가 `pageBreak="TABLE"`, `repeatHeader="1"`, `treatAsChar="0"`이고 첫 행 셀이 `header="1"`인지 확인
+- 일반 데이터 표가 `pageBreak="TABLE"`, `repeatHeader="1"`, `treatAsChar="0"`, `hp:outMargin@bottom="850"`이고 첫 행 셀이 `header="1"`인지 확인
 - 다운로드 링크의 파일명과 `type="application/hwp+zip"` 확인
 
 ## 5. Security and Privacy Checks
@@ -90,6 +90,7 @@ Scope: static browser-only conversion flow from file selection to HWPX download.
 - [ ] HWPX ZIP 구조 검증 PASS
 - [ ] `long-table.csv` 변환 후 한컴에서 표가 두 쪽 이상으로 나뉘고, 다음 쪽에도 제목 줄이 자동 반복됨
 - [ ] 긴 표가 글자처럼 취급되지 않으며 단 오른쪽 정렬로 설정되고, 행 높이·열 너비·병합 셀이 깨지지 않음
+- [ ] 짧은 일반 표와 다음 본문 사이에 아래쪽 바깥 여백 약 3mm가 보이며, 긴 표의 쪽 나눔에는 불필요한 중간 간격이 생기지 않음
 - [ ] Markdown 문장 속 인라인 코드가 앞뒤 문장과 같은 문단에 표시되고, 단독 코드 문단은 기존 코드 블록 형태 유지
 - [ ] 기본 미리보기 페이지 비율과 상단 표시가 A3/A4/B5/Letter 및 세로/가로 선택을 반영
 - [ ] 긴 가로 문서가 가로 비율을 유지한 여러 장으로 나뉘며, 종이 내부 스크롤·내용 잘림·이중 스크롤이 없음
@@ -197,3 +198,11 @@ Scope: static browser-only conversion flow from file selection to HWPX download.
 - 감지 불가 시 배포 TTF 내부 이름인 `Pretendard GOV Variable`을 기본값으로 사용한다.
 - [x] 자동 테스트: 두 설치명 감지, 동시 설치 시 Variable 우선, 미감지 기본값, 양방향 `substFont`, 7개 언어 fontface 검사
 - [ ] v4.5.11 배포 후 두 PC 모두 글꼴 적용과 한컴 글꼴란 표시 재확인
+
+## 15. v4.5.12 일반 표 아래 바깥 여백
+
+- [x] 일반 데이터 표 `hp:outMargin@bottom="850"`(약 3mm) 자동 검사
+- [x] 표지·구분선·코드 블록용 표에는 일반 데이터 표 여백을 일괄 적용하지 않음
+- [x] `npm run test:golden` PASS
+- [x] `node qa/gate.js qa/fixtures/md_hwpx_test.md` PASS
+- [x] 한컴오피스에서 일반 표 아래 3mm 바깥 여백 적용 확인
