@@ -1,0 +1,22 @@
+{
+  "title": "Golden IR JSON 제목\u0001",
+  "doc_type": "plain",
+  "blocks": [
+    {
+      "type": "para",
+      "runs": [
+        { "text": "IR 굵은 텍스트\u0002", "bold": true },
+        { "text": "와 일반 텍스트" }
+      ]
+    },
+    {
+      "type": "table",
+      "header": ["IR 열\u0003", "IR 값"],
+      "rows": [["IR 셀\u0004", "제어문자 제거"]]
+    },
+    {
+      "type": "quote",
+      "blocks": [{ "type": "para", "text": "IR 인용문\u0005" }]
+    }
+  ]
+}

@@ -64,6 +64,13 @@ OWPML은 요소마다 소속 네임스페이스가 정해져 있다. **prefix를
 - **제외:** 표지·구분선·코드 블록처럼 표를 레이아웃 개체로 사용하는 경로에는 일반 데이터 표 설정을 일괄 적용하지 않는다.
 - **검증:** `tests/fixtures/long-table.csv`와 `tests/golden.js`로 XML 속성을 검사하고, 한컴에서 두 쪽 이상으로 나뉘는지와 매 쪽 첫 줄에 제목 행이 반복되는지 눈으로 확인한다.
 
+### 용지 크기는 가로인데 방향 enum이 세로로 남는 경우
+
+- **증상:** XML의 폭/높이는 가로로 뒤집혔지만 한컴에서 방향 적용이 일관되지 않을 수 있다.
+- **원인:** `hp:pagePr@landscape`를 항상 `WIDELY`로 출력했다.
+- **정답:** hwpxlib `PageDirection` 원문 기준 `WIDELY`는 세로, `NARROWLY`는 가로다. 가로에서는 enum과 `width > height`, 세로에서는 enum과 `width < height`가 함께 맞아야 한다.
+- **검증:** `tests/golden.js`가 모든 포맷의 세로 방향과 A3 가로 방향을 `section0.xml`에서 검사한다.
+
 ---
 
 ## 2. 정답 확인처 — 추측하지 말고 한컴 호환 라이브러리와 대조

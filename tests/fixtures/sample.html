@@ -7,9 +7,12 @@
 <body>
   <h1>Golden HTML 제목 Alpha</h1>
   <h2>HTML 하위 제목 Beta</h2>
-  <p>첫 문단입니다. <strong>굵은 텍스트</strong>와 <em>기울임 텍스트</em>, 한글/English, 특수문자 &amp; &lt; &gt; " ' 를 포함합니다.</p>
+  <p>첫 문단입니다. <strong>굵은 텍스트</strong>와 <em>기울임 텍스트</em>, <u>밑줄 텍스트</u>, <s>취소선 텍스트</s>, <span style="color:#C62828">색상 텍스트</span>, 한글/English, 특수문자 &amp; &lt; &gt; " ' 를 포함합니다.</p>
   <ul>
-    <li>비순서 목록 하나</li>
+    <li>
+      비순서 목록 하나
+      <ul><li>중첩 목록 Alpha</li></ul>
+    </li>
     <li>비순서 목록 English</li>
   </ul>
   <ol>
@@ -24,6 +27,11 @@
       <tr><td>표 제목</td><td>표 값 한글</td><td>English Cell</td></tr>
       <tr><td>특수문자</td><td>A &amp; B</td><td>긴 텍스트 long text wraps safely</td></tr>
     </tbody>
+  </table>
+  <table>
+    <tr><th rowspan="2">병합 제목</th><th colspan="2">병합 값</th></tr>
+    <tr><th>하위 A</th><th>하위 B</th></tr>
+    <tr><td>병합 본문</td><td>값 A</td><td>값 B</td></tr>
   </table>
   <blockquote>
     <p>HTML Quote Alpha with <strong>bold quote</strong></p>

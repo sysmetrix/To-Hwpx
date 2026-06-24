@@ -60,6 +60,9 @@ jobs:
         run: |
           node qa/gate.js qa/fixtures/md_hwpx_test.md
           node qa/gate.js qa/fixtures/sample.docx
+          node qa/gate.js qa/fixtures/docx_table_test.docx
+          node qa/gate.js qa/fixtures/docx_image_test.docx
+          node qa/gate.js tests/fixtures/sample.xlsx
 
       # 2) GitHub Pages 설정
       #    정적 HTML/CSS/JS 파일만 있으므로 별도 빌드 불필요

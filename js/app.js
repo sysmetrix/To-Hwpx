@@ -686,6 +686,7 @@ const FORMAT_INFO = {
         features: [
             'h1~h6, p, ul/ol, table, blockquote, strong/em, code 등 문서형 태그 중심 지원',
             '밑줄, 취소선, 일부 글자색처럼 텍스트에 붙은 인라인 서식 일부 보존',
+            '들여쓴 중첩 목록과 표의 rowspan/colspan 병합 구조 보존',
             '일반적으로 HTML 변환은 CSS 화면 배치보다 본문 의미 구조 보존이 우선',
         ],
         limits: ['CSS 레이아웃·반응형 배치·대부분의 디자인 속성 무시', '이미지·SVG 미지원', 'script·style·nav·footer 등 비본문 요소 무시'],
@@ -711,7 +712,7 @@ const FORMAT_INFO = {
         tech: 'ZIP 구조 시도 → 내부 XML/텍스트 추출 → IR',
         features: [
             'HWPX를 잘못 업로드한 경우 내부 XML 본문 텍스트와 일부 표를 읽을 수 있음',
-            '구형 HWP5 바이너리는 현재 안내/제한 처리 중심',
+            '구형 HWP5 바이너리는 결과 파일을 만들지 않고 HWPX/DOCX 재저장 방법을 안내',
             '일반적으로 한글 문서는 한컴오피스에서 HWPX로 저장하는 편이 가장 안전',
         ],
         limits: ['HWP5(바이너리) 본문 파싱은 대폭 제한됨', '서식·이미지·개체·복잡한 표 복원 불완전', '이미 HWPX인 파일은 변환보다 원본 사용을 권장'],
@@ -758,7 +759,7 @@ const FORMAT_INFO = {
         tech: 'JSON.parse → 구조 분석 → IR → HWPX (IR 형식이면 직접 사용)',
         features: [
             '객체와 배열을 제목, 목록, 키-값 표 형태로 변환',
-            '배열 안 객체 구조는 표로 정리',
+            '객체 배열은 키 합집합을 열로 사용하는 행형 표로 정리',
             'IR 형식 JSON을 직접 HWPX로 변환 가능 (고급 사용)',
             '일반적으로 JSON 변환은 원본 값 보존과 가독성 확보가 목표',
         ],
@@ -2073,7 +2074,7 @@ function getConversionSummaryForExt(ext) {
             lossy: '이미지, 복잡한 HTML, 사용자 정의 스타일, 페이지 배치',
         },
         html: {
-            preserved: 'h1-h6, p, ul/ol, table, strong/em 중심 구조',
+            preserved: 'h1-h6, p, 중첩 ul/ol, 병합 표, strong/em/u/s와 일부 글자색',
             lossy: 'CSS 레이아웃, 이미지, SVG, 스크립트, 외부 리소스',
         },
         htm: {
@@ -2105,7 +2106,7 @@ function getConversionSummaryForExt(ext) {
             lossy: '여러 시트, 수식 자체, 차트, 이미지, 셀 병합과 세부 서식',
         },
         json: {
-            preserved: '객체/배열 값, 키-값 목록, 배열 표',
+            preserved: '객체/배열 값, 키-값 표, 객체 배열의 행형 표, 정규화된 IR',
             lossy: '보고서형 레이아웃, 데이터 타입 의미, 원본 들여쓰기',
         },
         ipynb: {
