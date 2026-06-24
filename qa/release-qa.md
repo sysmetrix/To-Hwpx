@@ -92,6 +92,7 @@ Scope: static browser-only conversion flow from file selection to HWPX download.
 - [ ] 긴 표가 글자처럼 취급되지 않으며 단 오른쪽 정렬로 설정되고, 행 높이·열 너비·병합 셀이 깨지지 않음
 - [ ] Markdown 문장 속 인라인 코드가 앞뒤 문장과 같은 문단에 표시되고, 단독 코드 문단은 기존 코드 블록 형태 유지
 - [ ] 기본 미리보기 페이지 비율과 상단 표시가 A3/A4/B5/Letter 및 세로/가로 선택을 반영
+- [ ] 긴 가로 문서가 가로 비율을 유지한 여러 장으로 나뉘며, 종이 내부 스크롤·내용 잘림·이중 스크롤이 없음
 - [ ] 결과 카드에 보존/손실 가능 요소 표시
 - [ ] 수동 다운로드 버튼으로 `.hwpx` 파일 저장
 - [ ] 한컴오피스에서 실제 열기 확인
@@ -158,3 +159,24 @@ Scope: static browser-only conversion flow from file selection to HWPX download.
 - [x] 기본 미리보기 실제 렌더 폭·높이와 용지별 상대 크기 검사
 - [x] 라이브 흐름 진단 스크립트 `tests/orientation-e2e.js` 추가
 - [ ] 배포 후 동일 사용자 문서로 한컴 가로 페이지와 표 경계 확인
+
+## 13. v4.5.8 기본 미리보기 회귀 방지
+
+원인:
+- v4.5.7에서 긴 가로 문서를 가로처럼 보이게 하려고 `.ir-page`에 고정 종횡비와 내부 `overflow:auto`를 함께 적용했다.
+- 테스트가 첫 페이지의 `renderedWidth > renderedHeight`만 확인하여 내부 스크롤과 내용 잘림을 정상으로 승인했다.
+
+필수 승인 기준:
+- [x] A3 가로 긴 문서가 두 페이지 이상으로 분할
+- [x] 모든 `.ir-page`가 선택 용지의 가로 종횡비 유지
+- [x] 각 페이지 `scrollHeight <= clientHeight + 1`
+- [x] 종이 내부 `overflow:auto` 없음
+- [x] 상단에 `용지 · 방향 · N쪽` 표시
+- [x] `npm run test:golden` PASS
+- [x] 로컬 실제 흐름 `tests/orientation-e2e.js` PASS 및 화면 캡처 확인
+- [ ] 배포 후 캐시를 비우고 `📋 v4.5.8` 확인
+- [ ] 사용자 문서로 세로·가로 미리보기와 페이지 이동을 최종 확인
+
+릴리스 중단 조건:
+- 위 자동 항목이 하나라도 실패하거나 실제 화면 캡처를 확인하지 않았으면 배포하지 않는다.
+- 단순 폭·높이 비교만으로 미리보기 회귀 검증을 대체하지 않는다.

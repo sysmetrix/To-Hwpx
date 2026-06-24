@@ -37,6 +37,17 @@
 - 회귀 입력·체크리스트: [qa/fixtures/README.md](qa/fixtures/README.md), [qa/release-qa.md](qa/release-qa.md).
 - 포맷 파서·HWPX 생성·포맷 안내 문구를 새로 작업할 때는 먼저 [format_conversion_playbook.md](hwpx-public-doc/references/format_conversion_playbook.md)의 해당 포맷 섹션을 읽고, 보존/손실 안내와 테스트를 함께 갱신한다.
 
+### 기본 미리보기 불변식
+
+기본 IR 미리보기는 실제 HWPX 렌더러가 아니지만, 용지 방향과 내용 흐름을 오해하게 만들면 안 된다.
+
+- A3/A4/B5/Letter 및 세로/가로의 종횡비를 유지한다. 특히 긴 가로 문서도 첫 페이지가 내용 높이에 밀려 세로처럼 늘어나면 안 된다.
+- `.ir-page` 안에 `overflow:auto` 같은 별도 스크롤을 만들지 않는다. 미리보기 영역과 종이 내부의 이중 스크롤은 금지한다.
+- 용지 높이를 넘는 내용은 숨기거나 자르지 않고 다음 `.ir-page`로 넘긴다. 각 페이지는 `scrollHeight <= clientHeight + 1`을 만족해야 한다.
+- 자동 테스트는 단순히 `width > height`만 보지 않는다. 페이지 수, 내부 잘림 여부, 상단의 용지·방향·쪽수 표시를 함께 검사한다.
+- 미리보기 CSS/크기/페이지 분할을 변경하면 `tests/golden.js`와 `tests/orientation-e2e.js`를 모두 실행하고 실제 화면 캡처를 확인한다.
+- 위 항목 중 하나라도 확인되지 않으면 릴리스 완료로 처리하지 않는다. “테스트 통과”가 사용자 시각 확인을 대체하지 않는다.
+
 ## UI·기대치 정렬 불변식
 
 변환 품질만큼 중요한 것은 사용자가 **무엇이 보존되고 무엇이 빠지는지** 미리 알게 하는 것이다. 최근 UX 기준은 아래를 유지한다.

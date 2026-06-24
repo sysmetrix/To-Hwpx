@@ -44,7 +44,9 @@ const target = process.argv[2] || 'https://sysmetrix.github.io/To-Hwpx/';
   await download.saveAs(outPath);
 
   await page.locator('#preview-result-btn').click();
-  const preview = await page.locator('#preview-ir .ir-page').evaluate(el => {
+  const preview = await page.locator('#preview-ir').evaluate(host => {
+    const pages = [...host.querySelectorAll('.ir-page')];
+    const el = pages[0];
     const style = getComputedStyle(el);
     const rect = el.getBoundingClientRect();
     return {
@@ -55,7 +57,11 @@ const target = process.argv[2] || 'https://sysmetrix.github.io/To-Hwpx/';
       renderedWidth: Math.round(rect.width),
       renderedHeight: Math.round(rect.height),
       computedAspectRatio: style.aspectRatio,
+      overflow: style.overflow,
+      clientHeight: el.clientHeight,
       scrollHeight: el.scrollHeight,
+      pageCount: pages.length,
+      clippedPages: pages.filter(page => page.scrollHeight > page.clientHeight + 1).length,
       label: document.querySelector('#preview-pagecount')?.textContent?.trim(),
     };
   });
@@ -71,7 +77,8 @@ const target = process.argv[2] || 'https://sysmetrix.github.io/To-Hwpx/';
   const width = Number((pagePr.match(/\bwidth="(\d+)"/) || [])[1]);
   const height = Number((pagePr.match(/\bheight="(\d+)"/) || [])[1]);
   if (selected.paper !== 'A3' || selected.storedOrientation !== 'landscape') throw new Error('UI selection state mismatch');
-  if (preview.orientation !== 'landscape' || preview.renderedWidth <= preview.renderedHeight) throw new Error('Preview is not landscape');
+  if (preview.orientation !== 'landscape' || preview.cssRatio !== '420 / 297' || preview.renderedWidth <= preview.renderedHeight) throw new Error('Preview paper ratio mismatch');
+  if (preview.pageCount < 2 || preview.clippedPages > 0) throw new Error('Preview pagination failed');
   if (!/landscape="NARROWLY"/.test(pagePr) || !(width < height)) throw new Error('HWPX landscape structure mismatch');
   if (errors.length) throw new Error(`Page errors: ${errors.join(' | ')}`);
   await browser.close();
