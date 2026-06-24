@@ -1,6 +1,17 @@
 {
-  "current": "4.5.2",
+  "current": "4.5.3",
   "versions": [
+    {
+      "version": "4.5.3",
+      "date": "2026-06-24",
+      "user": [],
+      "dev": [
+        "[v4.5.3] js/app.js/style.css: ?lab=1로 한 번 활성화한 브라우저의 개발자 변경사항 탭에 실험실 기능 켜기/끄기 토글 추가. ?lab=0은 기능 상태와 토글 자격을 모두 제거하는 완전 해제로 유지",
+        "[v4.5.3] tests/golden.js: 최초 비노출, ?lab=1 활성화, 토글 끄기/다시 켜기, ?lab=0 완전 해제 흐름 회귀 검사 추가",
+        "[v4.5.3] AGENTS.md: 개발자 변경사항의 실험실 토글 사용법과 완전 해제 동작 기록",
+        "[v4.5.3] package.json/package-lock.json/sw.js/index.html: v4.5.3 반영"
+      ]
+    },
     {
       "version": "4.5.2",
       "date": "2026-06-24",

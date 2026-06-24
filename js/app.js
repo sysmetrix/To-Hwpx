@@ -1286,20 +1286,72 @@ const PASTE_MIME = {
  * ※ 공개 정적 사이트라 "보안"이 아니라 "가림"이다. 미완성 직접 입력을 일반 사용자
  *    동선에서 숨기는 용도(개발자 본인 테스트용). 켜는 법은 AGENTS.md "실험실" 절 참고.
  */
+const LAB_STATE_KEY = 'tohwpx_lab';
+const LAB_ACCESS_KEY = 'tohwpx_lab_access';
+
 function isLabEnabled() {
     try {
         const params = new URLSearchParams(location.search);
         if (params.has('lab')) {
             const v = (params.get('lab') || '').toLowerCase();
             const on = v !== '0' && v !== 'off' && v !== 'false';
-            if (on) localStorage.setItem('tohwpx_lab', '1');
-            else    localStorage.removeItem('tohwpx_lab');
+            if (on) {
+                localStorage.setItem(LAB_STATE_KEY, '1');
+                localStorage.setItem(LAB_ACCESS_KEY, '1');
+            } else {
+                localStorage.removeItem(LAB_STATE_KEY);
+                localStorage.removeItem(LAB_ACCESS_KEY);
+            }
             return on;
         }
-        return localStorage.getItem('tohwpx_lab') === '1';
+        return localStorage.getItem(LAB_STATE_KEY) === '1';
     } catch (e) {
         return false;
     }
+}
+
+function canManageLab() {
+    try {
+        return localStorage.getItem(LAB_ACCESS_KEY) === '1'
+            || localStorage.getItem(LAB_STATE_KEY) === '1';
+    } catch (e) {
+        return false;
+    }
+}
+
+function renderLabControl() {
+    if (!canManageLab()) return '';
+    const enabled = isLabEnabled();
+    return `
+        <section class="changelog-lab-control" aria-label="실험실 기능 설정">
+            <div>
+                <strong>실험실 기능</strong>
+                <p>미완성 기능을 개발자 테스트용으로 표시합니다.</p>
+            </div>
+            <button type="button" class="changelog-lab-toggle"
+                    data-lab-toggle aria-pressed="${enabled}">
+                ${enabled ? '끄기' : '켜기'}
+            </button>
+        </section>
+    `;
+}
+
+function bindLabControl() {
+    document.querySelector('[data-lab-toggle]')?.addEventListener('click', () => {
+        try {
+            const enabled = isLabEnabled();
+            localStorage.setItem(LAB_ACCESS_KEY, '1');
+            if (enabled) localStorage.removeItem(LAB_STATE_KEY);
+            else localStorage.setItem(LAB_STATE_KEY, '1');
+
+            const url = new URL(location.href);
+            url.searchParams.delete('lab');
+            history.replaceState(null, '', url);
+            location.reload();
+        } catch (e) {
+            showToast('실험실 설정을 저장하지 못했습니다.', 'error');
+        }
+    });
 }
 
 function initInputMode() {
@@ -3046,12 +3098,13 @@ function renderChangelogContent(tab) {
         group.versions.push(version);
     }
 
-    el.innerHTML = groups.map(group => `
+    el.innerHTML = `${tab === 'dev' ? renderLabControl() : ''}${groups.map(group => `
         <section class="changelog-date-group">
             <div class="changelog-date-heading">${escHtml(group.date)}</div>
             ${tab === 'user' ? renderMergedUserChangelog(group.versions) : renderVersionedChangelog(group.versions, tab)}
         </section>
-    `).join('');
+    `).join('')}`;
+    if (tab === 'dev') bindLabControl();
 }
 
 function versionLabel(version) {
