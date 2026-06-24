@@ -288,12 +288,18 @@ function getBoldFontName(name) {
  *              4~9=표 좌/우 바깥 테두리 제거 변형
  */
 function buildHeaderXml(fontName, basePt, customBfMap = new Map(), imageBlocks = [], docHeaderFooter = {}, customCharMap = new Map()) {
-    const fn = xmlEsc(fontName || '휴먼명조');
+    const resolvedFontName = fontName || '휴먼명조';
+    const fn = xmlEsc(resolvedFontName);
     const bp = Math.max(6, Math.min(36, parseInt(basePt, 10) || 12));
-    const { familyType, weight, type } = getFontMeta(fontName || '휴먼명조');
+    const { familyType, weight, type } = getFontMeta(resolvedFontName);
+    // Pretendard GOV 가변 폰트는 PC별 등록명 차이를 OWPML 대체 글꼴로 흡수한다.
+    const substFontName = resolvedFontName === 'Pretendard GOV Variable' ? 'Pretendard GOV' : null;
+    const substFontTag = substFontName
+        ? `\n          <hh:substFont face="${xmlEsc(substFontName)}" type="TTF" isEmbedded="0"/>`
+        : '';
 
     // KoPubWorld Dotum Medium처럼 Bold가 별도 폰트 파일인 경우
-    const boldFontName = getBoldFontName(fontName || '휴먼명조');
+    const boldFontName = getBoldFontName(resolvedFontName);
     const boldFn = boldFontName ? xmlEsc(boldFontName) : null;
     const fontCnt = boldFn ? 2 : 1;
     const codeFontId = fontCnt;
@@ -314,7 +320,7 @@ function buildHeaderXml(fontName, basePt, customBfMap = new Map(), imageBlocks =
 
     const fontFaceBlock = (lang) => `
       <hh:fontface lang="${lang}" fontCnt="${totalFontCnt}">
-        <hh:font id="0" face="${fn}" type="${type}" isEmbedded="0">
+        <hh:font id="0" face="${fn}" type="${type}" isEmbedded="0">${substFontTag}
           <hh:typeInfo familyType="${familyType}" weight="${weight}" proportion="4" contrast="0" strokeVariation="1" armStyle="1" letterform="1" midline="1" xHeight="1"/>
         </hh:font>${boldFn ? `
         <hh:font id="1" face="${boldFn}" type="TTF" isEmbedded="0">

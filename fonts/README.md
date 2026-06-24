@@ -13,6 +13,6 @@
 
 주의: HWPX 파일에는 폰트 파일이 임베딩되지 않습니다. 한컴오피스에서 같은 폰트로 보려면 사용자의 PC에 해당 TTF/OTF를 설치해야 합니다.
 
-Pretendard GOV는 PC와 설치 방식에 따라 한컴에 `Pretendard GOV Variable` 또는 `Pretendard GOV`로 등록될 수 있습니다. 문서 글꼴 선택에서 한컴에 표시되는 이름과 같은 항목을 선택하세요.
+Pretendard GOV는 PC와 설치 방식에 따라 한컴에 `Pretendard GOV Variable` 또는 `Pretendard GOV`로 등록될 수 있습니다. 앱은 `Pretendard GOV Variable`을 주 글꼴로 기록하고 `Pretendard GOV`를 HWPX 대체 글꼴로 함께 기록합니다.
 
 폰트 파일을 이 저장소에 포함하거나 배포하기 전에 각 폰트의 라이선스와 재배포 조건을 확인하세요.
