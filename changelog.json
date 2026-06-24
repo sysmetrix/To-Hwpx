@@ -1,6 +1,21 @@
 {
-  "current": "4.5.10",
+  "current": "4.5.11",
   "versions": [
+    {
+      "version": "4.5.11",
+      "date": "2026-06-25",
+      "user": [
+        "Pretendard GOV가 PC에 등록된 실제 이름을 변환할 때 자동으로 확인해, 한컴의 글꼴란에도 올바른 이름이 표시되도록 개선했습니다.",
+        "`Pretendard GOV Variable`과 `Pretendard GOV` 어느 이름으로 설치되어 있어도 해당 설치명을 우선 사용하고 다른 이름을 대체 글꼴로 함께 기록합니다."
+      ],
+      "dev": [
+        "[v4.5.11] app.js: queryLocalFonts의 family/fullName/PostScript 정확 일치로 Pretendard GOV 실제 등록명을 판별하고 변환 파이프라인에 전달",
+        "[v4.5.11] hwpx.js: 실제 등록명을 주 글꼴로 기록하고 반대 Pretendard 등록명을 양방향 hh:substFont로 기록",
+        "[v4.5.11] tests/golden.js: Variable/GOV 단독 설치, 동시 설치 우선순위, 감지 불가 기본값, 양방향 대체 글꼴 회귀 검사",
+        "[v4.5.11] AGENTS.md/gotchas/playbook/release-qa/fonts README: 두 PC 실측 결과와 최종 품질 기준 기록",
+        "[v4.5.11] package.json/package-lock.json/sw.js/index.html: v4.5.11 반영"
+      ]
+    },
     {
       "version": "4.5.10",
       "date": "2026-06-25",

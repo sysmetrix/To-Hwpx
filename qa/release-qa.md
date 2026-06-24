@@ -180,3 +180,20 @@ Scope: static browser-only conversion flow from file selection to HWPX download.
 릴리스 중단 조건:
 - 위 자동 항목이 하나라도 실패하거나 실제 화면 캡처를 확인하지 않았으면 배포하지 않는다.
 - 단순 폭·높이 비교만으로 미리보기 회귀 검증을 대체하지 않는다.
+
+## 14. Pretendard GOV PC별 등록명 호환성
+
+실기기 확인 결과:
+
+- [x] `Pretendard GOV Variable` 설치 PC: v4.5.10에서 글꼴 적용 및 한컴 글꼴란 표시 정상
+- [x] `Pretendard GOV` 설치 PC: v4.5.10에서 대체 글꼴 렌더링은 적용됐으나 한컴 글꼴란이 빈칸
+
+최종 품질 기준(v4.5.11):
+
+- UI에는 `Pretendard GOV Variable` 하나만 노출한다.
+- 변환 직전 실제 등록명을 정확히 감지한다.
+- Variable 설치 PC는 주 글꼴 `Pretendard GOV Variable`, 대체 글꼴 `Pretendard GOV`로 기록한다.
+- GOV 설치 PC는 주 글꼴 `Pretendard GOV`, 대체 글꼴 `Pretendard GOV Variable`로 기록한다.
+- 감지 불가 시 배포 TTF 내부 이름인 `Pretendard GOV Variable`을 기본값으로 사용한다.
+- [x] 자동 테스트: 두 설치명 감지, 동시 설치 시 Variable 우선, 미감지 기본값, 양방향 `substFont`, 7개 언어 fontface 검사
+- [ ] v4.5.11 배포 후 두 PC 모두 글꼴 적용과 한컴 글꼴란 표시 재확인
