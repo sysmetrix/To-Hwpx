@@ -40,6 +40,7 @@
 주의:
 - `marked.lexer()` 경로가 우선이다. 실패하면 HTML 파서로 폴백한다.
 - marked가 구두점 인접 강조를 놓치는 경우가 있어 `splitInlineEmphasis()` 보정이 있다.
+- 작은따옴표(`'`)는 `hp:t` 본문에서 `&apos;`로 바꾸지 않고 문자 그대로 출력한다. XML 문법상 안전하며, 한컴에서 `&apos;`가 표시되지 않는 회귀를 막기 위한 처리다.
 - 링크 URL 자체보다 링크 텍스트 보존이 우선이다.
 - 인용구는 `quote` IR → HWPX `paraPrIDRef="19"`로 출력한다. 예전처럼 `▶` 텍스트를 붙이면 안 된다.
 - 이미지와 복잡한 인라인 HTML은 지원 범위 밖으로 안내한다.
@@ -47,6 +48,7 @@
 검증:
 - `tests/fixtures/sample.md`
 - 코드블록, 목록, 표, 인용구, 한글/영문 혼합, 특수문자가 `section0.xml`에 남는지 본다.
+- 작은따옴표 회귀는 일반 문장·인라인 강조의 `'`가 `section0.xml`에 문자 그대로 있고 `&apos;`가 없는지 확인한다.
 - 인용구 회귀는 `section0.xml`에 `paraPrIDRef="19"`가 있고 `▶ Quoted Alpha line`이 없어야 한다.
 
 ## HTML
