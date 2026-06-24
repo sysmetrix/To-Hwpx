@@ -327,6 +327,50 @@ async function runCase(page, testCase) {
   console.log(`PASS ${testCase.format.padEnd(5)} ${testCase.file}`);
 }
 
+async function validateLabControl(page) {
+  const baseUrl = `http://127.0.0.1:${PORT}/index.html`;
+
+  await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
+  await page.evaluate(() => {
+    localStorage.removeItem('tohwpx_lab');
+    localStorage.removeItem('tohwpx_lab_access');
+  });
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await page.locator('#open-changelog').click();
+  await page.locator('.changelog-tab[data-tab="dev"]').click();
+  assert(await page.locator('[data-lab-toggle]').count() === 0,
+    'lab: toggle exposed before initial authorization');
+
+  await page.goto(`${baseUrl}?lab=1`, { waitUntil: 'domcontentloaded' });
+  assert(await page.locator('.input-mode-tabs').isVisible(),
+    'lab: direct input tabs hidden after ?lab=1');
+  await page.locator('#open-changelog').click();
+  await page.locator('.changelog-tab[data-tab="dev"]').click();
+  assert((await page.locator('[data-lab-toggle]').textContent()).trim() === '끄기',
+    'lab: enabled toggle does not offer off action');
+
+  await page.locator('[data-lab-toggle]').click();
+  await page.waitForLoadState('domcontentloaded');
+  assert(!await page.locator('.input-mode-tabs').isVisible(),
+    'lab: direct input tabs remain visible after toggle off');
+  await page.locator('#open-changelog').click();
+  await page.locator('.changelog-tab[data-tab="dev"]').click();
+  assert((await page.locator('[data-lab-toggle]').textContent()).trim() === '켜기',
+    'lab: toggle disappears or has wrong label while disabled');
+
+  await page.locator('[data-lab-toggle]').click();
+  await page.waitForLoadState('domcontentloaded');
+  assert(await page.locator('.input-mode-tabs').isVisible(),
+    'lab: direct input tabs hidden after toggle on');
+
+  await page.goto(`${baseUrl}?lab=0`, { waitUntil: 'domcontentloaded' });
+  await page.locator('#open-changelog').click();
+  await page.locator('.changelog-tab[data-tab="dev"]').click();
+  assert(await page.locator('[data-lab-toggle]').count() === 0,
+    'lab: toggle remains after full ?lab=0 reset');
+  console.log('PASS LAB   changelog toggle');
+}
+
 (async () => {
   const docxPath = path.join(FIXTURES, 'sample.docx');
   if (!fs.existsSync(docxPath)) {
@@ -352,6 +396,7 @@ async function runCase(page, testCase) {
     for (const testCase of CASES) {
       await runCase(page, testCase);
     }
+    await validateLabControl(page);
     assert(pageErrors.length === 0, `브라우저 오류 발생: ${pageErrors.join(' | ')}`);
     console.log(`\nGOLDEN: ${CASES.length} cases passed`);
   } finally {

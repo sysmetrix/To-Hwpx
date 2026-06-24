@@ -3064,6 +3064,46 @@ a:hover { text-decoration: underline; }
     overflow-wrap: anywhere;
     word-break: break-word;
 }
+.changelog-lab-control {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 24px;
+    padding: 14px 16px;
+    border: 1px solid var(--c-border);
+    border-radius: var(--radius-md);
+    background: var(--c-surface-alt);
+}
+.changelog-lab-control strong {
+    display: block;
+    margin-bottom: 3px;
+    color: var(--c-text);
+    font-size: 0.9rem;
+}
+.changelog-lab-control p {
+    margin: 0;
+    color: var(--c-text-sub);
+    font-size: 0.8rem;
+    line-height: 1.45;
+}
+.changelog-lab-toggle {
+    flex-shrink: 0;
+    min-width: 58px;
+    padding: 7px 12px;
+    border: 1px solid var(--c-primary);
+    border-radius: 999px;
+    background: var(--c-primary);
+    color: #fff;
+    font-family: var(--font-main);
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+.changelog-lab-toggle[aria-pressed="true"] {
+    background: transparent;
+    color: var(--c-primary);
+}
 .changelog-date-group {
     margin-bottom: 30px;
     padding-bottom: 30px;
