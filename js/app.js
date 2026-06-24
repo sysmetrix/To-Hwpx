@@ -37,6 +37,7 @@ const state = {
     downloadUrl: null,                 // 마지막 변환 결과 Blob URL
     downloadTimer: null                // Blob URL 해제 타이머
 };
+let modalReturnFocus = null;
 
 // ─────────────────────────────────────────────────────────────────────────
 // [7단계 파이프라인 정의]
@@ -623,7 +624,7 @@ function applyDocumentTitlePolicy(ir, file, customTitle, titleSource) {
 // ─────────────────────────────────────────────────────────────────────────
 function initFormatTabs() {
     const tabs = document.querySelectorAll('.format-tab');
-    tabs.forEach(tab => {
+    tabs.forEach((tab, index) => {
         tab.addEventListener('click', () => {
             const scope = tab.closest('.service-info') || document;
             const shouldOpen = !tab.classList.contains('active');
@@ -642,6 +643,19 @@ function initFormatTabs() {
             scope.querySelectorAll('.format-panel').forEach(panel => {
                 panel.classList.toggle('active', shouldOpen && panel.id === targetId);
             });
+        });
+        tab.addEventListener('keydown', (e) => {
+            if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) return;
+            const scopeTabs = Array.from((tab.closest('.service-info') || document).querySelectorAll('.format-tab'));
+            const current = scopeTabs.indexOf(tab);
+            let next = current;
+            if (e.key === 'ArrowRight') next = (current + 1) % scopeTabs.length;
+            if (e.key === 'ArrowLeft') next = (current - 1 + scopeTabs.length) % scopeTabs.length;
+            if (e.key === 'Home') next = 0;
+            if (e.key === 'End') next = scopeTabs.length - 1;
+            e.preventDefault();
+            scopeTabs[next].focus();
+            scopeTabs[next].click();
         });
     });
 }
@@ -840,9 +854,16 @@ const FONT_DOWNLOADS = [
 function initFormatCards() {
     document.querySelectorAll('.format-card').forEach(card => {
         decorateFormatCard(card);
-        card.addEventListener('click', () => {
+        const openCard = () => {
             const ext = card.dataset.ext || '';
             if (ext) openFormatModal(ext);
+        };
+        card.addEventListener('click', openCard);
+        card.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                openCard();
+            }
         });
     });
 
@@ -913,13 +934,11 @@ function openFormatModal(ext) {
 
     document.getElementById('fmt-modal-body').innerHTML = html;
 
-    modal.classList.add('open');
-    document.body.style.overflow = 'hidden';
+    openModal(modal);
 }
 
 function closeFormatModal() {
-    document.getElementById('format-modal')?.classList.remove('open');
-    document.body.style.overflow = '';
+    closeModal(document.getElementById('format-modal'));
 }
 
 async function hasLocalFont(path) {
@@ -1072,14 +1091,12 @@ async function renderFontGuide() {
 function showFontGuide() {
     const modal = document.getElementById('font-guide-modal');
     if (!modal) return;
-    modal.classList.add('open');
-    document.body.style.overflow = 'hidden';
+    openModal(modal);
     renderFontGuide();
 }
 
 function closeFontGuide() {
-    document.getElementById('font-guide-modal')?.classList.remove('open');
-    document.body.style.overflow = '';
+    closeModal(document.getElementById('font-guide-modal'));
 }
 
 
@@ -1572,9 +1589,11 @@ async function runConversionPipeline() {
             setProgressPanelState(item.validation.pass ? 'success' : 'warning');
             setStatusText('완료!');
             showResult({ url: item.url, fileName: item.fileName, size: item.blob.size, validation: item.validation });
-            if (state.autoDownload) {
+            if (state.autoDownload && item.validation.pass) {
                 triggerDownload(item.url, item.fileName);
                 setStatusText('완료! 다운로드를 시작했습니다.');
+            } else if (!item.validation.pass) {
+                setStatusText('완료했지만 구조 경고가 있어 자동 다운로드를 중지했습니다.');
             }
         }
     } else {
@@ -1585,7 +1604,7 @@ async function runConversionPipeline() {
         showBatchResults({ okCount, warnCount, errCount, total });
         state.downloadTimer = setTimeout(revokeAllQueueUrls, 300_000);
         // 배치는 N회 자동 다운로드 대신 ZIP 1회만 자동 다운로드(자동 다운로드 켜진 경우)
-        if (state.autoDownload && anyOk) {
+        if (state.autoDownload && anyOk && warnCount === 0) {
             await downloadAllAsZip();
         }
     }
@@ -1730,8 +1749,10 @@ function showResult({ url, fileName, size, validation }) {
         : `구조 검증 경고 ${issues.length || 1}건 — 다운로드 전 미리보기를 확인하세요`;
     const validClass = validation.pass ? 'result-valid' : 'result-warn';
     const cardClass = validation.pass ? '' : ' result-card--warn';
-    const autoText = state.autoDownload
+    const autoText = state.autoDownload && validation.pass
         ? '자동 다운로드가 시작되었습니다. 필요하면 다시 다운로드하거나 미리보기를 여세요.'
+        : !validation.pass
+            ? '구조 검증 경고로 자동 다운로드를 중지했습니다. 경고를 확인한 뒤 필요할 때만 수동으로 내려받으세요.'
         : '자동 다운로드가 꺼져 있습니다. 아래 버튼으로 내려받으세요.';
 
     // [보안] URL은 blob: 스킴만 가능 (직접 생성했으므로 안전)
@@ -2299,6 +2320,7 @@ function initMobileMenu() {
     toggle.addEventListener('click', () => {
         const isOpen = nav.classList.toggle('open');
         toggle.setAttribute('aria-expanded', String(isOpen));
+        toggle.setAttribute('aria-label', isOpen ? '메뉴 닫기' : '메뉴 열기');
         toggle.textContent = isOpen ? '✕' : '☰';
     });
 
@@ -2307,6 +2329,7 @@ function initMobileMenu() {
         if (!nav.contains(e.target) && !toggle.contains(e.target)) {
             nav.classList.remove('open');
             toggle.setAttribute('aria-expanded', 'false');
+            toggle.setAttribute('aria-label', '메뉴 열기');
             toggle.textContent = '☰';
         }
     });
@@ -2322,6 +2345,12 @@ function initNavLinks() {
                 e.preventDefault();
                 // 모바일 메뉴 닫기
                 document.getElementById('main-nav')?.classList.remove('open');
+                const menuToggle = document.getElementById('menu-toggle');
+                if (menuToggle) {
+                    menuToggle.setAttribute('aria-expanded', 'false');
+                    menuToggle.setAttribute('aria-label', '메뉴 열기');
+                    menuToggle.textContent = '☰';
+                }
                 target.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
         });
@@ -2392,6 +2421,34 @@ function getFormatIcon(ext) {
 // [모달 초기화]
 //   미리보기·업데이트 내역 모달의 열기/닫기·탭 이벤트 등록
 // ─────────────────────────────────────────────────────────────────────────
+function getModalFocusable(modal) {
+    return Array.from(modal.querySelectorAll(
+        'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+    )).filter(el => !el.hidden && el.getClientRects().length > 0);
+}
+
+function openModal(modal) {
+    if (!modal) return;
+    const active = document.querySelector('.modal-overlay.open');
+    if (active && active !== modal) closeModal(active, false);
+    modalReturnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    modal.classList.add('open');
+    document.body.classList.add('modal-open');
+    requestAnimationFrame(() => {
+        const focusTarget = getModalFocusable(modal)[0] || modal;
+        if (focusTarget === modal && !modal.hasAttribute('tabindex')) modal.setAttribute('tabindex', '-1');
+        focusTarget.focus({ preventScroll: true });
+    });
+}
+
+function closeModal(modal, restoreFocus = true) {
+    if (!modal || !modal.classList.contains('open')) return;
+    modal.classList.remove('open');
+    if (!document.querySelector('.modal-overlay.open')) document.body.classList.remove('modal-open');
+    if (restoreFocus && modalReturnFocus?.isConnected) modalReturnFocus.focus({ preventScroll: true });
+    if (restoreFocus) modalReturnFocus = null;
+}
+
 function initModals() {
     // 닫기 버튼
     document.getElementById('close-preview')?.addEventListener('click', closePreview);
@@ -2442,17 +2499,32 @@ function initModals() {
 
     // ESC: 모달이 열려 있으면 닫고, 아니면 초기화 버튼과 동일하게 동작
     document.addEventListener('keydown', (e) => {
+        const open = document.querySelector('.modal-overlay.open');
+        if (e.key === 'Tab' && open) {
+            const focusable = getModalFocusable(open);
+            if (!focusable.length) {
+                e.preventDefault();
+                open.focus();
+            } else {
+                const first = focusable[0];
+                const last = focusable[focusable.length - 1];
+                if (e.shiftKey && document.activeElement === first) {
+                    e.preventDefault();
+                    last.focus();
+                } else if (!e.shiftKey && document.activeElement === last) {
+                    e.preventDefault();
+                    first.focus();
+                }
+            }
+            return;
+        }
         if (e.key !== 'Escape') return;
-        const modalOpen = !!document.querySelector('.modal-overlay.open');
-        closePreview();
-        closeChangelog();
-        closePcGuide();
-        closeMobileGuide();
-        closeInstallGuide();
-        closePrivacyGuide();
-        closeFontGuide();
-        closeShortcuts();
-        if (modalOpen) return;   // 모달을 닫은 경우엔 초기화하지 않음
+        const modalOpen = !!open;
+        if (modalOpen) {
+            e.preventDefault();
+            closeModal(open);
+            return;   // 모달을 닫은 경우엔 초기화하지 않음
+        }
         const ae = document.activeElement;
         const typing = ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.isContentEditable);
         if (typing) { ae.blur(); return; }   // 입력 중이면 포커스 해제만
@@ -2474,63 +2546,51 @@ function initModals() {
 }
 
 function closePreview() {
-    document.getElementById('preview-modal')?.classList.remove('open');
-    document.body.style.overflow = '';
+    closeModal(document.getElementById('preview-modal'));
 }
 
 function closeChangelog() {
-    document.getElementById('changelog-modal')?.classList.remove('open');
-    document.body.style.overflow = '';
+    closeModal(document.getElementById('changelog-modal'));
 }
 
 function showPcGuide() {
-    document.getElementById('pc-guide-modal')?.classList.add('open');
-    document.body.style.overflow = 'hidden';
+    openModal(document.getElementById('pc-guide-modal'));
 }
 
 function closePcGuide() {
-    document.getElementById('pc-guide-modal')?.classList.remove('open');
-    document.body.style.overflow = '';
+    closeModal(document.getElementById('pc-guide-modal'));
 }
 
 function showMobileGuide() {
-    document.getElementById('mobile-guide-modal')?.classList.add('open');
-    document.body.style.overflow = 'hidden';
+    openModal(document.getElementById('mobile-guide-modal'));
 }
 
 function closeMobileGuide() {
-    document.getElementById('mobile-guide-modal')?.classList.remove('open');
-    document.body.style.overflow = '';
+    closeModal(document.getElementById('mobile-guide-modal'));
 }
 
 function showPrivacyGuide() {
-    document.getElementById('privacy-guide-modal')?.classList.add('open');
-    document.body.style.overflow = 'hidden';
+    openModal(document.getElementById('privacy-guide-modal'));
 }
 
 function closePrivacyGuide() {
-    document.getElementById('privacy-guide-modal')?.classList.remove('open');
-    document.body.style.overflow = '';
+    closeModal(document.getElementById('privacy-guide-modal'));
 }
 
 function showShortcuts() {
-    document.getElementById('shortcuts-modal')?.classList.add('open');
-    document.body.style.overflow = 'hidden';
+    openModal(document.getElementById('shortcuts-modal'));
 }
 
 function closeShortcuts() {
-    document.getElementById('shortcuts-modal')?.classList.remove('open');
-    document.body.style.overflow = '';
+    closeModal(document.getElementById('shortcuts-modal'));
 }
 
 function showInstallGuide() {
-    document.getElementById('install-guide-modal')?.classList.add('open');
-    document.body.style.overflow = 'hidden';
+    openModal(document.getElementById('install-guide-modal'));
 }
 
 function closeInstallGuide() {
-    document.getElementById('install-guide-modal')?.classList.remove('open');
-    document.body.style.overflow = '';
+    closeModal(document.getElementById('install-guide-modal'));
 }
 
 
@@ -2546,7 +2606,10 @@ function initConverterDropArea() {
 
     area.addEventListener('click', () => fileInput.click());
     area.addEventListener('keydown', e => {
-        if (e.key === 'Enter' || e.key === ' ') fileInput.click();
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            fileInput.click();
+        }
     });
     area.addEventListener('dragover', e => {
         e.preventDefault();
@@ -2986,8 +3049,7 @@ function applyPreviewPaper(pageEl) {
 function openPreview(blob) {
     const modal = document.getElementById('preview-modal');
     if (!modal) return;
-    modal.classList.add('open');
-    document.body.style.overflow = 'hidden';
+    openModal(modal);
 
     const irBox   = document.getElementById('preview-ir');
     const wrap    = document.getElementById('preview-iframe-wrap');
@@ -3064,8 +3126,7 @@ async function showChangelog() {
     const modal = document.getElementById('changelog-modal');
     if (!modal) return;
 
-    modal.classList.add('open');
-    document.body.style.overflow = 'hidden';
+    openModal(modal);
 
     if (!_changelogData) {
         try {

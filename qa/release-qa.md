@@ -106,3 +106,30 @@ Scope: static browser-only conversion flow from file selection to HWPX download.
 3. rhwp 미리보기와 한컴오피스 렌더링 차이로 최종 여백/표 너비 확인이 필요함.
 4. 모바일 브라우저 다운로드 UI는 OS 정책 영향을 받아 자동 다운로드가 차단될 수 있음.
 5. HWP5 바이너리는 브라우저에서 완전 파싱하지 못해 HWPX/DOCX로 사전 변환이 필요함.
+
+## 10. v4.5.4 상용화 마무리 기록
+
+### 수정·개선 결정
+
+- 구조 검증 경고 산출물은 결과 카드에서 수동 다운로드할 수 있지만 자동 다운로드하지 않는다. 배치 변환도 경고 항목이 하나라도 있으면 ZIP 자동 다운로드를 중지한다.
+- 모든 모달은 열린 창 안에서 Tab/Shift+Tab 포커스를 순환하고, ESC·닫기·바깥 클릭으로 종료하면 원래 열기 컨트롤로 포커스를 돌려준다.
+- 포맷 카드는 Enter/Space, 포맷 탭은 좌우 방향키·Home·End를 지원한다.
+- 모바일 모달은 `dvh`와 safe-area를 사용하고, 닫기·메뉴 컨트롤은 최소 44px 터치 영역을 확보한다.
+- GitHub Pages 배포 전 golden 테스트와 MD/DOCX HWPX 패키지 게이트를 실행한다. 테스트 의존성이 운영 산출물에 섞이지 않도록 `index.html`, CSS, JS, fonts, icons, manifest, changelog, service worker만 `_site`에 구성한다.
+- PWA 시작 경로는 저장소 하위 경로 배포를 위해 `./` 기준으로 고정하고, 외부 rhwp iframe 권한은 실제 사용에 필요한 스크립트·동일 출처로 제한한다.
+
+### 자동 승인 기준
+
+- [x] `npm run test:golden` PASS — 기존 7개 입력 + Lab + 상용 UX 회귀
+- [x] `node qa/gate.js qa/fixtures/md_hwpx_test.md` PASS
+- [x] `node qa/gate.js qa/fixtures/sample.docx` PASS
+- [x] package/lock/SW/index/changelog 버전 4.5.4 일치
+- [ ] GitHub Actions Pages 배포 성공
+
+### 실기기·사람 승인 기준
+
+- [ ] Chrome·Edge 데스크톱에서 파일 선택 → 변환 → 자동/수동 다운로드 → 한컴오피스 열기
+- [ ] iPhone Safari 375/390px 및 Android Chrome 360/412px에서 `.hwpx` 파일명 유지
+- [ ] 모바일 세로/가로 회전, 화면 키보드, 노치/홈 인디케이터에서 주요 버튼이 가려지지 않음
+- [ ] Tab/Shift+Tab, Enter/Space, 방향키, ESC만으로 주요 흐름 이용 가능
+- [ ] MD·DOCX·CSV 표본을 한컴오피스에서 열어 글꼴·표·코드·여백을 시각 확인

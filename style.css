@@ -197,6 +197,11 @@ body {
     -webkit-font-smoothing: antialiased;  /* macOS 폰트 렌더링 개선 */
 }
 
+body.modal-open {
+    overflow: hidden;
+    overscroll-behavior: none;
+}
+
 img { max-width: 100%; display: block; }
 a   { color: var(--c-primary); text-decoration: none; }
 a:hover { text-decoration: underline; }
@@ -431,6 +436,8 @@ a:hover { text-decoration: underline; }
     cursor: pointer;
     padding: 8px;
     color: var(--c-text);
+    min-width: 44px;
+    min-height: 44px;
 }
 
 
@@ -2239,6 +2246,7 @@ a:hover { text-decoration: underline; }
         word-break: keep-all;
     }
     .options-grid-4col { grid-template-columns: 1fr; }
+    #pipeline-steps { grid-template-columns: repeat(2, 1fr); }
     .steps-grid  { grid-template-columns: 1fr; }
     .margin-grid { grid-template-columns: 1fr 1fr; }
     .result-actions {
@@ -2391,7 +2399,7 @@ a:hover { text-decoration: underline; }
     box-shadow: var(--shadow-lg);
     display: flex;
     flex-direction: column;
-    max-height: 90vh;
+    max-height: min(90vh, 90dvh);
     width: 100%;
     overflow: hidden;
     animation: slideUpModal 0.22s ease;
@@ -2452,8 +2460,8 @@ a:hover { text-decoration: underline; }
     font-size: 1rem;
     cursor: pointer;
     color: var(--c-text-muted);
-    width: 32px;
-    height: 32px;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -3181,6 +3189,14 @@ a:hover { text-decoration: underline; }
     .btn-preview { width: 100%; justify-content: center; }
 }
 @media (max-width: 480px) {
+    .modal-overlay {
+        align-items: flex-end;
+        padding: 8px max(8px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+    }
+    .modal-box {
+        max-height: min(94vh, 94dvh);
+        border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    }
     .modal-header { padding: 14px 16px; }
     .changelog-content { padding: 16px; }
     .changelog-tabs { padding: 0 16px; }
