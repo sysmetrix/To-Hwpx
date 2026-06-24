@@ -87,6 +87,8 @@ Scope: static browser-only conversion flow from file selection to HWPX download.
 - [ ] HWPX ZIP 구조 검증 PASS
 - [ ] `long-table.csv` 변환 후 한컴에서 표가 두 쪽 이상으로 나뉘고, 다음 쪽에도 제목 줄이 자동 반복됨
 - [ ] 긴 표가 글자처럼 취급되지 않으며 단 오른쪽 정렬로 설정되고, 행 높이·열 너비·병합 셀이 깨지지 않음
+- [ ] Markdown 문장 속 인라인 코드가 앞뒤 문장과 같은 문단에 표시되고, 단독 코드 문단은 기존 코드 블록 형태 유지
+- [ ] 기본 미리보기 페이지 비율과 상단 표시가 A3/A4/B5/Letter 및 세로/가로 선택을 반영
 - [ ] 결과 카드에 보존/손실 가능 요소 표시
 - [ ] 수동 다운로드 버튼으로 `.hwpx` 파일 저장
 - [ ] 한컴오피스에서 실제 열기 확인

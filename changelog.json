@@ -1,6 +1,21 @@
 {
-  "current": "4.5.1",
+  "current": "4.5.2",
   "versions": [
+    {
+      "version": "4.5.2",
+      "date": "2026-06-24",
+      "user": [
+        "일반 문장 안의 인라인 코드가 별도 코드 상자로 분리되지 않고 앞뒤 문장과 자연스럽게 이어지도록 개선했습니다. 코드만 있는 문단은 기존 코드 블록 형태를 유지합니다.",
+        "기본 미리보기가 선택한 용지 크기(A3/A4/B5/Letter)와 세로·가로 방향을 페이지 비율과 안내 문구에 반영하도록 개선했습니다."
+      ],
+      "dev": [
+        "[v4.5.2] js/parsers.js: Markdown 문장 속 codespan을 code=true 인라인 런으로 유지하고, 문단 전체가 단일 codespan일 때만 기존 코드 블록 표로 출력",
+        "[v4.5.2] js/app.js/style.css: 기본 IR 미리보기에 용지별 실제 종횡비와 방향, A3/A4/B5/Letter·세로/가로 상태 표시 적용",
+        "[v4.5.2] tests/fixtures/sample.md/tests/golden.js: 인라인 코드 동일 문단·단독 코드 블록 유지 및 A3 가로 미리보기 UI 회귀 검증 추가",
+        "[v4.5.2] format_conversion_playbook.md/qa/release-qa.md: 인라인 코드 보존 규칙과 미리보기 용지 검증 기준 기록",
+        "[v4.5.2] package.json/package-lock.json/sw.js/index.html: v4.5.2 반영"
+      ]
+    },
     {
       "version": "4.5.1",
       "date": "2026-06-24",

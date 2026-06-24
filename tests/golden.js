@@ -17,6 +17,8 @@ const CASES = [
     name: 'markdown',
     file: 'sample.md',
     format: 'MD',
+    previewPaper: 'A3',
+    previewOrientation: 'landscape',
     minTables: 1,
     mustContain: [
       'Golden Markdown 제목 Alpha',
@@ -31,6 +33,10 @@ const CASES = [
       '링크 텍스트',
       "작은따옴표 회귀: don't, 사용자의 '문서', ",
       "it's bold",
+      '문장 안의 ',
+      '인라인 코드',
+      '는 앞뒤 문장과 같은 문단에 자연스럽게 이어집니다.',
+      '단독 코드 문단',
     ],
     mustNotContain: ['▶ Quoted Alpha line'],
     rawMustContain: ["don't", "사용자의 '문서'", "it's bold"],
@@ -233,6 +239,17 @@ async function validateHwpxPackage(page, zip, testCase) {
 
   const tableCount = (sectionXml.match(/<hp:tbl\b/g) || []).length;
   assert(tableCount >= testCase.minTables, `${testCase.name}: 표 개수 부족 (${tableCount} < ${testCase.minTables})`);
+  if (testCase.name === 'markdown') {
+    const inlineCodePara = [...sectionXml.matchAll(/<hp:p\b[\s\S]*?<\/hp:p>/g)]
+      .map(match => match[0])
+      .find(para => para.includes('문장 안의 ') && para.includes('인라인 코드')
+        && para.includes('는 앞뒤 문장과 같은 문단에 자연스럽게 이어집니다.'));
+    assert(inlineCodePara, `${testCase.name}: 인라인 코드가 앞뒤 문장과 다른 문단으로 분리됨`);
+    assert(/charPrIDRef="6"><hp:t>인라인 코드<\/hp:t>/.test(inlineCodePara),
+      `${testCase.name}: 인라인 코드 런에 코드 글자 모양이 적용되지 않음`);
+    assert(sectionXml.includes('<hp:t xml:space="preserve">단독 코드 문단</hp:t>'),
+      `${testCase.name}: 단독 코드 문단의 기존 코드 블록 표현이 유지되지 않음`);
+  }
   const dataTables = [...sectionXml.matchAll(/<hp:tbl\b[\s\S]*?<\/hp:tbl>/g)]
     .map(match => match[0])
     .filter(table => /<hp:tbl\b[^>]*\brepeatHeader="1"/.test(table));
@@ -264,6 +281,15 @@ async function runCase(page, testCase) {
 
   await page.goto(`http://127.0.0.1:${PORT}/index.html`, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => window.JSZip && window.marked && window.XLSX, null, { timeout: 30000 });
+  if (testCase.previewPaper) {
+    await page.locator('#paper-size').evaluate((el, value) => {
+      el.value = value;
+      el.dispatchEvent(new Event('change', { bubbles: true }));
+    }, testCase.previewPaper);
+  }
+  if (testCase.previewOrientation) {
+    await page.locator(`[data-orient="${testCase.previewOrientation}"]`).evaluate(el => el.click());
+  }
 
   const downloadPromise = page.waitForEvent('download', { timeout: 30000 });
   await page.setInputFiles('#file-input', inputPath);
@@ -275,6 +301,29 @@ async function runCase(page, testCase) {
   const buf = fs.readFileSync(outPath);
   const zip = await JSZip.loadAsync(buf);
   await validateHwpxPackage(page, zip, testCase);
+  if (testCase.previewPaper) {
+    await page.locator('#preview-result-btn').click();
+    const previewState = await page.locator('#preview-ir .ir-page').evaluate(el => ({
+      paper: el.dataset.paper,
+      orientation: el.dataset.orientation,
+      width: el.style.getPropertyValue('--preview-page-width'),
+      ratio: el.style.getPropertyValue('--preview-page-ratio'),
+      inlineCodeParagraphs: [...el.querySelectorAll('p')].filter(p =>
+        p.textContent.includes('문장 안의 인라인 코드는 앞뒤 문장과 같은 문단에 자연스럽게 이어집니다.')
+        && p.querySelector('code')?.textContent === '인라인 코드'
+      ).length,
+    }));
+    assert(previewState.paper === testCase.previewPaper,
+      `${testCase.name}: 미리보기에 용지 크기가 반영되지 않음`);
+    assert(previewState.orientation === testCase.previewOrientation,
+      `${testCase.name}: 미리보기에 용지 방향이 반영되지 않음`);
+    assert(previewState.width === '1440px' && previewState.ratio === '420 / 297',
+      `${testCase.name}: A3 가로 미리보기 페이지 비율/폭이 잘못됨`);
+    assert(previewState.inlineCodeParagraphs === 1,
+      `${testCase.name}: 미리보기에서 인라인 코드가 앞뒤 문장과 분리됨`);
+    const pageInfo = await page.locator('#preview-pagecount').textContent();
+    assert(pageInfo.trim() === 'A3 · 가로', `${testCase.name}: 미리보기 용지 안내가 잘못됨`);
+  }
   console.log(`PASS ${testCase.format.padEnd(5)} ${testCase.file}`);
 }
 

@@ -2909,6 +2909,27 @@ function irBlocksToHtml(blocks) {
     return h;
 }
 
+const PREVIEW_PAPER_MM = {
+    A3:     { width: 297, height: 420 },
+    A4:     { width: 210, height: 297 },
+    B5:     { width: 182, height: 257 },
+    Letter: { width: 215.9, height: 279.4 },
+};
+
+function applyPreviewPaper(pageEl) {
+    if (!pageEl) return;
+    const base = PREVIEW_PAPER_MM[state.paperSize] || PREVIEW_PAPER_MM.A4;
+    const landscape = state.orientation === 'landscape';
+    const widthMm = landscape ? base.height : base.width;
+    const heightMm = landscape ? base.width : base.height;
+    const widthPx = Math.round(720 * (widthMm / PREVIEW_PAPER_MM.A4.width));
+
+    pageEl.style.setProperty('--preview-page-width', `${widthPx}px`);
+    pageEl.style.setProperty('--preview-page-ratio', `${widthMm} / ${heightMm}`);
+    pageEl.dataset.paper = state.paperSize || 'A4';
+    pageEl.dataset.orientation = landscape ? 'landscape' : 'portrait';
+}
+
 /** 미리보기 모달 열기 — 기본은 IR을 HTML로 즉시 렌더(빠르고 100% 로컬) */
 function openPreview(blob) {
     const modal = document.getElementById('preview-modal');
@@ -2927,6 +2948,10 @@ function openPreview(blob) {
             ? `<div class="ir-page">${state.ir.title && state.ir.title.trim()
                 ? `<h1 class="ir-title">${escHtml(state.ir.title.trim())}</h1>` : ''}${irBlocksToHtml(state.ir.blocks)}</div>`
             : '<p class="preview-empty">미리보기할 내용이 없습니다. 먼저 파일을 변환해 주세요.</p>';
+        applyPreviewPaper(irBox.querySelector('.ir-page'));
+    }
+    if (countEl) {
+        countEl.textContent = `${state.paperSize || 'A4'} · ${state.orientation === 'landscape' ? '가로' : '세로'}`;
     }
 }
 
