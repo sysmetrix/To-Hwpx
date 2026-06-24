@@ -1,6 +1,20 @@
 {
-  "current": "4.5.5",
+  "current": "4.5.6",
   "versions": [
+    {
+      "version": "4.5.6",
+      "date": "2026-06-25",
+      "user": [
+        "가로 용지에서 페이지는 세로로 남고 표만 페이지 밖으로 나가던 문제를 긴급 수정했습니다.",
+        "A3·A4·B5·Letter의 가로 방향이 용지 폭과 높이를 올바르게 바꾸도록 기존 한컴 호환 동작을 복구했습니다."
+      ],
+      "dev": [
+        "[v4.5.6] hwpx.js: 가로 pagePr@landscape=NARROWLY 변경을 철회하고 한컴 실렌더링 검증값 WIDELY 복구",
+        "[v4.5.6] tests/golden.js: WIDELY 유지 + 세로 width<height + 가로 width>height 회귀 기준으로 정정",
+        "[v4.5.6] playbook/gotchas/audit/release-qa: hwpxlib 주석보다 한컴 실렌더링을 우선하는 용지 방향 기준과 회귀 원인 기록",
+        "[v4.5.6] package.json/package-lock.json/sw.js/index.html: v4.5.6 반영"
+      ]
+    },
     {
       "version": "4.5.5",
       "date": "2026-06-24",

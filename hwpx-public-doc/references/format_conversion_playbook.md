@@ -230,7 +230,7 @@
 - 새 borderFill, charPr, paraPr를 만들면 IDRef 검증과 namespace를 같이 본다.
 - 표는 grid, row, cell span이 맞지 않으면 한컴에서 조용히 깨진다.
 - 그림은 `BinData`, manifest, content.hpf, `hp:pic/hc:img`가 모두 맞아야 한다.
-- `hp:pagePr@landscape`는 hwpxlib `PageDirection` 기준 세로 `WIDELY`, 가로 `NARROWLY`이며 폭/높이 관계도 함께 일치해야 한다.
+- 한컴 실렌더링 기준 `hp:pagePr@landscape="WIDELY"`를 유지하고, 세로는 `width < height`, 가로는 `width > height`로 용지 방향을 결정한다. `NARROWLY`로 바꾸면 페이지는 세로에 남고 콘텐츠 폭만 가로로 계산되는 회귀가 발생하므로 사용하지 않는다.
 
 ## 포맷 안내 문구 작성 규칙
 
