@@ -1098,7 +1098,7 @@ function buildSecPr(marginsHwp, paperKey, landscape = false, hasMasterPage = fal
         `<hp:visibility hideFirstHeader="0" hideFirstFooter="0" hideFirstMasterPage="0" ` +
         `border="SHOW_ALL" fill="SHOW_ALL" hideFirstPageNum="0" hideFirstEmptyLine="0" showLineNumber="0"/>` +
         `<hp:lineNumberShape restartType="0" countBy="0" distance="0" startNumber="0"/>` +
-        `<hp:pagePr landscape="WIDELY" width="${paper.w}" height="${paper.h}" gutterType="LEFT_ONLY">` +
+        `<hp:pagePr landscape="${landscape ? 'NARROWLY' : 'WIDELY'}" width="${paper.w}" height="${paper.h}" gutterType="LEFT_ONLY">` +
         `<hp:margin header="${m.header}" footer="${m.footer}" gutter="0" ` +
         `left="${m.left}" right="${m.right}" top="${m.top}" bottom="${m.bottom}"/>` +
         `</hp:pagePr>` +

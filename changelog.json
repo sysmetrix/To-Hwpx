@@ -1,6 +1,26 @@
 {
-  "current": "4.5.4",
+  "current": "4.5.5",
   "versions": [
+    {
+      "version": "4.5.5",
+      "date": "2026-06-24",
+      "user": [
+        "TXT가 UTF-8뿐 아니라 EUC-KR 한글도 올바르게 읽도록 개선했습니다.",
+        "HTML 중첩 목록과 표의 가로·세로 병합, JSON 객체 배열 표, IPYNB 코드 셀의 문서 구조 보존을 강화했습니다.",
+        "손상 JSON·IPYNB·CSV·DOCX와 HWP5 파일은 오류 안내문 HWPX를 만들지 않고 원인과 재저장 방법을 안내합니다.",
+        "가로 용지로 변환한 HWPX의 한컴 방향 속성을 호환 규격에 맞게 수정했습니다."
+      ],
+      "dev": [
+        "[v4.5.5] parsers.js: BOM/UTF-8/EUC-KR 디코딩, HTML 중첩 목록·rowspan/colspan, JSON 객체 배열·IR 재귀 sanitize, IPYNB code 블록 보존",
+        "[v4.5.5] parsers.js: 손상 JSON/IPYNB/CSV/DOCX, 빈 XLSX, HWP5/미지원 HWP 구조의 성공 위장 HWPX 생성 차단",
+        "[v4.5.5] hwpx.js: hwpxlib PageDirection 기준 가로 pagePr@landscape=NARROWLY, 세로=WIDELY 적용",
+        "[v4.5.5] tests/golden.js: 정상 11개 포맷 fixture와 실패 입력 5종, 인라인 서식·병합 표·용지 방향·EUC-KR·XLSX·IR 제어문자 회귀 검사",
+        "[v4.5.5] qa/gate.js: package XML well-formed 및 hc:img→content.hpf→BinData→manifest 그림 참조 ⑦ 게이트 추가",
+        "[v4.5.5] conversion-quality-audit-v4.5.5.md/playbook/gotchas/release-qa: 포맷별 평가·원인·정답 구조·검증 기준 기록",
+        "[v4.5.5] pages.yml: MD·DOCX 기본/병합표/이미지·XLSX 패키지 게이트로 배포 관문 확대",
+        "[v4.5.5] package.json/package-lock.json/sw.js/index.html: v4.5.5 반영"
+      ]
+    },
     {
       "version": "4.5.4",
       "date": "2026-06-24",

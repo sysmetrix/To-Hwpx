@@ -7,6 +7,7 @@ const path = require('path');
 const JSZip = require('jszip');
 const { chromium } = require('playwright');
 const { buildDocx } = require('./make-docx-fixture');
+const { buildXlsx } = require('./make-xlsx-fixture');
 
 const ROOT = path.resolve(__dirname, '..');
 const FIXTURES = path.join(__dirname, 'fixtures');
@@ -46,19 +47,40 @@ const CASES = [
     name: 'html',
     file: 'sample.html',
     format: 'HTML',
-    minTables: 1,
+    minTables: 2,
     mustContain: [
       'Golden HTML 제목 Alpha',
       'HTML 하위 제목 Beta',
       '첫 문단입니다',
       '굵은 텍스트',
       '기울임 텍스트',
+      '밑줄 텍스트',
+      '취소선 텍스트',
+      '색상 텍스트',
       '비순서 목록 하나',
+      '중첩 목록 Alpha',
       '순서 목록 첫째',
       '표 값 한글',
       'HTML Quote Alpha',
+      '병합 제목',
+      '병합 값',
+      '병합 본문',
     ],
     mustNotContain: ['▶ HTML Quote Alpha'],
+  },
+  {
+    name: 'txt-utf8',
+    file: 'sample.txt',
+    format: 'TXT',
+    minTables: 0,
+    mustContain: ['Golden TXT 제목 Alpha', '첫 문단입니다', 'English Alpha', '목록 항목 하나', '둘째 문단'],
+  },
+  {
+    name: 'txt-euckr',
+    file: 'sample-euckr.txt',
+    format: 'TXT',
+    minTables: 0,
+    mustContain: ['EUC-KR 제목', '첫 문단 한글 보존', '목록 하나', '목록 둘'],
   },
   {
     name: 'csv',
@@ -74,6 +96,14 @@ const CASES = [
       '긴 텍스트',
       'long text wraps safely',
     ],
+  },
+  {
+    name: 'xlsx',
+    file: 'sample.xlsx',
+    format: 'XLSX',
+    minTables: 1,
+    mustContain: ['Golden 첫 시트', 'XLSX 제목', '표 값 한글', 'English Cell', '계산 결과', '1234', 'long text wraps safely'],
+    mustNotContain: ['SECOND_SHEET_MUST_NOT_APPEAR'],
   },
   {
     name: 'long-table',
@@ -100,6 +130,14 @@ const CASES = [
       '표 값 한글',
       'long text wraps safely',
     ],
+  },
+  {
+    name: 'json-ir',
+    file: 'sample-ir.json',
+    format: 'JSON',
+    minTables: 1,
+    mustContain: ['Golden IR JSON 제목', 'IR 굵은 텍스트', '와 일반 텍스트', 'IR 열', 'IR 셀', '제어문자 제거', 'IR 인용문'],
+    rawMustNotContain: ['\u0001', '\u0002', '\u0003', '\u0004', '\u0005'],
   },
   {
     name: 'ipynb',
@@ -250,10 +288,57 @@ async function validateHwpxPackage(page, zip, testCase) {
     assert(sectionXml.includes('<hp:t xml:space="preserve">단독 코드 문단</hp:t>'),
       `${testCase.name}: 단독 코드 문단의 기존 코드 블록 표현이 유지되지 않음`);
   }
+
+  const pagePr = (/<hp:pagePr\b[^>]*>/.exec(sectionXml) || [])[0] || '';
+  const expectedLandscape = testCase.previewOrientation === 'landscape';
+  assert(new RegExp(`landscape="${expectedLandscape ? 'NARROWLY' : 'WIDELY'}"`).test(pagePr),
+    `${testCase.name}: HWPX 용지 방향 enum 불일치`);
+  const pageWidth = +((/\bwidth="(\d+)"/.exec(pagePr) || [])[1]);
+  const pageHeight = +((/\bheight="(\d+)"/.exec(pagePr) || [])[1]);
+  assert(expectedLandscape ? pageWidth > pageHeight : pageWidth < pageHeight,
+    `${testCase.name}: HWPX 용지 폭/높이 방향 불일치`);
+  if (testCase.name === 'ipynb') {
+    const codeTable = [...sectionXml.matchAll(/<hp:tbl\b[\s\S]*?<\/hp:tbl>/g)]
+      .map(match => match[0])
+      .find(table => table.includes('코드 셀 Alpha') && table.includes('print(message)'));
+    assert(codeTable, `${testCase.name}: 코드 셀이 코드 블록 표로 출력되지 않음`);
+    assert(/charPrIDRef="6"/.test(codeTable), `${testCase.name}: 코드 셀에 등폭 코드 글자 모양이 적용되지 않음`);
+  }
+  if (testCase.name === 'json') {
+    const objectArrayTable = [...sectionXml.matchAll(/<hp:tbl\b[\s\S]*?<\/hp:tbl>/g)]
+      .map(match => match[0])
+      .find(table => table.includes('구분') && table.includes('값') && table.includes('비고')
+        && table.includes('표 제목') && table.includes('long text wraps safely'));
+    assert(objectArrayTable, `${testCase.name}: 객체 배열이 행형 데이터 표로 변환되지 않음`);
+  }
+  if (testCase.name === 'html') {
+    assert(/<hp:cellSpan colSpan="2" rowSpan="1"\/>/.test(sectionXml),
+      `${testCase.name}: colspan 병합이 HWPX cellSpan으로 보존되지 않음`);
+    assert(/<hp:cellSpan colSpan="1" rowSpan="2"\/>/.test(sectionXml),
+      `${testCase.name}: rowspan 병합이 HWPX cellSpan으로 보존되지 않음`);
+  }
+  if (testCase.name === 'html' || testCase.name === 'docx') {
+    const charPrById = new Map([...headerXml.matchAll(/<hh:charPr\b[^>]*\bid="(\d+)"[\s\S]*?<\/hh:charPr>/g)]
+      .map(match => [match[1], match[0]]));
+    const charPrForText = expected => {
+      const run = [...sectionXml.matchAll(/<hp:run\b[^>]*\bcharPrIDRef="(\d+)"[^>]*>[\s\S]*?<\/hp:run>/g)]
+        .find(match => match[0].includes(expected));
+      return run ? (charPrById.get(run[1]) || '') : '';
+    };
+    assert(charPrForText('굵은 텍스트').includes('<hh:bold/>'), `${testCase.name}: 굵게 서식 누락`);
+    assert(charPrForText('기울임 텍스트').includes('<hh:italic/>'), `${testCase.name}: 기울임 서식 누락`);
+    if (testCase.name === 'html') {
+      assert(charPrForText('밑줄 텍스트').includes('<hh:underline '), `${testCase.name}: 밑줄 서식 누락`);
+      assert(charPrForText('취소선 텍스트').includes('<hh:strikeout '), `${testCase.name}: 취소선 서식 누락`);
+      assert(charPrForText('색상 텍스트').includes('textColor="#C62828"'), `${testCase.name}: 글자색 서식 누락`);
+    }
+  }
   const dataTables = [...sectionXml.matchAll(/<hp:tbl\b[\s\S]*?<\/hp:tbl>/g)]
     .map(match => match[0])
     .filter(table => /<hp:tbl\b[^>]*\brepeatHeader="1"/.test(table));
-  assert(dataTables.length >= 1, `${testCase.name}: 일반 데이터 표를 찾지 못함`);
+  if (testCase.minTables > 0) {
+    assert(dataTables.length >= 1, `${testCase.name}: 일반 데이터 표를 찾지 못함`);
+  }
   for (const table of dataTables) {
     const tableOpen = (/<hp:tbl\b[^>]*>/.exec(table) || [])[0] || '';
     const posOpen = (/<hp:pos\b[^>]*\/>/.exec(table) || [])[0] || '';
@@ -289,6 +374,8 @@ async function runCase(page, testCase) {
   }
   if (testCase.previewOrientation) {
     await page.locator(`[data-orient="${testCase.previewOrientation}"]`).evaluate(el => el.click());
+  } else {
+    await page.locator('[data-orient="portrait"]').evaluate(el => el.click());
   }
 
   const downloadPromise = page.waitForEvent('download', { timeout: 30000 });
@@ -417,10 +504,46 @@ async function validateCommercialUx(page) {
   console.log('PASS UX    keyboard, modal, warning download, PWA scope');
 }
 
+async function validateRejectedInputs(page) {
+  const baseUrl = `http://127.0.0.1:${PORT}/index.html`;
+  const cases = [
+    { name: 'malformed JSON', file: { name: 'broken.json', mimeType: 'application/json', buffer: Buffer.from('{"open":') }, expect: 'JSON 파싱 오류' },
+    { name: 'malformed IPYNB', file: { name: 'broken.ipynb', mimeType: 'application/json', buffer: Buffer.from('{not notebook') }, expect: 'IPYNB 파싱 오류' },
+    { name: 'unclosed CSV quote', file: { name: 'broken.csv', mimeType: 'text/csv', buffer: Buffer.from('a,b\n"open,cell') }, expect: '닫히지 않은 따옴표' },
+    { name: 'broken DOCX', file: { name: 'broken.docx', mimeType: 'application/octet-stream', buffer: Buffer.from('not a zip') }, expect: 'DOCX ZIP 열기 실패' },
+    { name: 'HWP5 binary', file: { name: 'legacy.hwp', mimeType: 'application/octet-stream', buffer: Buffer.from([0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1]) }, expect: 'HWP5 바이너리' },
+  ];
+
+  for (const testCase of cases) {
+    await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
+    await page.waitForFunction(() => window.JSZip && window.marked && window.XLSX, null, { timeout: 30000 });
+    let downloaded = false;
+    const onDownload = () => { downloaded = true; };
+    page.on('download', onDownload);
+    await page.setInputFiles('#file-input', testCase.file);
+    await page.locator('#convert-btn').click();
+    await page.locator('.result-card--error').waitFor({ state: 'visible', timeout: 30000 });
+    const failureText = await page.locator('#result-area').textContent();
+    assert(failureText.includes(testCase.expect), `${testCase.name}: 기대 오류 문구 누락`);
+    await page.waitForTimeout(200);
+    assert(!downloaded, `${testCase.name}: 실패 입력에서 HWPX가 다운로드됨`);
+    page.off('download', onDownload);
+  }
+  console.log(`PASS FAIL  ${cases.length} malformed/unsupported inputs rejected`);
+}
+
 (async () => {
   const docxPath = path.join(FIXTURES, 'sample.docx');
   if (!fs.existsSync(docxPath)) {
     await buildDocx(docxPath);
+  }
+  const xlsxPath = path.join(FIXTURES, 'sample.xlsx');
+  if (!fs.existsSync(xlsxPath)) {
+    await buildXlsx(xlsxPath);
+  }
+  const eucKrPath = path.join(FIXTURES, 'sample-euckr.txt');
+  if (!fs.existsSync(eucKrPath)) {
+    fs.writeFileSync(eucKrPath, Buffer.from('IyBFVUMtS1Igwaa48Q0KDQrDuSC5rrTcIMfRsdsgurjBuA0KDQotILjxt88gx8+zqg0KLSC48bfPILXR', 'base64'));
   }
 
   const srv = await serve();
@@ -444,6 +567,7 @@ async function validateCommercialUx(page) {
     }
     await validateLabControl(page);
     await validateCommercialUx(page);
+    await validateRejectedInputs(page);
     assert(pageErrors.length === 0, `브라우저 오류 발생: ${pageErrors.join(' | ')}`);
     console.log(`\nGOLDEN: ${CASES.length} cases passed`);
   } finally {

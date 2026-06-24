@@ -2,7 +2,7 @@
  * [qa/gate.js]  HWPX 변환 회귀 검증 게이트 (개발자용, 선택)
  * ===================================================================
  * 목적: 입력 파일을 실제 브라우저에서 .hwpx로 변환한 뒤, HWPX 패키지
- *       무결성 ①~⑥을 자동 검사한다. 하나라도 FAIL이면 exit code 1.
+ *       무결성 ①~⑦을 자동 검사한다. 하나라도 FAIL이면 exit code 1.
  *
  *   ① mimetype이 ZIP 첫 항목·무압축(STORED)·내용 application/hwp+zip
  *   ② META-INF 3종(container.xml/manifest.xml/container.rdf) + Preview + Contents 존재
@@ -10,6 +10,7 @@
  *   ④ section0의 모든 charPrIDRef/paraPrIDRef/borderFillIDRef ⊆ header 정의 id
  *   ⑤ header의 모든 itemCnt == 실제 자식 수 (fontfaces 내부 fontCnt 포함)
  *   ⑥ 모든 표(hp:tbl)의 격자가 span 반영 시 (행,열) 정확히 1회 덮임 (깨진 표 차단)
+ *   ⑦ 그림의 hc:img 참조가 content.hpf item·BinData·package manifest까지 연결됨
  *
  * [사전 준비] (CDN 전용 저장소라 개발 의존성은 일시 설치)
  *   npm i playwright jszip
@@ -82,6 +83,8 @@ function childCount(xml, container, child) {
     const zip = await JSZip.loadAsync(buf);
     const header = await zip.file('Contents/header.xml').async('string');
     const section = await zip.file('Contents/section0.xml').async('string');
+    const contentHpf = await zip.file('Contents/content.hpf').async('string');
+    const packageManifest = await zip.file('META-INF/manifest.xml').async('string');
 
     // ① mimetype
     const firstName = buf.slice(30, 30 + buf.readUInt16LE(26)).toString('latin1');
@@ -90,14 +93,14 @@ function childCount(xml, container, child) {
         && (await zip.file('mimetype').async('string')) === 'application/hwp+zip';
     // ② entries
     const need = ['META-INF/container.xml', 'META-INF/manifest.xml', 'META-INF/container.rdf',
-        'Preview/PrvText.txt', 'Contents/header.xml', 'Contents/section0.xml'];
+        'Preview/PrvText.txt', 'Contents/content.hpf', 'Contents/header.xml', 'Contents/section0.xml'];
     const missing = need.filter(f => !zip.file(f));
     const c2 = missing.length === 0;
     // ③ well-formed
-    const wf = await page.evaluate(xml => {
+    const wf = await page.evaluate(xmls => xmls.every(xml => {
         const d = new DOMParser().parseFromString(xml, 'application/xml');
         return !d.querySelector('parsererror');
-    }, section);
+    }), [section, header, contentHpf, packageManifest]);
     const c3 = wf && section.includes('hancom.co.kr/hwpml/2011/section')
         && section.includes('hancom.co.kr/hwpml/2011/paragraph');
     // ④ reference integrity
@@ -142,15 +145,34 @@ function childCount(xml, container, child) {
         if (!c6) break;
     }
 
-    const gate = [c1, c2, c3, c4, c5, c6];
+    // ⑦ 그림 참조 무결성: section hc:img → content.hpf opf:item → BinData → package manifest
+    const imageRefs = [...section.matchAll(/<hc:img\b[^>]*\bbinaryItemIDRef="([^"]+)"/g)].map(m => m[1]);
+    const imageItems = new Map();
+    for (const match of contentHpf.matchAll(/<opf:item\b[^>]*>/g)) {
+        const tag = match[0];
+        const id = (/\bid="([^"]+)"/.exec(tag) || [])[1];
+        const href = (/\bhref="([^"]+)"/.exec(tag) || [])[1];
+        if (id && href) imageItems.set(id, href);
+    }
+    const badImages = [];
+    for (const ref of imageRefs) {
+        const href = imageItems.get(ref);
+        if (!href) badImages.push(`${ref}:content.hpf item 없음`);
+        else if (!zip.file(href)) badImages.push(`${ref}:${href} 파일 없음`);
+        else if (!packageManifest.includes(`full-path="${href}"`)) badImages.push(`${ref}:${href} manifest 없음`);
+    }
+    const c7 = badImages.length === 0;
+
+    const gate = [c1, c2, c3, c4, c5, c6, c7];
     console.log(`입력: ${path.relative(ROOT, input)}  (${buf.length} bytes)`);
     console.log(`① mimetype STORED 첫항목 : ${c1 ? 'PASS' : 'FAIL'}`);
     console.log(`② META-INF+Preview+Contents: ${c2 ? 'PASS' : 'FAIL'}${missing.length ? ' missing=' + missing : ''}`);
-    console.log(`③ section0 well-formed+ns  : ${c3 ? 'PASS' : 'FAIL'}`);
+    console.log(`③ package XML well-formed+ns: ${c3 ? 'PASS' : 'FAIL'}`);
     console.log(`④ IDRef ⊆ header 정의      : ${c4 ? 'PASS' : 'FAIL'}${c4 ? '' : ` dangling C=${badC} P=${badP} B=${badB}`}`);
     console.log(`⑤ itemCnt == 실제 자식 수  : ${c5 ? 'PASS' : 'FAIL'}  ` +
         itemRows.map(([c, r]) => `${c} ${r.declared}=${r.actual}`).join(' | '));
     console.log(`⑥ 표 격자 무결성(${tbls.length}개)    : ${c6 ? 'PASS' : 'FAIL'}${c6 ? '' : ' ' + badTbl}`);
+    console.log(`⑦ 그림 참조 무결성(${imageRefs.length}개)  : ${c7 ? 'PASS' : 'FAIL'}${c7 ? '' : ' ' + badImages.join(' | ')}`);
     if (errs.length) console.log('page errors:', errs);
 
     await browser.close();

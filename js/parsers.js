@@ -379,19 +379,10 @@ function extractFromNode(node, blocks) {
                 blocks.push({ type: 'blank' });
             }
 
-        } else if (tag === 'ul') {
-            // 순서없는 목록 → ordered:false
-            const items = Array.from(child.querySelectorAll(':scope > li'))
-                .map(li => sanitize((li.firstChild ? li.firstChild.textContent : li.textContent) || li.textContent).trim())
-                .filter(Boolean);
-            if (items.length) blocks.push({ type: 'list', ordered: false, items });
-
-        } else if (tag === 'ol') {
-            // 순서있는 목록 → ordered:true (buildSection에서 "1. 2. 3." 형식으로 출력)
-            const items = Array.from(child.querySelectorAll(':scope > li'))
-                .map(li => sanitize((li.firstChild ? li.firstChild.textContent : li.textContent) || li.textContent).trim())
-                .filter(Boolean);
-            if (items.length) blocks.push({ type: 'list', ordered: true, items });
+        } else if (tag === 'ul' || tag === 'ol') {
+            // 들여쓴 HTML과 중첩 목록도 직접 항목 텍스트·레벨·번호를 보존
+            const items = extractHtmlList(child);
+            if (items.length) blocks.push({ type: 'list', ordered: tag === 'ol', items });
 
         } else if (tag === 'table') {
             // <table> → table 블록
@@ -433,14 +424,33 @@ function extractFromNode(node, blocks) {
     }
 }
 
+function extractHtmlList(listEl, level = 0, out = []) {
+    const ordered = (listEl.tagName || '').toLowerCase() === 'ol';
+    const start = ordered ? (parseInt(listEl.getAttribute('start') || '1', 10) || 1) : null;
+    const children = Array.from(listEl.children || []).filter(el => (el.tagName || '').toLowerCase() === 'li');
+    children.forEach((li, index) => {
+        const clone = li.cloneNode(true);
+        clone.querySelectorAll('ul, ol').forEach(nested => nested.remove());
+        const text = sanitize(clone.textContent.trim());
+        if (text) out.push({ text, level, ordered, marker: ordered ? start + index : null });
+        Array.from(li.children || [])
+            .filter(el => ['ul', 'ol'].includes((el.tagName || '').toLowerCase()))
+            .forEach(nested => extractHtmlList(nested, level + 1, out));
+    });
+    return out;
+}
+
 /** <table> DOM 요소 → IR table 블록 변환 */
 function extractHtmlTable(tableEl) {
     const rows = tableEl.querySelectorAll('tr');
     if (!rows.length) return null;
 
     const allRows = Array.from(rows).map(tr =>
-        Array.from(tr.querySelectorAll('th, td'))
-            .map(td => sanitize(td.textContent.trim()))
+        Array.from(tr.querySelectorAll(':scope > th, :scope > td')).map(td => ({
+            text: sanitize(td.textContent.trim()),
+            colSpan: Math.max(1, parseInt(td.getAttribute('colspan') || '1', 10) || 1),
+            rowSpan: Math.max(1, parseInt(td.getAttribute('rowspan') || '1', 10) || 1),
+        }))
     );
 
     if (!allRows.length) return null;
@@ -564,6 +574,9 @@ function csvToRows(text) {
             field += c;
         }
     }
+    if (inQuote) {
+        throw new Error('CSV 파싱 오류: 닫히지 않은 따옴표가 있습니다.');
+    }
     // 마지막 행 처리 (줄바꿈 없이 끝나는 경우)
     row.push(field);
     if (row.some(v => v.trim())) rows.push(row);
@@ -578,14 +591,14 @@ function csvToRows(text) {
 // ─────────────────────────────────────────────────────────────────────────
 function parseXlsx(arrayBuffer, docType = 'plain') {
     if (typeof XLSX === 'undefined') {
-        // SheetJS 미로드 시 오류 블록으로 폴백
-        const ir = emptyIR('XLSX 문서', docType);
-        ir.blocks.push({ type: 'para', text: 'SheetJS 라이브러리 미로드: XLSX 처리 불가. 인터넷 연결을 확인하세요.' });
-        return ir;
+        throw new Error('SheetJS 라이브러리 미로드: XLSX 처리 불가. 인터넷 연결을 확인하세요.');
     }
 
     const workbook = XLSX.read(arrayBuffer, { type: 'array' });
     const firstSheetName = workbook.SheetNames[0];
+    if (!firstSheetName || !workbook.Sheets[firstSheetName]) {
+        throw new Error('XLSX 첫 번째 시트를 찾을 수 없습니다. 비어 있거나 손상된 파일입니다.');
+    }
     // sheet_to_csv로 CSV 문자열 생성 후 파서 재사용
     const csvText = XLSX.utils.sheet_to_csv(workbook.Sheets[firstSheetName]);
     const ir = parseCsv(csvText, docType);
@@ -603,9 +616,7 @@ function parseJson(text, docType = 'plain') {
     try {
         obj = JSON.parse(text);
     } catch (e) {
-        const ir = emptyIR('JSON 문서', docType);
-        ir.blocks.push({ type: 'para', text: 'JSON 파싱 오류: ' + e.message });
-        return ir;
+        throw new Error('JSON 파싱 오류: ' + e.message);
     }
 
     // IR 형식 판별: { blocks: [...] } 구조면 직접 사용
@@ -613,18 +624,19 @@ function parseJson(text, docType = 'plain') {
         return {
             title: sanitize(obj.title || 'JSON 문서'),
             doc_type: obj.doc_type || docType,
-            // 중첩 객체 내 텍스트도 sanitize 적용
-            blocks: (obj.blocks || []).map(b => ({
-                ...b,
-                text:  b.text  ? sanitize(b.text)  : b.text,
-                items: b.items ? b.items.map(sanitize) : b.items,
-            }))
+            blocks: obj.blocks.map(sanitizeIrBlock),
         };
     }
 
     // 일반 JSON → key-value 표/목록으로 변환
     const ir = emptyIR('JSON 문서', docType);
-    jsonToBlocks(obj, ir.blocks, 0);
+    let content = obj;
+    if (obj && typeof obj === 'object' && !Array.isArray(obj) && typeof obj.title === 'string') {
+        ir.title = sanitize(obj.title) || ir.title;
+        content = { ...obj };
+        delete content.title;
+    }
+    jsonToBlocks(content, ir.blocks, 0);
     return ir;
 }
 
@@ -635,6 +647,17 @@ function jsonToBlocks(value, blocks, depth) {
         const allSimple = value.every(v => typeof v !== 'object' || v === null);
         if (allSimple) {
             blocks.push({ type: 'list', items: value.map(v => sanitize(String(v))) });
+        } else if (value.length && value.every(v => v && typeof v === 'object' && !Array.isArray(v))) {
+            // 객체 배열은 key 합집합을 열로 사용해 실제 데이터 표로 변환
+            const keys = [...new Set(value.flatMap(v => Object.keys(v)))];
+            blocks.push({
+                type: 'table',
+                header: keys.map(sanitize),
+                rows: value.map(v => keys.map(k => {
+                    const cell = v[k];
+                    return cell && typeof cell === 'object' ? JSON.stringify(cell) : sanitize(String(cell ?? ''));
+                })),
+            });
         } else {
             // 복잡한 배열: 인덱스 제목 + 재귀
             value.forEach((v, i) => {
@@ -643,12 +666,20 @@ function jsonToBlocks(value, blocks, depth) {
             });
         }
     } else if (value && typeof value === 'object') {
-        // 객체 → 키/값 2열 표
-        const rows = Object.entries(value).map(([k, v]) => [
-            sanitize(k),
-            typeof v === 'object' ? JSON.stringify(v) : sanitize(String(v))
-        ]);
-        if (rows.length) blocks.push({ type: 'table', header: ['키', '값'], rows });
+        // 단순값은 키/값 표, 중첩 객체·배열은 키 제목 아래 구조적으로 재귀 전개
+        const entries = Object.entries(value);
+        const simple = entries.filter(([, v]) => typeof v !== 'object' || v === null);
+        if (simple.length) {
+            blocks.push({
+                type: 'table',
+                header: ['키', '값'],
+                rows: simple.map(([k, v]) => [sanitize(k), sanitize(String(v ?? ''))]),
+            });
+        }
+        for (const [key, nested] of entries.filter(([, v]) => v && typeof v === 'object')) {
+            blocks.push({ type: 'heading', level: Math.min(depth + 2, 6), text: sanitize(key) });
+            jsonToBlocks(nested, blocks, depth + 1);
+        }
     } else {
         blocks.push({ type: 'para', text: sanitize(String(value)) });
     }
@@ -665,8 +696,8 @@ function parseIpynb(text, docType = 'plain') {
     let nb;
     try {
         nb = JSON.parse(text);
-    } catch {
-        return { ...emptyIR('Notebook', docType), blocks: [{ type: 'para', text: 'IPYNB 파싱 오류: JSON 형식이 아님' }] };
+    } catch (e) {
+        throw new Error('IPYNB 파싱 오류: JSON 형식이 아님 (' + e.message + ')');
     }
 
     const ir = emptyIR('Jupyter Notebook', docType);
@@ -686,9 +717,9 @@ function parseIpynb(text, docType = 'plain') {
             ir.blocks.push(...mdIR.blocks);
 
         } else if (cell.cell_type === 'code') {
-            // 코드 셀: 코드 내용 표시
+            // 코드 셀: 등폭 코드 블록으로 출력
             if (source.trim()) {
-                ir.blocks.push({ type: 'para', text: '[코드]\n' + sanitize(source) });
+                ir.blocks.push({ type: 'code', text: sanitize(source.replace(/\s+$/, '')) });
             }
             // 실행 출력 처리
             for (const out of (cell.outputs || [])) {
@@ -1248,17 +1279,7 @@ async function parseHwp(buffer, docType = 'plain') {
     const fmt = detectHwpFormat(buffer);
 
     if (fmt === 'ole2') {
-        // HWP5 바이너리 — 브라우저에서 완전 파싱 불가
-        ir.title = 'HWP5 바이너리 파일';
-        ir.blocks.push({
-            type: 'para',
-            text: '[알림] 이 파일은 HWP5 바이너리 형식입니다. 브라우저에서 완전한 텍스트 추출이 불가능합니다.'
-        });
-        ir.blocks.push({
-            type: 'para',
-            text: '한컴오피스에서 "다른 이름으로 저장 → HWPX 형식"으로 변환하거나, .docx 형식으로 내보내기 후 다시 시도해 주세요.'
-        });
-        return ir;
+        throw new Error('HWP5 바이너리는 브라우저에서 본문을 안전하게 추출할 수 없습니다. 한컴오피스에서 HWPX 또는 DOCX로 다시 저장해 주세요.');
     }
 
     if (fmt === 'zip') {
@@ -1344,7 +1365,7 @@ async function parseHwp(buffer, docType = 'plain') {
             }
 
             if (!ir.blocks.length && !ir.title) {
-                ir.blocks.push({ type: 'para', text: '[HWPX] 텍스트를 추출하지 못했습니다. 파일 구조를 확인해 주세요.' });
+                throw new Error('HWPX에서 변환 가능한 본문 텍스트를 추출하지 못했습니다.');
             }
         } catch (err) {
             throw new Error(`HWP/HWPX 파싱 오류: ${err.message}`);
@@ -1353,8 +1374,52 @@ async function parseHwp(buffer, docType = 'plain') {
     }
 
     // 알 수 없는 형식
-    ir.blocks.push({ type: 'para', text: '[HWP] 알 수 없는 파일 형식입니다. HWP 또는 HWPX 파일이 맞는지 확인해 주세요.' });
-    return ir;
+    throw new Error('알 수 없는 HWP 파일 구조입니다. HWP 또는 HWPX 파일이 맞는지 확인해 주세요.');
+}
+
+function sanitizeIrCell(cell) {
+    if (cell && typeof cell === 'object' && !Array.isArray(cell)) {
+        return { ...cell, text: sanitize(cell.text ?? '') };
+    }
+    return sanitize(cell ?? '');
+}
+
+function sanitizeIrBlock(block) {
+    if (!block || typeof block !== 'object') return { type: 'para', text: sanitize(block ?? '') };
+    const clean = { ...block };
+    if ('text' in clean) clean.text = sanitize(clean.text ?? '');
+    if (Array.isArray(clean.runs)) clean.runs = clean.runs.map(run => ({ ...run, text: sanitize(run?.text ?? '') }));
+    if (Array.isArray(clean.items)) {
+        clean.items = clean.items.map(item => item && typeof item === 'object'
+            ? { ...item, text: sanitize(item.text ?? ''), codeBlocks: (item.codeBlocks || []).map(sanitizeIrBlock) }
+            : sanitize(item ?? ''));
+    }
+    if (Array.isArray(clean.header)) clean.header = clean.header.map(sanitizeIrCell);
+    if (Array.isArray(clean.rows)) clean.rows = clean.rows.map(row => Array.isArray(row) ? row.map(sanitizeIrCell) : []);
+    if (Array.isArray(clean.blocks)) clean.blocks = clean.blocks.map(sanitizeIrBlock);
+    return clean;
+}
+
+/** 텍스트 입력 디코딩: BOM 우선, 유효 UTF-8, 마지막으로 EUC-KR(CP949) */
+function decodeTextBuffer(arrayBuffer) {
+    const bytes = new Uint8Array(arrayBuffer);
+    if (bytes.length >= 2 && bytes[0] === 0xFF && bytes[1] === 0xFE) {
+        return new TextDecoder('utf-16le').decode(bytes.subarray(2));
+    }
+    if (bytes.length >= 2 && bytes[0] === 0xFE && bytes[1] === 0xFF) {
+        return new TextDecoder('utf-16be').decode(bytes.subarray(2));
+    }
+    const utf8Bytes = bytes.length >= 3 && bytes[0] === 0xEF && bytes[1] === 0xBB && bytes[2] === 0xBF
+        ? bytes.subarray(3) : bytes;
+    try {
+        return new TextDecoder('utf-8', { fatal: true }).decode(utf8Bytes);
+    } catch (_) {
+        try {
+            return new TextDecoder('euc-kr', { fatal: true }).decode(bytes);
+        } catch (e) {
+            throw new Error('텍스트 인코딩을 해석할 수 없습니다. UTF-8 또는 EUC-KR로 다시 저장해 주세요.');
+        }
+    }
 }
 
 
@@ -1412,7 +1477,7 @@ async function fileToIR(file, docType = 'plain') {
 
     // accept 타입에 따라 파일 읽기 방법 선택
     if (parser.accept === 'text') {
-        const text = await file.text();
+        const text = decodeTextBuffer(await file.arrayBuffer());
         return parser.async ? await parser.fn(text, docType) : parser.fn(text, docType);
     } else {
         const buffer = await file.arrayBuffer();

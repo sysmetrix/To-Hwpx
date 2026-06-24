@@ -62,6 +62,7 @@
 
 보존:
 - `h1`-`h6`, `p`, `ul`, `ol`, `li`, `table`
+- 들여쓴 중첩 `ul/ol`의 항목 레벨과 `table`의 `rowspan/colspan`
 - `blockquote`(Markdown 인용구와 같은 HWPX 인용 문단)
 - `strong`, `em`, `code`, `u`, `ins`, `s`, `strike`, `del`
 - 일부 글자색(`style="color:"`, `<font color>`)
@@ -74,7 +75,7 @@
 
 검증:
 - `tests/fixtures/sample.html`
-- 제목/문단/목록/표 텍스트와 namespace가 유지되는지 확인한다.
+- 제목/문단/중첩 목록/병합 표 텍스트와 namespace, 굵게·기울임·밑줄·취소선·글자색을 확인한다.
 
 ## TXT
 
@@ -87,11 +88,16 @@
 - 원문 텍스트
 - 줄바꿈과 빈 줄 기반 문단
 - 한글/영문/특수문자
+- UTF-8(BOM 포함), UTF-16 BOM, EUC-KR(CP949) 디코딩
 
 주의:
 - 제목, 표, bold 같은 서식 정보는 원본에 없으므로 추정하지 않는다.
 - 표처럼 보이는 텍스트도 기본적으로 일반 문단으로 처리될 수 있다.
 - 인코딩 감지는 앱 로딩 경로와 함께 확인한다.
+
+검증:
+- `tests/fixtures/sample.txt`, `tests/fixtures/sample-euckr.txt`
+- UTF-8/EUC-KR의 제목·문단·목록·한글이 동일하게 HWPX에 남는지 확인한다.
 
 ## CSV / XLSX
 
@@ -118,6 +124,7 @@
 검증:
 - `tests/fixtures/sample.csv`
 - `tests/fixtures/long-table.csv`
+- `tests/fixtures/sample.xlsx`
 - 빈 셀, 열 개수, 긴 텍스트, 표 존재 여부를 본다.
 - 일반 표의 `pageBreak="TABLE"`, `repeatHeader="1"`, `treatAsChar="0"`, 단 오른쪽 정렬, 첫 행 제목 셀 지정을 XML로 검사하고 긴 표는 한컴에서 실제 쪽 나눔과 제목 줄 반복을 확인한다.
 
@@ -133,6 +140,7 @@
 - 배열 값
 - 배열 안 객체 구조의 표 변환
 - IR 형식 JSON 직접 변환
+- IR 직접 입력의 runs/items/table/quote 내부 XML 금지 제어문자 재귀 정규화
 
 주의:
 - 보고서형 편집 레이아웃을 자동 설계하지 않는다.
@@ -142,7 +150,9 @@
 
 검증:
 - `tests/fixtures/sample.json`
+- `tests/fixtures/sample-ir.json`
 - 제목/문단/표 텍스트 누락이 없는지 확인한다.
+- 객체 배열의 열/행 표와 IR 내부 제어문자 제거 후 XML well-formed를 확인한다.
 
 ## IPYNB
 
@@ -153,7 +163,7 @@
 
 보존:
 - markdown cell: Markdown 파서 재사용
-- code cell: 등폭 코드블록
+- code cell: 일반 문단이 아닌 등폭 코드블록 표
 - text output: 문서 본문으로 포함
 
 주의:
@@ -202,7 +212,7 @@
 
 보존:
 - HWPX 오업로드 시 내부 XML 본문 텍스트와 일부 표
-- HWP5 바이너리는 제한/안내 중심
+- HWP5 바이너리는 결과 HWPX를 만들지 않고 실패 카드에서 HWPX/DOCX 재저장을 안내
 
 주의:
 - 사용자가 HWP 파일을 안정적으로 변환하고 싶다면 한컴오피스에서 HWPX 또는 DOCX로 다시 저장하도록 안내한다.
@@ -220,6 +230,7 @@
 - 새 borderFill, charPr, paraPr를 만들면 IDRef 검증과 namespace를 같이 본다.
 - 표는 grid, row, cell span이 맞지 않으면 한컴에서 조용히 깨진다.
 - 그림은 `BinData`, manifest, content.hpf, `hp:pic/hc:img`가 모두 맞아야 한다.
+- `hp:pagePr@landscape`는 hwpxlib `PageDirection` 기준 세로 `WIDELY`, 가로 `NARROWLY`이며 폭/높이 관계도 함께 일치해야 한다.
 
 ## 포맷 안내 문구 작성 규칙
 

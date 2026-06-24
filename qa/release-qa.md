@@ -27,6 +27,8 @@ Scope: static browser-only conversion flow from file selection to HWPX download.
 | JSON | `qa/fixtures/sample.json` | 제목, 목록, 객체 표 또는 텍스트 단순화 |
 | IPYNB | `qa/fixtures/sample.ipynb` | 마크다운/코드/텍스트 출력 추출, 이미지 출력 손실 안내 |
 | HWP/HWPX | 앱 생성 HWPX, HWP5 샘플 | HWPX 텍스트 재추출, HWP5는 변환 안내 메시지 |
+| XLSX 자동 fixture | `tests/fixtures/sample.xlsx` | 첫 시트·빈 셀·수식 표시값 보존, 두 번째 시트 제외 |
+| TXT 인코딩 | `tests/fixtures/sample.txt`, `sample-euckr.txt` | UTF-8/EUC-KR 한글·문단·목록 보존 |
 
 ## 3. Edge Cases
 
@@ -51,6 +53,7 @@ Scope: static browser-only conversion flow from file selection to HWPX download.
 - `META-INF/container.xml`, `META-INF/manifest.xml`, `Contents/header.xml`, `Contents/section0.xml`, `Preview/PrvText.txt` 존재 확인
 - `section0.xml` 네임스페이스와 XML 파싱 오류 확인
 - `charPrIDRef`, `paraPrIDRef`, `borderFillIDRef` 참조 무결성 확인
+- `hc:img@binaryItemIDRef`가 `content.hpf` item, `BinData`, package manifest와 연결되는지 확인
 - 일반 데이터 표가 `pageBreak="TABLE"`, `repeatHeader="1"`, `treatAsChar="0"`이고 첫 행 셀이 `header="1"`인지 확인
 - 다운로드 링크의 파일명과 `type="application/hwp+zip"` 확인
 
@@ -107,6 +110,8 @@ Scope: static browser-only conversion flow from file selection to HWPX download.
 4. 모바일 브라우저 다운로드 UI는 OS 정책 영향을 받아 자동 다운로드가 차단될 수 있음.
 5. HWP5 바이너리는 브라우저에서 완전 파싱하지 못해 HWPX/DOCX로 사전 변환이 필요함.
 
+포맷별 점수·결함·검증 근거는 `qa/conversion-quality-audit-v4.5.5.md`를 기준으로 한다.
+
 ## 10. v4.5.4 상용화 마무리 기록
 
 ### 수정·개선 결정
@@ -133,3 +138,15 @@ Scope: static browser-only conversion flow from file selection to HWPX download.
 - [ ] 모바일 세로/가로 회전, 화면 키보드, 노치/홈 인디케이터에서 주요 버튼이 가려지지 않음
 - [ ] Tab/Shift+Tab, Enter/Space, 방향키, ESC만으로 주요 흐름 이용 가능
 - [ ] MD·DOCX·CSV 표본을 한컴오피스에서 열어 글꼴·표·코드·여백을 시각 확인
+
+## 11. v4.5.5 포맷 품질 감사 결과
+
+- [x] Golden 정상 입력 11개: MD, HTML, TXT UTF-8/EUC-KR, CSV, XLSX, JSON 일반/IR, IPYNB, DOCX
+- [x] 손상·미지원 입력 5개: JSON, IPYNB, CSV, DOCX, HWP5 — HWPX 미생성 및 실패 카드 확인
+- [x] MD 패키지 게이트 ①~⑦ PASS
+- [x] DOCX 기본 패키지 게이트 ①~⑦ PASS
+- [x] DOCX 병합·중첩 표 격자 게이트 PASS
+- [x] DOCX 그림 `hc:img → content.hpf → BinData → manifest` 참조 게이트 PASS
+- [x] XLSX 첫 시트 HWPX 표 패키지 게이트 PASS
+- [x] 세로 `WIDELY`/가로 `NARROWLY`와 폭·높이 관계 자동 검사 PASS
+- [ ] 한컴오피스에서 A3 가로, DOCX 그림, 병합 표, IPYNB 코드 배경을 시각 확인
