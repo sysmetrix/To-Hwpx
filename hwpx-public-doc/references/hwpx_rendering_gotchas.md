@@ -44,7 +44,7 @@ OWPML은 요소마다 소속 네임스페이스가 정해져 있다. **prefix를
 
 - **증상:** 특정 글꼴(Pretendard)만 선택해도 한글에서 **적용이 안 됨**. 다른 글꼴은 정상, 파일도 정상 열림.
 - **원인:** 폰트 select의 `value`가 HWPX 글꼴면(fontface) 이름으로 **그대로 박힌다**. 값이 `Pretendard GOV Variable Medium`(가변폰트 풀네임)이라 한컴/Windows에 설치된 실제 패밀리명 `Pretendard GOV`와 **매칭 실패** → 글꼴만 조용히 무시됨.
-- **해결:** [index.html](../../index.html) 폰트 옵션 `value`를 **한컴이 매칭하는 패밀리명**으로. 반드시 [js/app.js](../../js/app.js) `FONT_DOWNLOADS`의 `systemNames`(예: `Pretendard GOV`, `Pretendard`)와 일치시킨다. KoPub처럼 무게를 포함한 이름이 맞는 경우도 있으니(`KoPub돋움체 Medium`) **설치된 등록명 기준**으로 정한다.
+- **해결:** [index.html](../../index.html) 폰트 옵션 `value`를 **한컴이 매칭하는 패밀리명**으로. Pretendard GOV 가변 폰트는 PC·설치 방식에 따라 `Pretendard GOV Variable` 또는 `Pretendard GOV`로 등록된다는 보고가 있어 두 항목을 모두 제공하고, 사용자가 한컴에 표시되는 이름과 같은 항목을 선택하게 한다. [js/app.js](../../js/app.js) `FONT_DOWNLOADS.systemNames`에도 두 패밀리명을 모두 둬 설치 감지와 안내를 맞춘다. KoPub처럼 무게를 포함한 이름이 맞는 경우도 있으니(`KoPub돋움체 Medium`) **설치된 등록명 기준**으로 정한다.
 - **교훈:** 네임스페이스뿐 아니라 **"이름 매칭"이 틀려도 동일하게 조용히 무시**된다. 글꼴이 안 먹으면 흐름을 의심하기 전에 **value가 실제 설치 패밀리명인지** 먼저 본다.
 
 ### 새 borderFill/paraPr을 추가할 때 ID 충돌도 조용히 망가진다 — v4.4.20 인용구

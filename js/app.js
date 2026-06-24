@@ -842,11 +842,15 @@ const FONT_DOWNLOADS = [
         official: 'https://www.kopus.org/biz-electronic-font2/',
     },
     {
-        name: 'Pretendard GOV',
-        family: 'Pretendard',
-        systemNames: ['Pretendard GOV', 'Pretendard', 'Pretendard 보통', 'PretendardGOV-Regular'],
+        name: 'Pretendard GOV Variable',
+        family: 'Pretendard GOV Variable',
+        systemNames: [
+            'Pretendard GOV Variable', 'Pretendard GOV',
+            'Pretendard GOV Variable Regular', 'Pretendard GOV Variable 보통',
+            'Pretendard', 'Pretendard 보통', 'PretendardGOVVariable'
+        ],
         desc: '오픈소스로 공개된 공공 라이선스 현대 고딕체입니다. 디지털 행정 문서에 잘 어울립니다.',
-        local: ['fonts/PretendardGOV-Regular.ttf', 'Font/Pretendard-Regular.ttf', 'Font/Pretendard GOV-1.3.9/Pretendard-Regular.ttf'],
+        local: ['fonts/PretendardGOVVariable.ttf'],
         official: 'https://github.com/orioncactus/pretendard/releases/tag/v1.3.9',
     },
 ];

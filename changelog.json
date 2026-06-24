@@ -1,6 +1,21 @@
 {
-  "current": "4.5.8",
+  "current": "4.5.9",
   "versions": [
+    {
+      "version": "4.5.9",
+      "date": "2026-06-25",
+      "user": [
+        "Pretendard GOV 가변 폰트가 PC에 따라 다른 이름으로 등록되는 문제를 반영해 `Pretendard GOV Variable`과 `Pretendard GOV`를 모두 선택할 수 있게 했습니다.",
+        "폰트 설치 안내와 다운로드 파일을 `Pretendard GOV Variable` 기준으로 변경했습니다."
+      ],
+      "dev": [
+        "[v4.5.9] index.html: 한컴의 설치 패밀리명에 맞춰 선택할 수 있도록 Pretendard GOV Variable/GOV 두 fontface 입력값 제공",
+        "[v4.5.9] app.js/fonts/: 안내 대표 명칭과 로컬 다운로드를 fonts/PretendardGOVVariable.ttf로 교체하고 기존 PretendardGOV-Regular.ttf 제거",
+        "[v4.5.9] tests/golden.js: 두 패밀리명의 HWPX fontface 기록과 Variable 안내·다운로드 링크 회귀 검사 추가",
+        "[v4.5.9] AGENTS.md/gotchas/fonts README: PC별 등록명 차이, 선택 기준, 배포 파일 경로 기록",
+        "[v4.5.9] package.json/package-lock.json/sw.js/index.html: v4.5.9 반영"
+      ]
+    },
     {
       "version": "4.5.8",
       "date": "2026-06-25",
