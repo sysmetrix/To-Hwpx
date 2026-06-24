@@ -72,7 +72,7 @@
 
 1. 코드 수정.
 2. **버전 범프**: `node qa/bump-version.js --write` → package/lock/sw(`CACHE_VERSION`)/index(버전 버튼) 자동 갱신. **단 [changelog.json](changelog.json)은 수동**: `current`를 새 버전으로 바꾸고 `versions[]` 맨 앞에 `{version,date,user[],dev[]}` 항목 추가. (날짜 같으면 patch+1, 다르면 minor+1.0 규칙.) 릴리스 전 `package.json`/`package-lock.json`/`sw.js`/`index.html` 버튼/[changelog.json](changelog.json) `current`가 같은 버전인지 확인한다.
-3. 브랜치 → 커밋(트레일러 `Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>`) → 푸시.
+3. 브랜치 → 커밋 → 푸시.
 4. **PR 생성·머지는 `gh` 없이 GitHub API**로(토큰은 `git credential fill`). `/tmp`는 node(Windows)와 curl이 다르게 해석하니 **JSON은 stdin 파이프**(`node -e '...JSON.stringify...' | curl ... -d @-`)로 넘긴다. 머지 405("Base branch was modified")는 재시도.
 5. main 동기화 → 브랜치 정리.
 6. 사용자에게 버전 번호 알리고 한컴 시각 확인 요청.
