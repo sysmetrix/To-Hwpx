@@ -126,6 +126,21 @@ function splitInlineEmphasis(text) {
 
 function splitInlineCodeBlocks(tokens, blocks) {
     const source = Array.isArray(tokens) ? tokens : [];
+    const meaningful = source.filter(token => {
+        if (!token) return false;
+        if (token.type === 'br') return true;
+        return plainMdText(token.tokens || token.text || token.raw).trim() !== '';
+    });
+    // 문단 전체가 단일 인라인 코드인 경우에만 기존 코드 블록(표) 표현을 유지한다.
+    if (meaningful.length === 1 && meaningful[0].type === 'codespan') {
+        blocks.push({
+            type: 'code',
+            text: sanitize(decodeMdEntities(meaningful[0].text || '')),
+            inline: true,
+        });
+        return;
+    }
+
     let paraRuns = [];
     function flushPara() {
         const hasText = paraRuns.some(r => r.text && r.text.trim());
@@ -134,8 +149,8 @@ function splitInlineCodeBlocks(tokens, blocks) {
     }
     for (const token of source) {
         if (token.type === 'codespan') {
-            flushPara();
-            blocks.push({ type: 'code', text: sanitize(decodeMdEntities(token.text || '')), inline: true });
+            const text = sanitize(decodeMdEntities(token.text || ''));
+            if (text) paraRuns.push({ text, code: true });
         } else if (token.type === 'strong' || token.type === 'em') {
             const text = plainMdText(token.tokens || token.text);
             if (text) paraRuns.push({ text, bold: token.type === 'strong', italic: token.type === 'em' });
