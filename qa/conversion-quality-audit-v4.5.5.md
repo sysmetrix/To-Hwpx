@@ -34,7 +34,7 @@ HWP를 제외한 구조형 입력 평균은 8.46/10이다. HWP를 포함하면 7
 8. IR 직접 입력의 표 셀·runs·인용구 내부 XML 금지 제어문자 정규화 누락.
 9. HTML에서 들여쓴 `<li>`와 중첩 목록이 사라질 수 있던 문제.
 10. HTML `rowspan`/`colspan`이 HWPX 병합 셀로 전달되지 않던 문제.
-11. 가로 용지 enum을 hwpxlib 주석만으로 `NARROWLY`로 바꾼 판단은 실제 한컴에서 회귀를 만들었다. v4.5.6에서 `WIDELY`를 유지하고 폭/높이 교환으로 방향을 결정하는 실렌더링 기준으로 정정.
+11. 용지 방향을 enum 또는 폭·높이 한쪽만으로 판단해 두 차례 회귀가 발생했다. v4.5.7에서 회전 전 기본 치수 유지 + 세로 `WIDELY`/가로 `NARROWLY` + 회전 후 유효 본문 폭 계산으로 정정하고 8조합 행렬 테스트를 추가했다.
 12. 패키지 게이트가 header/section 외 XML well-formed를 확인하지 않던 공백.
 13. DOCX 그림의 `hc:img → content.hpf → BinData → manifest` 연결을 검사하지 않던 공백.
 

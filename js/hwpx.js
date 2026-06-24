@@ -1088,7 +1088,9 @@ function buildTable(header, rows, contentWidthHwp = 48000, customBfMap = new Map
  */
 function buildSecPr(marginsHwp, paperKey, landscape = false, hasMasterPage = false) {
     const paperBase = PAPER_SIZES[paperKey] || PAPER_SIZES['A4'];
-    const paper = landscape ? { w: paperBase.h, h: paperBase.w } : paperBase;
+    // HWPX는 기본 용지 폭/높이를 유지하고 landscape enum으로 회전한다.
+    // 가로에서 폭/높이까지 교환하면 한컴에서 이중 회전되어 페이지는 세로, 콘텐츠만 가로 폭이 된다.
+    const paper = paperBase;
     const m = Object.assign({}, DEFAULT_MARGINS_HWP, marginsHwp || {});
     return `<hp:secPr id="" textDirection="HORIZONTAL" spaceColumns="1134" tabStop="8000" ` +
         `tabStopVal="4000" tabStopUnit="HWPUNIT" outlineShapeIDRef="0" memoShapeIDRef="0" ` +
@@ -1098,7 +1100,7 @@ function buildSecPr(marginsHwp, paperKey, landscape = false, hasMasterPage = fal
         `<hp:visibility hideFirstHeader="0" hideFirstFooter="0" hideFirstMasterPage="0" ` +
         `border="SHOW_ALL" fill="SHOW_ALL" hideFirstPageNum="0" hideFirstEmptyLine="0" showLineNumber="0"/>` +
         `<hp:lineNumberShape restartType="0" countBy="0" distance="0" startNumber="0"/>` +
-        `<hp:pagePr landscape="WIDELY" width="${paper.w}" height="${paper.h}" gutterType="LEFT_ONLY">` +
+        `<hp:pagePr landscape="${landscape ? 'NARROWLY' : 'WIDELY'}" width="${paper.w}" height="${paper.h}" gutterType="LEFT_ONLY">` +
         `<hp:margin header="${m.header}" footer="${m.footer}" gutter="0" ` +
         `left="${m.left}" right="${m.right}" top="${m.top}" bottom="${m.bottom}"/>` +
         `</hp:pagePr>` +
@@ -1504,7 +1506,9 @@ async function validateHwpx(blob, expectedMarginsMm = null) {
                 pageAttrs[key] = Number(value);
                 return '';
             });
-            const expectedContentWidth = pageAttrs.width - marginAttrs.left - marginAttrs.right;
+            const pageDirection = (pagePrMatch[1].match(/\blandscape="([^"]+)"/) || [])[1] || 'WIDELY';
+            const effectivePageWidth = pageDirection === 'NARROWLY' ? pageAttrs.height : pageAttrs.width;
+            const expectedContentWidth = effectivePageWidth - marginAttrs.left - marginAttrs.right;
             const lineSegMatch = xml.match(/<hp:p\b[^>]*>[\s\S]*?<hp:secPr\b[\s\S]*?<hp:lineseg\b([^>]+?)\/>/);
             if (!lineSegMatch) {
                 issues.push('section0.xml: hp:secPr 문단에 linesegarray가 없음');

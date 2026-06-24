@@ -11,7 +11,9 @@ const swPath = path.join(root, 'sw.js');
 const indexPath = path.join(root, 'index.html');
 
 function todayIso() {
-    return new Date().toISOString().slice(0, 10);
+    const now = new Date();
+    const pad = value => String(value).padStart(2, '0');
+    return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
 }
 
 function parseVersion(version) {
