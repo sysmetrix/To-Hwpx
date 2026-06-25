@@ -1,6 +1,17 @@
 {
-  "current": "4.6.0",
+  "current": "4.6.1",
   "versions": [
+    {
+      "version": "4.6.1",
+      "date": "2026-06-26",
+      "user": [
+        "새 문서의 기본 글꼴을 맑은 고딕에서 휴먼명조로 변경했습니다."
+      ],
+      "dev": [
+        "[v4.6.1] index.html/js/app.js: 기본 문서 모양 요약, 폰트 select 기본 선택, state/reset 기본값을 휴먼명조로 통일",
+        "[v4.6.1] package.json/package-lock.json/sw.js/index.html/changelog.json: v4.6.1 반영"
+      ]
+    },
     {
       "version": "4.6.0",
       "date": "2026-06-26",

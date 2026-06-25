@@ -26,7 +26,7 @@ const state = {
     docType:      'plain',             // 상단 제목 블록: plain(없음)|titleblock(기본)|cover-unit(표지단위)|cover-annual(표지연간)
     customTitle:  '',                  // 사용자가 입력한 제목 (비어 있으면 자동 기준 적용)
     titleSource:  'heading',           // 제목을 비웠을 때: 'filename'(파일 이름) | 'heading'(문서 첫 제목/문장)
-    docFont:      '맑은 고딕',          // 출력 폰트 (기본: 맑은 고딕)
+    docFont:      '휴먼명조',          // 출력 폰트 (기본: 휴먼명조)
     fontSize:     12,                  // 기본 글꼴 크기 (pt)
     paperSize:    'A4',                // 용지 크기: "A4" | "B5" | "Letter"
     orientation:  'portrait',          // 용지 방향: "portrait" | "landscape"
@@ -2839,7 +2839,7 @@ function resetConverterState() {
     state.docType = 'plain';
     state.customTitle = '';
     state.titleSource = 'heading';
-    state.docFont = '맑은 고딕';
+    state.docFont = '휴먼명조';
     state.fontSize = 12;
     state.paperSize = 'A4';
     state.orientation = 'portrait';
@@ -2859,7 +2859,7 @@ function resetConverterState() {
     const titleSrc = document.getElementById('title-source');
     if (titleSrc) titleSrc.value = 'heading';
     updateTitlePlaceholder('heading');
-    if (docFont) docFont.value = '맑은 고딕';
+    if (docFont) docFont.value = '휴먼명조';
     if (fontSize) fontSize.value = '12';
     if (paperSize) paperSize.value = 'A4';
     if (autoDownload) autoDownload.checked = true;
