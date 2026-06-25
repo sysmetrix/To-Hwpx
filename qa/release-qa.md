@@ -19,7 +19,7 @@ Scope: static browser-only conversion flow from file selection to HWPX download.
 
 | 포맷 | 테스트 입력 | 기대 결과 |
 | --- | --- | --- |
-| MD | `qa/fixtures/sample.md` | 제목, 본문, 목록, 표, 코드블록, 구분선 생성. 이미지/복잡 CSS 없음 안내 |
+| MD | `tests/fixtures/sample.md`, `qa/fixtures/md_link_image_test.md` | 제목, 본문, 목록, 표, 코드블록, 클릭 가능한 본문 링크, data URL 그림 생성. 상대경로 이미지는 fallback 안내 |
 | HTML | `qa/fixtures/sample.html` | 스크립트 미실행, 텍스트/표/목록만 추출 |
 | DOCX | 수동 DOCX 샘플 | 본문, 표, 일부 굵게/기울임, 이미지, 첫 머리글/바닥글, 각주 텍스트 보존. 페이지 배치·복잡 개체 손실 안내 |
 | TXT | `qa/fixtures/sample.txt`, `empty.txt` | 순수 텍스트 변환, 빈 문서도 오류 없이 처리 |
@@ -55,6 +55,7 @@ Scope: static browser-only conversion flow from file selection to HWPX download.
 - `section0.xml` 네임스페이스와 XML 파싱 오류 확인
 - `charPrIDRef`, `paraPrIDRef`, `borderFillIDRef` 참조 무결성 확인
 - `hc:img@binaryItemIDRef`가 `content.hpf` item, `BinData`, package manifest와 연결되는지 확인
+- `hp:fieldBegin type="HYPERLINK"`와 `hp:fieldEnd`의 `id/fieldid` 쌍, 안전한 `Path` 프로토콜, URL XML escape 확인
 - 일반 데이터 표가 `pageBreak="TABLE"`, `repeatHeader="1"`, `treatAsChar="0"`, `hp:outMargin@bottom="850"`이고 첫 행 셀이 `header="1"`인지 확인
 - 코드 블록 표의 `hp:outMargin@bottom="850"`, 인용구 `paraPr id=19`의 `hh:next value="850"` 및 코드 글자 모양이 사용자가 선택한 글꼴 id를 참조하는지 확인
 - 구분선 표의 `hp:outMargin@top/bottom="850"`과 구분선 앞뒤 외부 빈 문단 제거 여부 확인
@@ -65,7 +66,8 @@ Scope: static browser-only conversion flow from file selection to HWPX download.
 - HTML/Markdown/JSON 입력은 `textContent` 또는 XML escape 경로로만 출력
 - IR 미리보기는 `textContent` 사용
 - 문서 내용은 서버로 전송하지 않음
-- 외부 요청은 CDN 라이브러리, Google Fonts, rhwp 미리보기 iframe, 공식 폰트 링크로 제한
+- 외부 요청은 CDN 라이브러리, Google Fonts, rhwp 미리보기 iframe, 공식 폰트 링크와 Markdown에 사용자가 명시한 원격 이미지로 제한
+- Markdown 원격 이미지는 `credentials: omit`, `referrerPolicy: no-referrer`, 10초 제한으로 직접 요청하며 원본 문서/HWPX는 전송하지 않음
 - 손상 ZIP과 압축 해제 50MB 초과 DOCX/HWPX는 파싱 실패로 중단
 
 ## 6. Changed Files and Reasons
@@ -100,6 +102,10 @@ Scope: static browser-only conversion flow from file selection to HWPX download.
 - [ ] 짧은 일반 표와 다음 본문 사이에 아래쪽 바깥 여백 약 3mm가 보이며, 긴 표의 쪽 나눔에는 불필요한 중간 간격이 생기지 않음
 - [ ] Markdown 문장 속 인라인 코드가 앞뒤 문장과 같은 문단에 표시되고, 단독 코드 문단은 기존 코드 블록 형태 유지
 - [ ] Markdown의 `&#39;`가 일반 문단·강조·목록·표에서 모두 `'`로 보이며 `section0.xml`에 `&apos;`, `&#39;`, `&amp;#39;`가 남지 않음
+- [ ] Markdown 안전 링크가 한컴에서 열리고, 굵은 링크의 서식과 클릭 기능이 함께 유지됨
+- [ ] `javascript:` 링크는 일반 표시 문자열만 남고 HWPX `Path`/`Command`에 포함되지 않음
+- [ ] Markdown data URL 그림이 한컴에 표시되고 `hc:img → content.hpf → BinData → manifest`가 연결됨
+- [ ] 상대경로·CORS 차단 이미지는 전체 변환을 실패시키지 않고 fallback 문단과 결과 카드 경고로 남음
 - [ ] 기본 미리보기 페이지 비율과 상단 표시가 A3/A4/B5/Letter 및 세로/가로 선택을 반영
 - [ ] 긴 가로 문서가 가로 비율을 유지한 여러 장으로 나뉘며, 종이 내부 스크롤·내용 잘림·이중 스크롤이 없음
 - [ ] 결과 카드에 보존/손실 가능 요소 표시
@@ -312,3 +318,40 @@ Scope: static browser-only conversion flow from file selection to HWPX download.
 - [x] v4.5.20 사용자 changelog의 직접 입력 공개 공지 제거
 - [x] 데스크톱 1280px·모바일 390px 일반/Lab 화면 시각 확인
 - [x] 직접 입력 품질 개선과 5개 형식 동등성 회귀는 유지
+
+## 24. v4.6.4 Markdown 링크·이미지 및 포맷 경계 품질 기준
+
+설계 경계:
+
+- [x] Markdown 문법 해석은 `parseMd()`/인라인 토큰 변환에 한정
+- [x] 비동기 이미지 확보는 `resolveMarkdownAssets()`로 분리하고 `parseMd()` 동기 계약 유지
+- [x] 링크·최종 그림은 공통 IR로 정규화한 뒤 포맷을 모르는 `hwpx.js`에서 출력
+- [x] HTML/DOCX 파서는 변경하지 않고 공용 Renderer의 새 속성이 있을 때만 새 동작 적용
+- [x] IPYNB Markdown 셀은 MD 파서 재사용 영향권으로 명시하고 golden 회귀 포함
+- [x] 목록·표 내부 링크/이미지는 문자열 IR 제약을 사용자 안내와 플레이북에 명시
+
+자동 승인 기준:
+
+- [x] 안전한 본문 링크 2개가 HYPERLINK fieldBegin/fieldEnd 쌍으로 생성
+- [x] 쿼리 문자열 `&`가 `Path`에서 `&amp;`로 XML escape
+- [x] `javascript:` 링크가 HWPX URL 필드에서 제거되고 표시 문자열은 보존
+- [x] data URL PNG가 `hc:img → content.hpf → BinData → manifest`로 연결
+- [x] 상대경로 이미지 실패가 문서 전체 실패가 아닌 fallback 문단/경고로 처리
+- [x] `qa/gate.js`에 링크 필드 무결성 ⑧ 추가
+- [x] `npm run test:golden` 전체 포맷 PASS
+- [x] `node qa/gate.js qa/fixtures/md_hwpx_test.md` ①~⑧ PASS
+- [x] `node qa/gate.js qa/fixtures/md_link_image_test.md` ①~⑧ PASS
+- [x] `node qa/gate.js qa/fixtures/docx_image_test.docx` ①~⑧ PASS
+
+실기기 승인 기준:
+
+- [ ] 캐시를 비우고 `📋 v4.6.4` 확인
+- [ ] 한컴에서 일반 링크와 굵은 링크를 Ctrl+클릭해 올바른 주소가 열림
+- [ ] 한컴에서 data URL 그림이 보이고 비율이 깨지지 않음
+- [ ] 상대경로/접근 차단 이미지의 fallback 문구가 이해 가능함
+- [ ] DOCX 기존 그림이 이전 버전과 동일하게 표시됨
+
+릴리스 중단 조건:
+
+- 링크가 파란색·밑줄로만 보이고 클릭되지 않거나, 그림이 자동 게이트를 통과해도 한컴에서 사라지면 완료 처리하지 않는다.
+- 공용 Renderer 변경 후 HTML/DOCX/JSON IR golden 중 하나라도 실패하면 포맷별 예외를 추가하기 전에 IR 계약 위반 여부를 먼저 확인한다.

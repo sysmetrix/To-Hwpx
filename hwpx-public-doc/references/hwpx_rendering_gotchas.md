@@ -40,6 +40,16 @@ OWPML은 요소마다 소속 네임스페이스가 정해져 있다. **prefix를
   3. `hc:img`·`hc:pt0` 등 hc: 요소를 쓰므로 **section0 루트에 `xmlns:hc` 선언 필요**.
 - **확인처:** hwpxlib `testFile/reader_writer/SimplePicture.hwpx` (실제 한컴 그림 HWPX 샘플) — GitHub API로 받아 `Contents/section0.xml`의 `hp:pic`, `content.hpf`를 그대로 대조.
 
+### 하이퍼링크도 필드 시작/끝이 맞지 않으면 조용히 일반 글자가 된다
+
+- **증상:** 링크 글자는 파란색·밑줄로 보이고 파일도 열리지만 한컴에서 클릭되지 않음.
+- **원인:** 표시 run에 URL 속성만 임의로 붙이거나 `hp:fieldBegin`만 만들고 짝이 되는 `hp:fieldEnd`의 `beginIDRef/fieldid`를 맞추지 않음.
+- **정답 구조:** `hp:run/hp:ctrl/hp:fieldBegin type="HYPERLINK"` → 링크 표시 `hp:run/hp:t` → `hp:run/hp:ctrl/hp:fieldEnd`. begin의 `id/fieldid`와 end의 `beginIDRef/fieldid`가 각각 같아야 한다.
+- `fieldBegin`의 `hp:parameters`에는 `Prop`, `Command`, `Path`, `Category=HWPHYPERLINK_TYPE_URL`, `TargetType`, `DocOpenType`을 기록한다. URL의 `&`는 XML에서 `&amp;`로 escape한다.
+- URL 안전성은 XML 생성 전에 검사한다. 현재 활성 프로토콜은 `http:`, `https:`, `mailto:`이고 나머지는 일반 텍스트로 내린다.
+- **확인처:** hwpxlib `testFile/error/20240919/테스트문서.hwpx`의 HYPERLINK 필드와 `FieldBeginWriter`/`CtrlWriter`.
+- **검증:** `qa/gate.js` ⑧이 begin/end 쌍과 안전한 Path를 검사한다. 자동 구조 검증 후에도 실제 한컴에서 Ctrl+클릭/링크 열기를 확인해야 한다.
+
 ### 글꼴(폰트)도 "조용히 무시"의 한 종류 — v4.4.10에서 해결
 
 - **증상:** 특정 글꼴(Pretendard)만 선택해도 한글에서 **적용이 안 됨**. 다른 글꼴은 정상, 파일도 정상 열림.

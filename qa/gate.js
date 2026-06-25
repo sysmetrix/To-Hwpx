@@ -2,7 +2,7 @@
  * [qa/gate.js]  HWPX 변환 회귀 검증 게이트 (개발자용, 선택)
  * ===================================================================
  * 목적: 입력 파일을 실제 브라우저에서 .hwpx로 변환한 뒤, HWPX 패키지
- *       무결성 ①~⑦을 자동 검사한다. 하나라도 FAIL이면 exit code 1.
+ *       무결성 ①~⑧을 자동 검사한다. 하나라도 FAIL이면 exit code 1.
  *
  *   ① mimetype이 ZIP 첫 항목·무압축(STORED)·내용 application/hwp+zip
  *   ② META-INF 3종(container.xml/manifest.xml/container.rdf) + Preview + Contents 존재
@@ -11,6 +11,7 @@
  *   ⑤ header의 모든 itemCnt == 실제 자식 수 (fontfaces 내부 fontCnt 포함)
  *   ⑥ 모든 표(hp:tbl)의 격자가 span 반영 시 (행,열) 정확히 1회 덮임 (깨진 표 차단)
  *   ⑦ 그림의 hc:img 참조가 content.hpf item·BinData·package manifest까지 연결됨
+ *   ⑧ 하이퍼링크 fieldBegin/fieldEnd의 id·fieldid가 짝을 이루고 위험 URL이 없음
  *
  * [사전 준비] (CDN 전용 저장소라 개발 의존성은 일시 설치)
  *   npm i playwright jszip
@@ -163,7 +164,32 @@ function childCount(xml, container, child) {
     }
     const c7 = badImages.length === 0;
 
-    const gate = [c1, c2, c3, c4, c5, c6, c7];
+    // ⑧ 하이퍼링크 필드 무결성: begin/end 쌍과 안전한 Path 프로토콜 확인
+    const hyperlinkBegins = [...section.matchAll(/<hp:fieldBegin\b[^>]*\btype="HYPERLINK"[^>]*>/g)].map(match => {
+        const tag = match[0];
+        return {
+            id: (/\bid="([^"]+)"/.exec(tag) || [])[1],
+            fieldid: (/\bfieldid="([^"]+)"/.exec(tag) || [])[1],
+        };
+    });
+    const hyperlinkEnds = [...section.matchAll(/<hp:fieldEnd\b[^>]*>/g)].map(match => {
+        const tag = match[0];
+        return {
+            id: (/\bbeginIDRef="([^"]+)"/.exec(tag) || [])[1],
+            fieldid: (/\bfieldid="([^"]+)"/.exec(tag) || [])[1],
+        };
+    });
+    const badHyperlinks = hyperlinkBegins
+        .filter(begin => !begin.id || !begin.fieldid
+            || !hyperlinkEnds.some(end => end.id === begin.id && end.fieldid === begin.fieldid))
+        .map(begin => `${begin.id || '?'}:${begin.fieldid || '?'}`);
+    const hyperlinkPaths = [...section.matchAll(/<hp:stringParam name="Path">([\s\S]*?)<\/hp:stringParam>/g)]
+        .map(match => match[1].replace(/&amp;/g, '&'));
+    const unsafePaths = hyperlinkPaths.filter(value => !/^(https?:|mailto:)/i.test(value));
+    const c8 = hyperlinkBegins.length === hyperlinkEnds.length
+        && badHyperlinks.length === 0 && unsafePaths.length === 0;
+
+    const gate = [c1, c2, c3, c4, c5, c6, c7, c8];
     console.log(`입력: ${path.relative(ROOT, input)}  (${buf.length} bytes)`);
     console.log(`① mimetype STORED 첫항목 : ${c1 ? 'PASS' : 'FAIL'}`);
     console.log(`② META-INF+Preview+Contents: ${c2 ? 'PASS' : 'FAIL'}${missing.length ? ' missing=' + missing : ''}`);
@@ -173,6 +199,7 @@ function childCount(xml, container, child) {
         itemRows.map(([c, r]) => `${c} ${r.declared}=${r.actual}`).join(' | '));
     console.log(`⑥ 표 격자 무결성(${tbls.length}개)    : ${c6 ? 'PASS' : 'FAIL'}${c6 ? '' : ' ' + badTbl}`);
     console.log(`⑦ 그림 참조 무결성(${imageRefs.length}개)  : ${c7 ? 'PASS' : 'FAIL'}${c7 ? '' : ' ' + badImages.join(' | ')}`);
+    console.log(`⑧ 링크 필드 무결성(${hyperlinkBegins.length}개)  : ${c8 ? 'PASS' : 'FAIL'}${c8 ? '' : ` pair=${badHyperlinks.join(',')} unsafe=${unsafePaths.join(',')}`}`);
     if (errs.length) console.log('page errors:', errs);
 
     await browser.close();

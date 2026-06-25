@@ -139,6 +139,18 @@ python -m http.server 8080
 4. `js/app.js`의 `FORMAT_INFO`에 같은 키(`xxx`)로 포맷 설명 객체 추가
 5. 파일 선택창에서 바로 보이게 하려면 `index.html`의 `<input id="file-input" accept="...">`에 확장자 추가
 
+### Parser / Resolver / IR / Renderer 경계
+
+포맷 품질을 같은 기준으로 유지하려면 다음 책임을 섞지 않습니다.
+
+1. **Parser**: 원본 문법·파일 구조를 읽어 포맷 중간 IR을 만듭니다.
+2. **Resolver**: 원격/내부 리소스 확보, MIME·크기 검증, 실패 fallback을 포맷별로 처리합니다.
+3. **공통 IR**: `para.runs[]`와 최종 `image` 블록처럼 Renderer가 이해하는 하나의 계약으로 정규화합니다.
+4. **Renderer**: 입력 확장자를 분기하지 않고 IR만 HWPX로 출력합니다.
+5. **Gate**: 링크 필드 쌍, 그림 4단 참조, XML/IDRef/표 격자를 검사합니다.
+
+공용 `js/hwpx.js`를 바꾸면 전체 golden을 실행합니다. Markdown 변경은 IPYNB Markdown 셀을 함께 검사하고, 이미지 패키징 변경은 기존 DOCX 그림 게이트도 함께 실행합니다. 세부 계약은 `AGENTS.md`와 `hwpx-public-doc/references/ir_schema.md`를 기준으로 합니다.
+
 ### 배포 후 반드시 맞춰야 하는 세 가지
 
 배포할 때마다 아래 세 곳을 함께 올려야 사용자가 보는 버전과 실제 캐시가 어긋나지 않습니다:

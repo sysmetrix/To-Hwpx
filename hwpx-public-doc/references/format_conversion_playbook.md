@@ -23,11 +23,11 @@
 
 ## Markdown
 
-관련 코드: `parseMd()`, `extractMarkdownTokens()`, `splitInlineEmphasis()` in `js/parsers.js`
+관련 코드: `parseMd()`, `extractMarkdownTokens()`, `markdownInlineRuns()`, `processMdInlineBlocks()`, `resolveMarkdownAssets()` in `js/parsers.js`; `buildParaRuns()`, `buildImageRun()` in `js/hwpx.js`
 
 목표:
 - 현재 가장 안정적인 구조형 입력이다.
-- 제목, 문단, 목록, 표, 코드블록, 인용구, 링크 텍스트를 안정적으로 HWPX로 옮긴다.
+- 제목, 문단, 목록, 표, 코드블록, 인용구, 클릭 가능한 본문 링크와 해결 가능한 이미지를 안정적으로 HWPX로 옮긴다.
 
 보존:
 - H1-H6 제목
@@ -44,9 +44,15 @@
 - 작은따옴표(`'`)는 `hp:t` 본문에서 `&apos;`로 바꾸지 않고 문자 그대로 출력한다. XML 문법상 안전하며, 한컴에서 `&apos;`가 표시되지 않는 회귀를 막기 위한 처리다.
 - Markdown 입력의 HTML 엔티티 작은따옴표(`&#39;`, `&apos;`)는 일반 문단뿐 아니라 강조·목록·표에서도 문자 `'`로 복원한다. `marked` 목록 토큰의 `item.text` fallback과 하위 `text` 토큰도 반드시 `decodeMdEntities()`를 거쳐야 하며, 한 경로라도 빠지면 목록에서만 엔티티가 그대로 노출된다.
 - 일반 문장 안의 인라인 코드(`codespan`)는 문단을 끊지 않고 `code:true` 런으로 출력한다. 문단 전체가 단일 인라인 코드인 경우에만 기존 코드 블록(표) 표현을 유지한다.
-- 링크 URL 자체보다 링크 텍스트 보존이 우선이다.
+- `marked`의 `link` 토큰은 표시 문자열과 `href/title`을 분리해 공통 run IR로 보존한다. 링크와 `strong/em/del`이 중첩되어도 재귀 run 변환으로 두 속성을 함께 유지한다.
+- 클릭 가능한 URL은 `http:`, `https:`, `mailto:`만 허용한다. 위험하거나 잘못된 URL은 표시 문자열만 남긴다.
+- HWPX 링크는 `hp:fieldBegin type="HYPERLINK"` → 표시 문자열 run → 같은 `id/fieldid`의 `hp:fieldEnd` 순서다. `Command`와 `Path`를 모두 기록하고 XML escape를 적용한다.
 - 인용구는 `quote` IR → HWPX `paraPrIDRef="19"`로 출력한다. 예전처럼 `▶` 텍스트를 붙이면 안 된다.
-- 이미지와 복잡한 인라인 HTML은 지원 범위 밖으로 안내한다.
+- Markdown 이미지 토큰은 먼저 `image-source`로 만들고 `fileToIR()` 뒤 `resolveMarkdownAssets()`에서 최종 `image` IR로 바꾼다. `parseMd()`는 IPYNB 재사용을 위해 동기로 유지한다.
+- data URL과 CORS가 허용된 HTTP(S) PNG/JPEG/GIF/BMP를 지원한다. 이미지별 8MB, 문서 합계 20MB, 요청 10초 제한을 적용한다.
+- 상대경로·CORS 차단·지원하지 않는 형식은 전체 변환을 실패시키지 않고 alt/주소가 포함된 fallback 문단과 `assetWarnings`로 남긴다.
+- 원격 이미지는 이미지 원본 서버에 브라우저가 직접 요청한다. 원본 MD/HWPX는 전송하지 않지만 개인정보 안내에 이 예외를 명시한다.
+- 목록 항목과 표 셀은 아직 문자열 IR이므로 내부 링크·이미지는 표시 텍스트 중심이다. 해당 범위를 확장할 때는 공용 item/cell run 계약을 먼저 설계한다.
 
 검증:
 - `tests/fixtures/sample.md`
@@ -54,6 +60,10 @@
 - 작은따옴표 회귀는 일반 문장·인라인 강조의 원문 `'`와 입력 엔티티 `&#39;`가 문단·강조·목록·표 모두에서 문자 `'`로 남는지 확인한다. `section0.xml`에는 `&apos;`, `&#39;`, `&amp;#39;`가 없어야 한다.
 - 인라인 코드는 앞뒤 텍스트와 같은 `hp:p` 안에서 코드용 `charPrIDRef="6"` 런으로 남고, 단독 코드 문단은 코드 블록 표로 유지되는지 확인한다.
 - 인용구 회귀는 `section0.xml`에 `paraPrIDRef="19"`가 있고 `▶ Quoted Alpha line`이 없어야 한다.
+- 링크 회귀는 `fieldBegin/fieldEnd`의 `id/fieldid` 쌍, `Path` URL의 `&amp;` escape, 위험 URL 부재를 검사한다.
+- 이미지 회귀는 `hc:img → content.hpf item → BinData → package manifest` 4단 연결과 MIME/고유 binName을 검사한다.
+- `tests/fixtures/sample.md`, `qa/fixtures/md_link_image_test.md`, `npm run test:golden`, `node qa/gate.js qa/fixtures/md_link_image_test.md`를 함께 실행한다.
+- Markdown 파서 변경은 IPYNB Markdown 셀에 전파되므로 `tests/fixtures/sample.ipynb` 회귀를 함께 확인한다.
 
 ## HTML
 
