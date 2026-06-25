@@ -681,7 +681,7 @@ const FORMAT_INFO = {
             'PNG/JPEG/GIF/BMP data URL과 CORS가 허용된 원격 이미지를 HWPX 그림으로 삽입',
             '일반적으로 Markdown은 시각 디자인보다 내용 구조 보존에 강함',
         ],
-        limits: ['상대경로 이미지는 현재 대체 문구로 보존', '목록·표 안 링크는 표시 텍스트 중심', '복잡한 인라인 HTML과 사용자 정의 스타일은 제외 가능', '페이지 단위 레이아웃은 새 HWPX 기본 흐름으로 재구성'],
+        limits: ['상대경로·CORS 차단 이미지는 대체 문구와 원본 링크로 보존', '표 안 링크는 표시 텍스트 중심', '복잡한 인라인 HTML과 사용자 정의 스타일은 제외 가능', '페이지 단위 레이아웃은 새 HWPX 기본 흐름으로 재구성'],
     },
     html: {
         icon: '🌐', name: 'HTML 문서',
@@ -2205,11 +2205,11 @@ function getConversionSummaryForExt(ext) {
     const summaries = {
         md: {
             preserved: '제목, 문단, 목록, 표, 코드블록, 클릭 가능한 본문 링크, 삽입 가능한 Markdown 이미지',
-            lossy: '상대경로·접근 차단 이미지, 목록·표 안 링크 기능, 복잡한 HTML, 사용자 정의 스타일, 페이지 배치',
+            lossy: '상대경로·접근 차단 이미지의 실제 그림, 표 안 링크 기능, 복잡한 HTML, 사용자 정의 스타일, 페이지 배치',
         },
         markdown: {
             preserved: '제목, 문단, 목록, 표, 코드블록, 클릭 가능한 본문 링크, 삽입 가능한 Markdown 이미지',
-            lossy: '상대경로·접근 차단 이미지, 목록·표 안 링크 기능, 복잡한 HTML, 사용자 정의 스타일, 페이지 배치',
+            lossy: '상대경로·접근 차단 이미지의 실제 그림, 표 안 링크 기능, 복잡한 HTML, 사용자 정의 스타일, 페이지 배치',
         },
         html: {
             preserved: 'h1-h6, p, 중첩 ul/ol, 병합 표, strong/em/u/s, 일부 글자색과 태그 없는 일반 텍스트',
@@ -3147,7 +3147,8 @@ function irListToHtml(block) {
         if (it.task) marker = it.checked ? '☑' : '☐';
         else if (ordered) marker = `${it.marker != null ? it.marker : (++auto)}.`;
         else marker = '•';
-        h += `<div class="ir-li" style="padding-left:${level * 1.4 + 1}em">${marker} ${cell(it)}</div>`;
+        const content = Array.isArray(it.runs) && it.runs.length ? irRunsToHtml(it.runs) : cell(it);
+        h += `<div class="ir-li" style="padding-left:${level * 1.4 + 1}em">${marker} ${content}</div>`;
         for (const cb of (it.codeBlocks || [])) h += `<pre class="ir-code"><code>${escHtml(cb.text || '')}</code></pre>`;
     }
     return h + '</div>';

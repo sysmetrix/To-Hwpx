@@ -34,6 +34,10 @@ const CASES = [
       '링크 텍스트',
       '굵은 링크',
       '위험 링크',
+      '관련 페이지:',
+      '청년공간 예약 안내',
+      '참고 자료:',
+      '운영 매뉴얼 보기',
       '[이미지: 상대경로 이미지] — 불러오지 못했습니다',
       "작은따옴표 회귀: don't, 사용자의 '문서', ",
       "it's bold",
@@ -296,7 +300,7 @@ async function validateHwpxPackage(page, zip, testCase) {
       return [tag, (/\bid="([^"]+)"/.exec(tag) || [])[1], (/\bfieldid="([^"]+)"/.exec(tag) || [])[1]];
     });
     const hyperlinkEnds = [...sectionXml.matchAll(/<hp:fieldEnd\b[^>]*\bbeginIDRef="([^"]+)"[^>]*\bfieldid="([^"]+)"[^>]*\/>/g)];
-    assert(hyperlinkBegins.length === 2, `${testCase.name}: 안전한 Markdown 링크 2개가 HYPERLINK 필드로 생성되지 않음`);
+    assert(hyperlinkBegins.length === 4, `${testCase.name}: 본문·목록 Markdown 링크 4개가 HYPERLINK 필드로 생성되지 않음`);
     assert(hyperlinkEnds.length === hyperlinkBegins.length, `${testCase.name}: HYPERLINK fieldBegin/fieldEnd 개수 불일치`);
     for (const begin of hyperlinkBegins) {
       assert(hyperlinkEnds.some(end => end[1] === begin[1] && end[2] === begin[2]),
@@ -305,6 +309,9 @@ async function validateHwpxPackage(page, zip, testCase) {
     assert(sectionXml.includes('<hp:stringParam name="Path">https://example.com/path?a=1&amp;b=2</hp:stringParam>'),
       `${testCase.name}: 링크 URL 또는 XML escaping 누락`);
     assert(!sectionXml.includes('javascript:alert'), `${testCase.name}: 위험한 javascript 링크가 HWPX에 남음`);
+    assert(sectionXml.includes('<hp:stringParam name="Path">https://example.com/youth-space</hp:stringParam>')
+      && sectionXml.includes('<hp:stringParam name="Path">https://example.com/manual</hp:stringParam>'),
+      `${testCase.name}: 목록 항목 링크 URL이 HWPX 필드로 보존되지 않음`);
     const linkRun = [...sectionXml.matchAll(/<hp:run\b[^>]*\bcharPrIDRef="(\d+)"[^>]*>[\s\S]*?<\/hp:run>/g)]
       .find(match => match[0].includes('<hp:t>링크 텍스트</hp:t>'));
     const linkCharPr = linkRun
@@ -468,6 +475,18 @@ async function runCase(page, testCase) {
   const zip = await JSZip.loadAsync(buf);
   await validateHwpxPackage(page, zip, testCase);
   if (testCase.name === 'markdown') {
+    const nestedImageSource = await page.evaluate(() => normalizeMarkdownImageSource(
+      '[https://example.com/image.jpg](https://example.com/image.jpg)'
+    ));
+    assert(nestedImageSource === 'https://example.com/image.jpg',
+      `${testCase.name}: 이미지 URL 자리에 중첩된 Markdown 링크 문법을 실제 URL로 정규화하지 못함`);
+    const failedImageFallback = await page.evaluate(() => markdownImageFallback({
+      alt: '청년공간 이미지 예시',
+      src: '[https://example.com/image.jpg](https://example.com/image.jpg)',
+    }, '이미지 서버의 브라우저 접근 정책(CORS)으로 가져오지 못했습니다.'));
+    assert(failedImageFallback.runs?.some(run => run.href === 'https://example.com/image.jpg'),
+      `${testCase.name}: 원격 이미지 실패 fallback에 클릭 가능한 원본 링크가 남지 않음`);
+
     const resultText = await page.locator('#result-area').textContent();
     assert(resultText.includes('이미지 제외: 상대경로 이미지는 이미지 파일을 함께 선택하는 방식이 아직 필요합니다.'),
       `${testCase.name}: 상대경로 이미지 실패가 결과 카드 경고에 표시되지 않음`);

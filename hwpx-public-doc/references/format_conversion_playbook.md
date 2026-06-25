@@ -52,7 +52,10 @@
 - data URL과 CORS가 허용된 HTTP(S) PNG/JPEG/GIF/BMP를 지원한다. 이미지별 8MB, 문서 합계 20MB, 요청 10초 제한을 적용한다.
 - 상대경로·CORS 차단·지원하지 않는 형식은 전체 변환을 실패시키지 않고 alt/주소가 포함된 fallback 문단과 `assetWarnings`로 남긴다.
 - 원격 이미지는 이미지 원본 서버에 브라우저가 직접 요청한다. 원본 MD/HWPX는 전송하지 않지만 개인정보 안내에 이 예외를 명시한다.
-- 목록 항목과 표 셀은 아직 문자열 IR이므로 내부 링크·이미지는 표시 텍스트 중심이다. 해당 범위를 확장할 때는 공용 item/cell run 계약을 먼저 설계한다.
+- 목록 항목은 `text`와 `runs`를 함께 보존하며 marker 뒤에 `buildParaRuns()`로 출력한다. `flattenMdList()`에서 `plainMdText()`만 남기면 목록 링크 URL이 다시 사라진다.
+- 표 셀은 아직 문자열 IR이므로 내부 링크·이미지는 표시 텍스트 중심이다. 해당 범위를 확장할 때는 공용 cell run 계약을 먼저 설계한다.
+- 이미지 URL 자리에 `[URL](URL)`이 중첩된 입력은 실제 URL을 자동 추출한다. 올바른 원문은 `![대체 텍스트](https://.../image.jpg)`이다.
+- CORS로 바이너리를 읽을 수 없는 원격 이미지는 정적 브라우저 앱에서 임베딩할 수 없다. 이 경우 실패 이유와 클릭 가능한 `원본 이미지 열기` 링크를 남긴다.
 
 검증:
 - `tests/fixtures/sample.md`
@@ -61,6 +64,8 @@
 - 인라인 코드는 앞뒤 텍스트와 같은 `hp:p` 안에서 코드용 `charPrIDRef="6"` 런으로 남고, 단독 코드 문단은 코드 블록 표로 유지되는지 확인한다.
 - 인용구 회귀는 `section0.xml`에 `paraPrIDRef="19"`가 있고 `▶ Quoted Alpha line`이 없어야 한다.
 - 링크 회귀는 `fieldBegin/fieldEnd`의 `id/fieldid` 쌍, `Path` URL의 `&amp;` escape, 위험 URL 부재를 검사한다.
+- 목록 링크 회귀는 일반 문단 링크와 별도로 `item.runs`가 남고 HWPX 링크 필드 개수가 증가하는지 검사한다.
+- 중첩 이미지 링크 문법은 `normalizeMarkdownImageSource()`가 실제 URL을 반환하고, CORS 실패 fallback의 run에 해당 URL `href`가 남는지 검사한다.
 - 이미지 회귀는 `hc:img → content.hpf item → BinData → package manifest` 4단 연결과 MIME/고유 binName을 검사한다.
 - `tests/fixtures/sample.md`, `qa/fixtures/md_link_image_test.md`, `npm run test:golden`, `node qa/gate.js qa/fixtures/md_link_image_test.md`를 함께 실행한다.
 - Markdown 파서 변경은 IPYNB Markdown 셀에 전파되므로 `tests/fixtures/sample.ipynb` 회귀를 함께 확인한다.

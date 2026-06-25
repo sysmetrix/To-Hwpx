@@ -234,12 +234,31 @@ function flattenMdList(listToken, level, out) {
             .filter(b => b.type === 'para' || b.type === 'heading')
             .map(b => b.text ? sanitize(decodeMdEntities(b.text)) : plainMdText(b.runs || ''))
             .filter(Boolean);
+        const runs = [];
+        for (const token of (item.tokens || [])) {
+            if (token.type === 'list' || token.type === 'code') continue;
+            const inlineTokens = token.tokens || [token];
+            const tokenRuns = markdownInlineRuns(inlineTokens);
+            if (!tokenRuns.length) continue;
+            if (runs.length) runs.push({ text: ' ' });
+            runs.push(...tokenRuns);
+        }
+        if (!runs.length) {
+            for (const block of ownBlocks.filter(b => b.type === 'para')) {
+                const blockRuns = Array.isArray(block.runs) && block.runs.length
+                    ? block.runs.map(run => ({ ...run }))
+                    : (block.text ? [{ text: block.text }] : []);
+                if (!blockRuns.length) continue;
+                if (runs.length) runs.push({ text: ' ' });
+                runs.push(...blockRuns);
+            }
+        }
         const codeBlocks = ownBlocks.filter(b => b.type === 'code');
         const fallbackText = typeof item.text === 'string' ? decodeMdEntities(item.text) : '';
         const text = sanitize(textParts.join(' ').trim() || fallbackText);
         if (text || codeBlocks.length) {
             out.push({
-                text, codeBlocks, level, ordered,
+                text, runs, codeBlocks, level, ordered,
                 marker: ordered ? (n++) : null,
                 task: item.task === true,
                 checked: !!item.checked,
@@ -1483,7 +1502,14 @@ function sanitizeIrBlock(block) {
     if (Array.isArray(clean.runs)) clean.runs = clean.runs.map(run => ({ ...run, text: sanitize(run?.text ?? '') }));
     if (Array.isArray(clean.items)) {
         clean.items = clean.items.map(item => item && typeof item === 'object'
-            ? { ...item, text: sanitize(item.text ?? ''), codeBlocks: (item.codeBlocks || []).map(sanitizeIrBlock) }
+            ? {
+                ...item,
+                text: sanitize(item.text ?? ''),
+                runs: Array.isArray(item.runs)
+                    ? item.runs.map(run => ({ ...run, text: sanitize(run?.text ?? '') }))
+                    : undefined,
+                codeBlocks: (item.codeBlocks || []).map(sanitizeIrBlock),
+            }
             : sanitize(item ?? ''));
     }
     if (Array.isArray(clean.header)) clean.header = clean.header.map(sanitizeIrCell);
@@ -1587,13 +1613,32 @@ function imageSizeHwp(meta) {
 
 function markdownImageFallback(block, reason) {
     const alt = String(block.alt || '').trim();
-    const src = String(block.src || '');
+    const src = normalizeMarkdownImageSource(block.src);
     const sourceLabel = src.startsWith('data:') ? '삽입 데이터' : src.slice(0, 240);
     const label = alt ? `[이미지: ${alt}]` : '[이미지]';
+    const message = `${label} — 불러오지 못했습니다${reason ? ` (${reason})` : ''}`;
+    if (/^https?:/i.test(src)) {
+        return {
+            type: 'para',
+            runs: [
+                { text: `${message} · ` },
+                { text: '원본 이미지 열기', href: src, title: alt || '원본 이미지' },
+            ],
+        };
+    }
     return {
         type: 'para',
-        text: `${label} — 불러오지 못했습니다${reason ? ` (${reason})` : ''}${sourceLabel ? ` · 원본: ${sourceLabel}` : ''}`,
+        text: `${message}${sourceLabel ? ` · 원본: ${sourceLabel}` : ''}`,
     };
+}
+
+function normalizeMarkdownImageSource(raw) {
+    let src = String(raw || '').trim();
+    const nestedLink = /^\[[^\]]*\]\(\s*(https?:\/\/[\s\S]+)\s*\)$/.exec(src);
+    if (nestedLink) src = nestedLink[1].trim();
+    const angleUrl = /^<(https?:\/\/[\s\S]+)>$/.exec(src);
+    if (angleUrl) src = angleUrl[1].trim();
+    return src;
 }
 
 async function fetchMarkdownImage(src) {
@@ -1637,6 +1682,9 @@ async function fetchMarkdownImage(src) {
         return { bytes, mimeType: response.headers.get('content-type') || '' };
     } catch (error) {
         if (error?.name === 'AbortError') throw new Error('이미지 요청 시간이 초과되었습니다.');
+        if (error instanceof TypeError && /failed to fetch/i.test(error.message || '')) {
+            throw new Error('이미지 서버의 브라우저 접근 정책(CORS)으로 가져오지 못했습니다.');
+        }
         throw error;
     } finally {
         clearTimeout(timer);
@@ -1660,7 +1708,7 @@ async function resolveMarkdownAssets(ir, sourceFormat = 'md') {
                 continue;
             }
             try {
-                const src = String(block.src || '').trim();
+                const src = normalizeMarkdownImageSource(block.src);
                 let loaded;
                 if (/^data:/i.test(src)) loaded = decodeDataImageUrl(src);
                 else if (/^https?:/i.test(src)) loaded = await fetchMarkdownImage(src);
