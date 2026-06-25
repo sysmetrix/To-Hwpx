@@ -117,7 +117,7 @@
             <span>｢BWYF｣ AX Challenger 2026</span>
             <!-- [주의] id="open-changelog"는 app.js에서 업데이트 내역 모달을 여는 연결값 -->
             <button class="util-changelog-btn" id="open-changelog" aria-label="업데이트 내역 보기">
-                📋 v4.6.3 업데이트 내역
+                📋 v4.6.4 업데이트 내역
             </button>
         </div>
     </div>
@@ -820,7 +820,7 @@
                             <td>★★★</td>
                             <td><span class="card-badge badge-available">지원됨</span></td>
                             <td>marked.js 토큰 분석 → IR</td>
-                            <td>이미지 미지원</td>
+                            <td>상대경로·접근 차단 이미지 제외 가능</td>
                         </tr>
                         <tr>
                             <td><strong>HTML</strong></td>
@@ -1164,6 +1164,7 @@
                 <li>업로드한 파일은 변환 과정에서 사용자 기기(브라우저) 안에서만 읽고 처리됩니다.</li>
                 <li>원본 파일도, 변환된 HWPX도 외부 서버로 전송·저장되지 않습니다.</li>
                 <li>변환 결과는 사용자가 직접 내려받으며, 페이지를 닫으면 메모리에서 사라집니다.</li>
+                <li>Markdown에 원격 이미지 주소가 있으면 해당 이미지 서버에 브라우저가 직접 요청합니다. 원본 문서나 변환 파일은 전송하지 않습니다.</li>
                 <li>단, '정밀 미리보기'를 사용할 때만 외부 뷰어(rhwp)를 불러오며, 이때도 파일은 브라우저 안에 머뭅니다.</li>
             </ul>
         </div>

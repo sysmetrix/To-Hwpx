@@ -5,7 +5,7 @@
 
 ## 이 프로젝트가 뭔가
 
-빌드 과정 없는 **정적 브라우저 앱**. 사용자가 올린 파일(MD/DOCX/HTML/TXT/CSV/XLSX/JSON/IPYNB/HWP)을 **IR**로 정규화 → **HWPX(한컴 OWPML)** 로 생성·검증·다운로드. 서버 전송 없음. `.hwpx` 업로드 처리는 예외/복구용으로 남겨 두되, 기본 입력 포맷 안내에는 넣지 않는다. **HWPX는 출력 형식**이다.
+빌드 과정 없는 **정적 브라우저 앱**. 사용자가 올린 파일(MD/DOCX/HTML/TXT/CSV/XLSX/JSON/IPYNB/HWP)을 **IR**로 정규화 → **HWPX(한컴 OWPML)** 로 생성·검증·다운로드. 원본 파일/HWPX의 서버 업로드는 없다. 단, Markdown 원격 이미지는 브라우저가 이미지 원본 서버에 직접 요청할 수 있다. `.hwpx` 업로드 처리는 예외/복구용으로 남겨 두되, 기본 입력 포맷 안내에는 넣지 않는다. **HWPX는 출력 형식**이다.
 
 핵심 파일:
 - [js/parsers.js](js/parsers.js) — 입력 → IR(`{title, doc_type, blocks:[...]}`)
@@ -27,16 +27,27 @@
 1. **네임스페이스**: 테두리·borderFill·charPr·paraPr·fontfaces = `hh:`(head). **채우기**(fillBrush/winBrush/gradation/imgBrush)·그림(`hc:img`)·공통 좌표(`hc:pt0`) = `hc:`(core). `hc:`를 쓰면 그 **루트(header·section0)에 `xmlns:hc="http://www.hancom.co.kr/hwpml/2011/core"` 선언 필수.** (`alpha="0"`이 불투명=정상값.)
 2. **글꼴 이름 = 한컴이 매칭하는 패밀리명**: 폰트 select의 `value`가 HWPX 글꼴면 이름으로 기록된다. 가변폰트의 무게까지 붙은 풀네임(예: `Pretendard GOV Variable Medium`)은 매칭 실패한다. Pretendard GOV는 UI에 `Pretendard GOV Variable` 하나만 노출하되, 변환 직전 `queryLocalFonts()`의 정확한 family/fullName/PostScript 이름으로 실제 등록명을 판별한다. Variable 설치 PC는 주 이름 `Pretendard GOV Variable`, GOV 설치 PC는 주 이름 `Pretendard GOV`를 기록하고 반대 이름을 `<hh:substFont .../>`로 `hh:typeInfo`보다 먼저 둔다. 감지 불가 시 배포 TTF 내부 이름인 Variable을 기본값으로 쓴다. 대체 글꼴만으로 렌더링하면 글꼴은 적용돼도 한컴 글꼴란이 빈칸이 될 수 있다. (v4.4.10, v4.5.10~11에서 확인.)
 3. **그림**: `hc:img@binaryItemIDRef`(문자열 id)는 header가 아니라 **`content.hpf`의 `opf:item id`** 와 매칭. `hp:pic` 구조는 hwpxlib `testFile/reader_writer/SimplePicture.hwpx`를 정답으로 대조.
+4. **하이퍼링크**: `hp:fieldBegin type="HYPERLINK"` → 표시 문자열 run → 같은 `id/fieldid`의 `hp:fieldEnd` 순서를 유지한다. URL은 `hp:parameters`의 `Command`와 `Path`에 기록하며 `http:`, `https:`, `mailto:`만 활성화한다. 링크 XML은 hwpxlib와 실제 한컴 생성 HWPX를 대조한다.
 
 **진단 순서(안 보일 때):** ①네임스페이스/요소명·이름 매칭 → ②`xmlns` 선언 → ③IDRef 무결성 → ④속성값(alpha 등은 **마지막**). 추측 금지, **hwpxlib와 대조**(gotchas 2절).
 
 ## 검증 (코드로 잡히는 것 vs 사람만 잡는 것)
 
-- 자동: `node qa/gate.js qa/fixtures/md_hwpx_test.md` → 게이트 ①~⑥(mimetype·필수파일·well‑formed·IDRef⊆정의·itemCnt·표 격자 무결성). `npm run test:golden`도 있음.
+- 자동: `node qa/gate.js qa/fixtures/md_hwpx_test.md` → 게이트 ①~⑧(mimetype·필수파일·well‑formed·IDRef⊆정의·itemCnt·표 격자·그림 참조·링크 필드 무결성). `npm run test:golden`도 있음.
 - **자동은 well‑formed/구조만 본다. 렌더링은 못 본다.** 비주얼(색·음영·그림·표지)은 **반드시 한컴에서 눈으로** 확인 → 사용자에게 "캐시 비우고 `📋 vX.Y.Z` 버전 확인 후 보이나요?"로 요청.
 - 회귀 입력·체크리스트: [qa/fixtures/README.md](qa/fixtures/README.md), [qa/release-qa.md](qa/release-qa.md).
 - 포맷 파서·HWPX 생성·포맷 안내 문구를 새로 작업할 때는 먼저 [format_conversion_playbook.md](hwpx-public-doc/references/format_conversion_playbook.md)의 해당 포맷 섹션을 읽고, 보존/손실 안내와 테스트를 함께 갱신한다.
 - 일반 데이터 표와 코드 블록 표는 다음 본문과 붙지 않도록 `hp:outMargin@bottom="${mmToHwp(3)}"`(실제 XML 값 850, 약 3mm)를 유지한다. 인용구는 표가 아니라 `paraPr id=19`의 `hh:next=850`으로 같은 아래 간격을 적용한다. 구분선 표는 `hp:outMargin@top/bottom="${mmToHwp(3)}"`를 쓰고 앞뒤 외부 빈 문단을 만들지 않는다. 표지처럼 다른 레이아웃 개체에는 이 값을 일괄 적용하지 않는다.
+
+### 포맷 분리와 공통 IR 계약
+
+- 포맷별 Parser는 원본 문법/파일 구조 해석만 담당한다. 외부·상대 리소스 확보와 포맷별 실패 복구는 해당 포맷 Resolver가 담당한다.
+- 공통 IR 정규화 이후 `js/hwpx.js`는 입력 확장자를 알지 못해야 한다. 같은 IR은 MD·HTML·DOCX 등 출처와 무관하게 같은 HWPX 구조를 만든다.
+- 공통 `para.runs[]`는 `{text,bold,italic,code,underline,strike,color,href,title}`를 사용한다. `href`가 없으면 기존 run XML과 동일해야 하며, URL 안전성 검사는 출처와 무관하게 공통 적용한다.
+- 최종 `image` 블록은 `{type:'image',binName,mimeType,data,widthHwp,heightHwp,alt,title,sourceFormat}`이며 `data` 확보와 MIME/크기 검증을 끝낸 뒤 Renderer로 넘긴다. 미해결 `image-source`는 Renderer에 넘기지 않는다.
+- Markdown은 `parseMd()`를 동기로 유지하고, 비동기 data URL/원격 이미지 처리는 `fileToIR()` 뒤 `resolveMarkdownAssets()`에서만 한다. IPYNB Markdown 셀도 `parseMd()`를 재사용하므로 함께 회귀 검사한다.
+- 공용 Renderer를 변경하면 전체 golden을 실행한다. Markdown Parser/Resolver만 변경해도 MD와 IPYNB를 함께 검사하고, 그림 패키징을 변경하면 DOCX 그림 게이트까지 반드시 실행한다.
+- 목록·표는 현재 문자열 중심 IR이다. 목록/표 내부 링크나 이미지를 지원하려면 공용 셀/항목 run 계약을 먼저 설계하고 별도 릴리스로 진행한다.
 
 ### 기본 미리보기 불변식
 
@@ -68,7 +79,7 @@
 - 지원 형식은 MD, HTML 소스, TXT, CSV/탭 구분 표, JSON이다. 바이너리 형식(DOCX/XLSX/HWP)은 파일 업로드만 사용한다.
 - 붙여넣은 문자열은 가상 `File`로 감싸 기존 `fileToIR()` 변환 파이프라인을 그대로 재사용한다.
 - HTML은 태그 없는 일반 텍스트도 문단으로 보존하고, CSV는 쉼표 CSV와 Excel·Google Sheets의 탭 구분 표(TSV)를 자동 판별한다.
-- `tests/golden.js`에서 MD/HTML/TXT/CSV/JSON 파일 입력과 직접 입력의 HWPX 본문·표 개수 동등성을 검사한다.
+- `tests/golden.js`에서 MD/HTML/TXT/CSV/JSON 파일 입력과 직접 입력의 HWPX 본문·표·링크·그림 개수 동등성을 검사한다.
 - **주의**: 공개 정적 사이트라 실험실은 보안이 아니라 가림이다. 진짜 비공개가 필요하면 main에 올리지 않는다.
 - **정합성**: 실험실 기능은 `changelog.json`의 사용자 항목에 공지하지 않는다. 정식 공개는 사용자의 명시적 결정이 있을 때만 user 항목·UI·안내 문구를 함께 변경한다.
 

@@ -31,4 +31,12 @@ console.log(message);
 > Quoted Alpha line
 > with **bold quote** text
 
-[링크 텍스트](https://example.com)을 본문 텍스트로 보존해야 합니다.
+[링크 텍스트](https://example.com/path?a=1&b=2)을 클릭 가능한 링크로 보존해야 합니다.
+
+[**굵은 링크**](https://example.com/bold)도 링크와 굵게 서식을 함께 보존해야 합니다.
+
+[위험 링크](javascript:alert(1))는 클릭 기능 없이 표시 텍스트만 보존해야 합니다.
+
+![삽입 이미지](data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==)
+
+![상대경로 이미지](images/missing.png)

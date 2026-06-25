@@ -124,7 +124,65 @@ function splitInlineEmphasis(text) {
     return runs.length ? runs : [{ text: src }];
 }
 
-function splitInlineCodeBlocks(tokens, blocks) {
+/**
+ * marked 인라인 토큰 → 공통 IR run.
+ * 링크는 표시 문자열과 href/title을 분리해 보존하고, strong/em/del의 중첩 서식을 유지한다.
+ * image 토큰은 문단 블록 분할이 필요하므로 processMdInlineBlocks()에서 처리한다.
+ */
+function markdownInlineRuns(tokens, inherited = {}) {
+    const runs = [];
+    const source = Array.isArray(tokens) ? tokens : [];
+    for (const token of source) {
+        if (!token || token.type === 'image') continue;
+        if (token.type === 'br') {
+            runs.push({ ...inherited, text: '\n' });
+            continue;
+        }
+        if (token.type === 'codespan') {
+            const text = sanitize(decodeMdEntities(token.text || token.raw || ''));
+            if (text) runs.push({ ...inherited, text, code: true });
+            continue;
+        }
+        if (token.type === 'strong' || token.type === 'em' || token.type === 'del') {
+            const next = {
+                ...inherited,
+                bold: inherited.bold || token.type === 'strong',
+                italic: inherited.italic || token.type === 'em',
+                strike: inherited.strike || token.type === 'del',
+            };
+            runs.push(...markdownInlineRuns(token.tokens || [{ type: 'text', text: token.text || '' }], next));
+            continue;
+        }
+        if (token.type === 'link') {
+            const href = sanitize(decodeMdEntities(token.href || ''));
+            const title = sanitize(decodeMdEntities(token.title || ''));
+            const next = { ...inherited, href, title };
+            runs.push(...markdownInlineRuns(token.tokens || [{ type: 'text', text: token.text || href }], next));
+            continue;
+        }
+        if (token.tokens) {
+            runs.push(...markdownInlineRuns(token.tokens, inherited));
+            continue;
+        }
+        const text = plainMdText(token.text || token.raw);
+        if (text) {
+            for (const run of splitInlineEmphasis(text)) runs.push({ ...inherited, ...run });
+        }
+    }
+    return runs;
+}
+
+function markdownImageSource(token) {
+    return {
+        type: 'image-source',
+        src: sanitize(decodeMdEntities(token?.href || '')),
+        alt: sanitize(decodeMdEntities(token?.text || '')),
+        title: sanitize(decodeMdEntities(token?.title || '')),
+        sourceFormat: 'md',
+    };
+}
+
+function processMdInlineBlocks(tokens, blocks) {
     const source = Array.isArray(tokens) ? tokens : [];
     const meaningful = source.filter(token => {
         if (!token) return false;
@@ -148,23 +206,12 @@ function splitInlineCodeBlocks(tokens, blocks) {
         paraRuns = [];
     }
     for (const token of source) {
-        if (token.type === 'codespan') {
-            const text = sanitize(decodeMdEntities(token.text || ''));
-            if (text) paraRuns.push({ text, code: true });
-        } else if (token.type === 'strong' || token.type === 'em') {
-            const text = plainMdText(token.tokens || token.text);
-            if (text) paraRuns.push({ text, bold: token.type === 'strong', italic: token.type === 'em' });
-        } else if (token.type === 'del') {
-            // ~~취소선~~
-            const text = plainMdText(token.tokens || token.text);
-            if (text) paraRuns.push({ text, strike: true });
-        } else if (token.type === 'br') {
-            paraRuns.push({ text: '\n' });
-        } else {
-            // marked가 강조로 토큰화하지 못한 평문에서 **굵게**/*기울임*/~~취소~~ 복구
-            const text = plainMdText(token.tokens || token.text || token.raw);
-            if (text) paraRuns.push(...splitInlineEmphasis(text));
+        if (token.type === 'image') {
+            flushPara();
+            blocks.push(markdownImageSource(token));
+            continue;
         }
+        paraRuns.push(...markdownInlineRuns([token]));
     }
     flushPara();
 }
@@ -211,7 +258,9 @@ function extractMarkdownTokens(tokens, blocks) {
             const text = sanitize(plainMdText(token.tokens || token.text).trim());
             if (text) blocks.push({ type: 'heading', level: token.depth || 1, text });
         } else if (token.type === 'paragraph') {
-            splitInlineCodeBlocks(token.tokens || [{ type: 'text', text: token.text || '' }], blocks);
+            processMdInlineBlocks(token.tokens || [{ type: 'text', text: token.text || '' }], blocks);
+        } else if (token.type === 'image') {
+            blocks.push(markdownImageSource(token));
         } else if (token.type === 'code') {
             blocks.push({ type: 'code', text: sanitize(token.text || ''), lang: sanitize(token.lang || '').trim() });
         } else if (token.type === 'space') {
@@ -1443,6 +1492,213 @@ function sanitizeIrBlock(block) {
     return clean;
 }
 
+const MARKDOWN_IMAGE_MAX_BYTES = 8 * 1024 * 1024;
+const MARKDOWN_IMAGE_TOTAL_MAX_BYTES = 20 * 1024 * 1024;
+
+function decodeBase64Bytes(base64) {
+    const binary = atob(base64.replace(/\s+/g, ''));
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    return bytes;
+}
+
+function decodePercentBytes(value) {
+    const source = String(value || '');
+    const out = [];
+    for (let i = 0; i < source.length; i++) {
+        if (source[i] === '%' && /^[0-9A-Fa-f]{2}$/.test(source.slice(i + 1, i + 3))) {
+            out.push(parseInt(source.slice(i + 1, i + 3), 16));
+            i += 2;
+        } else {
+            const encoded = new TextEncoder().encode(source[i]);
+            out.push(...encoded);
+        }
+    }
+    return new Uint8Array(out);
+}
+
+function decodeDataImageUrl(src) {
+    const match = /^data:(image\/[a-z0-9.+-]+)(;base64)?,(.*)$/is.exec(String(src || ''));
+    if (!match) throw new Error('지원하는 이미지 data URL이 아닙니다.');
+    const mimeType = match[1].toLowerCase();
+    let bytes;
+    try {
+        bytes = match[2]
+            ? decodeBase64Bytes(match[3])
+            : decodePercentBytes(match[3]);
+    } catch (_) {
+        throw new Error('이미지 data URL을 해석하지 못했습니다.');
+    }
+    return { bytes, mimeType };
+}
+
+function sniffRasterImage(bytes, declaredMime = '') {
+    const b = bytes || new Uint8Array();
+    if (b.length >= 24 && b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4E && b[3] === 0x47) {
+        const view = new DataView(b.buffer, b.byteOffset, b.byteLength);
+        return { ext: 'png', mimeType: 'image/png', width: view.getUint32(16), height: view.getUint32(20) };
+    }
+    if (b.length >= 10 && b[0] === 0x47 && b[1] === 0x49 && b[2] === 0x46) {
+        const view = new DataView(b.buffer, b.byteOffset, b.byteLength);
+        return { ext: 'gif', mimeType: 'image/gif', width: view.getUint16(6, true), height: view.getUint16(8, true) };
+    }
+    if (b.length >= 26 && b[0] === 0x42 && b[1] === 0x4D) {
+        const view = new DataView(b.buffer, b.byteOffset, b.byteLength);
+        return {
+            ext: 'bmp', mimeType: 'image/bmp',
+            width: Math.abs(view.getInt32(18, true)),
+            height: Math.abs(view.getInt32(22, true)),
+        };
+    }
+    if (b.length >= 4 && b[0] === 0xFF && b[1] === 0xD8) {
+        let offset = 2;
+        while (offset + 9 < b.length) {
+            if (b[offset] !== 0xFF) { offset++; continue; }
+            const marker = b[offset + 1];
+            if (marker === 0xD8 || marker === 0xD9) { offset += 2; continue; }
+            const len = (b[offset + 2] << 8) | b[offset + 3];
+            if (len < 2 || offset + len + 2 > b.length) break;
+            if ([0xC0, 0xC1, 0xC2, 0xC3, 0xC5, 0xC6, 0xC7, 0xC9, 0xCA, 0xCB, 0xCD, 0xCE, 0xCF].includes(marker)) {
+                return {
+                    ext: 'jpg', mimeType: 'image/jpeg',
+                    height: (b[offset + 5] << 8) | b[offset + 6],
+                    width: (b[offset + 7] << 8) | b[offset + 8],
+                };
+            }
+            offset += len + 2;
+        }
+    }
+    throw new Error(`지원하지 않는 이미지 형식입니다${declaredMime ? ` (${declaredMime})` : ''}.`);
+}
+
+function imageSizeHwp(meta) {
+    const pxToHwp = 75; // 96dpi 기준: 7200 HWPUNIT / 96px
+    const width = Math.max(1, Number(meta.width) || 0);
+    const height = Math.max(1, Number(meta.height) || 0);
+    let widthHwp = Math.round(width * pxToHwp);
+    let heightHwp = Math.round(height * pxToHwp);
+    const maxDefaultWidth = 40000;
+    if (widthHwp > maxDefaultWidth) {
+        heightHwp = Math.round(heightHwp * maxDefaultWidth / widthHwp);
+        widthHwp = maxDefaultWidth;
+    }
+    return { widthHwp, heightHwp };
+}
+
+function markdownImageFallback(block, reason) {
+    const alt = String(block.alt || '').trim();
+    const src = String(block.src || '');
+    const sourceLabel = src.startsWith('data:') ? '삽입 데이터' : src.slice(0, 240);
+    const label = alt ? `[이미지: ${alt}]` : '[이미지]';
+    return {
+        type: 'para',
+        text: `${label} — 불러오지 못했습니다${reason ? ` (${reason})` : ''}${sourceLabel ? ` · 원본: ${sourceLabel}` : ''}`,
+    };
+}
+
+async function fetchMarkdownImage(src) {
+    const url = new URL(src);
+    if (!['http:', 'https:'].includes(url.protocol)) throw new Error('허용하지 않는 이미지 주소입니다.');
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 10000);
+    try {
+        const response = await fetch(url.href, {
+            signal: controller.signal,
+            credentials: 'omit',
+            referrerPolicy: 'no-referrer',
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const contentLength = Number(response.headers.get('content-length') || 0);
+        if (contentLength > MARKDOWN_IMAGE_MAX_BYTES) throw new Error('이미지 용량이 8MB를 초과합니다.');
+        let bytes;
+        if (response.body?.getReader) {
+            const reader = response.body.getReader();
+            const chunks = [];
+            let size = 0;
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                size += value.byteLength;
+                if (size > MARKDOWN_IMAGE_MAX_BYTES) {
+                    await reader.cancel();
+                    throw new Error('이미지 용량이 8MB를 초과합니다.');
+                }
+                chunks.push(value);
+            }
+            bytes = new Uint8Array(size);
+            let offset = 0;
+            for (const chunk of chunks) {
+                bytes.set(chunk, offset);
+                offset += chunk.byteLength;
+            }
+        } else {
+            bytes = new Uint8Array(await response.arrayBuffer());
+        }
+        return { bytes, mimeType: response.headers.get('content-type') || '' };
+    } catch (error) {
+        if (error?.name === 'AbortError') throw new Error('이미지 요청 시간이 초과되었습니다.');
+        throw error;
+    } finally {
+        clearTimeout(timer);
+    }
+}
+
+async function resolveMarkdownAssets(ir, sourceFormat = 'md') {
+    let imageCounter = 1;
+    let totalBytes = 0;
+    const warnings = [];
+
+    async function resolveBlocks(blocks) {
+        const out = [];
+        for (const block of (blocks || [])) {
+            if (block?.type === 'quote') {
+                out.push({ ...block, blocks: await resolveBlocks(block.blocks || []) });
+                continue;
+            }
+            if (block?.type !== 'image-source') {
+                out.push(block);
+                continue;
+            }
+            try {
+                const src = String(block.src || '').trim();
+                let loaded;
+                if (/^data:/i.test(src)) loaded = decodeDataImageUrl(src);
+                else if (/^https?:/i.test(src)) loaded = await fetchMarkdownImage(src);
+                else throw new Error('상대경로 이미지는 이미지 파일을 함께 선택하는 방식이 아직 필요합니다.');
+
+                if (loaded.bytes.byteLength > MARKDOWN_IMAGE_MAX_BYTES) {
+                    throw new Error('이미지 용량이 8MB를 초과합니다.');
+                }
+                const meta = sniffRasterImage(loaded.bytes, loaded.mimeType);
+                if (totalBytes + loaded.bytes.byteLength > MARKDOWN_IMAGE_TOTAL_MAX_BYTES) {
+                    throw new Error('문서 이미지 총용량이 20MB를 초과합니다.');
+                }
+                totalBytes += loaded.bytes.byteLength;
+                const size = imageSizeHwp(meta);
+                out.push({
+                    type: 'image',
+                    binName: `image${imageCounter++}.${meta.ext}`,
+                    mimeType: meta.mimeType,
+                    data: loaded.bytes,
+                    ...size,
+                    alt: block.alt || '',
+                    title: block.title || '',
+                    sourceFormat,
+                });
+            } catch (error) {
+                const reason = error?.message || '알 수 없는 오류';
+                warnings.push({ assetType: 'image', source: block.src || '', reason });
+                out.push(markdownImageFallback(block, reason));
+            }
+        }
+        return out;
+    }
+
+    ir.blocks = await resolveBlocks(ir.blocks || []);
+    if (warnings.length) ir.assetWarnings = warnings;
+    return ir;
+}
+
 /** 텍스트 입력 디코딩: BOM 우선, 유효 UTF-8, 마지막으로 EUC-KR(CP949) */
 function decodeTextBuffer(arrayBuffer) {
     const bytes = new Uint8Array(arrayBuffer);
@@ -1527,7 +1783,10 @@ async function fileToIR(file, docType = 'plain') {
     // accept 타입에 따라 파일 읽기 방법 선택
     if (parser.accept === 'text') {
         const text = decodeTextBuffer(await file.arrayBuffer());
-        return parser.async ? await parser.fn(text, docType) : parser.fn(text, docType);
+        const ir = parser.async ? await parser.fn(text, docType) : parser.fn(text, docType);
+        return (ext === 'md' || ext === 'markdown' || ext === 'ipynb')
+            ? await resolveMarkdownAssets(ir, ext === 'ipynb' ? 'ipynb' : 'md')
+            : ir;
     } else {
         const buffer = await file.arrayBuffer();
         return parser.async ? await parser.fn(buffer, docType) : parser.fn(buffer, docType);

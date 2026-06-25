@@ -32,6 +32,9 @@ const CASES = [
       'Quoted Alpha line',
       'bold quote',
       '링크 텍스트',
+      '굵은 링크',
+      '위험 링크',
+      '[이미지: 상대경로 이미지] — 불러오지 못했습니다',
       "작은따옴표 회귀: don't, 사용자의 '문서', ",
       "it's bold",
       "HTML 엔티티 작은따옴표 회귀: 사용자'문서, ",
@@ -152,6 +155,7 @@ const CASES = [
       'Golden IPYNB 제목 Alpha',
       '첫 문단입니다',
       '목록 항목 하나',
+      '노트북 링크',
       '표 값 한글',
       '코드 셀 Alpha',
       '출력 텍스트 Output Alpha',
@@ -255,6 +259,8 @@ async function validateHwpxPackage(page, zip, testCase) {
 
   const headerXml = await zip.file('Contents/header.xml').async('string');
   const sectionXml = await zip.file('Contents/section0.xml').async('string');
+  const contentHpf = await zip.file('Contents/content.hpf').async('string');
+  const manifestXml = await zip.file('META-INF/manifest.xml').async('string');
   assert(sectionXml.includes('hancom.co.kr/hwpml/2011/section'), `${testCase.name}: section namespace 누락`);
   assert(sectionXml.includes('hancom.co.kr/hwpml/2011/paragraph'), `${testCase.name}: paragraph namespace 누락`);
   assert(headerXml.includes('hancom.co.kr/hwpml/2011/head'), `${testCase.name}: header namespace 누락`);
@@ -285,6 +291,37 @@ async function validateHwpxPackage(page, zip, testCase) {
   const tableCount = (sectionXml.match(/<hp:tbl\b/g) || []).length;
   assert(tableCount >= testCase.minTables, `${testCase.name}: 표 개수 부족 (${tableCount} < ${testCase.minTables})`);
   if (testCase.name === 'markdown') {
+    const hyperlinkBegins = [...sectionXml.matchAll(/<hp:fieldBegin\b[^>]*\btype="HYPERLINK"[^>]*>/g)].map(match => {
+      const tag = match[0];
+      return [tag, (/\bid="([^"]+)"/.exec(tag) || [])[1], (/\bfieldid="([^"]+)"/.exec(tag) || [])[1]];
+    });
+    const hyperlinkEnds = [...sectionXml.matchAll(/<hp:fieldEnd\b[^>]*\bbeginIDRef="([^"]+)"[^>]*\bfieldid="([^"]+)"[^>]*\/>/g)];
+    assert(hyperlinkBegins.length === 2, `${testCase.name}: 안전한 Markdown 링크 2개가 HYPERLINK 필드로 생성되지 않음`);
+    assert(hyperlinkEnds.length === hyperlinkBegins.length, `${testCase.name}: HYPERLINK fieldBegin/fieldEnd 개수 불일치`);
+    for (const begin of hyperlinkBegins) {
+      assert(hyperlinkEnds.some(end => end[1] === begin[1] && end[2] === begin[2]),
+        `${testCase.name}: HYPERLINK fieldBegin과 fieldEnd ID 연결 불일치`);
+    }
+    assert(sectionXml.includes('<hp:stringParam name="Path">https://example.com/path?a=1&amp;b=2</hp:stringParam>'),
+      `${testCase.name}: 링크 URL 또는 XML escaping 누락`);
+    assert(!sectionXml.includes('javascript:alert'), `${testCase.name}: 위험한 javascript 링크가 HWPX에 남음`);
+    const linkRun = [...sectionXml.matchAll(/<hp:run\b[^>]*\bcharPrIDRef="(\d+)"[^>]*>[\s\S]*?<\/hp:run>/g)]
+      .find(match => match[0].includes('<hp:t>링크 텍스트</hp:t>'));
+    const linkCharPr = linkRun
+      ? ((new RegExp(`<hh:charPr\\b[^>]*\\bid="${linkRun[1]}"[\\s\\S]*?</hh:charPr>`).exec(headerXml) || [])[0] || '')
+      : '';
+    assert(linkCharPr.includes('textColor="#0563C1"') && linkCharPr.includes('<hh:underline '),
+      `${testCase.name}: 링크용 파란색·밑줄 글자 모양 누락`);
+
+    const imageRefs = [...sectionXml.matchAll(/<hc:img\b[^>]*\bbinaryItemIDRef="([^"]+)"/g)].map(m => m[1]);
+    assert(imageRefs.length === 1 && imageRefs[0] === 'image1',
+      `${testCase.name}: data URL 이미지가 단일 hc:img로 생성되지 않음`);
+    assert(contentHpf.includes('<opf:item id="image1" href="BinData/image1.png" media-type="image/png" isEmbeded="1"/>'),
+      `${testCase.name}: Markdown 이미지 content.hpf item 누락`);
+    assert(zip.file('BinData/image1.png'), `${testCase.name}: Markdown 이미지 BinData 파일 누락`);
+    assert(manifestXml.includes('odf:full-path="BinData/image1.png"') && manifestXml.includes('odf:media-type="image/png"'),
+      `${testCase.name}: Markdown 이미지 package manifest 선언 누락`);
+
     const inlineCodePara = [...sectionXml.matchAll(/<hp:p\b[\s\S]*?<\/hp:p>/g)]
       .map(match => match[0])
       .find(para => para.includes('문장 안의 ') && para.includes('인라인 코드')
@@ -304,6 +341,11 @@ async function validateHwpxPackage(page, zip, testCase) {
   const pageHeight = +((/\bheight="(\d+)"/.exec(pagePr) || [])[1]);
   assert(pageWidth < pageHeight, `${testCase.name}: HWPX 기본 용지 폭/높이를 회전 전에 유지하지 않음`);
   if (testCase.name === 'ipynb') {
+    assert((sectionXml.match(/type="HYPERLINK"/g) || []).length === 1,
+      `${testCase.name}: Markdown 셀 링크가 HYPERLINK 필드로 생성되지 않음`);
+    assert((sectionXml.match(/<hc:img\b/g) || []).length === 1
+      && contentHpf.includes('href="BinData/image1.png"') && zip.file('BinData/image1.png'),
+      `${testCase.name}: Markdown 셀 data URL 이미지가 공통 그림 경로로 생성되지 않음`);
     const codeTable = [...sectionXml.matchAll(/<hp:tbl\b[\s\S]*?<\/hp:tbl>/g)]
       .map(match => match[0])
       .find(table => table.includes('코드 셀 Alpha') && table.includes('print(message)'));
@@ -425,6 +467,11 @@ async function runCase(page, testCase) {
   const buf = fs.readFileSync(outPath);
   const zip = await JSZip.loadAsync(buf);
   await validateHwpxPackage(page, zip, testCase);
+  if (testCase.name === 'markdown') {
+    const resultText = await page.locator('#result-area').textContent();
+    assert(resultText.includes('이미지 제외: 상대경로 이미지는 이미지 파일을 함께 선택하는 방식이 아직 필요합니다.'),
+      `${testCase.name}: 상대경로 이미지 실패가 결과 카드 경고에 표시되지 않음`);
+  }
   if (testCase.previewPaper) {
     await page.locator('#preview-result-btn').click();
     const previewState = await page.locator('#preview-ir').evaluate(host => {
@@ -516,6 +563,10 @@ async function validateDirectInput(page) {
       `direct ${format}: 파일 업로드와 직접 입력의 HWPX 본문이 다름`);
     assert((pasteXml.match(/<hp:tbl\b/g) || []).length === (fileXml.match(/<hp:tbl\b/g) || []).length,
       `direct ${format}: 파일 업로드와 직접 입력의 표 개수가 다름`);
+    assert((pasteXml.match(/type="HYPERLINK"/g) || []).length === (fileXml.match(/type="HYPERLINK"/g) || []).length,
+      `direct ${format}: 파일 업로드와 직접 입력의 링크 개수가 다름`);
+    assert((pasteXml.match(/<hc:img\b/g) || []).length === (fileXml.match(/<hc:img\b/g) || []).length,
+      `direct ${format}: 파일 업로드와 직접 입력의 이미지 개수가 다름`);
     console.log(`PASS DIRECT ${format.toUpperCase().padEnd(4)} file/paste parity`);
   }
 

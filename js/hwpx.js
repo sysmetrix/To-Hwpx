@@ -220,6 +220,15 @@ function buildImageRun(imgBlock, imgIndex, contentWidthHwp = 48000) {
         `</hp:p>`;
 }
 
+/** 본문과 인용구에 포함된 최종 image IR을 문서 순서대로 수집한다. */
+function collectImageBlocks(blocks, out = []) {
+    for (const block of (blocks || [])) {
+        if (block?.type === 'image') out.push(block);
+        else if (block?.type === 'quote') collectImageBlocks(block.blocks || [], out);
+    }
+    return out;
+}
+
 
 // ─────────────────────────────────────────────────────────────────────────
 // [머리글/바닥글 masterPage 생성]
@@ -644,6 +653,13 @@ let _footnoteIdCounter = 1;
 function _nextFootnoteId() { return _footnoteIdCounter++; }
 function _resetFootnoteId() { _footnoteIdCounter = 1; }
 
+let _hyperlinkIdCounter = 1700000000;
+function _nextHyperlinkIds() {
+    const id = String(_hyperlinkIdCounter++);
+    return { id, fieldId: String(_hyperlinkIdCounter++) };
+}
+function _resetHyperlinkIds() { _hyperlinkIdCounter = 1700000000; }
+
 /**
  * 단락(hp:p) XML 생성
  * replaceEmoji → xmlEsc 순서로 처리하여 이모지 □ 치환 후 XML 안전 처리
@@ -660,15 +676,52 @@ function buildPara(text, charId = '0', paraId = '0') {
  * 가지는지 판정. 동적 charPr(customCharMap) 대상 여부를 결정한다.
  */
 function runNeedsExtChar(run) {
-    const hasColor = run.color && /^#[0-9A-Fa-f]{6}$/.test(run.color) && run.color.toUpperCase() !== '#000000';
-    return !!(run.underline || run.strike || hasColor);
+    const color = run.href && !run.color ? '#0563C1' : run.color;
+    const hasColor = color && /^#[0-9A-Fa-f]{6}$/.test(color) && color.toUpperCase() !== '#000000';
+    return !!(run.href || run.underline || run.strike || hasColor);
 }
 
 /** 확장 charPr 시그니처 키: "bold italic underline strike | #RRGGBB | height"
  *  height 비움 = 본문 크기. 제목 색 보존 시 제목 크기(HWPUNIT)를 함께 넣어 구분한다. */
 function extCharKey(run) {
-    const color = (run.color && /^#[0-9A-Fa-f]{6}$/.test(run.color)) ? run.color.toUpperCase() : '#000000';
-    return `${run.bold ? 1 : 0}${run.italic ? 1 : 0}${run.underline ? 1 : 0}${run.strike ? 1 : 0}|${color}|${run.height || ''}`;
+    const rawColor = run.href && !run.color ? '#0563C1' : run.color;
+    const color = (rawColor && /^#[0-9A-Fa-f]{6}$/.test(rawColor)) ? rawColor.toUpperCase() : '#000000';
+    const underline = run.href || run.underline;
+    return `${run.bold ? 1 : 0}${run.italic ? 1 : 0}${underline ? 1 : 0}${run.strike ? 1 : 0}|${color}|${run.height || ''}`;
+}
+
+function normalizeSafeHyperlink(raw) {
+    const src = String(raw || '').trim();
+    if (!src) return '';
+    try {
+        const url = new URL(src);
+        return ['http:', 'https:', 'mailto:'].includes(url.protocol) ? url.href : '';
+    } catch (_) {
+        return '';
+    }
+}
+
+function hyperlinkCommand(url) {
+    return String(url).replace(/([\\:?])/g, '\\$1') + ';1;0;1;';
+}
+
+function buildHyperlinkBegin(url, ids) {
+    return `<hp:run charPrIDRef="0"><hp:ctrl>` +
+        `<hp:fieldBegin id="${ids.id}" type="HYPERLINK" name="" editable="0" dirty="0" zorder="-1" fieldid="${ids.fieldId}">` +
+        `<hp:parameters cnt="6" name="">` +
+        `<hp:integerParam name="Prop">0</hp:integerParam>` +
+        `<hp:stringParam name="Command">${xmlEsc(hyperlinkCommand(url))}</hp:stringParam>` +
+        `<hp:stringParam name="Path">${xmlEsc(url)}</hp:stringParam>` +
+        `<hp:stringParam name="Category">HWPHYPERLINK_TYPE_URL</hp:stringParam>` +
+        `<hp:stringParam name="TargetType">HWPHYPERLINK_TARGET_BOOKMARK</hp:stringParam>` +
+        `<hp:stringParam name="DocOpenType">HWPHYPERLINK_JUMP_NEWTAB</hp:stringParam>` +
+        `</hp:parameters></hp:fieldBegin></hp:ctrl></hp:run>`;
+}
+
+function buildHyperlinkEnd(ids) {
+    return `<hp:run charPrIDRef="0"><hp:ctrl>` +
+        `<hp:fieldEnd beginIDRef="${ids.id}" fieldid="${ids.fieldId}"/>` +
+        `</hp:ctrl></hp:run>`;
 }
 
 /**
@@ -702,7 +755,15 @@ function buildParaRuns(runs, paraId = '0', customCharMap = new Map()) {
         } else if (run.italic) {
             cId = '8';
         }
-        runsXml += `<hp:run charPrIDRef="${cId}"><hp:t>${safe}</hp:t></hp:run>`;
+        const href = normalizeSafeHyperlink(run.href);
+        if (href) {
+            const ids = _nextHyperlinkIds();
+            runsXml += buildHyperlinkBegin(href, ids);
+            runsXml += `<hp:run charPrIDRef="${cId}"><hp:t>${safe}</hp:t></hp:run>`;
+            runsXml += buildHyperlinkEnd(ids);
+        } else {
+            runsXml += `<hp:run charPrIDRef="${cId}"><hp:t>${safe}</hp:t></hp:run>`;
+        }
     }
     if (!runsXml && !ctrlsXml) return buildBlankPara();
     return `<hp:p id="${pid}" paraPrIDRef="${paraId}" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0">${runsXml}${ctrlsXml}</hp:p>`;
@@ -1167,9 +1228,10 @@ function buildSection(ir, marginsHwp, paperKey, landscape = false, customBfMap =
     // 섹션마다 문단 ID 및 각주 ID를 재시작
     _resetParaId();
     _resetFootnoteId();
+    _resetHyperlinkIds();
 
     // 이미지 블록 목록 (빈 배열이면 이미지 없음)
-    const imageBlocks = (ir.blocks || []).filter(b => b.type === 'image');
+    const imageBlocks = collectImageBlocks(ir.blocks || []);
     const hasMasterPage = !!(ir.header || ir.footer);
 
     const contentWidthHwp = getContentWidthHwp(marginsHwp, paperKey, landscape);
@@ -1231,6 +1293,9 @@ function buildSection(ir, marginsHwp, paperKey, landscape = false, customBfMap =
                 parts.push(buildCodeBlock(quoteBlock, '', contentWidthHwp));
             } else if (qType === 'table') {
                 parts.push(buildTable(quoteBlock.header, quoteBlock.rows, contentWidthHwp, customBfMap, customCharMap));
+            } else if (qType === 'image') {
+                const imgIndex = imageBlocks.indexOf(quoteBlock);
+                if (imgIndex >= 0) parts.push(buildImageRun(quoteBlock, imgIndex, contentWidthHwp));
             } else if (qType === 'hr' && showHorizontalRules) {
                 parts.push(buildHrPara(contentWidthHwp));
             } else if (qType === 'quote') {
@@ -1405,7 +1470,7 @@ async function buildHwpx(ir, fontName = '휴먼명조', fontSize = 12, marginsMm
     scanCharProps(ir.blocks || []);
 
     // 이미지 블록 수집
-    const imageBlocks = (ir.blocks || []).filter(b => b.type === 'image');
+    const imageBlocks = collectImageBlocks(ir.blocks || []);
     const docHeaderFooter = { header: ir.header || '', footer: ir.footer || '' };
 
     const headerXml   = buildHeaderXml(fontName, fontSize, customBfMap, imageBlocks, docHeaderFooter, customCharMap, lineSpacingPercent);

@@ -1,6 +1,24 @@
 {
-  "current": "4.6.3",
+  "current": "4.6.4",
   "versions": [
+    {
+      "version": "4.6.4",
+      "date": "2026-06-26",
+      "user": [
+        "Markdown 본문의 일반 링크와 굵은 링크를 클릭 가능한 한글 하이퍼링크로 보존합니다.",
+        "Markdown의 PNG/JPEG/GIF/BMP data URL과 접근 가능한 원격 이미지를 HWPX 그림으로 삽입합니다.",
+        "위험한 링크는 클릭 기능을 제거하고, 상대경로·접근 차단 이미지는 문서 변환을 중단하지 않고 대체 문구와 결과 경고로 안내합니다."
+      ],
+      "dev": [
+        "[v4.6.4] js/parsers.js: marked 인라인 토큰 재귀 run 변환, link href/title 보존, image-source→resolveMarkdownAssets 분리, data/HTTP(S) 이미지 MIME·크기·용량·시간 제한 및 fallback 추가",
+        "[v4.6.4] js/hwpx.js: hwpxlib 기준 HYPERLINK fieldBegin/fieldEnd 생성, 안전 URL 공통 검증, 링크 글자 모양, 인용구 포함 그림 재귀 수집 추가",
+        "[v4.6.4] js/app.js/index.html/README.md: Markdown 링크·이미지 보존/손실 안내, 이미지 제외 결과 경고, 원격 이미지 직접 요청 개인정보 예외 반영",
+        "[v4.6.4] tests/golden.js/fixtures: MD·IPYNB 링크와 data URL 그림, 위험 URL, 상대경로 fallback, 직접 입력 동등성 회귀 추가",
+        "[v4.6.4] qa/gate.js/fixtures/release-qa.md: HYPERLINK begin/end 무결성 ⑧, MD 링크·그림 fixture, DOCX 그림 상호 회귀 승인 기준 추가",
+        "[v4.6.4] AGENTS.md/DEV.md/playbook/gotchas/ir_schema.md: Parser·Resolver·공통 IR·Renderer 책임 경계와 링크·그림 유지보수 계약 문서화",
+        "[v4.6.4] package.json/package-lock.json/sw.js/index.html/changelog.json: v4.6.4 반영"
+      ]
+    },
     {
       "version": "4.6.3",
       "date": "2026-06-26",

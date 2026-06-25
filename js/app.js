@@ -674,13 +674,14 @@ const FORMAT_INFO = {
         desc: '문서 구조가 텍스트로 명확히 드러나는 형식이라 현재 서비스에서 가장 안정적인 입력 포맷입니다.',
         tech: 'marked.js 토큰 분석 → 자체 보정 → IR(중간 표현) → HWPX',
         features: [
-            '제목(H1~H6), 문단, 목록, 표, 코드블록, 링크 텍스트를 중심으로 보존',
+            '제목(H1~H6), 문단, 목록, 표, 코드블록, 클릭 가능한 본문 링크를 중심으로 보존',
             '구두점에 붙은 **굵게**·따옴표·앰퍼샌드(&)·부등호(<,>)도 정확히 처리',
             'GitHub Flavored Markdown 표와 머리행, 순서/비순서 목록, 태스크리스트(☑/□) 지원',
             '코드블록(검정 배경·흰 글자), 인라인 코드, 인용구(왼쪽 선·옅은 배경) 지원',
+            'PNG/JPEG/GIF/BMP data URL과 CORS가 허용된 원격 이미지를 HWPX 그림으로 삽입',
             '일반적으로 Markdown은 시각 디자인보다 내용 구조 보존에 강함',
         ],
-        limits: ['이미지 미지원', '복잡한 인라인 HTML과 사용자 정의 스타일은 제외 가능', '페이지 단위 레이아웃은 새 HWPX 기본 흐름으로 재구성'],
+        limits: ['상대경로 이미지는 현재 대체 문구로 보존', '목록·표 안 링크는 표시 텍스트 중심', '복잡한 인라인 HTML과 사용자 정의 스타일은 제외 가능', '페이지 단위 레이아웃은 새 HWPX 기본 흐름으로 재구성'],
     },
     html: {
         icon: '🌐', name: 'HTML 문서',
@@ -1813,6 +1814,7 @@ async function convertOneFile(file, statusPrefix = '', outputFontName = state.do
     } catch (e) {
         validation = { pass: false, issues: ['검증 실행 오류: ' + e.message] };
     }
+    validation.assetWarnings = Array.isArray(ir.assetWarnings) ? ir.assetWarnings : [];
     setStepState('validate', validation.pass ? 'done' : 'error');
     setProgress(82);
 
@@ -1867,6 +1869,7 @@ function showResult({ url, fileName, size, validation }) {
     const inputLabel = getInputFormatLabel(ext);
     const summary = getConversionSummary();
     const issues = Array.isArray(validation.issues) ? validation.issues : [];
+    const assetWarnings = Array.isArray(validation.assetWarnings) ? validation.assetWarnings : [];
     const issuePreview = issues.slice(0, 3);
     const officeCheckTitle = validation.pass ? '한컴오피스 최종 확인 권장' : '한컴오피스 확인 필수';
     const officeCheckDetail = validation.pass
@@ -1927,6 +1930,12 @@ function showResult({ url, fileName, size, validation }) {
                 <ul class="result-issues">
                     ${issuePreview.map(issue => `<li>${escHtml(issue)}</li>`).join('')}
                     ${issues.length > issuePreview.length ? `<li>외 ${issues.length - issuePreview.length}건</li>` : ''}
+                </ul>
+            ` : ''}
+            ${assetWarnings.length ? `
+                <ul class="result-issues">
+                    ${assetWarnings.slice(0, 3).map(item => `<li>이미지 제외: ${escHtml(item.reason || '불러오기 실패')}</li>`).join('')}
+                    ${assetWarnings.length > 3 ? `<li>외 ${assetWarnings.length - 3}건</li>` : ''}
                 </ul>
             ` : ''}
             <dl class="result-summary">
@@ -2195,12 +2204,12 @@ function getInputFormatLabel(ext) {
 function getConversionSummaryForExt(ext) {
     const summaries = {
         md: {
-            preserved: '제목, 문단, 목록, 표, 코드블록, 링크 텍스트',
-            lossy: '이미지, 복잡한 HTML, 사용자 정의 스타일, 페이지 배치',
+            preserved: '제목, 문단, 목록, 표, 코드블록, 클릭 가능한 본문 링크, 삽입 가능한 Markdown 이미지',
+            lossy: '상대경로·접근 차단 이미지, 목록·표 안 링크 기능, 복잡한 HTML, 사용자 정의 스타일, 페이지 배치',
         },
         markdown: {
-            preserved: '제목, 문단, 목록, 표, 코드블록, 링크 텍스트',
-            lossy: '이미지, 복잡한 HTML, 사용자 정의 스타일, 페이지 배치',
+            preserved: '제목, 문단, 목록, 표, 코드블록, 클릭 가능한 본문 링크, 삽입 가능한 Markdown 이미지',
+            lossy: '상대경로·접근 차단 이미지, 목록·표 안 링크 기능, 복잡한 HTML, 사용자 정의 스타일, 페이지 배치',
         },
         html: {
             preserved: 'h1-h6, p, 중첩 ul/ol, 병합 표, strong/em/u/s, 일부 글자색과 태그 없는 일반 텍스트',
@@ -3115,7 +3124,13 @@ function irRunsToHtml(runs) {
         if (r.strike) deco.push('line-through');
         const css = (r.color && /^#[0-9A-Fa-f]{6}$/.test(r.color) ? `color:${r.color};` : '')
                   + (deco.length ? `text-decoration:${deco.join(' ')};` : '');
-        h += css ? `<span style="${css}">${t}</span>` : t;
+        t = css ? `<span style="${css}">${t}</span>` : t;
+        let href = '';
+        try {
+            const url = new URL(String(r.href || ''));
+            if (['http:', 'https:', 'mailto:'].includes(url.protocol)) href = url.href;
+        } catch (_) {}
+        h += href ? `<a href="${escHtml(href)}" target="_blank" rel="noopener noreferrer">${t}</a>` : t;
     }
     return h;
 }
