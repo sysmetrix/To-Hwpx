@@ -1,6 +1,19 @@
 {
-  "current": "4.5.18",
+  "current": "4.5.19",
   "versions": [
+    {
+      "version": "4.5.19",
+      "date": "2026-06-25",
+      "user": [
+        "Chrome과 Edge의 앱 설치 아이콘을 동일한 색상·선 굵기·배경 스타일로 정리해 안내 팝업의 시각적 통일감을 높였습니다."
+      ],
+      "dev": [
+        "[v4.5.19] chrome-install.svg/edge-install.svg: 서로 달랐던 밝은/어두운 캡처 배경을 제거하고 중성 회색 단색 선·동일 stroke-width로 통일",
+        "[v4.5.19] style.css: 설치 아이콘 타일의 배경·테두리를 테마 토큰으로 일원화해 라이트/다크 테마 대응",
+        "[v4.5.19] tests/golden.js/qa/release-qa.md: 아이콘 색상·배경 통일 회귀 검사와 시각 승인 기록 추가",
+        "[v4.5.19] package.json/package-lock.json/sw.js/index.html: v4.5.19 반영"
+      ]
+    },
     {
       "version": "4.5.18",
       "date": "2026-06-25",
