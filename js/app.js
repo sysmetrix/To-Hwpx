@@ -681,7 +681,7 @@ const FORMAT_INFO = {
     html: {
         icon: '🌐', name: 'HTML 문서',
         quality: '★★☆', available: true,
-        desc: '웹 화면 재현이 아니라 문서 본문 구조를 HWPX로 옮기는 용도에 맞춘 입력 포맷입니다.',
+        desc: 'HTML 소스의 문서 구조를 옮기며, 웹 화면에서 복사한 일반 텍스트도 문단으로 보존합니다.',
         tech: 'DOMParser API → DOM 트리 순회 → IR → HWPX',
         features: [
             'h1~h6, p, ul/ol, table, blockquote, strong/em, code 등 문서형 태그 중심 지원',
@@ -689,7 +689,7 @@ const FORMAT_INFO = {
             '들여쓴 중첩 목록과 표의 rowspan/colspan 병합 구조 보존',
             '일반적으로 HTML 변환은 CSS 화면 배치보다 본문 의미 구조 보존이 우선',
         ],
-        limits: ['CSS 레이아웃·반응형 배치·대부분의 디자인 속성 무시', '이미지·SVG 미지원', 'script·style·nav·footer 등 비본문 요소 무시'],
+        limits: ['웹 화면의 시각 배치와 CSS 레이아웃은 복제하지 않음', '이미지·SVG 미지원', 'script·style·nav·footer 등 비본문 요소 무시'],
     },
     docx: {
         icon: '📘', name: 'Word 문서 (DOCX)',
@@ -740,12 +740,12 @@ const FORMAT_INFO = {
         limits: ['제목·표·굵게 같은 서식 정보 없음', '표처럼 보이는 텍스트도 일반 문단으로 처리될 수 있음'],
     },
     csv: {
-        icon: '📊', name: 'CSV / XLSX 스프레드시트',
+        icon: '📊', name: 'CSV / XLSX / 표 붙여넣기',
         quality: '★★☆', available: true,
         desc: '표 데이터의 행과 열을 HWPX 표로 옮기는 데 초점을 둔 입력 포맷입니다.',
         tech: 'CSV: RFC 4180 파서 / XLSX: SheetJS 라이브러리 → 표 IR → HWPX',
         features: [
-            'CSV 전체 데이터 또는 XLSX 첫 번째 시트를 HWPX 표로 변환',
+            'CSV 전체 데이터, Excel·Google Sheets에서 복사한 탭 구분 표, XLSX 첫 번째 시트를 HWPX 표로 변환',
             '첫 행을 표 머리행으로 처리하고 기본 표 테두리 적용',
             '빈 셀, 긴 텍스트, 한글·영문·특수문자 처리',
             '일반적으로 스프레드시트 변환은 데이터 표 보존이 우선이고 시각 서식은 보조',
@@ -1345,106 +1345,7 @@ const PASTE_MIME = {
     json: 'application/json',
 };
 
-/**
- * 실험실(lab) 기능 활성 여부.
- * - URL에 ?lab=1 (또는 ?lab=on/true) → localStorage 'tohwpx_lab'='1' 저장 후 활성
- * - URL에 ?lab=0 (또는 off/false) → 해제
- * - 파라미터 없으면 저장값을 따른다(한 번 켜면 그 브라우저에서 유지)
- * ※ 공개 정적 사이트라 "보안"이 아니라 "가림"이다. 미완성 직접 입력을 일반 사용자
- *    동선에서 숨기는 용도(개발자 본인 테스트용). 켜는 법은 AGENTS.md "실험실" 절 참고.
- */
-const LAB_STATE_KEY = 'tohwpx_lab';
-const LAB_ACCESS_KEY = 'tohwpx_lab_access';
-
-function isLabEnabled() {
-    try {
-        const params = new URLSearchParams(location.search);
-        if (params.has('lab')) {
-            const v = (params.get('lab') || '').toLowerCase();
-            const on = v !== '0' && v !== 'off' && v !== 'false';
-            if (on) {
-                localStorage.setItem(LAB_STATE_KEY, '1');
-                localStorage.setItem(LAB_ACCESS_KEY, '1');
-            } else {
-                localStorage.removeItem(LAB_STATE_KEY);
-                localStorage.removeItem(LAB_ACCESS_KEY);
-            }
-            return on;
-        }
-        return localStorage.getItem(LAB_STATE_KEY) === '1';
-    } catch (e) {
-        return false;
-    }
-}
-
-function canManageLab() {
-    try {
-        return localStorage.getItem(LAB_ACCESS_KEY) === '1'
-            || localStorage.getItem(LAB_STATE_KEY) === '1';
-    } catch (e) {
-        return false;
-    }
-}
-
-function renderLabControl() {
-    if (!canManageLab()) return '';
-    const enabled = isLabEnabled();
-    return `
-        <section class="changelog-lab-control" aria-label="실험실 기능 설정">
-            <span class="changelog-lab-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" focusable="false">
-                    <path d="M9 3h6M10 3v5.2l-5.2 8.5A2.8 2.8 0 0 0 7.2 21h9.6a2.8 2.8 0 0 0 2.4-4.3L14 8.2V3"/>
-                    <path d="M7.4 15h9.2"/>
-                </svg>
-            </span>
-            <div class="changelog-lab-copy">
-                <div class="changelog-lab-heading">
-                    <strong>실험실</strong>
-                    <span class="changelog-lab-status">${enabled ? '사용 중' : '꺼짐'}</span>
-                </div>
-                <p>개발 중인 기능을 미리 사용해 볼 수 있어요.</p>
-            </div>
-            <button type="button" class="changelog-lab-toggle"
-                    data-lab-toggle aria-pressed="${enabled}"
-                    aria-label="실험실 기능 ${enabled ? '끄기' : '켜기'}">
-                <span class="changelog-lab-toggle-track" aria-hidden="true">
-                    <span class="changelog-lab-toggle-thumb"></span>
-                </span>
-            </button>
-        </section>
-    `;
-}
-
-function bindLabControl() {
-    document.querySelector('[data-lab-toggle]')?.addEventListener('click', () => {
-        try {
-            const enabled = isLabEnabled();
-            localStorage.setItem(LAB_ACCESS_KEY, '1');
-            if (enabled) localStorage.removeItem(LAB_STATE_KEY);
-            else localStorage.setItem(LAB_STATE_KEY, '1');
-
-            const url = new URL(location.href);
-            url.searchParams.delete('lab');
-            history.replaceState(null, '', url);
-            location.reload();
-        } catch (e) {
-            showToast('실험실 설정을 저장하지 못했습니다.', 'error');
-        }
-    });
-}
-
 function initInputMode() {
-    // 직접 입력은 아직 일부 형식(HTML 등) 변환 품질이 미완성이라 실험실 플래그 뒤로 숨긴다.
-    // 플래그가 꺼져 있으면 탭을 감추고 파일 업로드만 노출한다.
-    if (!isLabEnabled()) {
-        document.querySelector('.input-mode-tabs')?.setAttribute('hidden', '');
-        document.getElementById('paste-mode')?.setAttribute('hidden', '');
-        const upload = document.getElementById('upload-mode');
-        if (upload) upload.hidden = false;
-        state.inputMode = 'upload';
-        return;   // 직접 입력 핸들러를 연결하지 않음
-    }
-
     document.getElementById('mode-upload')?.addEventListener('click', () => setInputMode('upload'));
     document.getElementById('mode-paste')?.addEventListener('click', () => setInputMode('paste'));
 
@@ -1455,8 +1356,10 @@ function initInputMode() {
         if (saved && Array.from(fmt.options).some(o => o.value === saved)) fmt.value = saved;
         fmt.addEventListener('change', () => {
             localStorage.setItem('tohwpx_pasteFormat', fmt.value);
+            updatePasteFormatHelp(fmt.value);
             if (state.inputMode === 'paste') updateFormatExpectation(fmt.value);
         });
+        updatePasteFormatHelp(fmt.value);
     }
 
     // 텍스트 입력 시 변환 버튼 활성/비활성
@@ -1467,6 +1370,19 @@ function initInputMode() {
         updateConvertButton(hasText);
         if (hasText) setProgressPanelState('ready');
     });
+}
+
+function updatePasteFormatHelp(ext) {
+    const help = document.getElementById('paste-format-help');
+    if (!help) return;
+    const messages = {
+        md: 'Markdown 문법의 제목·목록·표·강조·코드·인용구를 인식합니다.',
+        html: 'HTML 소스를 붙여넣으세요. 웹 화면에서 복사한 일반 텍스트도 문단으로 보존됩니다.',
+        txt: '입력한 텍스트와 빈 줄 기준 문단을 그대로 변환합니다.',
+        csv: '쉼표 CSV와 Excel·Google Sheets에서 복사한 탭 구분 표를 자동 인식합니다.',
+        json: '유효한 JSON 또는 To HWPX IR 구조를 입력하세요.',
+    };
+    help.textContent = messages[ext] || '';
 }
 
 /** 입력 방식 전환 (파일 ↔ 직접 입력). 전환 시 진행 중 입력은 초기화한다. */
@@ -2137,8 +2053,8 @@ function getConversionSummaryForExt(ext) {
             lossy: '이미지, 복잡한 HTML, 사용자 정의 스타일, 페이지 배치',
         },
         html: {
-            preserved: 'h1-h6, p, 중첩 ul/ol, 병합 표, strong/em/u/s와 일부 글자색',
-            lossy: 'CSS 레이아웃, 이미지, SVG, 스크립트, 외부 리소스',
+            preserved: 'h1-h6, p, 중첩 ul/ol, 병합 표, strong/em/u/s, 일부 글자색과 태그 없는 일반 텍스트',
+            lossy: '웹 화면 배치, CSS 레이아웃, 이미지, SVG, 스크립트, 외부 리소스',
         },
         htm: {
             preserved: 'h1-h6, p, ul/ol, table, strong/em 중심 구조',
@@ -2157,7 +2073,7 @@ function getConversionSummaryForExt(ext) {
             lossy: '제목 구조, 표 구조, 굵게/색상 같은 서식 정보',
         },
         csv: {
-            preserved: '행/열, 빈 셀, 첫 행 머리글, 긴 텍스트',
+            preserved: 'CSV·탭 구분 표의 행/열, 빈 셀, 첫 행 머리글, 긴 텍스트',
             lossy: '셀 병합, 수식 자체, 색상, 차트, 이미지, 여러 시트',
         },
         xlsx: {
@@ -3260,13 +3176,12 @@ function renderChangelogContent(tab) {
         group.versions.push(version);
     }
 
-    el.innerHTML = `${tab === 'dev' ? renderLabControl() : ''}${groups.map(group => `
+    el.innerHTML = `${groups.map(group => `
         <section class="changelog-date-group">
             <div class="changelog-date-heading">${escHtml(group.date)}</div>
             ${tab === 'user' ? renderMergedUserChangelog(group.versions) : renderVersionedChangelog(group.versions, tab)}
         </section>
     `).join('')}`;
-    if (tab === 'dev') bindLabControl();
 }
 
 function versionLabel(version) {

@@ -117,7 +117,7 @@
             <span>｢BWYF｣ AX Challenger 2026</span>
             <!-- [주의] id="open-changelog"는 app.js에서 업데이트 내역 모달을 여는 연결값 -->
             <button class="util-changelog-btn" id="open-changelog" aria-label="업데이트 내역 보기">
-                📋 v4.5.19 업데이트 내역
+                📋 v4.5.20 업데이트 내역
             </button>
         </div>
     </div>
@@ -227,9 +227,9 @@
 
             <!-- ── 왼쪽: 옵션 패널 ──────────────────────────────── -->
             <div class="options-panel">
-                <h3>파일 선택 및 기본 옵션</h3>
+                <h3>입력 및 기본 옵션</h3>
 
-                <!-- 입력 방식 탭: 파일 업로드 / 직접 입력 (app.js initInputMode가 제어) -->
+                <!-- 입력 방식 탭: 파일 업로드 / 직접 입력 -->
                 <div class="input-mode-tabs" role="tablist" aria-label="입력 방식">
                     <button type="button" id="mode-upload" class="input-mode-tab is-active"
                             role="tab" aria-selected="true" aria-controls="upload-mode">📂 파일 업로드</button>
@@ -259,16 +259,17 @@
                         <label for="paste-format">입력 형식</label>
                         <select id="paste-format" name="paste-format" aria-label="직접 입력 내용의 형식">
                             <option value="md">Markdown (.md)</option>
-                            <option value="html">HTML (.html)</option>
+                            <option value="html">HTML 소스 (.html)</option>
                             <option value="txt">텍스트 (.txt)</option>
-                            <option value="csv">CSV (.csv)</option>
+                            <option value="csv">CSV / 표 붙여넣기</option>
                             <option value="json">JSON (.json)</option>
                         </select>
+                        <p id="paste-format-help" class="paste-format-help" aria-live="polite"></p>
                     </div>
                     <div class="form-row">
                         <label for="paste-input">내용 입력</label>
                         <textarea id="paste-input" class="paste-textarea" rows="10"
-                                  placeholder="여기에 내용을 붙여넣으세요&#10;예) # 제목, - 목록, **굵게**, | 표 | 등 선택한 형식 규칙을 그대로 인식합니다"></textarea>
+                                  placeholder="여기에 내용을 붙여넣으세요. 선택한 형식의 규칙에 따라 변환합니다."></textarea>
                     </div>
                     <div class="form-row paste-name-row">
                         <label for="paste-name">문서명 <small style="font-weight:400;color:var(--c-text-muted)">(선택)</small></label>

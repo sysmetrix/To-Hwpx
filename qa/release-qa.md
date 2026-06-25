@@ -1,6 +1,6 @@
 # To HWPX Release QA
 
-Date: 2026-06-20
+Date: 2026-06-25
 Scope: static browser-only conversion flow from file selection to HWPX download.
 
 ## 1. Release Risk Diagnosis
@@ -88,7 +88,10 @@ Scope: static browser-only conversion flow from file selection to HWPX download.
 - [ ] 배치 변환 후 파일별 상태(완료/경고/실패) 표시
 - [ ] 전체 ZIP 다운로드 열림 + 파일별 개별 받기 동작
 - [ ] 단일 파일 변환은 기존과 동일(결과 카드 1개 + 자동 다운로드)
-- [ ] 직접 입력 탭: 형식 선택 + 내용 붙여넣기 → 변환·다운로드 동작
+- [x] 직접 입력 탭 기본 노출: MD/HTML/TXT/CSV/JSON 형식 선택 + 내용 붙여넣기 → 변환·다운로드 동작
+- [x] 동일 입력의 파일 업로드·직접 입력 HWPX 본문 및 표 개수 동등성
+- [x] Excel·Google Sheets 탭 구분 표 붙여넣기 → HWPX 표 변환
+- [x] HTML 태그 없는 일반 텍스트 붙여넣기 → 문단 보존
 - [ ] 직접 입력 ↔ 파일 업로드 탭 전환 시 입력·결과 초기화, 파일 드롭 시 업로드 모드 자동 전환
 - [ ] HWPX ZIP 구조 검증 PASS
 - [ ] `long-table.csv` 변환 후 한컴에서 표가 두 쪽 이상으로 나뉘고, 다음 쪽에도 제목 줄이 자동 반복됨
@@ -280,3 +283,19 @@ Scope: static browser-only conversion flow from file selection to HWPX download.
 - [x] 데스크톱 라이트·다크 테마 실제 렌더 확인
 - [x] `npm run test:golden` PASS
 - [ ] 배포 후 Chrome·Edge 실제 화면에서 아이콘 식별성 확인
+
+## 22. v4.5.20 직접 입력 정식 공개
+
+공개 기준:
+
+- [x] MD/HTML/TXT/CSV/JSON 직접 입력을 기존 `fileToIR()` 변환 파이프라인으로 처리
+- [x] 5개 형식에서 동일 원문의 파일 업로드·직접 입력 HWPX 본문과 표 개수 동등성 검사
+- [x] CSV 모드에서 쉼표 CSV와 Excel·Google Sheets 탭 구분 표 자동 판별
+- [x] 열 수가 다른 표 행에 빈 셀을 보충해 HWPX 표 격자 유지
+- [x] HTML 소스와 태그 없는 일반 텍스트 모두 본문 보존
+- [x] CRLF/LF 줄바꿈을 LF로 정규화해 운영체제와 textarea 간 문단 파싱 차이 제거
+- [x] 실험실 플래그와 업데이트 내역의 실험실 토글 제거, 입력 방식 탭 기본 노출
+- [x] `FORMAT_INFO`, 결과 카드 보존/손실 안내, 플레이북, AGENTS 작업 지침 정합성 갱신
+- [x] `npm run test:golden` PASS
+- [x] 데스크톱 1280px·모바일 390px 실제 화면에서 파일 업로드가 기본 탭이고 직접 입력 안내가 자연스럽게 보이는지 확인
+- [ ] 직접 입력으로 만든 MD·HTML·TSV 결과를 한컴오피스에서 열어 시각 확인
