@@ -31,6 +31,7 @@ const state = {
     paperSize:    'A4',                // 용지 크기: "A4" | "B5" | "Letter"
     orientation:  'portrait',          // 용지 방향: "portrait" | "landscape"
     lineSpacing:  160,                 // 줄 간격 (%)
+    showHorizontalRules: false,        // 가로 구분선 표시 여부
     pageMargins:  { top: 10, bottom: 10, left: 20, right: 20, header: 10, footer: 10 },  // 단위: mm
     autoDownload: true,                // 변환 완료 시 자동 다운로드
     isConverting: false,               // 변환 중 중복 실행 방지 플래그
@@ -1270,6 +1271,20 @@ function initOptions() {
         });
     }
 
+    const hrDisplayBtns = document.querySelectorAll('.seg-btn[data-hr-display]');
+    if (hrDisplayBtns.length) {
+        const savedHrDisplay = localStorage.getItem('tohwpx_showHorizontalRules');
+        state.showHorizontalRules = savedHrDisplay === 'true';
+        applyHrDisplayUi(state.showHorizontalRules);
+        hrDisplayBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                state.showHorizontalRules = btn.dataset.hrDisplay === 'show';
+                applyHrDisplayUi(state.showHorizontalRules);
+                localStorage.setItem('tohwpx_showHorizontalRules', String(state.showHorizontalRules));
+            });
+        });
+    }
+
     // 페이지 여백 입력 (mm 단위, #margin-top/bottom/left/right/header/footer)
     const marginIds = ['top', 'bottom', 'left', 'right', 'header', 'footer'];
     marginIds.forEach(side => {
@@ -1284,13 +1299,16 @@ function initOptions() {
             const max = (side === 'header' || side === 'footer') ? 30 : 60;
             state.pageMargins[side] = Math.max(0, Math.min(max, val));
             el.value = state.pageMargins[side];
+            updateMarginPreview();
         };
         el.addEventListener('change', syncMargin);
         el.addEventListener('input', () => {
             const val = parseFloat(el.value);
             if (!isNaN(val)) state.pageMargins[side] = val;
+            updateMarginPreview();
         });
     });
+    updateMarginPreview();
 
     const autoDownloadEl = document.getElementById('auto-download');
     if (autoDownloadEl) {
@@ -1778,7 +1796,7 @@ async function convertOneFile(file, statusPrefix = '', outputFontName = state.do
         hwpxBlob = await buildHwpx(ir, outputFontName, state.fontSize, state.pageMargins, state.paperSize, (pct) => {
             setProgress(58 + (pct * 0.14)); // 58% ~ 72%
             st(`HWPX 파일을 압축하는 중... ${Math.round(pct)}%`);
-        }, state.orientation, state.lineSpacing);
+        }, state.orientation, state.lineSpacing, { showHorizontalRules: state.showHorizontalRules });
     } catch (e) {
         throw new Error('HWPX 생성 실패: ' + e.message);
     }
@@ -2319,12 +2337,37 @@ function syncMarginInputs() {
         state.pageMargins[side] = Math.max(0, Math.min(max, val));
         el.value = state.pageMargins[side];
     }
+    updateMarginPreview();
 }
 
 function applyOrientationUi(orientation) {
     const landscape = orientation === 'landscape';
     document.querySelectorAll('.seg-btn[data-orient]').forEach(btn => {
         const active = (btn.dataset.orient === 'landscape') === landscape;
+        btn.classList.toggle('is-active', active);
+        btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+    });
+}
+
+function updateMarginPreview() {
+    const paper = document.querySelector('.margin-paper');
+    if (!paper) return;
+    const m = state.pageMargins || {};
+    const px = (value, max, minPx, maxPx) => {
+        const n = Math.max(0, Math.min(max, Number(value) || 0));
+        return Math.round(minPx + (n / max) * (maxPx - minPx));
+    };
+    paper.style.setProperty('--margin-preview-top', `${px(m.top, 60, 18, 42)}px`);
+    paper.style.setProperty('--margin-preview-right', `${px(m.right, 60, 16, 38)}px`);
+    paper.style.setProperty('--margin-preview-bottom', `${px(m.bottom, 60, 18, 42)}px`);
+    paper.style.setProperty('--margin-preview-left', `${px(m.left, 60, 16, 38)}px`);
+    paper.style.setProperty('--margin-preview-header', `${px(m.header, 30, 14, 28)}px`);
+    paper.style.setProperty('--margin-preview-footer', `${px(m.footer, 30, 14, 28)}px`);
+}
+
+function applyHrDisplayUi(show) {
+    document.querySelectorAll('.seg-btn[data-hr-display]').forEach(btn => {
+        const active = (btn.dataset.hrDisplay === 'show') === !!show;
         btn.classList.toggle('is-active', active);
         btn.setAttribute('aria-pressed', active ? 'true' : 'false');
     });
@@ -2865,10 +2908,11 @@ function resetConverterState() {
     state.paperSize = 'A4';
     state.orientation = 'portrait';
     state.lineSpacing = 160;
+    state.showHorizontalRules = false;
     state.pageMargins = { top: 10, bottom: 10, left: 20, right: 20, header: 10, footer: 10 };
     state.autoDownload = true;
 
-    for (const key of ['tohwpx_font', 'tohwpx_fontSize', 'tohwpx_paperSize', 'tohwpx_autoDownload', 'tohwpx_orientation', 'tohwpx_lineSpacing']) {
+    for (const key of ['tohwpx_font', 'tohwpx_fontSize', 'tohwpx_paperSize', 'tohwpx_autoDownload', 'tohwpx_orientation', 'tohwpx_lineSpacing', 'tohwpx_showHorizontalRules']) {
         localStorage.removeItem(key);
     }
 
@@ -2893,6 +2937,8 @@ function resetConverterState() {
         if (el) el.value = value;
     }
     applyOrientationUi('portrait');
+    applyHrDisplayUi(false);
+    updateMarginPreview();
     updateAdvancedSettingsSummary();
     updateConvertButton(false);
     showToast('<strong>↺ 초기화 완료</strong> <span>선택 파일과 변환 옵션을 기본값으로 되돌렸습니다.</span>');

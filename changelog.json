@@ -1,6 +1,23 @@
 {
-  "current": "4.6.2",
+  "current": "4.6.3",
   "versions": [
+    {
+      "version": "4.6.3",
+      "date": "2026-06-26",
+      "user": [
+        "문서 세부 설정에 가로 구분선 표시/숨김 옵션을 추가하고, 실무 문서에 맞게 기본값을 숨김으로 설정했습니다.",
+        "페이지 여백 설정을 숫자만 나열하던 방식에서 종이 미니맵과 본문 영역이 함께 보이는 화면으로 개선했습니다.",
+        "여백 값을 바꾸면 종이 미니맵의 본문 영역도 함께 반응해 어느 방향의 여백인지 더 쉽게 이해할 수 있습니다."
+      ],
+      "dev": [
+        "[v4.6.3] index.html/style.css: 문서 세부 설정에 가로 구분선 토글 추가, 페이지 여백 UI를 margin-paper-map 미니맵 구조로 재구성",
+        "[v4.6.3] js/app.js: showHorizontalRules state/localStorage/reset 및 여백 미니맵 CSS 변수 동기화 추가",
+        "[v4.6.3] js/hwpx.js: buildHwpx/buildSection options.showHorizontalRules로 HR 출력 여부 제어",
+        "[v4.6.3] tests/golden.js: 구분선 기본 숨김, 표시 옵션 HR 생성, 여백 미니맵 DOM 회귀 검사 추가",
+        "[v4.6.3] DESIGN.md: 구분선 기본 숨김과 페이지 여백 미니맵 기준 반영",
+        "[v4.6.3] package.json/package-lock.json/sw.js/index.html/changelog.json: v4.6.3 반영"
+      ]
+    },
     {
       "version": "4.6.2",
       "date": "2026-06-26",

@@ -371,15 +371,7 @@ async function validateHwpxPackage(page, zip, testCase) {
   if (testCase.name === 'markdown') {
     const hrTableMatch = [...sectionXml.matchAll(/<hp:tbl\b[\s\S]*?<\/hp:tbl>/g)]
       .find(match => /<hp:tc\b[^>]*\bborderFillIDRef="10"/.test(match[0]));
-    assert(hrTableMatch, `${testCase.name}: 구분선 표를 찾지 못함`);
-    const hrOutMargin = (/<hp:outMargin\b[^>]*\/>/.exec(hrTableMatch[0]) || [])[0] || '';
-    assert(/\btop="850"/.test(hrOutMargin) && /\bbottom="850"/.test(hrOutMargin),
-      `${testCase.name}: 구분선 표 위아래 바깥 여백이 각각 3mm가 아님`);
-    const aroundHr = sectionXml.slice(Math.max(0, hrTableMatch.index - 250), hrTableMatch.index + hrTableMatch[0].length + 250);
-    assert(!/<hp:p\b[^>]*\bparaPrIDRef="9"[^>]*>[\s\S]*?<\/hp:p>\s*<hp:p\b[^>]*>[\s\S]*?<hp:tbl\b/.test(aroundHr),
-      `${testCase.name}: 구분선 위에 외부 빈 문단이 남아 있음`);
-    assert(!/<\/hp:tbl>[\s\S]*?<\/hp:p>\s*<hp:p\b[^>]*\bparaPrIDRef="9"/.test(aroundHr),
-      `${testCase.name}: 구분선 아래에 외부 빈 문단이 남아 있음`);
+    assert(!hrTableMatch, `${testCase.name}: 기본 설정에서 구분선 표가 표시됨`);
   }
   if (testCase.name === 'markdown' || testCase.name === 'html') {
     assert(headerXml.includes('<hh:paraPr id="19"'), `${testCase.name}: 인용구 문단 모양 paraPr id=19 누락`);
@@ -389,6 +381,20 @@ async function validateHwpxPackage(page, zip, testCase) {
     assert(/<hh:next value="850" unit="HWPUNIT"\/>/.test(quoteParaPr),
       `${testCase.name}: 인용구 아래 간격이 3mm가 아님`);
   }
+}
+
+function assertHorizontalRuleTable(sectionXml, label) {
+  const hrTableMatch = [...sectionXml.matchAll(/<hp:tbl\b[\s\S]*?<\/hp:tbl>/g)]
+    .find(match => /<hp:tc\b[^>]*\bborderFillIDRef="10"/.test(match[0]));
+  assert(hrTableMatch, `${label}: 구분선 표를 찾지 못함`);
+  const hrOutMargin = (/<hp:outMargin\b[^>]*\/>/.exec(hrTableMatch[0]) || [])[0] || '';
+  assert(/\btop="850"/.test(hrOutMargin) && /\bbottom="850"/.test(hrOutMargin),
+    `${label}: 구분선 표 위아래 바깥 여백이 각각 3mm가 아님`);
+  const aroundHr = sectionXml.slice(Math.max(0, hrTableMatch.index - 250), hrTableMatch.index + hrTableMatch[0].length + 250);
+  assert(!/<hp:p\b[^>]*\bparaPrIDRef="9"[^>]*>[\s\S]*?<\/hp:p>\s*<hp:p\b[^>]*>[\s\S]*?<hp:tbl\b/.test(aroundHr),
+    `${label}: 구분선 위에 외부 빈 문단이 남아 있음`);
+  assert(!/<\/hp:tbl>[\s\S]*?<\/hp:p>\s*<hp:p\b[^>]*\bparaPrIDRef="9"/.test(aroundHr),
+    `${label}: 구분선 아래에 외부 빈 문단이 남아 있음`);
 }
 
 async function runCase(page, testCase) {
@@ -746,6 +752,63 @@ async function validateLineSpacingOption(page) {
   console.log('PASS LINE  line spacing default + HWPX paraPr');
 }
 
+async function validateDetailSettingsUx(page) {
+  const baseUrl = `http://127.0.0.1:${PORT}/index.html`;
+  await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => window.JSZip && window.marked && window.XLSX, null, { timeout: 30000 });
+  await page.locator('.advanced-settings > summary').click();
+
+  const defaults = await page.evaluate(() => ({
+    hrButtons: [...document.querySelectorAll('[data-hr-display]')].map(btn => ({
+      mode: btn.dataset.hrDisplay,
+      active: btn.classList.contains('is-active'),
+    })),
+    marginMap: !!document.querySelector('.margin-paper-map .margin-paper-inner'),
+    marginInputs: ['top', 'header', 'left', 'right', 'bottom', 'footer']
+      .filter(side => document.querySelector(`#margin-${side}`)).length,
+  }));
+  assert(defaults.hrButtons.some(btn => btn.mode === 'hide' && btn.active),
+    'detail settings: 구분선 기본값이 숨김이 아님');
+  assert(defaults.marginMap, 'detail settings: 페이지 여백 종이 미니맵 누락');
+  assert(defaults.marginInputs === 6, 'detail settings: 페이지 여백 입력 6개가 유지되지 않음');
+
+  const hiddenHeader = await page.evaluate(async () => {
+    const blob = await buildHwpx(
+      { title: 'hr hidden', doc_type: 'plain', blocks: [{ type: 'para', text: '앞' }, { type: 'hr' }, { type: 'para', text: '뒤' }] },
+      '휴먼명조',
+      12,
+      null,
+      'A4',
+      null,
+      'portrait',
+      160,
+      { showHorizontalRules: false }
+    );
+    const zip = await JSZip.loadAsync(await blob.arrayBuffer());
+    return zip.file('Contents/section0.xml').async('string');
+  });
+  assert(!/<hp:tc\b[^>]*\bborderFillIDRef="10"/.test(hiddenHeader),
+    'detail settings: 숨김 옵션에서 구분선 표가 생성됨');
+
+  const shownSection = await page.evaluate(async () => {
+    const blob = await buildHwpx(
+      { title: 'hr shown', doc_type: 'plain', blocks: [{ type: 'para', text: '앞' }, { type: 'hr' }, { type: 'para', text: '뒤' }] },
+      '휴먼명조',
+      12,
+      null,
+      'A4',
+      null,
+      'portrait',
+      160,
+      { showHorizontalRules: true }
+    );
+    const zip = await JSZip.loadAsync(await blob.arrayBuffer());
+    return zip.file('Contents/section0.xml').async('string');
+  });
+  assertHorizontalRuleTable(shownSection, 'detail settings');
+  console.log('PASS DETAIL hr toggle + margin paper map');
+}
+
 async function validatePretendardCompatibility(page) {
   const baseUrl = `http://127.0.0.1:${PORT}/index.html`;
   await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
@@ -853,6 +916,7 @@ async function validatePretendardCompatibility(page) {
     await validateRejectedInputs(page);
     await validatePaperMatrix(page);
     await validateLineSpacingOption(page);
+    await validateDetailSettingsUx(page);
     await validatePretendardCompatibility(page);
     assert(pageErrors.length === 0, `브라우저 오류 발생: ${pageErrors.join(' | ')}`);
     console.log(`\nGOLDEN: ${CASES.length} cases passed`);

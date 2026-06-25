@@ -117,7 +117,7 @@
             <span>｢BWYF｣ AX Challenger 2026</span>
             <!-- [주의] id="open-changelog"는 app.js에서 업데이트 내역 모달을 여는 연결값 -->
             <button class="util-changelog-btn" id="open-changelog" aria-label="업데이트 내역 보기">
-                📋 v4.6.2 업데이트 내역
+                📋 v4.6.3 업데이트 내역
             </button>
         </div>
     </div>
@@ -364,7 +364,7 @@
 
                 <details class="advanced-settings">
                     <summary>
-                        <span class="adv-summary-text">문서 세부 설정 <small>줄 간격 · 상단 제목 블록 · 여백 · 자동 다운로드</small></span>
+                        <span class="adv-summary-text">문서 세부 설정 <small>줄 간격 · 구분선 · 상단 제목 블록 · 여백 · 자동 다운로드</small></span>
                         <span class="adv-summary-note">더 보기</span>
                         <span class="adv-chevron" aria-hidden="true">▾</span>
                     </summary>
@@ -380,6 +380,14 @@
                                         <option value="180">180%</option>
                                         <option value="200">200%</option>
                                     </select>
+                                </div>
+
+                                <div class="form-row hr-display-row">
+                                    <label>가로 구분선</label>
+                                    <div class="seg-control" role="group" aria-label="가로 구분선 표시 여부">
+                                        <button type="button" class="seg-btn is-active" data-hr-display="hide">숨김</button>
+                                        <button type="button" class="seg-btn" data-hr-display="show">표시</button>
+                                    </div>
                                 </div>
 
                                 <!-- [수정 시] 라디오 value(plain/titleblock/cover-unit/cover-annual)는 hwpx.js buildSection의 docType 분기와 맞춰야 함 -->
@@ -424,37 +432,49 @@
                                  hwpx.js buildHwpx()에서 mm → HWPUNIT 변환 (1mm ≈ 283 HWPUNIT) -->
                             <div class="form-row advanced-margins">
                                 <label>페이지 여백 (mm)</label>
-                                <!-- 배치: 상단(위·머리말) / 좌우(왼쪽·오른쪽) / 하단(아래·꼬리말) -->
-                                <div class="margin-grid-2col">
-                                    <div class="margin-item">
-                                        <label for="margin-top">위</label>
-                                        <input type="number" id="margin-top"
-                                               value="10" min="0" max="60" step="1" aria-label="위 여백 mm">
+                                <div class="margin-paper-map" aria-label="페이지 여백 설정">
+                                    <div class="margin-paper">
+                                        <div class="margin-page-label margin-page-label--top">위</div>
+                                        <div class="margin-page-label margin-page-label--left">왼쪽</div>
+                                        <div class="margin-page-label margin-page-label--right">오른쪽</div>
+                                        <div class="margin-page-label margin-page-label--bottom">아래</div>
+                                        <div class="margin-paper-inner">
+                                            <div class="margin-header-zone">머리말</div>
+                                            <div class="margin-body-zone">본문 영역</div>
+                                            <div class="margin-footer-zone">꼬리말</div>
+                                        </div>
                                     </div>
-                                    <div class="margin-item">
-                                        <label for="margin-header">머리말</label>
-                                        <input type="number" id="margin-header"
-                                               value="10" min="0" max="30" step="1" aria-label="머리말 여백 mm">
-                                    </div>
-                                    <div class="margin-item">
-                                        <label for="margin-left">왼쪽</label>
-                                        <input type="number" id="margin-left"
-                                               value="20" min="0" max="60" step="1" aria-label="왼쪽 여백 mm">
-                                    </div>
-                                    <div class="margin-item">
-                                        <label for="margin-right">오른쪽</label>
-                                        <input type="number" id="margin-right"
-                                               value="20" min="0" max="60" step="1" aria-label="오른쪽 여백 mm">
-                                    </div>
-                                    <div class="margin-item">
-                                        <label for="margin-bottom">아래</label>
-                                        <input type="number" id="margin-bottom"
-                                               value="10" min="0" max="60" step="1" aria-label="아래 여백 mm">
-                                    </div>
-                                    <div class="margin-item">
-                                        <label for="margin-footer">꼬리말</label>
-                                        <input type="number" id="margin-footer"
-                                               value="10" min="0" max="30" step="1" aria-label="꼬리말 여백 mm">
+                                    <div class="margin-controls">
+                                        <div class="margin-item margin-item--top">
+                                            <label for="margin-top">위</label>
+                                            <input type="number" id="margin-top"
+                                                   value="10" min="0" max="60" step="1" aria-label="위 여백 mm">
+                                        </div>
+                                        <div class="margin-item margin-item--header">
+                                            <label for="margin-header">머리말</label>
+                                            <input type="number" id="margin-header"
+                                                   value="10" min="0" max="30" step="1" aria-label="머리말 여백 mm">
+                                        </div>
+                                        <div class="margin-item margin-item--left">
+                                            <label for="margin-left">왼쪽</label>
+                                            <input type="number" id="margin-left"
+                                                   value="20" min="0" max="60" step="1" aria-label="왼쪽 여백 mm">
+                                        </div>
+                                        <div class="margin-item margin-item--right">
+                                            <label for="margin-right">오른쪽</label>
+                                            <input type="number" id="margin-right"
+                                                   value="20" min="0" max="60" step="1" aria-label="오른쪽 여백 mm">
+                                        </div>
+                                        <div class="margin-item margin-item--bottom">
+                                            <label for="margin-bottom">아래</label>
+                                            <input type="number" id="margin-bottom"
+                                                   value="10" min="0" max="60" step="1" aria-label="아래 여백 mm">
+                                        </div>
+                                        <div class="margin-item margin-item--footer">
+                                            <label for="margin-footer">꼬리말</label>
+                                            <input type="number" id="margin-footer"
+                                                   value="10" min="0" max="30" step="1" aria-label="꼬리말 여백 mm">
+                                        </div>
                                     </div>
                                 </div>
                             </div>

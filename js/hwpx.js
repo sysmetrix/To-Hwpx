@@ -1158,7 +1158,8 @@ function buildSectionBootstrap(secPrXml, contentWidthHwp) {
  * IR → section0.xml 전체 문자열
  * [v4] 참조 앱(md-to-hwpx)처럼 첫 bootstrap 문단에 secPr를 배치한다.
  */
-function buildSection(ir, marginsHwp, paperKey, landscape = false, customBfMap = new Map(), customCharMap = new Map()) {
+function buildSection(ir, marginsHwp, paperKey, landscape = false, customBfMap = new Map(), customCharMap = new Map(), options = {}) {
+    const showHorizontalRules = !!options.showHorizontalRules;
     const NS_HS = 'http://www.hancom.co.kr/hwpml/2011/section';
     const NS_HP = 'http://www.hancom.co.kr/hwpml/2011/paragraph';
     const docType = ir.doc_type || 'plain';
@@ -1230,7 +1231,7 @@ function buildSection(ir, marginsHwp, paperKey, landscape = false, customBfMap =
                 parts.push(buildCodeBlock(quoteBlock, '', contentWidthHwp));
             } else if (qType === 'table') {
                 parts.push(buildTable(quoteBlock.header, quoteBlock.rows, contentWidthHwp, customBfMap, customCharMap));
-            } else if (qType === 'hr') {
+            } else if (qType === 'hr' && showHorizontalRules) {
                 parts.push(buildHrPara(contentWidthHwp));
             } else if (qType === 'quote') {
                 pushQuoteBlocks(quoteBlock.blocks || []);
@@ -1265,7 +1266,7 @@ function buildSection(ir, marginsHwp, paperKey, landscape = false, customBfMap =
             // 명시적 빈 줄 블록
             parts.push(buildBlankPara());
 
-        } else if (bt === 'hr') {
+        } else if (bt === 'hr' && showHorizontalRules) {
             // 구분선 → 글자처럼 취급되는 표 객체
             parts.push(buildHrPara(contentWidthHwp));
 
@@ -1334,7 +1335,7 @@ function buildSection(ir, marginsHwp, paperKey, landscape = false, customBfMap =
  * @param {string} orientation   용지 방향 "portrait"|"landscape"
  * @param {number} lineSpacingPercent 본문 줄 간격 퍼센트
  */
-async function buildHwpx(ir, fontName = '휴먼명조', fontSize = 12, marginsMm = null, paperSize = 'A4', onProgress = null, orientation = 'portrait', lineSpacingPercent = 160) {
+async function buildHwpx(ir, fontName = '휴먼명조', fontSize = 12, marginsMm = null, paperSize = 'A4', onProgress = null, orientation = 'portrait', lineSpacingPercent = 160, options = {}) {
     if (typeof JSZip === 'undefined') throw new Error('JSZip 미로드: 인터넷 연결을 확인하세요.');
 
     validateCodeAudit(ir);
@@ -1408,7 +1409,7 @@ async function buildHwpx(ir, fontName = '휴먼명조', fontSize = 12, marginsMm
     const docHeaderFooter = { header: ir.header || '', footer: ir.footer || '' };
 
     const headerXml   = buildHeaderXml(fontName, fontSize, customBfMap, imageBlocks, docHeaderFooter, customCharMap, lineSpacingPercent);
-    const section0Xml = buildSection(ir, marginsHwp, paperSize, landscape, customBfMap, customCharMap);
+    const section0Xml = buildSection(ir, marginsHwp, paperSize, landscape, customBfMap, customCharMap, options);
 
     // 이미지가 있을 때 manifest를 동적으로 생성하여 BinData 파일 선언
     const manifestXml = imageBlocks.length
