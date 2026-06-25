@@ -1,6 +1,21 @@
 {
-  "current": "4.5.12",
+  "current": "4.5.13",
   "versions": [
+    {
+      "version": "4.5.13",
+      "date": "2026-06-25",
+      "user": [
+        "인용구와 코드문 아래에도 3mm 간격을 적용해 다음 본문과 붙어 보이지 않도록 개선했습니다.",
+        "코드문 안의 글꼴도 문서에서 선택한 글꼴로 함께 변환되도록 개선했습니다."
+      ],
+      "dev": [
+        "[v4.5.13] hwpx.js: 코드 블록 표 hp:outMargin@bottom을 mmToHwp(3)로 명시하고 인용구 paraPr id=19의 다음 간격을 850 HWPUNIT으로 설정",
+        "[v4.5.13] hwpx.js: 코드 전용 D2Coding fontface를 제거하고 charPr id=6이 사용자가 선택한 문서 글꼴 id=0을 참조하도록 변경",
+        "[v4.5.13] tests/golden.js: 코드 블록 표 아래 3mm, 인용구 아래 3mm, 코드 글꼴 선택값 반영 회귀 검사 추가",
+        "[v4.5.13] AGENTS.md/playbook/gotchas/release-qa: 인용구·코드문 간격 및 코드 글꼴 품질 기준 갱신",
+        "[v4.5.13] package.json/package-lock.json/sw.js/index.html: v4.5.13 반영"
+      ]
+    },
     {
       "version": "4.5.12",
       "date": "2026-06-25",

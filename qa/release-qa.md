@@ -55,6 +55,7 @@ Scope: static browser-only conversion flow from file selection to HWPX download.
 - `charPrIDRef`, `paraPrIDRef`, `borderFillIDRef` 참조 무결성 확인
 - `hc:img@binaryItemIDRef`가 `content.hpf` item, `BinData`, package manifest와 연결되는지 확인
 - 일반 데이터 표가 `pageBreak="TABLE"`, `repeatHeader="1"`, `treatAsChar="0"`, `hp:outMargin@bottom="850"`이고 첫 행 셀이 `header="1"`인지 확인
+- 코드 블록 표의 `hp:outMargin@bottom="850"`, 인용구 `paraPr id=19`의 `hh:next value="850"` 및 코드 글자 모양이 사용자가 선택한 글꼴 id를 참조하는지 확인
 - 다운로드 링크의 파일명과 `type="application/hwp+zip"` 확인
 
 ## 5. Security and Privacy Checks
@@ -206,3 +207,12 @@ Scope: static browser-only conversion flow from file selection to HWPX download.
 - [x] `npm run test:golden` PASS
 - [x] `node qa/gate.js qa/fixtures/md_hwpx_test.md` PASS
 - [x] 한컴오피스에서 일반 표 아래 3mm 바깥 여백 적용 확인
+
+## 16. v4.5.13 인용구·코드문 간격과 코드 글꼴
+
+- [x] 코드 블록 표 `hp:outMargin@bottom="850"`(약 3mm) 자동 검사
+- [x] 인용구 `paraPr id=19`의 `hh:next value="850"` 자동 검사
+- [x] 코드 글자 모양 `charPr id=6`이 선택한 문서 글꼴 id=0을 참조하고 `D2Coding` 고정 fontface가 없는지 자동 검사
+- [x] `npm run test:golden` PASS
+- [x] `node qa/gate.js qa/fixtures/md_hwpx_test.md` PASS
+- [ ] 한컴오피스에서 인용구·코드문 아래 3mm 간격과 코드문 선택 글꼴 적용 확인

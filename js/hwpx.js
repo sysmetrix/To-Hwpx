@@ -303,9 +303,7 @@ function buildHeaderXml(fontName, basePt, customBfMap = new Map(), imageBlocks =
     // KoPubWorld Dotum Medium처럼 Bold가 별도 폰트 파일인 경우
     const boldFontName = getBoldFontName(resolvedFontName);
     const boldFn = boldFontName ? xmlEsc(boldFontName) : null;
-    const fontCnt = boldFn ? 2 : 1;
-    const codeFontId = fontCnt;
-    const totalFontCnt = fontCnt + 1;
+    const totalFontCnt = boldFn ? 2 : 1;
 
     // 글자 크기 HWPUNIT (1pt = 100)
     const sz = {
@@ -328,9 +326,6 @@ function buildHeaderXml(fontName, basePt, customBfMap = new Map(), imageBlocks =
         <hh:font id="1" face="${boldFn}" type="TTF" isEmbedded="0">
           <hh:typeInfo familyType="FCAT_GOTHIC" weight="8" proportion="4" contrast="0" strokeVariation="1" armStyle="1" letterform="1" midline="1" xHeight="1"/>
         </hh:font>` : ''}
-        <hh:font id="${codeFontId}" face="D2Coding" type="TTF" isEmbedded="0">
-          <hh:typeInfo familyType="FCAT_GOTHIC" weight="4" proportion="0" contrast="0" strokeVariation="1" armStyle="1" letterform="1" midline="1" xHeight="1"/>
-        </hh:font>
       </hh:fontface>`;
 
     // bold=true 시: boldFn이 있으면 font face 1 참조(별도 Bold 폰트), 없으면 <hh:bold/> 태그
@@ -383,7 +378,7 @@ ${charBase(2, sz.h2,   true,  false)}
 ${charBase(3, sz.h3,   true,  false)}
 ${charBase(4, sz.h4,   true,  false)}
 ${charBase(5, sz.tblHd,true,  false)}
-${charBase(6, sz.code, false, false, codeFontId).replace('"#000000"', '"#FFFFFF"')}
+${charBase(6, sz.code, false, false).replace('"#000000"', '"#FFFFFF"')}
 ${charBase(7, sz.body, true,  false)}
 ${charBase(8, sz.body, false, true)}
 ${charBase(9, sz.body, true,  true)}
@@ -417,7 +412,7 @@ ${paraBase(11, 'RIGHT',  150,   0,    0,    0)}
       <!-- id=12/13  DOCX 정렬 보존: 가운데/오른쪽 -->
 ${paraBase(12, 'CENTER', 160,   0,  850,    0)}
 ${paraBase(13, 'RIGHT',  160,   0,  850,    0)}
-      <!-- id=14  코드 라인: 고정폭 글꼴 -->
+      <!-- id=14  코드 라인: 사용자가 선택한 문서 글꼴 -->
 ${paraBase(14, 'LEFT',   120,   0,    0,    0)}
       <!-- id=15/16  H5/H6 제목 -->
 ${paraBase(15, 'LEFT',   160, 300,  150,    0)}
@@ -425,8 +420,8 @@ ${paraBase(16, 'LEFT',   160, 200,  100,    0)}
       <!-- id=17/18  중첩 목록 들여쓰기 (레벨1/레벨2). 레벨0은 id=5 사용 -->
 ${paraBase(17, 'LEFT',   160,   0,  100, 1200)}
 ${paraBase(18, 'LEFT',   160,   0,  100, 1800)}
-      <!-- id=19  인용구: 왼쪽 선+옅은 배경, 본문보다 조금 들여쓰기 -->
-${paraBase(19, 'LEFT',   160, 300,  300,  900, '19')}
+      <!-- id=19  인용구: 왼쪽 선+옅은 배경, 본문보다 조금 들여쓰기, 아래 3mm -->
+${paraBase(19, 'LEFT',   160, 300,  850,  900, '19')}
     </hh:paraProperties>
     <hh:borderFills itemCnt="${19 + customBfMap.size}">
       <!-- id=1 테두리 없음 -->
@@ -736,7 +731,7 @@ function buildCodeBlock(block, prefix = '', contentWidthHwp = 48000) {
         `<hp:sz width="${tableWidth}" widthRelTo="ABSOLUTE" height="${rowHeight}" heightRelTo="ABSOLUTE" protect="0"/>` +
         `<hp:pos treatAsChar="0" affectLSpacing="0" flowWithText="1" allowOverlap="0" holdAnchorAndSO="0" ` +
         `vertRelTo="PARA" horzRelTo="PARA" vertAlign="TOP" horzAlign="LEFT" vertOffset="0" horzOffset="0"/>` +
-        `<hp:outMargin left="0" right="0" top="0" bottom="850"/>` +
+        `<hp:outMargin left="0" right="0" top="0" bottom="${mmToHwp(3)}"/>` +
         `<hp:inMargin left="0" right="0" top="0" bottom="0"/>` +
         `<hp:cellzoneList><hp:cellzone startRowAddr="0" startColAddr="0" endRowAddr="0" endColAddr="0" borderFillIDRef="11"/></hp:cellzoneList>` +
         `<hp:tr><hp:tc name="" header="0" hasMargin="0" protect="0" editable="0" dirty="0" borderFillIDRef="11">` +
