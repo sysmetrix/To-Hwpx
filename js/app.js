@@ -62,6 +62,7 @@ const SUPPORTED_EXTENSIONS = new Set([
 ]);
 const BINARY_EXTENSIONS = new Set(['xlsx', 'xls', 'docx', 'hwp', 'hwpx']);
 const SUPPORTED_FORMAT_LABEL = 'MD, HTML, TXT, CSV, XLSX, JSON, IPYNB, DOCX, HWP';
+const ONBOARDING_SEEN_KEY = 'tohwpx_onboarding_seen';
 
 // ─────────────────────────────────────────────────────────────────────────
 // [DOM 준비 후 초기화]
@@ -86,10 +87,21 @@ document.addEventListener('DOMContentLoaded', () => {
     initMobileMenu();           // 모바일 햄버거 메뉴
     initNavLinks();             // 부드러운 스크롤 네비게이션
     initModals();               // 미리보기·업데이트 내역 모달
+    initHelpDots();             // 설정 라벨의 짧은 도움말 버튼
     initResetButton();          // 현재 선택 파일과 변환 옵션 초기화
     initTheme();                // 다크/라이트 테마 토글·시스템 동기화
     showFormatHintPlaceholder();// 파일 선택 전 포맷 힌트 영역 안내(빈칸 방지)
+    maybeShowOnboardingGuide(); // 첫 방문 1회 기본 사용 안내
 });
+
+function initHelpDots() {
+    document.querySelectorAll('.help-dot').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+        });
+    });
+}
 
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -1232,6 +1244,7 @@ function initOptions() {
         paperEl.addEventListener('change', () => {
             state.paperSize = paperEl.value;
             localStorage.setItem('tohwpx_paperSize', paperEl.value);
+            updateMarginPreview();
             updateAdvancedSettingsSummary();
         });
     }
@@ -1247,6 +1260,7 @@ function initOptions() {
                 state.orientation = btn.dataset.orient === 'landscape' ? 'landscape' : 'portrait';
                 applyOrientationUi(state.orientation);
                 localStorage.setItem('tohwpx_orientation', state.orientation);
+                updateMarginPreview();
                 updateAdvancedSettingsSummary();
             });
         });
@@ -1268,6 +1282,7 @@ function initOptions() {
             if ([130, 150, 160, 180, 200].includes(v)) {
                 state.lineSpacing = v;
                 localStorage.setItem('tohwpx_lineSpacing', String(v));
+                updateAdvancedSettingsSummary();
             }
         });
     }
@@ -1353,7 +1368,7 @@ function updateAdvancedSettingsSummary() {
     const summary = document.getElementById('advanced-settings-summary');
     if (!summary) return;
     const orientationLabel = state.orientation === 'landscape' ? '가로' : '세로';
-    summary.textContent = `현재: ${state.docFont} · ${state.fontSize}pt · ${state.paperSize} · ${orientationLabel}`;
+    summary.textContent = `현재: ${state.docFont} · ${state.fontSize}pt · 줄 ${state.lineSpacing}% · ${state.paperSize} · ${orientationLabel}`;
 }
 
 
@@ -2361,17 +2376,23 @@ function applyOrientationUi(orientation) {
 function updateMarginPreview() {
     const paper = document.querySelector('.margin-paper');
     if (!paper) return;
+    const base = PREVIEW_PAPER_MM[state.paperSize] || PREVIEW_PAPER_MM.A4;
+    const widthMm = state.orientation === 'landscape' ? base.height : base.width;
+    const heightMm = state.orientation === 'landscape' ? base.width : base.height;
     const m = state.pageMargins || {};
-    const px = (value, max, minPx, maxPx) => {
-        const n = Math.max(0, Math.min(max, Number(value) || 0));
-        return Math.round(minPx + (n / max) * (maxPx - minPx));
+    const pct = (value, total, minPct, maxPct) => {
+        const n = Math.max(0, Math.min(total * 0.45, Number(value) || 0));
+        return `${Math.max(minPct, Math.min(maxPct, (n / total) * 100)).toFixed(2)}%`;
     };
-    paper.style.setProperty('--margin-preview-top', `${px(m.top, 60, 18, 42)}px`);
-    paper.style.setProperty('--margin-preview-right', `${px(m.right, 60, 16, 38)}px`);
-    paper.style.setProperty('--margin-preview-bottom', `${px(m.bottom, 60, 18, 42)}px`);
-    paper.style.setProperty('--margin-preview-left', `${px(m.left, 60, 16, 38)}px`);
-    paper.style.setProperty('--margin-preview-header', `${px(m.header, 30, 14, 28)}px`);
-    paper.style.setProperty('--margin-preview-footer', `${px(m.footer, 30, 14, 28)}px`);
+    const contentHeightMm = Math.max(1, heightMm - (Number(m.top) || 0) - (Number(m.bottom) || 0));
+    paper.style.setProperty('--margin-paper-ratio', `${widthMm} / ${heightMm}`);
+    paper.style.setProperty('--margin-paper-width', state.orientation === 'landscape' ? '190px' : '150px');
+    paper.style.setProperty('--margin-preview-top', pct(m.top, heightMm, 2.4, 26));
+    paper.style.setProperty('--margin-preview-right', pct(m.right, widthMm, 2.6, 28));
+    paper.style.setProperty('--margin-preview-bottom', pct(m.bottom, heightMm, 2.4, 26));
+    paper.style.setProperty('--margin-preview-left', pct(m.left, widthMm, 2.6, 28));
+    paper.style.setProperty('--margin-preview-header', pct(m.header, contentHeightMm, 3.2, 30));
+    paper.style.setProperty('--margin-preview-footer', pct(m.footer, contentHeightMm, 3.2, 30));
 }
 
 function applyHrDisplayUi(show) {
@@ -2622,16 +2643,27 @@ function initModals() {
     document.getElementById('close-install-guide')?.addEventListener('click', closeInstallGuide);
     document.getElementById('close-privacy-guide')?.addEventListener('click', closePrivacyGuide);
     document.getElementById('close-font-guide')?.addEventListener('click', closeFontGuide);
+    document.getElementById('close-onboarding-guide')?.addEventListener('click', closeOnboardingGuide);
+    document.getElementById('close-advanced-guide')?.addEventListener('click', closeAdvancedGuide);
     document.getElementById('close-shortcuts')?.addEventListener('click', closeShortcuts);
     document.getElementById('recheck-fonts-btn')?.addEventListener('click', () => renderFontGuide());
+    document.getElementById('onboarding-done')?.addEventListener('click', closeOnboardingGuide);
+    document.getElementById('onboarding-open-advanced')?.addEventListener('click', () => {
+        markOnboardingSeen();
+        closeModal(document.getElementById('onboarding-guide-modal'), false);
+        document.getElementById('open-onboarding-guide')?.focus({ preventScroll: true });
+        showAdvancedGuide();
+    });
 
     // 업데이트 내역 열기 버튼 (유틸리티 바)
     document.getElementById('open-changelog')?.addEventListener('click', showChangelog);
+    document.getElementById('open-onboarding-guide')?.addEventListener('click', showOnboardingGuide);
     document.getElementById('open-pc-guide')?.addEventListener('click', showPcGuide);
     document.getElementById('open-mobile-guide')?.addEventListener('click', showMobileGuide);
     document.getElementById('open-install-guide')?.addEventListener('click', showInstallGuide);
     document.getElementById('open-privacy-guide')?.addEventListener('click', showPrivacyGuide);
     document.getElementById('open-font-guide')?.addEventListener('click', showFontGuide);
+    document.getElementById('open-advanced-guide')?.addEventListener('click', showAdvancedGuide);
     document.getElementById('open-shortcuts')?.addEventListener('click', showShortcuts);
     document.getElementById('open-rhwp-precise')?.addEventListener('click', loadRhwpPrecise);
 
@@ -2656,6 +2688,12 @@ function initModals() {
     });
     document.getElementById('font-guide-modal')?.addEventListener('click', (e) => {
         if (e.target === e.currentTarget) closeFontGuide();
+    });
+    document.getElementById('onboarding-guide-modal')?.addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) closeOnboardingGuide();
+    });
+    document.getElementById('advanced-guide-modal')?.addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) closeAdvancedGuide();
     });
     document.getElementById('shortcuts-modal')?.addEventListener('click', (e) => {
         if (e.target === e.currentTarget) closeShortcuts();
@@ -2715,6 +2753,44 @@ function closePreview() {
 
 function closeChangelog() {
     closeModal(document.getElementById('changelog-modal'));
+}
+
+function markOnboardingSeen() {
+    try {
+        localStorage.setItem(ONBOARDING_SEEN_KEY, '1');
+    } catch (e) {
+        // localStorage 차단 환경에서는 현재 세션에서만 안내가 닫힙니다.
+    }
+}
+
+function maybeShowOnboardingGuide() {
+    try {
+        if (localStorage.getItem(ONBOARDING_SEEN_KEY) === '1') return;
+    } catch (e) {
+        return;
+    }
+    window.setTimeout(() => {
+        if (document.querySelector('.modal-overlay.open')) return;
+        if (state.files?.length || state.file) return;
+        showOnboardingGuide();
+    }, 700);
+}
+
+function showOnboardingGuide() {
+    openModal(document.getElementById('onboarding-guide-modal'));
+}
+
+function closeOnboardingGuide() {
+    markOnboardingSeen();
+    closeModal(document.getElementById('onboarding-guide-modal'));
+}
+
+function showAdvancedGuide() {
+    openModal(document.getElementById('advanced-guide-modal'));
+}
+
+function closeAdvancedGuide() {
+    closeModal(document.getElementById('advanced-guide-modal'));
 }
 
 function showPcGuide() {

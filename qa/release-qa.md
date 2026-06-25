@@ -367,3 +367,22 @@ Scope: static browser-only conversion flow from file selection to HWPX download.
 - [x] 전체 golden PASS
 - [ ] 한컴에서 `관련 페이지`, `참고 자료` 목록 링크 클릭 확인
 - [ ] CORS 차단 이미지 fallback의 `원본 이미지 열기` 클릭 확인
+
+## 26. v4.6.6 온보딩·문서 설정 UX 정리
+
+- [x] 문서 기본 설정에서 `변환` 표현 제거
+- [x] 줄 간격을 글꼴 크기 오른쪽으로 이동하고 설정 요약에 `줄 N%` 표시
+- [x] 상단 제목 블록을 가로 구분선보다 먼저 노출
+- [x] 첫 방문 1회 온보딩: 파일 선택 → 기본 설정 확인 → 변환 후 다운로드 3단계 안내
+- [x] 헤비 유저용 고급 사용 팁: 문서 모양, 폰트, 보존 한계, 추천 순서 분리 안내
+- [x] 세부 설정 항목별 짧은 도움말 버튼 추가
+- [x] Chrome/Edge 설치 안내 아이콘을 같은 품질의 128px SVG 스타일로 교체
+- [x] 페이지 여백 미니맵이 용지 크기·방향·mm 비율을 반영
+- [x] 자동 QA에서 온보딩 모달이 변환 게이트를 막지 않도록 `tohwpx_onboarding_seen` 상태 주입
+- [x] 전체 golden PASS
+- [x] `tests/orientation-e2e.js` PASS
+- [x] `node qa/gate.js qa/fixtures/md_hwpx_test.md` ①~⑧ PASS
+- [x] 데스크톱 캡처: 온보딩 모달, 세부 설정 도움말, 고급 사용 팁 모달 확인
+- [ ] 배포 후 캐시를 비우고 `📋 v4.6.6` 확인
+- [ ] Chrome/Edge 실제 화면에서 설치 안내 아이콘 식별성 확인
+- [ ] 한컴에서 기본 여백·가로/세로 문서가 의도대로 보이는지 시각 확인

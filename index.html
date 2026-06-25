@@ -117,7 +117,7 @@
             <span>｢BWYF｣ AX Challenger 2026</span>
             <!-- [주의] id="open-changelog"는 app.js에서 업데이트 내역 모달을 여는 연결값 -->
             <button class="util-changelog-btn" id="open-changelog" aria-label="업데이트 내역 보기">
-                📋 v4.6.5 업데이트 내역
+                📋 v4.6.6 업데이트 내역
             </button>
         </div>
     </div>
@@ -203,6 +203,7 @@
         <!-- 보조 안내 버튼 — 첫 행동(파일 선택)을 방해하지 않도록 드롭존 아래에 배치 -->
         <div class="hero-badges" aria-label="지원 실행 환경">
             <!-- [주의] 아래 버튼 id는 app.js 모달 열기 기능과 연결됨. 글자만 수정 -->
+            <button type="button" id="open-onboarding-guide">처음 사용 안내</button>
             <button type="button" id="open-pc-guide">PC 브라우저 지원</button>
             <button type="button" id="open-mobile-guide">모바일 브라우저 지원</button>
             <button type="button" id="open-install-guide">앱처럼 설치 가능</button>
@@ -305,10 +306,10 @@
                 <section class="document-shape-panel" aria-labelledby="document-shape-title">
                     <div class="document-shape-head">
                         <div>
-                            <h4 id="document-shape-title">변환 문서 기본 설정</h4>
+                            <h4 id="document-shape-title">문서 기본 설정</h4>
                             <p>이 값으로 HWPX가 만들어집니다. 필요하면 변환 전에 바로 바꾸세요.</p>
                         </div>
-                        <span id="advanced-settings-summary" class="document-shape-summary">현재: 휴먼명조 · 12pt · A4 · 세로</span>
+                        <span id="advanced-settings-summary" class="document-shape-summary">현재: 휴먼명조 · 12pt · 줄 160% · A4 · 세로</span>
                     </div>
                     <div class="options-grid-4col document-shape-grid">
                         <div class="form-row">
@@ -343,6 +344,19 @@
                                 <option value="18">18pt</option>
                             </select>
                         </div>
+                        <div class="form-row line-spacing-row">
+                            <label for="line-spacing" class="label-with-help">
+                                <span>줄 간격</span>
+                                <button type="button" class="help-dot" title="본문과 목록 문단에 적용되는 기본 줄 간격입니다. 코드 블록은 읽기 좋도록 별도 간격을 유지합니다." aria-label="줄 간격 도움말">?</button>
+                            </label>
+                            <select id="line-spacing" name="line-spacing">
+                                <option value="130">130%</option>
+                                <option value="150">150%</option>
+                                <option value="160" selected>160%</option>
+                                <option value="180">180%</option>
+                                <option value="200">200%</option>
+                            </select>
+                        </div>
                         <div class="form-row">
                             <label for="paper-size">용지 크기</label>
                             <select id="paper-size" name="paper-size">
@@ -364,35 +378,19 @@
 
                 <details class="advanced-settings">
                     <summary>
-                        <span class="adv-summary-text">문서 세부 설정 <small>줄 간격 · 구분선 · 상단 제목 블록 · 여백 · 자동 다운로드</small></span>
+                        <span class="adv-summary-text">문서 세부 설정 <small>상단 제목 블록 · 구분선 · 여백 · 자동 다운로드</small></span>
                         <span class="adv-summary-note">더 보기</span>
                         <span class="adv-chevron" aria-hidden="true">▾</span>
                     </summary>
                     <div class="advanced-settings-body">
                         <div class="advanced-settings-grid">
                             <div class="advanced-main">
-                                <div class="form-row line-spacing-row">
-                                    <label for="line-spacing">줄 간격</label>
-                                    <select id="line-spacing" name="line-spacing">
-                                        <option value="130">130%</option>
-                                        <option value="150">150%</option>
-                                        <option value="160" selected>160%</option>
-                                        <option value="180">180%</option>
-                                        <option value="200">200%</option>
-                                    </select>
-                                </div>
-
-                                <div class="form-row hr-display-row">
-                                    <label>가로 구분선</label>
-                                    <div class="seg-control" role="group" aria-label="가로 구분선 표시 여부">
-                                        <button type="button" class="seg-btn is-active" data-hr-display="hide">숨김</button>
-                                        <button type="button" class="seg-btn" data-hr-display="show">표시</button>
-                                    </div>
-                                </div>
-
                                 <!-- [수정 시] 라디오 value(plain/titleblock/cover-unit/cover-annual)는 hwpx.js buildSection의 docType 분기와 맞춰야 함 -->
                                 <div class="form-row">
-                                    <span class="form-row-label">상단 제목 블록</span>
+                                    <span class="form-row-label label-with-help">
+                                        <span>상단 제목 블록</span>
+                                        <button type="button" class="help-dot" title="문서 첫 페이지 맨 위에 보고서형 제목 표를 넣습니다. 일반 메모 변환에는 '없음'이 가장 깔끔합니다." aria-label="상단 제목 블록 도움말">?</button>
+                                    </span>
                                     <div class="card-radio-group" role="radiogroup" aria-label="상단 제목 블록">
                                         <label class="card-radio">
                                             <input type="radio" name="doc-type" value="plain" checked>
@@ -426,12 +424,26 @@
                                 </div>
                                 <p class="form-hint">문서 맨 위에 머리말 표를 넣습니다. '기본'은 회색 띠, '표지'는 색 밴드이며, 모두 가운데에 제목, 아래에 [팀명/이름](점선)과 작성일(오른쪽)이 들어갑니다. 빈 항목은 변환 후 한글에서 채워주세요.</p>
 
+                                <div class="form-row hr-display-row">
+                                    <label class="label-with-help">
+                                        <span>가로 구분선</span>
+                                        <button type="button" class="help-dot" title="Markdown의 --- 같은 구분선을 HWPX에 표시할지 정합니다. 실무 문서에서는 숨김이 보통 더 자연스럽습니다." aria-label="가로 구분선 도움말">?</button>
+                                    </label>
+                                    <div class="seg-control" role="group" aria-label="가로 구분선 표시 여부">
+                                        <button type="button" class="seg-btn is-active" data-hr-display="hide">숨김</button>
+                                        <button type="button" class="seg-btn" data-hr-display="show">표시</button>
+                                    </div>
+                                </div>
+
                             </div>
 
                             <!-- 페이지 여백 — 용지 크기 설정 옆에 배치
                                  hwpx.js buildHwpx()에서 mm → HWPUNIT 변환 (1mm ≈ 283 HWPUNIT) -->
                             <div class="form-row advanced-margins">
-                                <label>페이지 여백 (mm)</label>
+                                <label class="label-with-help">
+                                    <span>페이지 여백 (mm)</span>
+                                    <button type="button" class="help-dot" title="숫자를 바꾸면 종이 미니맵이 즉시 반응합니다. 실제 HWPX 여백값도 같은 mm 기준으로 생성됩니다." aria-label="페이지 여백 도움말">?</button>
+                                </label>
                                 <div class="margin-paper-map" aria-label="페이지 여백 설정">
                                     <div class="margin-paper">
                                         <div class="margin-page-label margin-page-label--top">위</div>
@@ -482,7 +494,10 @@
 
                 <label class="toggle-row" for="auto-download">
                     <span class="toggle-text">
-                        <strong>자동 다운로드</strong>
+                        <strong class="label-with-help">
+                            <span>자동 다운로드</span>
+                            <button type="button" class="help-dot" title="변환이 끝나면 바로 저장합니다. 꺼도 완료 카드에서 언제든 다시 다운로드할 수 있습니다." aria-label="자동 다운로드 도움말">?</button>
+                        </strong>
                         <small>완료 카드에서도 다시 다운로드할 수 있습니다.</small>
                     </span>
                     <input type="checkbox" id="auto-download" class="toggle-input" checked>
@@ -498,6 +513,7 @@
                     ▶ IR 미리보기 보기
                 </button>
                 <pre id="ir-preview" hidden aria-label="IR 미리보기"><code id="ir-content">파일을 업로드하면 중간 표현(IR)이 여기에 표시됩니다.</code></pre>
+                    <button type="button" id="open-advanced-guide" class="advanced-guide-link">고급 사용 팁 보기</button>
                     </div>
                 </details>
 
@@ -1201,6 +1217,85 @@
                     <li>이 창에서 <b>다시 확인</b> 클릭 <span class="font-guide-hint-muted">(권한 요청 팝업이 뜨면 허용)</span></li>
                     <li>한컴오피스에서 사용하려면 한컴오피스 재시작</li>
                 </ol>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     [처음 사용 안내 모달]  라이트 유저 기본 흐름 + 헤비 유저 진입점
+     ════════════════════════════════════════════════════════════════ -->
+<div id="onboarding-guide-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="onboarding-guide-title">
+    <div class="modal-box modal-box--md">
+        <div class="modal-header">
+            <span class="modal-title" id="onboarding-guide-title">처음 사용 안내</span>
+            <button class="modal-close" id="close-onboarding-guide" aria-label="처음 사용 안내 닫기">✕</button>
+        </div>
+        <div class="modal-body">
+            <p class="onboarding-lead">
+                대부분의 문서는 아래 3단계면 충분합니다. 세밀한 문서 모양은 필요할 때만 열어보세요.
+            </p>
+            <ol class="onboarding-steps">
+                <li>
+                    <strong>파일 선택</strong>
+                    <span>드롭존에 파일을 올리거나 클릭해서 MD, DOCX, XLSX 같은 입력 파일을 고릅니다.</span>
+                </li>
+                <li>
+                    <strong>기본 설정 확인</strong>
+                    <span>글꼴, 크기, 줄 간격, 용지 크기와 방향만 확인합니다. 기본값 그대로 써도 됩니다.</span>
+                </li>
+                <li>
+                    <strong>변환 후 다운로드</strong>
+                    <span>HWPX를 내려받아 한컴에서 열고, 색·여백·표지가 의도와 맞는지 눈으로 확인합니다.</span>
+                </li>
+            </ol>
+            <details class="onboarding-detail">
+                <summary>보고서처럼 맞춰야 한다면</summary>
+                <ul>
+                    <li>상단 제목 블록은 보고서형 첫 화면이 필요할 때만 켭니다.</li>
+                    <li>구분선은 기본 숨김이 실무 문서에 더 자연스럽습니다.</li>
+                    <li>여백 미니맵은 실제 mm 값을 반영하므로 숫자를 바꾸며 바로 확인할 수 있습니다.</li>
+                    <li>선택한 폰트를 한컴에서도 그대로 보려면 사용자 PC에 해당 폰트가 설치되어 있어야 합니다.</li>
+                </ul>
+            </details>
+            <div class="onboarding-actions">
+                <button type="button" class="btn-secondary" id="onboarding-open-advanced">고급 사용 팁</button>
+                <button type="button" class="btn-primary-lite" id="onboarding-done">이해했어요</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     [고급 사용 팁 모달]  헤비 유저용 품질·설정 가이드
+     ════════════════════════════════════════════════════════════════ -->
+<div id="advanced-guide-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="advanced-guide-title">
+    <div class="modal-box modal-box--md">
+        <div class="modal-header">
+            <span class="modal-title" id="advanced-guide-title">고급 사용 팁</span>
+            <button class="modal-close" id="close-advanced-guide" aria-label="고급 사용 팁 닫기">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="advanced-guide-grid">
+                <section>
+                    <h3>문서 모양</h3>
+                    <p>줄 간격, 제목 블록, 구분선, 여백은 HWPX 생성값에 직접 반영됩니다. 보고서 제출 전에는 한컴에서 실제 렌더링을 확인하세요.</p>
+                </section>
+                <section>
+                    <h3>폰트</h3>
+                    <p>HWPX에는 폰트 파일이 들어가지 않고 이름만 기록됩니다. 다른 PC에서 같은 모양을 원하면 같은 폰트를 설치해야 합니다.</p>
+                </section>
+                <section>
+                    <h3>보존 한계</h3>
+                    <p>DOCX나 HTML의 복잡한 원본 레이아웃을 그대로 복제하는 도구가 아니라, 내용을 한글 문서 구조로 정리하는 변환기입니다.</p>
+                </section>
+                <section>
+                    <h3>추천 순서</h3>
+                    <p>먼저 기본값으로 변환한 뒤, 필요할 때만 여백과 제목 블록을 조정하는 흐름이 가장 빠르고 안정적입니다.</p>
+                </section>
+            </div>
+            <div class="advanced-guide-note">
+                앞으로 추가하기 좋은 세부 설정은 문단 앞/뒤 간격, 제목 스타일 프리셋, 표 스타일, 링크 표시 방식, 이미지 최대 폭/정렬입니다.
             </div>
         </div>
     </div>

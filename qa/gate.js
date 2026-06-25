@@ -67,6 +67,9 @@ function childCount(xml, container, child) {
     const srv = await serve();
     const browser = await chromium.launch();
     const ctx = await browser.newContext({ acceptDownloads: true });
+    await ctx.addInitScript(() => {
+        localStorage.setItem('tohwpx_onboarding_seen', '1');
+    });
     const page = await ctx.newPage();
     const errs = [];
     page.on('pageerror', e => errs.push(e.message));

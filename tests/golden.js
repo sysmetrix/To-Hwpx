@@ -628,6 +628,24 @@ async function validateCommercialUx(page) {
   await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => window.JSZip && window.marked && window.XLSX, null, { timeout: 30000 });
 
+  const onboardingGuide = page.locator('#open-onboarding-guide');
+  await onboardingGuide.click();
+  assert(await page.locator('#onboarding-guide-modal').isVisible(), 'ux: 처음 사용 안내 모달이 열리지 않음');
+  const onboardingText = await page.locator('#onboarding-guide-modal').textContent();
+  assert(onboardingText.includes('대부분의 문서는 아래 3단계면 충분합니다')
+    && onboardingText.includes('보고서처럼 맞춰야 한다면'),
+    'ux: 라이트/헤비 유저 안내 문구가 누락됨');
+  await page.locator('#onboarding-open-advanced').click();
+  assert(await page.locator('#advanced-guide-modal').isVisible(), 'ux: 처음 안내에서 고급 사용 팁으로 이동하지 못함');
+  const advancedText = await page.locator('#advanced-guide-modal').textContent();
+  assert(advancedText.includes('문서 모양')
+    && advancedText.includes('보존 한계')
+    && advancedText.includes('문단 앞/뒤 간격'),
+    'ux: 고급 사용 팁 핵심 내용이 누락됨');
+  await page.keyboard.press('Escape');
+  assert(await onboardingGuide.evaluate(el => document.activeElement === el),
+    'ux: 고급 사용 팁 종료 후 처음 안내 버튼으로 포커스가 복귀하지 않음');
+
   const pcGuide = page.locator('#open-pc-guide');
   await pcGuide.focus();
   await pcGuide.press('Enter');
@@ -647,10 +665,12 @@ async function validateCommercialUx(page) {
     'ux: Edge 설치 아이콘 안내가 없음');
   const chromeInstallIcon = fs.readFileSync(path.join(ROOT, 'icons/chrome-install.svg'), 'utf8');
   const edgeInstallIcon = fs.readFileSync(path.join(ROOT, 'icons/edge-install.svg'), 'utf8');
-  assert(chromeInstallIcon.includes('stroke="#667085"')
-    && edgeInstallIcon.includes('stroke="#667085"')
-    && !chromeInstallIcon.includes('<rect width="64"')
-    && !edgeInstallIcon.includes('<rect width="64"'),
+  assert(chromeInstallIcon.includes('width="128"')
+    && edgeInstallIcon.includes('width="128"')
+    && chromeInstallIcon.includes('feDropShadow')
+    && edgeInstallIcon.includes('feDropShadow')
+    && chromeInstallIcon.includes('linearGradient')
+    && edgeInstallIcon.includes('linearGradient'),
     'ux: Chrome/Edge 설치 아이콘의 색상 또는 배경 스타일이 통일되지 않음');
   const installGuideText = await page.locator('#install-guide-modal').textContent();
   assert(installGuideText.includes('브라우저마다 설치 아이콘 모양이 다릅니다'),
@@ -693,6 +713,10 @@ async function validateCommercialUx(page) {
   assert(serviceWorker.includes("'./icons/chrome-install.svg'")
     && serviceWorker.includes("'./icons/edge-install.svg'"),
     'pwa: 설치 안내 아이콘이 오프라인 앱 셸 캐시에 없음');
+  assert(await page.locator('.help-dot[aria-label="줄 간격 도움말"]').count() === 1
+    && await page.locator('.help-dot[aria-label="페이지 여백 도움말"]').count() === 1
+    && await page.locator('#open-advanced-guide').count() === 1,
+    'ux: 세부 설정 도움말 또는 고급 사용 팁 진입점 누락');
   console.log('PASS UX    keyboard, modal, warning download, PWA scope');
 }
 
@@ -967,6 +991,7 @@ async function validatePretendardCompatibility(page) {
   const context = await browser.newContext({ acceptDownloads: true });
   await context.addInitScript(() => {
     localStorage.setItem('tohwpx_autoDownload', 'true');
+    localStorage.setItem('tohwpx_onboarding_seen', '1');
   });
   await context.route('https://edwardkim.github.io/**', route => route.abort());
   const page = await context.newPage();
