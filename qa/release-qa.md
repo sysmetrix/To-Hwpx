@@ -56,6 +56,7 @@ Scope: static browser-only conversion flow from file selection to HWPX download.
 - `hc:img@binaryItemIDRef`가 `content.hpf` item, `BinData`, package manifest와 연결되는지 확인
 - 일반 데이터 표가 `pageBreak="TABLE"`, `repeatHeader="1"`, `treatAsChar="0"`, `hp:outMargin@bottom="850"`이고 첫 행 셀이 `header="1"`인지 확인
 - 코드 블록 표의 `hp:outMargin@bottom="850"`, 인용구 `paraPr id=19`의 `hh:next value="850"` 및 코드 글자 모양이 사용자가 선택한 글꼴 id를 참조하는지 확인
+- 구분선 표의 `hp:outMargin@top/bottom="850"`과 구분선 앞뒤 외부 빈 문단 제거 여부 확인
 - 다운로드 링크의 파일명과 `type="application/hwp+zip"` 확인
 
 ## 5. Security and Privacy Checks
@@ -216,3 +217,11 @@ Scope: static browser-only conversion flow from file selection to HWPX download.
 - [x] `npm run test:golden` PASS
 - [x] `node qa/gate.js qa/fixtures/md_hwpx_test.md` PASS
 - [ ] 한컴오피스에서 인용구·코드문 아래 3mm 간격과 코드문 선택 글꼴 적용 확인
+
+## 17. v4.5.14 구분선 표 바깥 여백
+
+- [x] 구분선 표 `hp:outMargin@top/bottom="850"`(각 약 3mm) 자동 검사
+- [x] 구분선 앞뒤 외부 `paraPrIDRef="9"` 빈 문단이 없는지 자동 검사
+- [x] `npm run test:golden` PASS
+- [x] `node qa/gate.js qa/fixtures/md_hwpx_test.md` PASS
+- [ ] 한컴오피스에서 구분선 위아래 3mm와 불필요한 빈 문단 제거 확인

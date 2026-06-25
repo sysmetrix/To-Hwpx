@@ -1,6 +1,20 @@
 {
-  "current": "4.5.13",
+  "current": "4.5.14",
   "versions": [
+    {
+      "version": "4.5.14",
+      "date": "2026-06-25",
+      "user": [
+        "구분선 위아래 간격을 빈 줄이 아닌 표 바깥 여백 3mm로 적용해 편집할 때 불필요한 빈 문단이 남지 않도록 개선했습니다."
+      ],
+      "dev": [
+        "[v4.5.14] hwpx.js: 구분선 표 hp:outMargin 위아래를 mmToHwp(3)로 설정하고 buildHrPara 뒤의 buildBlankPara 제거",
+        "[v4.5.14] hwpx.js: 구분선과 인접한 IR blank 블록을 렌더링에서 제외해 위아래 외부 빈 문단 제거",
+        "[v4.5.14] tests/fixtures/sample.md/tests/golden.js: 구분선 표 위아래 3mm 및 인접 빈 문단 부재 회귀 검사 추가",
+        "[v4.5.14] AGENTS.md/playbook/gotchas/release-qa: 구분선 간격은 표 바깥 여백으로 처리하는 기준 기록",
+        "[v4.5.14] package.json/package-lock.json/sw.js/index.html: v4.5.14 반영"
+      ]
+    },
     {
       "version": "4.5.13",
       "date": "2026-06-25",
