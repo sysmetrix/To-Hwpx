@@ -1,6 +1,18 @@
 {
-  "current": "4.5.15",
+  "current": "4.5.16",
   "versions": [
+    {
+      "version": "4.5.16",
+      "date": "2026-06-25",
+      "user": [
+        "브라우저 탭과 설치형 앱의 제목을 \"To HWPX - 한글로\"로 통일했습니다."
+      ],
+      "dev": [
+        "[v4.5.16] index.html: 브라우저 탭 title과 og:title을 \"To HWPX - 한글로\"로 변경",
+        "[v4.5.16] manifest.json: PWA name과 short_name을 \"To HWPX - 한글로\"로 통일",
+        "[v4.5.16] package.json/package-lock.json/sw.js/index.html: v4.5.16 반영"
+      ]
+    },
     {
       "version": "4.5.15",
       "date": "2026-06-25",
