@@ -338,9 +338,9 @@ function updateDropZoneMulti(n) {
                 <span>개별 HWPX + ZIP</span>
             </div>
             <div class="format-hint-body">
-                <span><b>공통 적용</b> 문서 모양 설정(글꼴·크기·용지·여백)이 모든 파일에 적용됩니다</span>
+                <span><b>공통 적용</b> 변환 전 문서 모양(글꼴·크기·용지·방향)이 모든 파일에 적용됩니다</span>
                 <span><b>제목</b> 파일별 제목 기준 규칙으로 자동 생성됩니다</span>
-                <span class="format-hint-settings"><b>문서 모양</b> 글꼴, 용지, 여백은 문서 모양 설정에서 바꿀 수 있습니다</span>
+                <span class="format-hint-settings"><b>문서 모양</b> 글꼴, 크기, 용지, 방향은 아래에서 바로 바꿀 수 있습니다</span>
             </div>
         `;
         hint.style.display = 'block';
@@ -403,7 +403,7 @@ function setCustomTitleEnabled(enabled) {
     const help = document.querySelector('.title-help');
     if (help) {
         help.innerHTML = enabled
-            ? '<b>문서 모양 설정의 상단 제목 블록</b>을 켜면 이 제목이 문서 맨 위에 표시됩니다.'
+            ? '상단 제목 블록은 세부 설정에서 켤 수 있습니다.'
             : '여러 파일은 <b>제목 기준 규칙</b>으로 파일마다 제목을 자동 생성합니다.';
     }
 }
@@ -525,7 +525,7 @@ function updateFormatExpectation(ext, waiting = false) {
         <div class="format-hint-body">
             <span><b>보존</b> ${escHtml(summary.preserved)}</span>
             <span><b>확인</b> ${escHtml(summary.lossy)}</span>
-            ${waiting ? '' : '<span class="format-hint-settings"><b>문서 모양</b> 글꼴, 용지, 여백은 문서 모양 설정에서 바꿀 수 있습니다</span>'}
+            ${waiting ? '' : '<span class="format-hint-settings"><b>문서 모양</b> 글꼴, 크기, 용지, 방향은 아래에서 바로 바꿀 수 있습니다</span>'}
         </div>
     `;
     hint.style.display = 'block';
@@ -1603,11 +1603,11 @@ function updateConvertButton(enabled) {
     if (state.inputMode === 'paste') {
         btn.textContent = !enabled
             ? (state.isConverting ? '변환 중…' : '내용을 입력하세요')
-            : '변환 시작 →';
+            : '이 설정으로 HWPX 만들기';
     } else {
         btn.textContent = !enabled
             ? (state.isConverting ? '변환 중…' : '파일을 먼저 선택하세요')
-            : (n > 1 ? `${n}개 변환 시작 →` : '변환 시작 →');
+            : (n > 1 ? `이 설정으로 ${n}개 HWPX 만들기` : '이 설정으로 HWPX 만들기');
     }
 }
 

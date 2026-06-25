@@ -980,6 +980,52 @@ a:hover { text-decoration: underline; }
     grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.2fr);
 }
 
+.document-shape-panel {
+    margin: 4px 0 14px;
+    padding: 16px 0 14px;
+    border-top: 1px solid var(--c-border);
+    border-bottom: 1px solid var(--c-border);
+}
+.document-shape-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 18px;
+    margin-bottom: 14px;
+}
+.document-shape-head h4 {
+    margin: 0 0 3px;
+    color: var(--c-text);
+    font-size: 0.95rem;
+    font-weight: 800;
+    letter-spacing: 0;
+}
+.document-shape-head p {
+    margin: 0;
+    color: var(--c-text-muted);
+    font-size: 0.78rem;
+    line-height: 1.45;
+}
+.document-shape-summary {
+    flex-shrink: 0;
+    max-width: 48%;
+    padding: 5px 9px;
+    border-radius: var(--radius-sm);
+    background: var(--c-primary-light);
+    color: var(--c-primary);
+    font-size: 0.75rem;
+    font-weight: 800;
+    line-height: 1.35;
+    text-align: right;
+}
+.document-shape-grid {
+    grid-template-columns: minmax(170px, 1.5fr) minmax(88px, 0.8fr) minmax(100px, 0.85fr) minmax(128px, 1fr);
+    gap: 10px;
+}
+.document-shape-grid .form-row {
+    margin-bottom: 0;
+}
+
 .advanced-settings {
     border: 1.5px solid var(--c-border);
     border-radius: var(--radius-md);
@@ -2210,6 +2256,16 @@ a:hover { text-decoration: underline; }
     .form-group-row { grid-template-columns: 1fr; }
     .options-2col { grid-template-columns: 1fr; }
     .options-grid-4col { grid-template-columns: repeat(2, 1fr); }
+    .document-shape-grid { grid-template-columns: minmax(0, 1.35fr) minmax(0, 0.8fr); }
+    .document-shape-head {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 8px;
+    }
+    .document-shape-summary {
+        max-width: none;
+        text-align: left;
+    }
     .advanced-settings-grid { grid-template-columns: 1fr; }
     .advanced-settings summary { align-items: flex-start; }
     .adv-summary-note { display: none; }
@@ -2263,6 +2319,13 @@ a:hover { text-decoration: underline; }
         word-break: keep-all;
     }
     .options-grid-4col { grid-template-columns: 1fr; }
+    .document-shape-grid { grid-template-columns: 1fr; }
+    .document-shape-panel {
+        padding: 14px 0;
+    }
+    .document-shape-head h4 {
+        font-size: 0.92rem;
+    }
     #pipeline-steps { grid-template-columns: repeat(2, 1fr); }
     .steps-grid  { grid-template-columns: 1fr; }
     .margin-grid { grid-template-columns: 1fr 1fr; }

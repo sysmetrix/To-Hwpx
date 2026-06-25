@@ -117,7 +117,7 @@
             <span>｢BWYF｣ AX Challenger 2026</span>
             <!-- [주의] id="open-changelog"는 app.js에서 업데이트 내역 모달을 여는 연결값 -->
             <button class="util-changelog-btn" id="open-changelog" aria-label="업데이트 내역 보기">
-                📋 v4.5.22 업데이트 내역
+                📋 v4.6.0 업데이트 내역
             </button>
         </div>
     </div>
@@ -289,7 +289,7 @@
                                name="doc-title"
                                placeholder="비워두면 문서에서 제목을 찾습니다"
                                maxlength="200">
-                        <p class="form-hint title-help"><b>문서 모양 설정의 상단 제목 블록</b>을 켜면 이 제목이 문서 맨 위에 표시됩니다.</p>
+                        <p class="form-hint title-help">상단 제목 블록은 세부 설정에서 켤 수 있습니다.</p>
                         <div class="title-source-row">
                             <span>제목을 비웠을 때</span>
                             <select id="title-source" name="title-source" aria-label="문서 제목을 비워둘 때 적용할 제목 기준">
@@ -302,10 +302,70 @@
                     <div id="format-hint" role="status" aria-live="polite"></div>
                 </div>
 
+                <section class="document-shape-panel" aria-labelledby="document-shape-title">
+                    <div class="document-shape-head">
+                        <div>
+                            <h4 id="document-shape-title">변환 전 문서 모양</h4>
+                            <p>이 값으로 HWPX가 만들어집니다. 필요하면 변환 전에 바로 바꾸세요.</p>
+                        </div>
+                        <span id="advanced-settings-summary" class="document-shape-summary">맑은 고딕 · 12pt · A4 · 세로</span>
+                    </div>
+                    <div class="options-grid-4col document-shape-grid">
+                        <div class="form-row">
+                            <label for="doc-font">한글 폰트</label>
+                            <!-- [주의] HWPX에는 폰트 파일이 임베딩되지 않고 폰트 이름만 기록됩니다.
+                                 선택한 폰트를 한글에서 그대로 보려면 사용자 PC에 TTF/OTF 설치가 필요합니다. -->
+                            <div class="font-select-wrap">
+                                <select id="doc-font" name="doc-font">
+                                    <option value="휴먼명조">휴먼명조</option>
+                                    <option value="맑은 고딕" selected>맑은 고딕</option>
+                                    <option value="나눔고딕">나눔고딕</option>
+                                    <option value="KoPub돋움체 Medium">KoPub돋움체</option>
+                                    <option value="Noto Sans KR">Noto Sans KR</option>
+                                    <option value="Pretendard GOV Variable">Pretendard GOV Variable</option>
+                                </select>
+                                <button type="button" id="open-font-guide" class="font-guide-btn"
+                                        aria-label="폰트 설치 안내 열기" title="폰트 설치 안내">
+                                    안내
+                                </button>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <label for="font-size">글꼴 크기</label>
+                            <select id="font-size" name="font-size">
+                                <option value="9">9pt</option>
+                                <option value="10">10pt</option>
+                                <option value="11">11pt</option>
+                                <option value="12" selected>12pt</option>
+                                <option value="13">13pt</option>
+                                <option value="14">14pt</option>
+                                <option value="16">16pt</option>
+                                <option value="18">18pt</option>
+                            </select>
+                        </div>
+                        <div class="form-row">
+                            <label for="paper-size">용지 크기</label>
+                            <select id="paper-size" name="paper-size">
+                                <option value="A4" selected>A4</option>
+                                <option value="A3">A3</option>
+                                <option value="B5">B5</option>
+                                <option value="Letter">Letter</option>
+                            </select>
+                        </div>
+                        <div class="form-row">
+                            <label>용지 방향</label>
+                            <div class="seg-control" role="group" aria-label="용지 방향">
+                                <button type="button" class="seg-btn is-active" data-orient="portrait">세로</button>
+                                <button type="button" class="seg-btn" data-orient="landscape">가로</button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
                 <details class="advanced-settings">
                     <summary>
-                        <span class="adv-summary-text">⚙ 문서 모양 설정 <small id="advanced-settings-summary">맑은 고딕 · 12pt · A4 · 세로</small></span>
-                        <span class="adv-summary-note">글꼴 · 용지 · 여백 조정</span>
+                        <span class="adv-summary-text">세부 설정 <small>상단 제목 블록 · 페이지 여백 · 자동 다운로드</small></span>
+                        <span class="adv-summary-note">더 보기</span>
                         <span class="adv-chevron" aria-hidden="true">▾</span>
                     </summary>
                     <div class="advanced-settings-body">
@@ -347,56 +407,6 @@
                                 </div>
                                 <p class="form-hint">문서 맨 위에 머리말 표를 넣습니다. '기본'은 회색 띠, '표지'는 색 밴드이며, 모두 가운데에 제목, 아래에 [팀명/이름](점선)과 작성일(오른쪽)이 들어갑니다. 빈 항목은 변환 후 한글에서 채워주세요.</p>
 
-                                <div class="options-grid-4col options-grid-advanced">
-                                    <div class="form-row">
-                                        <label for="doc-font">한글 폰트</label>
-                                        <!-- [주의] HWPX에는 폰트 파일이 임베딩되지 않고 폰트 이름만 기록됩니다.
-                                             선택한 폰트를 한글에서 그대로 보려면 사용자 PC에 TTF/OTF 설치가 필요합니다. -->
-                                        <div class="font-select-wrap">
-                                            <select id="doc-font" name="doc-font">
-                                                <option value="휴먼명조">휴먼명조</option>
-                                                <option value="맑은 고딕" selected>맑은 고딕</option>
-                                                <option value="나눔고딕">나눔고딕</option>
-                                                <option value="KoPub돋움체 Medium">KoPub돋움체</option>
-                                                <option value="Noto Sans KR">Noto Sans KR</option>
-                                                <option value="Pretendard GOV Variable">Pretendard GOV Variable</option>
-                                            </select>
-                                            <button type="button" id="open-font-guide" class="font-guide-btn"
-                                                    aria-label="폰트 설치 안내 열기" title="폰트 설치 안내">
-                                                안내
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div class="form-row">
-                                        <label for="font-size">글꼴 크기</label>
-                                        <select id="font-size" name="font-size">
-                                            <option value="9">9pt</option>
-                                            <option value="10">10pt</option>
-                                            <option value="11">11pt</option>
-                                            <option value="12" selected>12pt</option>
-                                            <option value="13">13pt</option>
-                                            <option value="14">14pt</option>
-                                            <option value="16">16pt</option>
-                                            <option value="18">18pt</option>
-                                        </select>
-                                    </div>
-                                    <div class="form-row">
-                                        <label for="paper-size">용지 크기</label>
-                                        <select id="paper-size" name="paper-size">
-                                            <option value="A4" selected>A4</option>
-                                            <option value="A3">A3</option>
-                                            <option value="B5">B5</option>
-                                            <option value="Letter">Letter</option>
-                                        </select>
-                                    </div>
-                                    <div class="form-row">
-                                        <label>용지 방향</label>
-                                        <div class="seg-control" role="group" aria-label="용지 방향">
-                                            <button type="button" class="seg-btn is-active" data-orient="portrait">세로</button>
-                                            <button type="button" class="seg-btn" data-orient="landscape">가로</button>
-                                        </div>
-                                    </div>
-                                </div>
                             </div>
 
                             <!-- 페이지 여백 — 용지 크기 설정 옆에 배치
