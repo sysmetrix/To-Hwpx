@@ -117,7 +117,7 @@
             <span>｢BWYF｣ AX Challenger 2026</span>
             <!-- [주의] id="open-changelog"는 app.js에서 업데이트 내역 모달을 여는 연결값 -->
             <button class="util-changelog-btn" id="open-changelog" aria-label="업데이트 내역 보기">
-                📋 v4.5.21 업데이트 내역
+                📋 v4.5.22 업데이트 내역
             </button>
         </div>
     </div>
@@ -289,7 +289,7 @@
                                name="doc-title"
                                placeholder="비워두면 문서에서 제목을 찾습니다"
                                maxlength="200">
-                        <p class="form-hint title-help"><b>고급 설정의 상단 제목 블록</b>을 켜면 이 제목이 문서 맨 위에 표시됩니다.</p>
+                        <p class="form-hint title-help"><b>문서 모양 설정의 상단 제목 블록</b>을 켜면 이 제목이 문서 맨 위에 표시됩니다.</p>
                         <div class="title-source-row">
                             <span>제목을 비웠을 때</span>
                             <select id="title-source" name="title-source" aria-label="문서 제목을 비워둘 때 적용할 제목 기준">
@@ -304,7 +304,8 @@
 
                 <details class="advanced-settings">
                     <summary>
-                        <span class="adv-summary-text">⚙ 고급 설정 <small>글꼴 · 글꼴 크기 · 용지 · 여백 · 자동 다운로드</small></span>
+                        <span class="adv-summary-text">⚙ 문서 모양 설정 <small id="advanced-settings-summary">맑은 고딕 · 12pt · A4 · 세로</small></span>
+                        <span class="adv-summary-note">글꼴 · 용지 · 여백 조정</span>
                         <span class="adv-chevron" aria-hidden="true">▾</span>
                     </summary>
                     <div class="advanced-settings-body">

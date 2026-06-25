@@ -338,8 +338,9 @@ function updateDropZoneMulti(n) {
                 <span>개별 HWPX + ZIP</span>
             </div>
             <div class="format-hint-body">
-                <span><b>공통 적용</b> 아래 고급 설정(글꼴·크기·용지·여백)이 모든 파일에 적용됩니다</span>
+                <span><b>공통 적용</b> 문서 모양 설정(글꼴·크기·용지·여백)이 모든 파일에 적용됩니다</span>
                 <span><b>제목</b> 파일별 제목 기준 규칙으로 자동 생성됩니다</span>
+                <span class="format-hint-settings"><b>문서 모양</b> 글꼴, 용지, 여백은 문서 모양 설정에서 바꿀 수 있습니다</span>
             </div>
         `;
         hint.style.display = 'block';
@@ -402,7 +403,7 @@ function setCustomTitleEnabled(enabled) {
     const help = document.querySelector('.title-help');
     if (help) {
         help.innerHTML = enabled
-            ? '<b>고급 설정의 상단 제목 블록</b>을 켜면 이 제목이 문서 맨 위에 표시됩니다.'
+            ? '<b>문서 모양 설정의 상단 제목 블록</b>을 켜면 이 제목이 문서 맨 위에 표시됩니다.'
             : '여러 파일은 <b>제목 기준 규칙</b>으로 파일마다 제목을 자동 생성합니다.';
     }
 }
@@ -524,6 +525,7 @@ function updateFormatExpectation(ext, waiting = false) {
         <div class="format-hint-body">
             <span><b>보존</b> ${escHtml(summary.preserved)}</span>
             <span><b>확인</b> ${escHtml(summary.lossy)}</span>
+            ${waiting ? '' : '<span class="format-hint-settings"><b>문서 모양</b> 글꼴, 용지, 여백은 문서 모양 설정에서 바꿀 수 있습니다</span>'}
         </div>
     `;
     hint.style.display = 'block';
@@ -1191,6 +1193,7 @@ function initOptions() {
         fontEl.addEventListener('change', () => {
             state.docFont = fontEl.value;
             localStorage.setItem('tohwpx_font', fontEl.value);
+            updateAdvancedSettingsSummary();
         });
     }
 
@@ -1210,6 +1213,7 @@ function initOptions() {
             if (!isNaN(v) && v >= 6 && v <= 36) {
                 state.fontSize = v;
                 localStorage.setItem('tohwpx_fontSize', String(v));
+                updateAdvancedSettingsSummary();
             }
         });
     }
@@ -1225,6 +1229,7 @@ function initOptions() {
         paperEl.addEventListener('change', () => {
             state.paperSize = paperEl.value;
             localStorage.setItem('tohwpx_paperSize', paperEl.value);
+            updateAdvancedSettingsSummary();
         });
     }
 
@@ -1239,6 +1244,7 @@ function initOptions() {
                 state.orientation = btn.dataset.orient === 'landscape' ? 'landscape' : 'portrait';
                 applyOrientationUi(state.orientation);
                 localStorage.setItem('tohwpx_orientation', state.orientation);
+                updateAdvancedSettingsSummary();
             });
         });
     }
@@ -1291,6 +1297,8 @@ function initOptions() {
             irToggle.setAttribute('aria-expanded', String(isHidden));
         });
     }
+
+    updateAdvancedSettingsSummary();
 }
 
 function updateTitlePlaceholder(titleSource = state.titleSource) {
@@ -1299,6 +1307,13 @@ function updateTitlePlaceholder(titleSource = state.titleSource) {
     titleEl.placeholder = titleSource === 'filename'
         ? '비워두면 파일 이름을 제목으로 씁니다'
         : '비워두면 문서에서 제목을 찾습니다';
+}
+
+function updateAdvancedSettingsSummary() {
+    const summary = document.getElementById('advanced-settings-summary');
+    if (!summary) return;
+    const orientationLabel = state.orientation === 'landscape' ? '가로' : '세로';
+    summary.textContent = `${state.docFont} · ${state.fontSize}pt · ${state.paperSize} · ${orientationLabel}`;
 }
 
 
@@ -2854,6 +2869,7 @@ function resetConverterState() {
         if (el) el.value = value;
     }
     applyOrientationUi('portrait');
+    updateAdvancedSettingsSummary();
     updateConvertButton(false);
     showToast('<strong>↺ 초기화 완료</strong> <span>선택 파일과 변환 옵션을 기본값으로 되돌렸습니다.</span>');
     requestAnimationFrame(() => window.scrollTo({ top: 0, left: 0, behavior: 'smooth' }));

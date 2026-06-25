@@ -1012,6 +1012,17 @@ a:hover { text-decoration: underline; }
 }
 .adv-summary-text {
     color: var(--c-primary);
+    min-width: 0;
+}
+.adv-summary-note {
+    margin-left: auto;
+    padding: 4px 8px;
+    border-radius: 999px;
+    background: var(--c-primary-light);
+    color: var(--c-primary);
+    font-size: 0.72rem;
+    font-weight: 700;
+    white-space: nowrap;
 }
 .adv-chevron {                       /* 펼침 표시 — 원형 배경으로 클릭 가능함을 명확히 */
     flex-shrink: 0;
@@ -1029,6 +1040,7 @@ a:hover { text-decoration: underline; }
 .advanced-settings[open] .adv-chevron { transform: rotate(180deg); }
 .advanced-settings summary:hover { background: var(--c-primary-light); }
 .advanced-settings summary:hover .adv-chevron { background: var(--c-primary); color: #fff; }
+.advanced-settings summary:hover .adv-summary-note { background: var(--c-surface); }
 .advanced-settings-body {
     padding: 14px;
     border-top: 1px solid var(--c-border);
@@ -1510,6 +1522,9 @@ a:hover { text-decoration: underline; }
 .format-hint-body b {
     color: var(--c-text);
     margin-right: 4px;
+}
+.format-hint-settings {
+    color: var(--c-primary);
 }
 
 /* IR 미리보기 토글 */
@@ -2196,6 +2211,8 @@ a:hover { text-decoration: underline; }
     .options-2col { grid-template-columns: 1fr; }
     .options-grid-4col { grid-template-columns: repeat(2, 1fr); }
     .advanced-settings-grid { grid-template-columns: 1fr; }
+    .advanced-settings summary { align-items: flex-start; }
+    .adv-summary-note { display: none; }
     .title-format-row { grid-template-columns: 1fr; gap: 0; }
     #pipeline-steps { grid-template-columns: repeat(4, 1fr); }
     .result-topline { align-items: stretch; flex-direction: column; }
