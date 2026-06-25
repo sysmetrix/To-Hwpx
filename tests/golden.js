@@ -628,13 +628,22 @@ async function validateCommercialUx(page) {
   await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => window.JSZip && window.marked && window.XLSX, null, { timeout: 30000 });
 
+  assert(await page.locator('#quick-guide').isVisible(), 'ux: 닫아도 남는 처음 사용 안내 바가 보이지 않음');
+  const quickGuideText = await page.locator('#quick-guide').textContent();
+  assert(quickGuideText.includes('파일 선택') && quickGuideText.includes('HWPX 다운로드'),
+    'ux: 처음 사용 안내 바의 핵심 흐름 문구 누락');
+
   const onboardingGuide = page.locator('#open-onboarding-guide');
   await onboardingGuide.click();
   assert(await page.locator('#onboarding-guide-modal').isVisible(), 'ux: 처음 사용 안내 모달이 열리지 않음');
   const onboardingText = await page.locator('#onboarding-guide-modal').textContent();
-  assert(onboardingText.includes('대부분의 문서는 아래 3단계면 충분합니다')
-    && onboardingText.includes('보고서처럼 맞춰야 한다면'),
-    'ux: 라이트/헤비 유저 안내 문구가 누락됨');
+  assert(onboardingText.includes('대부분의 문서는 아래 순서만 기억하면 됩니다')
+    && onboardingText.includes('보고서처럼 맞출 때만'),
+    'ux: 축약된 라이트/헤비 유저 안내 문구가 누락됨');
+  await page.keyboard.press('Escape');
+  assert(await page.locator('#quick-guide').isVisible(),
+    'ux: 처음 안내 모달을 닫은 뒤 잔존 안내 바가 사라짐');
+  await onboardingGuide.click();
   await page.locator('#onboarding-open-advanced').click();
   assert(await page.locator('#advanced-guide-modal').isVisible(), 'ux: 처음 안내에서 고급 사용 팁으로 이동하지 못함');
   const advancedText = await page.locator('#advanced-guide-modal').textContent();
@@ -645,6 +654,9 @@ async function validateCommercialUx(page) {
   await page.keyboard.press('Escape');
   assert(await onboardingGuide.evaluate(el => document.activeElement === el),
     'ux: 고급 사용 팁 종료 후 처음 안내 버튼으로 포커스가 복귀하지 않음');
+  await page.locator('#quick-guide-hide').click();
+  assert(!(await page.locator('#quick-guide').isVisible()),
+    'ux: 안내 바 숨기기 버튼이 동작하지 않음');
 
   const pcGuide = page.locator('#open-pc-guide');
   await pcGuide.focus();
@@ -717,6 +729,8 @@ async function validateCommercialUx(page) {
     && await page.locator('.help-dot[aria-label="페이지 여백 도움말"]').count() === 1
     && await page.locator('#open-advanced-guide').count() === 1,
     'ux: 세부 설정 도움말 또는 고급 사용 팁 진입점 누락');
+  assert((await page.locator('#workflow-hint').textContent()).includes('3단계'),
+    'ux: 변환 완료 후 상황별 흐름 안내가 완료 단계로 바뀌지 않음');
   console.log('PASS UX    keyboard, modal, warning download, PWA scope');
 }
 

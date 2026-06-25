@@ -581,6 +581,49 @@ a:hover { text-decoration: underline; }
     line-height: 1.65;
     text-align: left;
 }
+.quick-guide {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: min(620px, 100%);
+    margin: 12px auto 0;
+    padding: 10px 12px;
+    border: 1px solid var(--c-info-border);
+    border-radius: var(--radius-md);
+    background: var(--c-info-bg);
+    color: var(--c-text-sub);
+    font-size: 0.84rem;
+    line-height: 1.45;
+}
+.quick-guide[hidden] {
+    display: none;
+}
+.quick-guide b {
+    color: var(--c-primary);
+}
+.quick-guide-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+.quick-guide-actions button {
+    padding: 6px 9px;
+    border: 1px solid var(--c-border);
+    border-radius: 999px;
+    background: var(--c-surface);
+    color: var(--c-primary);
+    font-family: var(--font-main);
+    font-size: 0.76rem;
+    font-weight: 800;
+    cursor: pointer;
+    white-space: nowrap;
+}
+.quick-guide-actions button:hover {
+    border-color: var(--c-primary);
+    background: var(--c-primary-light);
+}
 /* 파일 선택 완료 상태 */
 .file-selected-info {
     display: flex;
@@ -1136,6 +1179,19 @@ a:hover { text-decoration: underline; }
 #cda-label {
     font-size: 0.85rem;
     color: var(--c-text-sub);
+}
+.workflow-hint {
+    margin: -4px 0 14px;
+    padding: 9px 11px;
+    border: 1px solid var(--c-border);
+    border-radius: var(--radius-sm);
+    background: var(--c-surface-alt);
+    color: var(--c-text-sub);
+    font-size: 0.8rem;
+    line-height: 1.5;
+}
+.workflow-hint b {
+    color: var(--c-primary);
 }
 
 .title-format-row {
@@ -2431,6 +2487,18 @@ a:hover { text-decoration: underline; }
         white-space: normal;
         text-align: center;
     }
+    .quick-guide {
+        align-items: stretch;
+        flex-direction: column;
+        text-align: left;
+    }
+    .quick-guide-actions {
+        justify-content: stretch;
+    }
+    .quick-guide-actions button {
+        flex: 1;
+        text-align: center;
+    }
     .formats-section,
     .value-section,
     .converter-section,
@@ -2929,6 +2997,15 @@ a:hover { text-decoration: underline; }
     color: var(--c-text-sub);
     font-size: 0.86rem;
     line-height: 1.7;
+}
+.onboarding-footnote {
+    margin-top: 12px;
+    padding: 10px 12px;
+    border-radius: var(--radius-md);
+    background: var(--c-primary-light);
+    color: var(--c-text-sub);
+    font-size: 0.86rem;
+    line-height: 1.55;
 }
 .onboarding-actions {
     display: flex;
