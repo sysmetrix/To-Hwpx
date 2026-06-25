@@ -63,6 +63,7 @@ const SUPPORTED_EXTENSIONS = new Set([
 const BINARY_EXTENSIONS = new Set(['xlsx', 'xls', 'docx', 'hwp', 'hwpx']);
 const SUPPORTED_FORMAT_LABEL = 'MD, HTML, TXT, CSV, XLSX, JSON, IPYNB, DOCX, HWP';
 const ONBOARDING_SEEN_KEY = 'tohwpx_onboarding_seen';
+const QUICK_GUIDE_HIDDEN_KEY = 'tohwpx_quick_guide_hidden';
 
 // ─────────────────────────────────────────────────────────────────────────
 // [DOM 준비 후 초기화]
@@ -88,9 +89,11 @@ document.addEventListener('DOMContentLoaded', () => {
     initNavLinks();             // 부드러운 스크롤 네비게이션
     initModals();               // 미리보기·업데이트 내역 모달
     initHelpDots();             // 설정 라벨의 짧은 도움말 버튼
+    initQuickGuide();           // 닫아도 남는 첫 사용 흐름 안내
     initResetButton();          // 현재 선택 파일과 변환 옵션 초기화
     initTheme();                // 다크/라이트 테마 토글·시스템 동기화
     showFormatHintPlaceholder();// 파일 선택 전 포맷 힌트 영역 안내(빈칸 방지)
+    updateWorkflowHint('select');
     maybeShowOnboardingGuide(); // 첫 방문 1회 기본 사용 안내
 });
 
@@ -101,6 +104,36 @@ function initHelpDots() {
             e.stopPropagation();
         });
     });
+}
+
+function initQuickGuide() {
+    const guide = document.getElementById('quick-guide');
+    if (!guide) return;
+    try {
+        guide.hidden = localStorage.getItem(QUICK_GUIDE_HIDDEN_KEY) === '1';
+    } catch (e) {
+        guide.hidden = false;
+    }
+    document.getElementById('quick-guide-open')?.addEventListener('click', showOnboardingGuide);
+    document.getElementById('quick-guide-hide')?.addEventListener('click', () => {
+        guide.hidden = true;
+        try {
+            localStorage.setItem(QUICK_GUIDE_HIDDEN_KEY, '1');
+        } catch (e) {
+            // 저장이 막힌 환경에서는 현재 화면에서만 숨깁니다.
+        }
+    });
+}
+
+function updateWorkflowHint(stage = 'select') {
+    const hint = document.getElementById('workflow-hint');
+    if (!hint) return;
+    const copy = {
+        select: '<b>1단계</b> 파일을 선택하면 아래 기본 설정과 변환 버튼을 바로 확인할 수 있습니다.',
+        settings: '<b>2단계</b> 대부분은 기본값 그대로 충분합니다. 보고서 모양만 필요할 때 세부 설정을 여세요.',
+        done: '<b>3단계</b> HWPX를 내려받은 뒤 한컴에서 여백, 표, 글꼴을 최종 확인하세요.',
+    };
+    hint.innerHTML = copy[stage] || copy.select;
 }
 
 
@@ -312,6 +345,7 @@ function onQueueChanged({ scroll = false } = {}) {
 
     renderQueueList();
     updateTitlePlaceholder();
+    updateWorkflowHint('settings');
 
     if (scroll) {
         document.getElementById('converter')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -456,6 +490,7 @@ function clearSelectedFile() {
     if (cdaLabel) cdaLabel.textContent = '파일을 드래그하거나 클릭하여 선택 (여러 개 가능)';
 
     showFormatHintPlaceholder();   // 파일 전: 빈칸 대신 안내 placeholder로 레이아웃 유지
+    updateWorkflowHint('select');
 
     const titleInput = document.getElementById('doc-title');
     if (titleInput) {
@@ -1880,6 +1915,7 @@ function updateIrPreview(ir) {
 function showResult({ url, fileName, size, validation }) {
     const area = document.getElementById('result-area');
     if (!area) return;
+    updateWorkflowHint('done');
     const ext = state.file ? getFileExtension(state.file.name) : '';
     const inputLabel = getInputFormatLabel(ext);
     const summary = getConversionSummary();
@@ -1987,6 +2023,7 @@ function showResult({ url, fileName, size, validation }) {
 function showBatchResults({ okCount, warnCount, errCount, total }) {
     const area = document.getElementById('result-area');
     if (!area) return;
+    updateWorkflowHint('done');
 
     const successCount = okCount + warnCount;
     const cardClass = (errCount && !successCount) ? ' result-card--error'

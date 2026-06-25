@@ -19,6 +19,7 @@ const target = process.argv[2] || 'https://sysmetrix.github.io/To-Hwpx/';
   await page.evaluate(async () => {
     localStorage.removeItem('tohwpx_paperSize');
     localStorage.removeItem('tohwpx_orientation');
+    localStorage.setItem('tohwpx_onboarding_seen', '1');
     for (const registration of await navigator.serviceWorker?.getRegistrations?.() || []) await registration.unregister();
     for (const key of await caches?.keys?.() || []) await caches.delete(key);
   });
