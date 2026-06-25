@@ -1391,13 +1391,25 @@ function renderLabControl() {
     const enabled = isLabEnabled();
     return `
         <section class="changelog-lab-control" aria-label="실험실 기능 설정">
-            <div>
-                <strong>실험실 기능</strong>
-                <p>미완성 기능을 개발자 테스트용으로 표시합니다.</p>
+            <span class="changelog-lab-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" focusable="false">
+                    <path d="M9 3h6M10 3v5.2l-5.2 8.5A2.8 2.8 0 0 0 7.2 21h9.6a2.8 2.8 0 0 0 2.4-4.3L14 8.2V3"/>
+                    <path d="M7.4 15h9.2"/>
+                </svg>
+            </span>
+            <div class="changelog-lab-copy">
+                <div class="changelog-lab-heading">
+                    <strong>실험실</strong>
+                    <span class="changelog-lab-status">${enabled ? '사용 중' : '꺼짐'}</span>
+                </div>
+                <p>개발 중인 기능을 미리 사용해 볼 수 있어요.</p>
             </div>
             <button type="button" class="changelog-lab-toggle"
-                    data-lab-toggle aria-pressed="${enabled}">
-                ${enabled ? '끄기' : '켜기'}
+                    data-lab-toggle aria-pressed="${enabled}"
+                    aria-label="실험실 기능 ${enabled ? '끄기' : '켜기'}">
+                <span class="changelog-lab-toggle-track" aria-hidden="true">
+                    <span class="changelog-lab-toggle-thumb"></span>
+                </span>
             </button>
         </section>
     `;

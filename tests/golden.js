@@ -469,8 +469,10 @@ async function validateLabControl(page) {
     'lab: direct input tabs hidden after ?lab=1');
   await page.locator('#open-changelog').click();
   await page.locator('.changelog-tab[data-tab="dev"]').click();
-  assert((await page.locator('[data-lab-toggle]').textContent()).trim() === '끄기',
-    'lab: enabled toggle does not offer off action');
+  assert(await page.locator('[data-lab-toggle]').getAttribute('aria-pressed') === 'true',
+    'lab: enabled switch state is not exposed');
+  assert((await page.locator('.changelog-lab-status').textContent()).trim() === '사용 중',
+    'lab: enabled status label mismatch');
 
   await page.locator('[data-lab-toggle]').click();
   await page.waitForLoadState('domcontentloaded');
@@ -478,8 +480,10 @@ async function validateLabControl(page) {
     'lab: direct input tabs remain visible after toggle off');
   await page.locator('#open-changelog').click();
   await page.locator('.changelog-tab[data-tab="dev"]').click();
-  assert((await page.locator('[data-lab-toggle]').textContent()).trim() === '켜기',
-    'lab: toggle disappears or has wrong label while disabled');
+  assert(await page.locator('[data-lab-toggle]').getAttribute('aria-pressed') === 'false',
+    'lab: disabled switch state is not exposed');
+  assert((await page.locator('.changelog-lab-status').textContent()).trim() === '꺼짐',
+    'lab: disabled status label mismatch');
 
   await page.locator('[data-lab-toggle]').click();
   await page.waitForLoadState('domcontentloaded');

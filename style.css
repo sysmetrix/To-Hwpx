@@ -3074,44 +3074,128 @@ a:hover { text-decoration: underline; }
     word-break: break-word;
 }
 .changelog-lab-control {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+    padding: 15px;
+    border: 1px solid var(--c-info-border);
+    border-radius: var(--radius-lg);
+    background:
+        radial-gradient(circle at 0 0, var(--c-primary-light), transparent 54%),
+        var(--c-surface);
+    box-shadow: var(--shadow-sm);
+}
+.changelog-lab-icon {
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 11px;
+    background: var(--c-primary-light);
+    color: var(--c-primary);
+}
+.changelog-lab-icon svg {
+    width: 21px;
+    height: 21px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.changelog-lab-copy { min-width: 0; }
+.changelog-lab-heading {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    margin-bottom: 24px;
-    padding: 14px 16px;
-    border: 1px solid var(--c-border);
-    border-radius: var(--radius-md);
-    background: var(--c-surface-alt);
-}
-.changelog-lab-control strong {
-    display: block;
+    gap: 7px;
     margin-bottom: 3px;
+}
+.changelog-lab-heading strong {
     color: var(--c-text);
-    font-size: 0.9rem;
+    font-size: 0.92rem;
+    letter-spacing: -0.01em;
+}
+.changelog-lab-status {
+    padding: 2px 7px;
+    border-radius: 999px;
+    background: var(--c-surface-alt);
+    color: var(--c-text-sub);
+    font-size: 0.68rem;
+    font-weight: 700;
+    line-height: 1.35;
+}
+.changelog-lab-control:has(.changelog-lab-toggle[aria-pressed="true"]) .changelog-lab-status {
+    background: var(--c-primary-light);
+    color: var(--c-primary);
 }
 .changelog-lab-control p {
     margin: 0;
     color: var(--c-text-sub);
-    font-size: 0.8rem;
+    font-size: 0.78rem;
     line-height: 1.45;
 }
 .changelog-lab-toggle {
+    display: grid;
+    place-items: center;
     flex-shrink: 0;
-    min-width: 58px;
-    padding: 7px 12px;
-    border: 1px solid var(--c-primary);
+    width: 48px;
+    height: 32px;
+    padding: 4px;
+    border: 0;
     border-radius: 999px;
-    background: var(--c-primary);
-    color: #fff;
-    font-family: var(--font-main);
-    font-size: 0.82rem;
-    font-weight: 700;
-    cursor: pointer;
-}
-.changelog-lab-toggle[aria-pressed="true"] {
     background: transparent;
-    color: var(--c-primary);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+.changelog-lab-toggle-track {
+    position: relative;
+    display: block;
+    width: 40px;
+    height: 24px;
+    border: 1px solid var(--c-border-strong);
+    border-radius: 999px;
+    background: var(--c-border-strong);
+    transition: background var(--trans), border-color var(--trans);
+}
+.changelog-lab-toggle-thumb {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(20, 21, 26, 0.22);
+    transition: transform var(--trans);
+}
+.changelog-lab-toggle[aria-pressed="true"] .changelog-lab-toggle-track {
+    border-color: var(--c-primary);
+    background: var(--c-primary);
+}
+.changelog-lab-toggle[aria-pressed="true"] .changelog-lab-toggle-thumb {
+    transform: translateX(16px);
+}
+.changelog-lab-toggle:hover .changelog-lab-toggle-track {
+    border-color: var(--c-primary);
+}
+.changelog-lab-toggle:focus-visible {
+    outline: 2px solid var(--c-primary);
+    outline-offset: 2px;
+}
+@media (max-width: 480px) {
+    .changelog-lab-control {
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        padding: 13px;
+        gap: 10px;
+    }
+    .changelog-lab-icon {
+        width: 34px;
+        height: 34px;
+        border-radius: 10px;
+    }
+    .changelog-lab-control p { font-size: 0.74rem; }
 }
 .changelog-date-group {
     margin-bottom: 30px;
