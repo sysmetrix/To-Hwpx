@@ -117,7 +117,7 @@
             <span>｢BWYF｣ AX Challenger 2026</span>
             <!-- [주의] id="open-changelog"는 app.js에서 업데이트 내역 모달을 여는 연결값 -->
             <button class="util-changelog-btn" id="open-changelog" aria-label="업데이트 내역 보기">
-                📋 v4.6.1 업데이트 내역
+                📋 v4.6.2 업데이트 내역
             </button>
         </div>
     </div>
@@ -305,10 +305,10 @@
                 <section class="document-shape-panel" aria-labelledby="document-shape-title">
                     <div class="document-shape-head">
                         <div>
-                            <h4 id="document-shape-title">변환 전 문서 모양</h4>
+                            <h4 id="document-shape-title">변환 문서 기본 설정</h4>
                             <p>이 값으로 HWPX가 만들어집니다. 필요하면 변환 전에 바로 바꾸세요.</p>
                         </div>
-                        <span id="advanced-settings-summary" class="document-shape-summary">휴먼명조 · 12pt · A4 · 세로</span>
+                        <span id="advanced-settings-summary" class="document-shape-summary">현재: 휴먼명조 · 12pt · A4 · 세로</span>
                     </div>
                     <div class="options-grid-4col document-shape-grid">
                         <div class="form-row">
@@ -364,13 +364,24 @@
 
                 <details class="advanced-settings">
                     <summary>
-                        <span class="adv-summary-text">세부 설정 <small>상단 제목 블록 · 페이지 여백 · 자동 다운로드</small></span>
+                        <span class="adv-summary-text">문서 세부 설정 <small>줄 간격 · 상단 제목 블록 · 여백 · 자동 다운로드</small></span>
                         <span class="adv-summary-note">더 보기</span>
                         <span class="adv-chevron" aria-hidden="true">▾</span>
                     </summary>
                     <div class="advanced-settings-body">
                         <div class="advanced-settings-grid">
                             <div class="advanced-main">
+                                <div class="form-row line-spacing-row">
+                                    <label for="line-spacing">줄 간격</label>
+                                    <select id="line-spacing" name="line-spacing">
+                                        <option value="130">130%</option>
+                                        <option value="150">150%</option>
+                                        <option value="160" selected>160%</option>
+                                        <option value="180">180%</option>
+                                        <option value="200">200%</option>
+                                    </select>
+                                </div>
+
                                 <!-- [수정 시] 라디오 value(plain/titleblock/cover-unit/cover-annual)는 hwpx.js buildSection의 docType 분기와 맞춰야 함 -->
                                 <div class="form-row">
                                     <span class="form-row-label">상단 제목 블록</span>

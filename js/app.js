@@ -30,6 +30,7 @@ const state = {
     fontSize:     12,                  // 기본 글꼴 크기 (pt)
     paperSize:    'A4',                // 용지 크기: "A4" | "B5" | "Letter"
     orientation:  'portrait',          // 용지 방향: "portrait" | "landscape"
+    lineSpacing:  160,                 // 줄 간격 (%)
     pageMargins:  { top: 10, bottom: 10, left: 20, right: 20, header: 10, footer: 10 },  // 단위: mm
     autoDownload: true,                // 변환 완료 시 자동 다운로드
     isConverting: false,               // 변환 중 중복 실행 방지 플래그
@@ -338,9 +339,9 @@ function updateDropZoneMulti(n) {
                 <span>개별 HWPX + ZIP</span>
             </div>
             <div class="format-hint-body">
-                <span><b>공통 적용</b> 변환 전 문서 모양(글꼴·크기·용지·방향)이 모든 파일에 적용됩니다</span>
+                <span><b>공통 적용</b> 변환 문서 기본 설정(글꼴·크기·용지·방향)이 모든 파일에 적용됩니다</span>
                 <span><b>제목</b> 파일별 제목 기준 규칙으로 자동 생성됩니다</span>
-                <span class="format-hint-settings"><b>문서 모양</b> 글꼴, 크기, 용지, 방향은 아래에서 바로 바꿀 수 있습니다</span>
+                <span class="format-hint-settings"><b>기본 설정</b> 글꼴, 용지, 방향은 아래 기본 설정에서 바로 바꿀 수 있습니다</span>
             </div>
         `;
         hint.style.display = 'block';
@@ -525,7 +526,7 @@ function updateFormatExpectation(ext, waiting = false) {
         <div class="format-hint-body">
             <span><b>보존</b> ${escHtml(summary.preserved)}</span>
             <span><b>확인</b> ${escHtml(summary.lossy)}</span>
-            ${waiting ? '' : '<span class="format-hint-settings"><b>문서 모양</b> 글꼴, 크기, 용지, 방향은 아래에서 바로 바꿀 수 있습니다</span>'}
+            ${waiting ? '' : '<span class="format-hint-settings"><b>기본 설정</b> 글꼴, 용지, 방향은 아래 기본 설정에서 바로 바꿀 수 있습니다</span>'}
         </div>
     `;
     hint.style.display = 'block';
@@ -1249,6 +1250,26 @@ function initOptions() {
         });
     }
 
+    // 줄 간격 선택 (% 단위)
+    const lineSpacingEl = document.getElementById('line-spacing');
+    if (lineSpacingEl) {
+        const savedLineSpacing = localStorage.getItem('tohwpx_lineSpacing');
+        if (savedLineSpacing) {
+            const v = parseInt(savedLineSpacing, 10);
+            if ([130, 150, 160, 180, 200].includes(v)) {
+                lineSpacingEl.value = String(v);
+                state.lineSpacing = v;
+            }
+        }
+        lineSpacingEl.addEventListener('change', () => {
+            const v = parseInt(lineSpacingEl.value, 10);
+            if ([130, 150, 160, 180, 200].includes(v)) {
+                state.lineSpacing = v;
+                localStorage.setItem('tohwpx_lineSpacing', String(v));
+            }
+        });
+    }
+
     // 페이지 여백 입력 (mm 단위, #margin-top/bottom/left/right/header/footer)
     const marginIds = ['top', 'bottom', 'left', 'right', 'header', 'footer'];
     marginIds.forEach(side => {
@@ -1313,7 +1334,7 @@ function updateAdvancedSettingsSummary() {
     const summary = document.getElementById('advanced-settings-summary');
     if (!summary) return;
     const orientationLabel = state.orientation === 'landscape' ? '가로' : '세로';
-    summary.textContent = `${state.docFont} · ${state.fontSize}pt · ${state.paperSize} · ${orientationLabel}`;
+    summary.textContent = `현재: ${state.docFont} · ${state.fontSize}pt · ${state.paperSize} · ${orientationLabel}`;
 }
 
 
@@ -1757,7 +1778,7 @@ async function convertOneFile(file, statusPrefix = '', outputFontName = state.do
         hwpxBlob = await buildHwpx(ir, outputFontName, state.fontSize, state.pageMargins, state.paperSize, (pct) => {
             setProgress(58 + (pct * 0.14)); // 58% ~ 72%
             st(`HWPX 파일을 압축하는 중... ${Math.round(pct)}%`);
-        }, state.orientation);
+        }, state.orientation, state.lineSpacing);
     } catch (e) {
         throw new Error('HWPX 생성 실패: ' + e.message);
     }
@@ -2843,16 +2864,18 @@ function resetConverterState() {
     state.fontSize = 12;
     state.paperSize = 'A4';
     state.orientation = 'portrait';
+    state.lineSpacing = 160;
     state.pageMargins = { top: 10, bottom: 10, left: 20, right: 20, header: 10, footer: 10 };
     state.autoDownload = true;
 
-    for (const key of ['tohwpx_font', 'tohwpx_fontSize', 'tohwpx_paperSize', 'tohwpx_autoDownload', 'tohwpx_orientation']) {
+    for (const key of ['tohwpx_font', 'tohwpx_fontSize', 'tohwpx_paperSize', 'tohwpx_autoDownload', 'tohwpx_orientation', 'tohwpx_lineSpacing']) {
         localStorage.removeItem(key);
     }
 
     const docFont = document.getElementById('doc-font');
     const fontSize = document.getElementById('font-size');
     const paperSize = document.getElementById('paper-size');
+    const lineSpacing = document.getElementById('line-spacing');
     const autoDownload = document.getElementById('auto-download');
     const plainRadio = document.querySelector('input[name="doc-type"][value="plain"]');
     if (plainRadio) plainRadio.checked = true;
@@ -2862,6 +2885,7 @@ function resetConverterState() {
     if (docFont) docFont.value = '휴먼명조';
     if (fontSize) fontSize.value = '12';
     if (paperSize) paperSize.value = 'A4';
+    if (lineSpacing) lineSpacing.value = '160';
     if (autoDownload) autoDownload.checked = true;
 
     for (const [side, value] of Object.entries(state.pageMargins)) {

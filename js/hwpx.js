@@ -74,6 +74,11 @@ function marginsMmToHwp(marginsMm = {}) {
     };
 }
 
+function normalizeLineSpacingPercent(value = 160) {
+    const n = parseInt(value, 10);
+    return [130, 150, 160, 180, 200].includes(n) ? n : 160;
+}
+
 
 // ─────────────────────────────────────────────────────────────────────────
 // [베이스 템플릿 상수]
@@ -281,16 +286,20 @@ function getBoldFontName(name) {
  * @param {Map}      customBfMap      표 셀 배경색 → borderFill id 맵
  * @param {Array}    imageBlocks      IR image 블록 배열
  * @param {object}   docHeaderFooter  {header?, footer?} 머리글/바닥글 텍스트
+ * @param {number}   lineSpacingPercent 본문 줄 간격 퍼센트
  *
  * [charPr ID]  0=본문, 1=H1, 2=H2, 3=H3, 4=H4, 5=표머리, 6=코드, 7=본문bold, 8=본문italic
  * [paraPr ID]  0=본문, 1=H1, 2=H2, 3=H3, 4=H4, 5=목록, 6=코드블록, 7=표셀(CENTER), 19=인용
  * [borderFill] 1=테두리없음, 2=실선(표셀), 3=실선+회색음영(표머리)
  *              4~9=표 좌/우 바깥 테두리 제거 변형
  */
-function buildHeaderXml(fontName, basePt, customBfMap = new Map(), imageBlocks = [], docHeaderFooter = {}, customCharMap = new Map()) {
+function buildHeaderXml(fontName, basePt, customBfMap = new Map(), imageBlocks = [], docHeaderFooter = {}, customCharMap = new Map(), lineSpacingPercent = 160) {
     const resolvedFontName = fontName || '휴먼명조';
     const fn = xmlEsc(resolvedFontName);
     const bp = Math.max(6, Math.min(36, parseInt(basePt, 10) || 12));
+    const bodyLineSpacing = normalizeLineSpacingPercent(lineSpacingPercent);
+    const h1LineSpacing = Math.max(bodyLineSpacing, 180);
+    const h2LineSpacing = Math.max(bodyLineSpacing, 170);
     const { familyType, weight, type } = getFontMeta(resolvedFontName);
     // 현재 PC의 실제 등록명을 주 글꼴로 쓰고 반대 등록명을 OWPML 대체 글꼴로 둔다.
     const substFontName = resolvedFontName === 'Pretendard GOV Variable'
@@ -393,12 +402,12 @@ ${[...customCharMap.entries()].map(([key, cid]) => {
     </hh:charProperties>
     <hh:paraProperties itemCnt="20">
       <!-- id  정렬    행간  전    후   들여  테두리참조 -->
-${paraBase(0, 'JUSTIFY', 160,   0,  850,    0)}
-${paraBase(1, 'LEFT',    180, 850,  567,    0)}
-${paraBase(2, 'LEFT',    170, 700,  425,    0)}
-${paraBase(3, 'LEFT',    160, 567,  283,    0)}
-${paraBase(4, 'LEFT',    160, 425,  200,    0)}
-${paraBase(5, 'LEFT',    160,   0,  100,  600)}
+${paraBase(0, 'JUSTIFY', bodyLineSpacing,   0,  850,    0)}
+${paraBase(1, 'LEFT',    h1LineSpacing, 850,  567,    0)}
+${paraBase(2, 'LEFT',    h2LineSpacing, 700,  425,    0)}
+${paraBase(3, 'LEFT',    bodyLineSpacing, 567,  283,    0)}
+${paraBase(4, 'LEFT',    bodyLineSpacing, 425,  200,    0)}
+${paraBase(5, 'LEFT',    bodyLineSpacing,   0,  100,  600)}
 ${paraBase(6, 'LEFT',    140, 200,  200,  400)}
       <!-- id=7  표 셀 가운데 정렬 -->
 ${paraBase(7, 'CENTER',  150,   0,    0,    0)}
@@ -410,18 +419,18 @@ ${paraBase(9, 'LEFT',    100,   0,    0,    0)}
 ${paraBase(10, 'LEFT',   150,   0,    0,    0)}
 ${paraBase(11, 'RIGHT',  150,   0,    0,    0)}
       <!-- id=12/13  DOCX 정렬 보존: 가운데/오른쪽 -->
-${paraBase(12, 'CENTER', 160,   0,  850,    0)}
-${paraBase(13, 'RIGHT',  160,   0,  850,    0)}
+${paraBase(12, 'CENTER', bodyLineSpacing,   0,  850,    0)}
+${paraBase(13, 'RIGHT',  bodyLineSpacing,   0,  850,    0)}
       <!-- id=14  코드 라인: 사용자가 선택한 문서 글꼴 -->
 ${paraBase(14, 'LEFT',   120,   0,    0,    0)}
       <!-- id=15/16  H5/H6 제목 -->
-${paraBase(15, 'LEFT',   160, 300,  150,    0)}
-${paraBase(16, 'LEFT',   160, 200,  100,    0)}
+${paraBase(15, 'LEFT',   bodyLineSpacing, 300,  150,    0)}
+${paraBase(16, 'LEFT',   bodyLineSpacing, 200,  100,    0)}
       <!-- id=17/18  중첩 목록 들여쓰기 (레벨1/레벨2). 레벨0은 id=5 사용 -->
-${paraBase(17, 'LEFT',   160,   0,  100, 1200)}
-${paraBase(18, 'LEFT',   160,   0,  100, 1800)}
+${paraBase(17, 'LEFT',   bodyLineSpacing,   0,  100, 1200)}
+${paraBase(18, 'LEFT',   bodyLineSpacing,   0,  100, 1800)}
       <!-- id=19  인용구: 왼쪽 선+옅은 배경, 본문보다 조금 들여쓰기, 아래 3mm -->
-${paraBase(19, 'LEFT',   160, 300,  850,  900, '19')}
+${paraBase(19, 'LEFT',   bodyLineSpacing, 300,  850,  900, '19')}
     </hh:paraProperties>
     <hh:borderFills itemCnt="${19 + customBfMap.size}">
       <!-- id=1 테두리 없음 -->
@@ -1323,8 +1332,9 @@ function buildSection(ir, marginsHwp, paperKey, landscape = false, customBfMap =
  * @param {string} paperSize     용지 "A4"|"B5"|"Letter"
  * @param {function} onProgress  진행률 콜백 함수 (0~100)
  * @param {string} orientation   용지 방향 "portrait"|"landscape"
+ * @param {number} lineSpacingPercent 본문 줄 간격 퍼센트
  */
-async function buildHwpx(ir, fontName = '휴먼명조', fontSize = 12, marginsMm = null, paperSize = 'A4', onProgress = null, orientation = 'portrait') {
+async function buildHwpx(ir, fontName = '휴먼명조', fontSize = 12, marginsMm = null, paperSize = 'A4', onProgress = null, orientation = 'portrait', lineSpacingPercent = 160) {
     if (typeof JSZip === 'undefined') throw new Error('JSZip 미로드: 인터넷 연결을 확인하세요.');
 
     validateCodeAudit(ir);
@@ -1397,7 +1407,7 @@ async function buildHwpx(ir, fontName = '휴먼명조', fontSize = 12, marginsMm
     const imageBlocks = (ir.blocks || []).filter(b => b.type === 'image');
     const docHeaderFooter = { header: ir.header || '', footer: ir.footer || '' };
 
-    const headerXml   = buildHeaderXml(fontName, fontSize, customBfMap, imageBlocks, docHeaderFooter, customCharMap);
+    const headerXml   = buildHeaderXml(fontName, fontSize, customBfMap, imageBlocks, docHeaderFooter, customCharMap, lineSpacingPercent);
     const section0Xml = buildSection(ir, marginsHwp, paperSize, landscape, customBfMap, customCharMap);
 
     // 이미지가 있을 때 manifest를 동적으로 생성하여 BinData 파일 선언

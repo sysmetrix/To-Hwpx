@@ -258,6 +258,9 @@ async function validateHwpxPackage(page, zip, testCase) {
   assert(sectionXml.includes('hancom.co.kr/hwpml/2011/section'), `${testCase.name}: section namespace 누락`);
   assert(sectionXml.includes('hancom.co.kr/hwpml/2011/paragraph'), `${testCase.name}: paragraph namespace 누락`);
   assert(headerXml.includes('hancom.co.kr/hwpml/2011/head'), `${testCase.name}: header namespace 누락`);
+  const bodyParaPr = (/<hh:paraPr\b[^>]*\bid="0"[\s\S]*?<\/hh:paraPr>/.exec(headerXml) || [])[0] || '';
+  assert(bodyParaPr.includes('<hh:lineSpacing type="PERCENT" value="160" unit="HWPUNIT"/>'),
+    `${testCase.name}: 기본 본문 줄 간격 160% 누락`);
 
   const sectionWellFormed = await page.evaluate(xml => {
     const doc = new DOMParser().parseFromString(xml, 'application/xml');
@@ -712,6 +715,37 @@ async function validatePaperMatrix(page) {
   console.log('PASS PAPER  A3/A4/B5/Letter × portrait/landscape');
 }
 
+async function validateLineSpacingOption(page) {
+  const baseUrl = `http://127.0.0.1:${PORT}/index.html`;
+  await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => window.JSZip && window.marked && window.XLSX, null, { timeout: 30000 });
+  await page.locator('.advanced-settings > summary').click();
+  const defaultValue = await page.locator('#line-spacing').inputValue();
+  assert(defaultValue === '160', 'line spacing: UI 기본값 160%가 아님');
+
+  const header = await page.evaluate(async () => {
+    const blob = await buildHwpx(
+      { title: 'line spacing', doc_type: 'plain', blocks: [{ type: 'para', text: '줄 간격 테스트' }] },
+      '휴먼명조',
+      12,
+      null,
+      'A4',
+      null,
+      'portrait',
+      180
+    );
+    const zip = await JSZip.loadAsync(await blob.arrayBuffer());
+    return zip.file('Contents/header.xml').async('string');
+  });
+  const bodyParaPr = (/<hh:paraPr\b[^>]*\bid="0"[\s\S]*?<\/hh:paraPr>/.exec(header) || [])[0] || '';
+  const listParaPr = (/<hh:paraPr\b[^>]*\bid="5"[\s\S]*?<\/hh:paraPr>/.exec(header) || [])[0] || '';
+  const codeParaPr = (/<hh:paraPr\b[^>]*\bid="6"[\s\S]*?<\/hh:paraPr>/.exec(header) || [])[0] || '';
+  assert(bodyParaPr.includes('value="180"'), 'line spacing: 본문 줄 간격 180% 반영 실패');
+  assert(listParaPr.includes('value="180"'), 'line spacing: 목록 줄 간격 180% 반영 실패');
+  assert(codeParaPr.includes('value="140"'), 'line spacing: 코드 블록 전용 줄 간격이 변경됨');
+  console.log('PASS LINE  line spacing default + HWPX paraPr');
+}
+
 async function validatePretendardCompatibility(page) {
   const baseUrl = `http://127.0.0.1:${PORT}/index.html`;
   await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
@@ -818,6 +852,7 @@ async function validatePretendardCompatibility(page) {
     await validateCommercialUx(page);
     await validateRejectedInputs(page);
     await validatePaperMatrix(page);
+    await validateLineSpacingOption(page);
     await validatePretendardCompatibility(page);
     assert(pageErrors.length === 0, `브라우저 오류 발생: ${pageErrors.join(' | ')}`);
     console.log(`\nGOLDEN: ${CASES.length} cases passed`);
