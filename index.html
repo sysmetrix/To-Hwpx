@@ -117,7 +117,7 @@
             <span>｢BWYF｣ AX Challenger 2026</span>
             <!-- [주의] id="open-changelog"는 app.js에서 업데이트 내역 모달을 여는 연결값 -->
             <button class="util-changelog-btn" id="open-changelog" aria-label="업데이트 내역 보기">
-                📋 v4.5.16 업데이트 내역
+                📋 v4.5.18 업데이트 내역
             </button>
         </div>
     </div>
@@ -1054,37 +1054,50 @@
             <button class="modal-close" id="close-install-guide" aria-label="설치 안내 닫기">✕</button>
         </div>
         <div class="modal-body">
-            <div class="install-guide-visual" aria-hidden="true">
-                <div class="browser-frame">
-                    <div class="browser-bar">
-                        <span class="dot"></span><span class="dot"></span><span class="dot"></span>
-                        <span class="address">to-hwpx</span>
-                        <span class="install-chip">설치</span>
-                    </div>
-                    <div class="browser-page">
-                        <span class="app-tile">HWPX</span>
-                        <span class="arrow-mark">→</span>
-                        <span class="home-tile">홈 화면</span>
-                    </div>
-                </div>
-            </div>
+            <p class="install-guide-lead">
+                PC의 Chrome 또는 Edge에서 주소창 오른쪽을 확인하세요.
+                브라우저마다 설치 아이콘 모양이 다릅니다.
+            </p>
             <div class="install-guide-grid">
-                <section>
-                    <h3>Chrome</h3>
+                <section class="install-browser-card">
+                    <div class="install-browser-head">
+                        <div>
+                            <span class="install-browser-kicker">Google</span>
+                            <h3>Chrome</h3>
+                        </div>
+                        <figure class="install-icon-sample">
+                            <img src="icons/chrome-install.svg" alt="모니터와 아래쪽 화살표 모양의 Chrome 설치 아이콘">
+                            <figcaption>이 모양을 찾으세요</figcaption>
+                        </figure>
+                    </div>
                     <ol>
-                        <li>주소창 오른쪽의 설치 아이콘을 누릅니다.</li>
-                        <li>아이콘이 없으면 메뉴 ⋮ 를 누릅니다.</li>
-                        <li>앱 설치 또는 홈 화면에 추가를 선택합니다.</li>
+                        <li><strong>주소창 오른쪽</strong>의 위 아이콘을 누릅니다.</li>
+                        <li>설치 확인 창에서 <strong>설치</strong>를 누릅니다.</li>
+                        <li>아이콘이 없으면 메뉴 <strong>⋮ → 전송, 저장, 공유 → 페이지를 앱으로 설치</strong>를 확인합니다.</li>
                     </ol>
                 </section>
-                <section>
-                    <h3>Edge</h3>
+                <section class="install-browser-card">
+                    <div class="install-browser-head">
+                        <div>
+                            <span class="install-browser-kicker">Microsoft</span>
+                            <h3>Edge</h3>
+                        </div>
+                        <figure class="install-icon-sample">
+                            <img src="icons/edge-install.svg" alt="창과 더하기 표시 모양의 Edge 앱 설치 아이콘">
+                            <figcaption>이 모양을 찾으세요</figcaption>
+                        </figure>
+                    </div>
                     <ol>
-                        <li>주소창 오른쪽의 앱 설치 아이콘을 누릅니다.</li>
-                        <li>아이콘이 없으면 메뉴 ⋯ 를 누릅니다.</li>
-                        <li>앱 > 이 사이트를 앱으로 설치를 선택합니다.</li>
+                        <li><strong>주소창 오른쪽</strong>의 위 아이콘을 누릅니다.</li>
+                        <li>설치 확인 창에서 <strong>설치</strong>를 누릅니다.</li>
+                        <li>아이콘이 없으면 메뉴 <strong>⋯ → 앱 → 이 사이트를 앱으로 설치</strong>를 확인합니다.</li>
                     </ol>
                 </section>
+            </div>
+            <div class="install-guide-note">
+                <strong>아이콘이 계속 보이지 않나요?</strong>
+                이미 설치된 경우에는 아이콘이 나타나지 않을 수 있습니다. 브라우저 메뉴의 앱 목록이나 Windows 시작 메뉴에서
+                <span>To HWPX - 한글로</span>를 확인하세요.
             </div>
         </div>
     </div>

@@ -1,6 +1,33 @@
 {
-  "current": "4.5.16",
+  "current": "4.5.18",
   "versions": [
+    {
+      "version": "4.5.18",
+      "date": "2026-06-25",
+      "user": [
+        "앱 설치 안내에서 Chrome과 Edge의 실제 설치 아이콘 모양을 따로 보여주고, 아이콘이 없을 때의 메뉴 경로와 이미 설치된 경우까지 쉽게 확인하도록 개선했습니다."
+      ],
+      "dev": [
+        "[v4.5.18] icons: 사용자 캡처를 기준으로 Chrome 설치·Edge 앱 설치 아이콘 SVG 자산 추가",
+        "[v4.5.18] index.html/style.css: 공통 가상 주소창을 브라우저별 아이콘 카드·단계·대체 경로·설치 완료 안내 구조로 개편하고 모바일/다크 테마 대응",
+        "[v4.5.18] tests/golden.js/sw.js: 설치 안내 아이콘·문구·포커스 복귀 및 오프라인 앱 셸 캐시 회귀 검사 추가",
+        "[v4.5.18] qa/release-qa.md: 설치 안내 UX 문제·수정 범위·시각 승인 기준 기록",
+        "[v4.5.18] package.json/package-lock.json/sw.js/index.html: v4.5.18 반영"
+      ]
+    },
+    {
+      "version": "4.5.17",
+      "date": "2026-06-25",
+      "user": [
+        "Markdown의 `&#39;`가 목록에서 그대로 보이던 문제를 고쳐 일반 문단·강조·목록·표 모두에서 작은따옴표(`'`)로 변환되도록 개선했습니다."
+      ],
+      "dev": [
+        "[v4.5.17] parsers.js: Markdown 목록의 하위 text 토큰과 item.text fallback에도 decodeMdEntities를 적용해 &#39; 엔티티 복원 경로 통일",
+        "[v4.5.17] tests/fixtures/sample.md/tests/golden.js: 문단·강조·목록·표의 &#39; 복원과 section0.xml 내 &apos;/&#39;/&amp;#39; 부재 회귀 검사 추가",
+        "[v4.5.17] format_conversion_playbook.md/qa/release-qa.md: 원인·적용 범위·릴리스 승인 기준 기록",
+        "[v4.5.17] package.json/package-lock.json/sw.js/index.html: v4.5.17 반영"
+      ]
+    },
     {
       "version": "4.5.16",
       "date": "2026-06-25",

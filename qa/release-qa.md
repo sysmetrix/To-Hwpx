@@ -35,6 +35,7 @@ Scope: static browser-only conversion flow from file selection to HWPX download.
 | 케이스 | 기대 결과 |
 | --- | --- |
 | 한글/이모지/특수문자 | XML 생성 오류 없이 텍스트 보존 |
+| Markdown `&#39;` 엔티티 | 일반 문단·강조·목록·표에서 문자 `'`로 복원되고 HWPX XML에 엔티티 문자열이 남지 않음 |
 | 긴 파일명 | 다운로드 파일명이 `.hwpx`로 끝남 |
 | 잘못된 확장자 | 변환 버튼 비활성화 및 지원 형식 안내 |
 | 손상 ZIP `.docx` | HWPX 생성 없이 파싱 실패 안내 |
@@ -94,6 +95,7 @@ Scope: static browser-only conversion flow from file selection to HWPX download.
 - [ ] 긴 표가 글자처럼 취급되지 않으며 단 오른쪽 정렬로 설정되고, 행 높이·열 너비·병합 셀이 깨지지 않음
 - [ ] 짧은 일반 표와 다음 본문 사이에 아래쪽 바깥 여백 약 3mm가 보이며, 긴 표의 쪽 나눔에는 불필요한 중간 간격이 생기지 않음
 - [ ] Markdown 문장 속 인라인 코드가 앞뒤 문장과 같은 문단에 표시되고, 단독 코드 문단은 기존 코드 블록 형태 유지
+- [ ] Markdown의 `&#39;`가 일반 문단·강조·목록·표에서 모두 `'`로 보이며 `section0.xml`에 `&apos;`, `&#39;`, `&amp;#39;`가 남지 않음
 - [ ] 기본 미리보기 페이지 비율과 상단 표시가 A3/A4/B5/Letter 및 세로/가로 선택을 반영
 - [ ] 긴 가로 문서가 가로 비율을 유지한 여러 장으로 나뉘며, 종이 내부 스크롤·내용 잘림·이중 스크롤이 없음
 - [ ] 결과 카드에 보존/손실 가능 요소 표시
@@ -232,3 +234,35 @@ Scope: static browser-only conversion flow from file selection to HWPX download.
 - [x] 활성/비활성 상태가 `aria-pressed`와 `사용 중`/`꺼짐` 문구에 함께 반영됨
 - [x] 모바일 폭과 다크 테마 디자인 토큰 대응
 - [x] `npm run test:golden` PASS
+
+## 19. v4.5.17 Markdown `&#39;` 엔티티 복원
+
+원인:
+- 일반 문단·강조·표는 `decodeMdEntities()`를 거쳤지만, Markdown 목록은 하위 `text` 토큰과 `item.text` fallback 경로에서 디코딩을 건너뛰었다.
+- 같은 입력이어도 목록에서만 `&#39;`가 그대로 노출되어 이전 작은따옴표 회귀 검사가 실제 적용 범위를 충분히 보장하지 못했다.
+
+수정·승인 기준:
+- [x] 목록 하위 `text` 토큰과 `item.text` fallback 모두 `decodeMdEntities()` 적용
+- [x] fixture에 일반 문단·강조·목록·표의 `&#39;` 입력 추가
+- [x] 생성된 `section0.xml`에서 각 입력이 문자 `'`로 존재
+- [x] 생성된 `section0.xml`에 `&apos;`, `&#39;`, `&amp;#39;`가 남지 않음
+- [x] `npm run test:golden` PASS
+- [x] `node qa/gate.js tests/fixtures/sample.md` 게이트 ①~⑦ PASS
+- [ ] 배포 후 캐시를 비우고 `📋 v4.5.17` 확인
+- [ ] 사용자 원본 Markdown을 한컴에서 열어 해당 문구가 작은따옴표로 보이는지 확인
+
+## 20. v4.5.18 앱 설치 안내 이해도 개선
+
+문제:
+- 브라우저별 실제 설치 아이콘이 다른데도 공통 가상 주소창과 `설치` 글자 칩으로 안내해 사용자가 어떤 아이콘을 눌러야 하는지 연결하기 어려웠다.
+- 설치 아이콘이 없을 때의 메뉴 경로와 이미 설치된 경우를 같은 단계에서 구분하지 않아 원인을 판단하기 어려웠다.
+
+수정·승인 기준:
+- [x] Chrome의 모니터·화살표 설치 아이콘과 Edge의 창·더하기 앱 설치 아이콘을 별도 이미지로 표시
+- [x] 브라우저별 카드에서 아이콘 → 기본 설치 단계 → 메뉴 대체 경로 순으로 안내
+- [x] 이미 설치된 경우 아이콘이 보이지 않을 수 있다는 별도 설명 제공
+- [x] 아이콘 이미지에 의미 있는 대체 텍스트 제공
+- [x] 데스크톱 1280px, 모바일 390px, 다크 테마 실제 렌더 캡처 확인
+- [x] 새 아이콘 2종을 서비스 워커 앱 셸 캐시에 포함
+- [x] `npm run test:golden` PASS
+- [ ] 배포 후 Chrome·Edge 실제 주소창 아이콘과 안내 이미지를 비교 확인

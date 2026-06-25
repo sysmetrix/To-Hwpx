@@ -34,14 +34,18 @@ const CASES = [
       '링크 텍스트',
       "작은따옴표 회귀: don't, 사용자의 '문서', ",
       "it's bold",
+      "HTML 엔티티 작은따옴표 회귀: 사용자'문서, ",
+      "강조'문장",
+      "엔티티 목록 사용자'항목",
+      "사용자'표",
       '문장 안의 ',
       '인라인 코드',
       '는 앞뒤 문장과 같은 문단에 자연스럽게 이어집니다.',
       '단독 코드 문단',
     ],
     mustNotContain: ['▶ Quoted Alpha line'],
-    rawMustContain: ["don't", "사용자의 '문서'", "it's bold"],
-    rawMustNotContain: ['&apos;'],
+    rawMustContain: ["don't", "사용자의 '문서'", "it's bold", "사용자'문서", "강조'문장", "사용자'항목", "사용자'표"],
+    rawMustNotContain: ['&apos;', '&#39;', '&amp;#39;'],
   },
   {
     name: 'html',
@@ -513,6 +517,22 @@ async function validateCommercialUx(page) {
   await page.keyboard.press('Escape');
   assert(await pcGuide.evaluate(el => document.activeElement === el), 'ux: 모달 종료 후 열기 버튼으로 포커스가 복귀하지 않음');
 
+  const installGuide = page.locator('#open-install-guide');
+  await installGuide.click();
+  assert(await page.locator('#install-guide-modal').isVisible(), 'ux: 앱 설치 안내 모달이 열리지 않음');
+  assert(await page.locator('img[src="icons/chrome-install.svg"]').count() === 1,
+    'ux: Chrome 설치 아이콘 안내가 없음');
+  assert(await page.locator('img[src="icons/edge-install.svg"]').count() === 1,
+    'ux: Edge 설치 아이콘 안내가 없음');
+  const installGuideText = await page.locator('#install-guide-modal').textContent();
+  assert(installGuideText.includes('브라우저마다 설치 아이콘 모양이 다릅니다'),
+    'ux: 브라우저별 아이콘 차이 안내가 없음');
+  assert(installGuideText.includes('이미 설치된 경우에는 아이콘이 나타나지 않을 수 있습니다'),
+    'ux: 설치 아이콘이 보이지 않는 경우의 설명이 없음');
+  await page.keyboard.press('Escape');
+  assert(await installGuide.evaluate(el => document.activeElement === el),
+    'ux: 설치 안내 종료 후 열기 버튼으로 포커스가 복귀하지 않음');
+
   const mdCard = page.locator('.format-card[data-ext="md"]');
   await mdCard.focus();
   await mdCard.press('Enter');
@@ -541,6 +561,10 @@ async function validateCommercialUx(page) {
   const manifest = JSON.parse(fs.readFileSync(path.join(ROOT, 'manifest.json'), 'utf8'));
   assert(manifest.id === './' && manifest.start_url === './' && manifest.scope === './',
     'pwa: 하위 경로용 id/start_url/scope 불일치');
+  const serviceWorker = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
+  assert(serviceWorker.includes("'./icons/chrome-install.svg'")
+    && serviceWorker.includes("'./icons/edge-install.svg'"),
+    'pwa: 설치 안내 아이콘이 오프라인 앱 셸 캐시에 없음');
   console.log('PASS UX    keyboard, modal, warning download, PWA scope');
 }
 
