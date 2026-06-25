@@ -36,7 +36,7 @@
 - **자동은 well‑formed/구조만 본다. 렌더링은 못 본다.** 비주얼(색·음영·그림·표지)은 **반드시 한컴에서 눈으로** 확인 → 사용자에게 "캐시 비우고 `📋 vX.Y.Z` 버전 확인 후 보이나요?"로 요청.
 - 회귀 입력·체크리스트: [qa/fixtures/README.md](qa/fixtures/README.md), [qa/release-qa.md](qa/release-qa.md).
 - 포맷 파서·HWPX 생성·포맷 안내 문구를 새로 작업할 때는 먼저 [format_conversion_playbook.md](hwpx-public-doc/references/format_conversion_playbook.md)의 해당 포맷 섹션을 읽고, 보존/손실 안내와 테스트를 함께 갱신한다.
-- 일반 데이터 표는 다음 본문과 붙지 않도록 `hp:outMargin@bottom="${mmToHwp(3)}"`(실제 XML 값 850, 약 3mm)를 유지한다. 표지·구분선·코드 블록처럼 표를 레이아웃 개체로 쓰는 경로에는 이 값을 일괄 적용하지 않는다.
+- 일반 데이터 표와 코드 블록 표는 다음 본문과 붙지 않도록 `hp:outMargin@bottom="${mmToHwp(3)}"`(실제 XML 값 850, 약 3mm)를 유지한다. 인용구는 표가 아니라 `paraPr id=19`의 `hh:next=850`으로 같은 아래 간격을 적용한다. 표지·구분선처럼 다른 레이아웃 개체에는 이 값을 일괄 적용하지 않는다.
 
 ### 기본 미리보기 불변식
 

@@ -354,10 +354,20 @@ async function validateHwpxPackage(page, zip, testCase) {
     assert(headerFlags.length > 0 && headerFlags.every(flag => flag === '1'),
       `${testCase.name}: 일반 표 첫 행이 제목 셀로 지정되지 않음`);
   }
+  const codeTables = [...sectionXml.matchAll(/<hp:tbl\b[\s\S]*?<\/hp:tbl>/g)]
+    .map(match => match[0])
+    .filter(table => /<hp:tbl\b[^>]*\bborderFillIDRef="11"/.test(table));
+  for (const table of codeTables) {
+    const outMarginOpen = (/<hp:outMargin\b[^>]*\/>/.exec(table) || [])[0] || '';
+    assert(/\bbottom="850"/.test(outMarginOpen), `${testCase.name}: 코드문 아래쪽 바깥 여백이 3mm가 아님`);
+  }
   if (testCase.name === 'markdown' || testCase.name === 'html') {
     assert(headerXml.includes('<hh:paraPr id="19"'), `${testCase.name}: 인용구 문단 모양 paraPr id=19 누락`);
     assert(headerXml.includes('<hh:borderFill id="19"'), `${testCase.name}: 인용구 borderFill id=19 누락`);
     assert(sectionXml.includes('paraPrIDRef="19"'), `${testCase.name}: 인용구 문단 paraPrIDRef=19 누락`);
+    const quoteParaPr = (/<hh:paraPr\b[^>]*\bid="19"[\s\S]*?<\/hh:paraPr>/.exec(headerXml) || [])[0] || '';
+    assert(/<hh:next value="850" unit="HWPUNIT"\/>/.test(quoteParaPr),
+      `${testCase.name}: 인용구 아래 간격이 3mm가 아님`);
   }
 }
 
@@ -661,6 +671,10 @@ async function validatePretendardCompatibility(page) {
     assert(substituteFonts.length === 7, `font: ${substitute} 대체 글꼴 7개 기록 실패`);
     assert(/<hh:font id="0" face="Pretendard GOV(?: Variable)?"[^>]*>\s*<hh:substFont[^>]*\/>\s*<hh:typeInfo/.test(header),
       'font: substFont가 typeInfo보다 앞에 기록되지 않음');
+    const codeCharPr = (/<hh:charPr\b[^>]*\bid="6"[\s\S]*?<\/hh:charPr>/.exec(header) || [])[0] || '';
+    assert(/<hh:fontRef hangul="0" latin="0" hanja="0" japanese="0" other="0" symbol="0" user="0"\/>/.test(codeCharPr),
+      `font: ${primary} 선택값이 코드문 글꼴에 반영되지 않음`);
+    assert(!header.includes('face="D2Coding"'), 'font: 코드문에 D2Coding 고정 글꼴이 남아 있음');
   }
 
   await page.locator('.advanced-settings > summary').click();
