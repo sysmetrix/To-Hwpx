@@ -266,3 +266,17 @@ Scope: static browser-only conversion flow from file selection to HWPX download.
 - [x] 새 아이콘 2종을 서비스 워커 앱 셸 캐시에 포함
 - [x] `npm run test:golden` PASS
 - [ ] 배포 후 Chrome·Edge 실제 주소창 아이콘과 안내 이미지를 비교 확인
+
+## 21. v4.5.19 설치 아이콘 시각 통일
+
+문제:
+- Chrome 캡처는 밝은 배경·어두운 선, Edge 캡처는 어두운 배경·밝은 선이라 같은 카드 묶음에서 이질적으로 보였다.
+
+수정·승인 기준:
+- [x] 두 SVG의 캡처 배경 제거
+- [x] 두 아이콘의 선 색상 `#667085`, 선 굵기 `2.5`로 통일
+- [x] 공통 CSS 타일이 테마별 배경·테두리를 담당하도록 역할 분리
+- [x] SVG 벡터 유지로 확대·고해상도 화면의 화소 저하 없음
+- [x] 데스크톱 라이트·다크 테마 실제 렌더 확인
+- [x] `npm run test:golden` PASS
+- [ ] 배포 후 Chrome·Edge 실제 화면에서 아이콘 식별성 확인

@@ -1,7 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="64" height="56" viewBox="0 0 64 56" role="img" aria-labelledby="title">
   <title id="title">Chrome 주소창 설치 아이콘</title>
-  <rect width="64" height="56" rx="8" fill="#f1f3f4"/>
-  <g fill="none" stroke="#6f7377" stroke-linecap="round" stroke-linejoin="round" stroke-width="3">
+  <g fill="none" stroke="#667085" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5">
     <path d="M20 16.5h24v15H34"/>
     <path d="M27 36h10"/>
     <path d="M32 31v5"/>

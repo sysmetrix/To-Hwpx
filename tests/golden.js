@@ -524,6 +524,13 @@ async function validateCommercialUx(page) {
     'ux: Chrome 설치 아이콘 안내가 없음');
   assert(await page.locator('img[src="icons/edge-install.svg"]').count() === 1,
     'ux: Edge 설치 아이콘 안내가 없음');
+  const chromeInstallIcon = fs.readFileSync(path.join(ROOT, 'icons/chrome-install.svg'), 'utf8');
+  const edgeInstallIcon = fs.readFileSync(path.join(ROOT, 'icons/edge-install.svg'), 'utf8');
+  assert(chromeInstallIcon.includes('stroke="#667085"')
+    && edgeInstallIcon.includes('stroke="#667085"')
+    && !chromeInstallIcon.includes('<rect width="64"')
+    && !edgeInstallIcon.includes('<rect width="64"'),
+    'ux: Chrome/Edge 설치 아이콘의 색상 또는 배경 스타일이 통일되지 않음');
   const installGuideText = await page.locator('#install-guide-modal').textContent();
   assert(installGuideText.includes('브라우저마다 설치 아이콘 모양이 다릅니다'),
     'ux: 브라우저별 아이콘 차이 안내가 없음');

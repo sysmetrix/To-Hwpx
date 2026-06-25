@@ -2603,7 +2603,10 @@ a:hover { text-decoration: underline; }
     width: 48px;
     height: 42px;
     margin: 0 auto 4px;
+    padding: 3px;
+    border: 1px solid var(--c-border);
     border-radius: var(--radius-sm);
+    background: var(--c-surface-alt);
     box-shadow: var(--shadow-sm);
 }
 .install-icon-sample figcaption {
