@@ -1,6 +1,22 @@
 {
-  "current": "4.6.4",
+  "current": "4.6.5",
   "versions": [
+    {
+      "version": "4.6.5",
+      "date": "2026-06-26",
+      "user": [
+        "Markdown 목록 안의 '관련 페이지', '참고 자료' 같은 링크도 클릭 가능한 링크로 보존합니다.",
+        "이미지 주소 자리에 링크 문법이 한 번 더 들어간 경우 실제 이미지 주소를 자동으로 찾아 처리합니다.",
+        "이미지 서버가 브라우저 접근을 차단하면 이해하기 쉬운 사유와 클릭 가능한 원본 이미지 링크를 남깁니다."
+      ],
+      "dev": [
+        "[v4.6.5] js/parsers.js: Markdown list item runs 보존, 중첩 이미지 링크 URL 정규화, CORS 오류 문구 및 클릭 가능한 원본 이미지 fallback 추가",
+        "[v4.6.5] js/hwpx.js/js/app.js: 목록 marker+run 링크 출력, 동적 링크 charPr 스캔, IR 미리보기 목록 링크 반영",
+        "[v4.6.5] tests/fixtures/sample.md/tests/golden.js/qa fixture: 목록 링크 2개, 중첩 이미지 URL 정규화, 원본 링크 fallback 회귀 추가",
+        "[v4.6.5] AGENTS.md/playbook/ir_schema/release-qa: 목록 run 계약과 CORS 차단 이미지 유지보수·수동 승인 기준 갱신",
+        "[v4.6.5] package.json/package-lock.json/sw.js/index.html/changelog.json: v4.6.5 반영"
+      ]
+    },
     {
       "version": "4.6.4",
       "date": "2026-06-26",

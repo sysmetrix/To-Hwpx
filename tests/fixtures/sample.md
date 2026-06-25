@@ -37,6 +37,9 @@ console.log(message);
 
 [위험 링크](javascript:alert(1))는 클릭 기능 없이 표시 텍스트만 보존해야 합니다.
 
+- 관련 페이지: [청년공간 예약 안내](https://example.com/youth-space)
+- 참고 자료: [운영 매뉴얼 보기](https://example.com/manual)
+
 ![삽입 이미지](data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==)
 
 ![상대경로 이미지](images/missing.png)

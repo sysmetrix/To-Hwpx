@@ -1284,7 +1284,11 @@ function buildSection(ir, marginsHwp, paperKey, landscape = false, customBfMap =
                     if (item.task) marker = item.checked ? '▣ ' : '□ ';
                     else if (ordered) marker = `${item.marker != null ? item.marker : (++autoNum)}. `;
                     else marker = bullets[level];
-                    if (item.text) parts.push(buildPara(marker + item.text, '0', '19'));
+                    if (item.runs && item.runs.length) {
+                        parts.push(buildParaRuns([{ text: marker }, ...item.runs], '19', customCharMap));
+                    } else if (item.text) {
+                        parts.push(buildPara(marker + item.text, '0', '19'));
+                    }
                     for (const codeBlock of (item.codeBlocks || [])) {
                         parts.push(buildCodeBlock(codeBlock, '', contentWidthHwp));
                     }
@@ -1352,7 +1356,11 @@ function buildSection(ir, marginsHwp, paperKey, landscape = false, customBfMap =
                 if (item.task) marker = item.checked ? '▣ ' : '□ ';
                 else if (ordered) marker = `${item.marker != null ? item.marker : (++autoNum)}. `;
                 else marker = bullets[level];
-                if (item.text) parts.push(buildPara(marker + item.text, '0', listParaId));
+                if (item.runs && item.runs.length) {
+                    parts.push(buildParaRuns([{ text: marker }, ...item.runs], listParaId, customCharMap));
+                } else if (item.text) {
+                    parts.push(buildPara(marker + item.text, '0', listParaId));
+                }
                 for (const codeBlock of (item.codeBlocks || [])) {
                     parts.push(buildCodeBlock(codeBlock, '  ', contentWidthHwp));
                 }
@@ -1463,7 +1471,10 @@ async function buildHwpx(ir, fontName = '휴먼명조', fontSize = 12, marginsMm
             } else if (block.type === 'quote') {
                 scanCharProps(block.blocks || []);
             } else if (block.type === 'list') {
-                for (const item of (block.items || [])) scanCharProps(item.codeBlocks || []);
+                for (const item of (block.items || [])) {
+                    for (const run of (item.runs || [])) if (run.text) addExtChar(run);
+                    scanCharProps(item.codeBlocks || []);
+                }
             }
         }
     };

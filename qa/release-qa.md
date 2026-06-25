@@ -355,3 +355,15 @@ Scope: static browser-only conversion flow from file selection to HWPX download.
 
 - 링크가 파란색·밑줄로만 보이고 클릭되지 않거나, 그림이 자동 게이트를 통과해도 한컴에서 사라지면 완료 처리하지 않는다.
 - 공용 Renderer 변경 후 HTML/DOCX/JSON IR golden 중 하나라도 실패하면 포맷별 예외를 추가하기 전에 IR 계약 위반 여부를 먼저 확인한다.
+
+## 25. v4.6.5 Markdown 목록 링크·이미지 실패 안내 교정
+
+- [x] Markdown 목록 항목의 `runs`를 보존해 일반/중첩 목록 링크를 HYPERLINK 필드로 출력
+- [x] 목록 marker와 링크 표시 문자열이 같은 문단에 유지
+- [x] 이미지 URL 자리에 `[URL](URL)`이 중첩된 입력을 실제 URL로 정규화
+- [x] CORS `Failed to fetch`를 브라우저 접근 정책 안내로 변환
+- [x] 원격 이미지 실패 fallback에 클릭 가능한 `원본 이미지 열기` 링크 보존
+- [x] MD 링크 게이트에서 본문 2개 + 목록 2개, 총 4개 링크 필드 PASS
+- [x] 전체 golden PASS
+- [ ] 한컴에서 `관련 페이지`, `참고 자료` 목록 링크 클릭 확인
+- [ ] CORS 차단 이미지 fallback의 `원본 이미지 열기` 클릭 확인
