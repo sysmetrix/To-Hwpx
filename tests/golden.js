@@ -361,6 +361,19 @@ async function validateHwpxPackage(page, zip, testCase) {
     const outMarginOpen = (/<hp:outMargin\b[^>]*\/>/.exec(table) || [])[0] || '';
     assert(/\bbottom="850"/.test(outMarginOpen), `${testCase.name}: 코드문 아래쪽 바깥 여백이 3mm가 아님`);
   }
+  if (testCase.name === 'markdown') {
+    const hrTableMatch = [...sectionXml.matchAll(/<hp:tbl\b[\s\S]*?<\/hp:tbl>/g)]
+      .find(match => /<hp:tc\b[^>]*\bborderFillIDRef="10"/.test(match[0]));
+    assert(hrTableMatch, `${testCase.name}: 구분선 표를 찾지 못함`);
+    const hrOutMargin = (/<hp:outMargin\b[^>]*\/>/.exec(hrTableMatch[0]) || [])[0] || '';
+    assert(/\btop="850"/.test(hrOutMargin) && /\bbottom="850"/.test(hrOutMargin),
+      `${testCase.name}: 구분선 표 위아래 바깥 여백이 각각 3mm가 아님`);
+    const aroundHr = sectionXml.slice(Math.max(0, hrTableMatch.index - 250), hrTableMatch.index + hrTableMatch[0].length + 250);
+    assert(!/<hp:p\b[^>]*\bparaPrIDRef="9"[^>]*>[\s\S]*?<\/hp:p>\s*<hp:p\b[^>]*>[\s\S]*?<hp:tbl\b/.test(aroundHr),
+      `${testCase.name}: 구분선 위에 외부 빈 문단이 남아 있음`);
+    assert(!/<\/hp:tbl>[\s\S]*?<\/hp:p>\s*<hp:p\b[^>]*\bparaPrIDRef="9"/.test(aroundHr),
+      `${testCase.name}: 구분선 아래에 외부 빈 문단이 남아 있음`);
+  }
   if (testCase.name === 'markdown' || testCase.name === 'html') {
     assert(headerXml.includes('<hh:paraPr id="19"'), `${testCase.name}: 인용구 문단 모양 paraPr id=19 누락`);
     assert(headerXml.includes('<hh:borderFill id="19"'), `${testCase.name}: 인용구 borderFill id=19 누락`);

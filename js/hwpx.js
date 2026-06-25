@@ -796,7 +796,7 @@ function buildHrPara(contentWidthHwp = 48000) {
         `<hp:sz width="${Math.max(12000, contentWidthHwp)}" widthRelTo="ABSOLUTE" height="0" heightRelTo="ABSOLUTE" protect="0"/>` +
         `<hp:pos treatAsChar="1" affectLSpacing="0" flowWithText="1" allowOverlap="0" holdAnchorAndSO="0" ` +
         `vertRelTo="PARA" horzRelTo="COLUMN" vertAlign="TOP" horzAlign="LEFT" vertOffset="0" horzOffset="0"/>` +
-        `<hp:outMargin left="0" right="0" top="0" bottom="0"/>` +
+        `<hp:outMargin left="0" right="0" top="${mmToHwp(3)}" bottom="${mmToHwp(3)}"/>` +
         `<hp:inMargin left="0" right="0" top="0" bottom="0"/>` +
         `<hp:tr><hp:tc name="" header="0" hasMargin="0" protect="0" editable="0" dirty="0" borderFillIDRef="10">` +
         `<hp:subList id="" textDirection="HORIZONTAL" lineWrap="BREAK" vertAlign="CENTER" ` +
@@ -805,8 +805,20 @@ function buildHrPara(contentWidthHwp = 48000) {
         `</hp:subList><hp:cellAddr colAddr="0" rowAddr="0"/><hp:cellSpan colSpan="1" rowSpan="1"/>` +
         `<hp:cellSz width="${Math.max(12000, contentWidthHwp)}" height="120"/>` +
         `<hp:cellMargin left="0" right="0" top="0" bottom="0"/></hp:tc></hp:tr>` +
-        `</hp:tbl><hp:t></hp:t></hp:run></hp:p>` +
-        buildBlankPara();
+        `</hp:tbl><hp:t></hp:t></hp:run></hp:p>`;
+}
+
+/** 구분선 주변의 IR 빈 문단은 표 바깥 여백과 중복되므로 렌더링에서 제외한다. */
+function removeHrSpacerBlanks(blocks) {
+    const list = blocks || [];
+    return list.filter((block, index) => {
+        if (block.type !== 'blank') return true;
+        let prev = index - 1;
+        let next = index + 1;
+        while (prev >= 0 && list[prev]?.type === 'blank') prev--;
+        while (next < list.length && list[next]?.type === 'blank') next++;
+        return list[prev]?.type !== 'hr' && list[next]?.type !== 'hr';
+    });
 }
 
 /**
@@ -1174,7 +1186,7 @@ function buildSection(ir, marginsHwp, paperKey, landscape = false, customBfMap =
     }
 
     const pushQuoteBlocks = (quoteBlocks) => {
-        for (const quoteBlock of (quoteBlocks || [])) {
+        for (const quoteBlock of removeHrSpacerBlanks(quoteBlocks)) {
             const qType = quoteBlock.type;
             if (qType === 'para') {
                 if (quoteBlock.runs && quoteBlock.runs.length > 0) {
@@ -1220,7 +1232,7 @@ function buildSection(ir, marginsHwp, paperKey, landscape = false, customBfMap =
     };
 
     // ── 본문 블록 ──────────────────────────────────────────────────────
-    for (const block of (ir.blocks || [])) {
+    for (const block of removeHrSpacerBlanks(ir.blocks)) {
         const bt = block.type;
 
         if (bt === 'heading') {
