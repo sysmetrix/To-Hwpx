@@ -456,9 +456,11 @@ async function runCase(page, testCase) {
 
 async function convertThroughUi(page, { inputPath, format, text, baseName }) {
   const baseUrl = `http://127.0.0.1:${PORT}/index.html`;
-  await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
+  await page.goto(inputPath ? baseUrl : `${baseUrl}?lab=1`, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => window.JSZip && window.marked && window.XLSX, null, { timeout: 30000 });
-  assert(await page.locator('.input-mode-tabs').isVisible(), 'direct: 입력 방식 탭이 기본 노출되지 않음');
+  if (!inputPath) {
+    assert(await page.locator('.input-mode-tabs').isVisible(), 'lab: ?lab=1에서 직접 입력 탭이 보이지 않음');
+  }
 
   const downloadPromise = page.waitForEvent('download', { timeout: 30000 });
   if (inputPath) {
@@ -478,6 +480,15 @@ async function convertThroughUi(page, { inputPath, format, text, baseName }) {
 }
 
 async function validateDirectInput(page) {
+  const baseUrl = `http://127.0.0.1:${PORT}/index.html`;
+  await page.goto(`${baseUrl}?lab=0`, { waitUntil: 'domcontentloaded' });
+  assert(!await page.locator('.input-mode-tabs').isVisible(),
+    'lab: 일반 사용자에게 직접 입력 탭이 노출됨');
+  await page.locator('#open-changelog').click();
+  await page.locator('.changelog-tab[data-tab="dev"]').click();
+  assert(await page.locator('[data-lab-toggle]').count() === 0,
+    'lab: 승인 전 사용자에게 실험실 토글이 노출됨');
+
   const cases = [
     ['md', 'sample.md'],
     ['html', 'sample.html'],
@@ -515,12 +526,22 @@ async function validateDirectInput(page) {
   assert(extractHpText(plainHtmlXml).includes('웹 화면에서 복사한 일반 텍스트도 보존됩니다.'),
     'direct HTML: 태그 없는 일반 텍스트가 누락됨');
 
-  await page.goto(`http://127.0.0.1:${PORT}/index.html`, { waitUntil: 'domcontentloaded' });
+  await page.goto(`${baseUrl}?lab=1`, { waitUntil: 'domcontentloaded' });
   await page.locator('#open-changelog').click();
   await page.locator('.changelog-tab[data-tab="dev"]').click();
-  assert(await page.locator('[data-lab-toggle]').count() === 0,
-    'direct: 정식 공개 후 실험실 토글이 남아 있음');
-  console.log('PASS DIRECT TSV + plain HTML + public UI');
+  assert(await page.locator('[data-lab-toggle]').getAttribute('aria-pressed') === 'true',
+    'lab: 승인 후 실험실 토글 상태가 켜짐으로 표시되지 않음');
+  await page.locator('[data-lab-toggle]').click();
+  await page.waitForLoadState('domcontentloaded');
+  assert(!await page.locator('.input-mode-tabs').isVisible(),
+    'lab: 토글을 끈 뒤 직접 입력 탭이 남아 있음');
+  await page.locator('#open-changelog').click();
+  await page.locator('.changelog-tab[data-tab="dev"]').click();
+  assert(await page.locator('[data-lab-toggle]').getAttribute('aria-pressed') === 'false',
+    'lab: 토글을 끈 상태가 반영되지 않음');
+
+  await page.goto(`${baseUrl}?lab=0`, { waitUntil: 'domcontentloaded' });
+  console.log('PASS DIRECT TSV + plain HTML + hidden Lab UI');
 }
 
 async function validateCommercialUx(page) {

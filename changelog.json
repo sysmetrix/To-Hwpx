@@ -1,19 +1,27 @@
 {
-  "current": "4.5.20",
+  "current": "4.5.21",
   "versions": [
+    {
+      "version": "4.5.21",
+      "date": "2026-06-25",
+      "user": [],
+      "dev": [
+        "[v4.5.21] app.js/style.css: 직접 입력의 Lab 게이트와 개발자 변경사항 실험실 토글을 복원해 일반 사용자 동선에서 다시 숨김",
+        "[v4.5.21] tests/golden.js: 일반 접속의 직접 입력·실험실 토글 비노출, ?lab=1 활성화, 토글 해제, 5개 형식 동등성 검사를 함께 보장",
+        "[v4.5.21] AGENTS.md/qa/release-qa.md/changelog.json: 품질 완성과 대중 공개 결정을 분리하고, 사용자 명시적 승인 전에는 실험실 기능을 user 항목에 공지하지 않는 기준 복원",
+        "[v4.5.21] 데스크톱 1280px·모바일 390px에서 일반 화면 비노출과 Lab 활성 화면 노출을 시각 확인",
+        "[v4.5.21] package.json/package-lock.json/sw.js/index.html: v4.5.21 반영"
+      ]
+    },
     {
       "version": "4.5.20",
       "date": "2026-06-25",
-      "user": [
-        "텍스트를 바로 붙여넣어 HWPX로 만드는 ‘직접 입력’을 정식 공개했습니다. Markdown·HTML·TXT·CSV·JSON을 지원합니다.",
-        "Excel이나 Google Sheets에서 복사한 표를 CSV 입력란에 그대로 붙여넣어 HWPX 표로 변환할 수 있습니다.",
-        "HTML 태그 없이 복사된 일반 텍스트와 Windows 줄바꿈도 빠짐없이 문단으로 보존하도록 개선했습니다."
-      ],
+      "user": [],
       "dev": [
-        "[v4.5.20] app.js/index.html/style.css: 직접 입력 Lab 게이트와 토글을 제거하고 파일 업로드 우선의 입력 방식 탭을 기본 노출, 형식별 붙여넣기 안내 추가",
+        "[v4.5.20] 실험실 직접 입력 품질 강화 작업: 형식별 붙여넣기 안내와 변환 동등성 검증 추가",
         "[v4.5.20] parsers.js: HTML 최상위 일반 텍스트 노드 보존, CSV/TSV 구분자 자동 판별, 불균일 행 빈 셀 보충, CRLF/LF 정규화",
-        "[v4.5.20] tests/golden.js: MD/HTML/TXT/CSV/JSON 파일 입력·직접 입력 HWPX 본문/표 동등성, TSV 표, 태그 없는 HTML, 공개 UI 회귀 검사 추가",
-        "[v4.5.20] AGENTS.md/format_conversion_playbook.md/qa/release-qa.md: 직접 입력 정식 지원 범위·검증 기준·수동 한컴 확인 항목 갱신",
+        "[v4.5.20] tests/golden.js: MD/HTML/TXT/CSV/JSON 파일 입력·직접 입력 HWPX 본문/표 동등성, TSV 표, 태그 없는 HTML 회귀 검사 추가",
+        "[v4.5.20] AGENTS.md/format_conversion_playbook.md/qa/release-qa.md: 직접 입력 실험실 지원 범위·검증 기준·수동 한컴 확인 항목 갱신",
         "[v4.5.20] 자동 검증: golden, orientation-e2e, MD/HTML/CSV qa gate PASS; 데스크톱 1280px·모바일 390px 화면 확인",
         "[v4.5.20] package.json/package-lock.json/sw.js/index.html: v4.5.20 반영"
       ]

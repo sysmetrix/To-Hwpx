@@ -740,12 +740,12 @@ const FORMAT_INFO = {
         limits: ['제목·표·굵게 같은 서식 정보 없음', '표처럼 보이는 텍스트도 일반 문단으로 처리될 수 있음'],
     },
     csv: {
-        icon: '📊', name: 'CSV / XLSX / 표 붙여넣기',
+        icon: '📊', name: 'CSV / XLSX 스프레드시트',
         quality: '★★☆', available: true,
         desc: '표 데이터의 행과 열을 HWPX 표로 옮기는 데 초점을 둔 입력 포맷입니다.',
         tech: 'CSV: RFC 4180 파서 / XLSX: SheetJS 라이브러리 → 표 IR → HWPX',
         features: [
-            'CSV 전체 데이터, Excel·Google Sheets에서 복사한 탭 구분 표, XLSX 첫 번째 시트를 HWPX 표로 변환',
+            'CSV 전체 데이터 또는 XLSX 첫 번째 시트를 HWPX 표로 변환',
             '첫 행을 표 머리행으로 처리하고 기본 표 테두리 적용',
             '빈 셀, 긴 텍스트, 한글·영문·특수문자 처리',
             '일반적으로 스프레드시트 변환은 데이터 표 보존이 우선이고 시각 서식은 보조',
@@ -1345,7 +1345,103 @@ const PASTE_MIME = {
     json: 'application/json',
 };
 
+/**
+ * 실험실(lab) 기능 활성 여부.
+ * - URL에 ?lab=1 (또는 ?lab=on/true) → localStorage 'tohwpx_lab'='1' 저장 후 활성
+ * - URL에 ?lab=0 (또는 off/false) → 기능과 토글 자격 해제
+ * - 파라미터가 없으면 저장값을 따른다.
+ * 공개 정적 사이트이므로 보안 기능이 아니라 일반 사용자 동선에서 숨기는 용도다.
+ */
+const LAB_STATE_KEY = 'tohwpx_lab';
+const LAB_ACCESS_KEY = 'tohwpx_lab_access';
+
+function isLabEnabled() {
+    try {
+        const params = new URLSearchParams(location.search);
+        if (params.has('lab')) {
+            const v = (params.get('lab') || '').toLowerCase();
+            const on = v !== '0' && v !== 'off' && v !== 'false';
+            if (on) {
+                localStorage.setItem(LAB_STATE_KEY, '1');
+                localStorage.setItem(LAB_ACCESS_KEY, '1');
+            } else {
+                localStorage.removeItem(LAB_STATE_KEY);
+                localStorage.removeItem(LAB_ACCESS_KEY);
+            }
+            return on;
+        }
+        return localStorage.getItem(LAB_STATE_KEY) === '1';
+    } catch (e) {
+        return false;
+    }
+}
+
+function canManageLab() {
+    try {
+        return localStorage.getItem(LAB_ACCESS_KEY) === '1'
+            || localStorage.getItem(LAB_STATE_KEY) === '1';
+    } catch (e) {
+        return false;
+    }
+}
+
+function renderLabControl() {
+    if (!canManageLab()) return '';
+    const enabled = isLabEnabled();
+    return `
+        <section class="changelog-lab-control" aria-label="실험실 기능 설정">
+            <span class="changelog-lab-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" focusable="false">
+                    <path d="M9 3h6M10 3v5.2l-5.2 8.5A2.8 2.8 0 0 0 7.2 21h9.6a2.8 2.8 0 0 0 2.4-4.3L14 8.2V3"/>
+                    <path d="M7.4 15h9.2"/>
+                </svg>
+            </span>
+            <div class="changelog-lab-copy">
+                <div class="changelog-lab-heading">
+                    <strong>실험실</strong>
+                    <span class="changelog-lab-status">${enabled ? '사용 중' : '꺼짐'}</span>
+                </div>
+                <p>개발 중인 기능을 미리 사용해 볼 수 있어요.</p>
+            </div>
+            <button type="button" class="changelog-lab-toggle"
+                    data-lab-toggle aria-pressed="${enabled}"
+                    aria-label="실험실 기능 ${enabled ? '끄기' : '켜기'}">
+                <span class="changelog-lab-toggle-track" aria-hidden="true">
+                    <span class="changelog-lab-toggle-thumb"></span>
+                </span>
+            </button>
+        </section>
+    `;
+}
+
+function bindLabControl() {
+    document.querySelector('[data-lab-toggle]')?.addEventListener('click', () => {
+        try {
+            const enabled = isLabEnabled();
+            localStorage.setItem(LAB_ACCESS_KEY, '1');
+            if (enabled) localStorage.removeItem(LAB_STATE_KEY);
+            else localStorage.setItem(LAB_STATE_KEY, '1');
+
+            const url = new URL(location.href);
+            url.searchParams.delete('lab');
+            history.replaceState(null, '', url);
+            location.reload();
+        } catch (e) {
+            showToast('실험실 설정을 저장하지 못했습니다.', 'error');
+        }
+    });
+}
+
 function initInputMode() {
+    if (!isLabEnabled()) {
+        document.querySelector('.input-mode-tabs')?.setAttribute('hidden', '');
+        document.getElementById('paste-mode')?.setAttribute('hidden', '');
+        const upload = document.getElementById('upload-mode');
+        if (upload) upload.hidden = false;
+        state.inputMode = 'upload';
+        return;
+    }
+
     document.getElementById('mode-upload')?.addEventListener('click', () => setInputMode('upload'));
     document.getElementById('mode-paste')?.addEventListener('click', () => setInputMode('paste'));
 
@@ -3176,12 +3272,13 @@ function renderChangelogContent(tab) {
         group.versions.push(version);
     }
 
-    el.innerHTML = `${groups.map(group => `
+    el.innerHTML = `${tab === 'dev' ? renderLabControl() : ''}${groups.map(group => `
         <section class="changelog-date-group">
             <div class="changelog-date-heading">${escHtml(group.date)}</div>
             ${tab === 'user' ? renderMergedUserChangelog(group.versions) : renderVersionedChangelog(group.versions, tab)}
         </section>
     `).join('')}`;
+    if (tab === 'dev') bindLabControl();
 }
 
 function versionLabel(version) {
