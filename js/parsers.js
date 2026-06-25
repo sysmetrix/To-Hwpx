@@ -364,7 +364,13 @@ function extractFromNode(node, blocks) {
     for (const child of node.childNodes) {
         const tag = (child.tagName || '').toLowerCase();
 
-        if (/^h[1-6]$/.test(tag)) {
+        if (child.nodeType === Node.TEXT_NODE) {
+            // HTML 소스 대신 웹 화면의 일반 텍스트를 붙여넣은 경우에도 빈 문서가 되지 않게 보존한다.
+            // 요소 사이의 들여쓰기/개행처럼 공백뿐인 텍스트 노드는 건너뛴다.
+            const text = sanitize(child.textContent.trim());
+            if (text) blocks.push({ type: 'para', text });
+
+        } else if (/^h[1-6]$/.test(tag)) {
             // h1~h6 → heading 블록 (level = 숫자 부분)
             const text = sanitize(child.textContent.trim());
             if (text) blocks.push({ type: 'heading', level: parseInt(tag[1], 10), text });
@@ -520,11 +526,19 @@ function parseTxt(text, docType = 'plain') {
 // ─────────────────────────────────────────────────────────────────────────
 function parseCsv(text, docType = 'plain') {
     const ir = emptyIR('스프레드시트', docType);
-    const rows = csvToRows(text);
+    const delimiter = detectDelimitedTextSeparator(text);
+    const rows = csvToRows(text, delimiter);
     if (!rows.length) return ir;
 
-    const header = rows[0].map(sanitize);
-    const dataRows = rows.slice(1).map(r => r.map(sanitize));
+    // 붙여넣기 표에서 행별 열 수가 다르면 가장 넓은 행에 맞춰 빈 셀을 보충한다.
+    // 데이터가 조용히 잘리거나 HWPX 표 격자가 어긋나는 것을 막는다.
+    const columnCount = Math.max(...rows.map(row => row.length));
+    const normalizeRow = row => Array.from(
+        { length: columnCount },
+        (_, index) => sanitize(row[index] ?? '')
+    );
+    const header = normalizeRow(rows[0]);
+    const dataRows = rows.slice(1).map(normalizeRow);
 
     if (dataRows.length) {
         // 데이터가 있으면 table 블록
@@ -537,10 +551,10 @@ function parseCsv(text, docType = 'plain') {
 }
 
 /**
- * CSV 문자열 → 2차원 배열
- * 따옴표 안 쉼표, 이중 따옴표 이스케이프(""), CRLF/LF 모두 처리
+ * CSV/TSV 문자열 → 2차원 배열
+ * 따옴표 안 구분자, 이중 따옴표 이스케이프(""), CRLF/LF 모두 처리
  */
-function csvToRows(text) {
+function csvToRows(text, delimiter = ',') {
     const rows = [];
     let row = [], field = '', inQuote = false;
 
@@ -559,7 +573,7 @@ function csvToRows(text) {
             }
         } else if (c === '"') {
             inQuote = true;
-        } else if (c === ',') {
+        } else if (c === delimiter) {
             row.push(field);
             field = '';
         } else if (c === '\r' && text[i + 1] === '\n') {
@@ -576,12 +590,40 @@ function csvToRows(text) {
         }
     }
     if (inQuote) {
-        throw new Error('CSV 파싱 오류: 닫히지 않은 따옴표가 있습니다.');
+        throw new Error('표 데이터 파싱 오류: 닫히지 않은 따옴표가 있습니다.');
     }
     // 마지막 행 처리 (줄바꿈 없이 끝나는 경우)
     row.push(field);
     if (row.some(v => v.trim())) rows.push(row);
     return rows;
+}
+
+/**
+ * CSV 파일의 쉼표와 Excel/Google Sheets에서 복사한 TSV의 탭을 자동 판별한다.
+ * 따옴표 안 구분자는 셀 내용이므로 개수에서 제외한다.
+ */
+function detectDelimitedTextSeparator(text) {
+    let commaCount = 0;
+    let tabCount = 0;
+    let inQuote = false;
+    let recordCount = 0;
+
+    for (let i = 0; i < text.length && recordCount < 20; i++) {
+        const c = text[i];
+        if (c === '"' && inQuote && text[i + 1] === '"') {
+            i++;
+        } else if (c === '"') {
+            inQuote = !inQuote;
+        } else if (!inQuote && c === ',') {
+            commaCount++;
+        } else if (!inQuote && c === '\t') {
+            tabCount++;
+        } else if (!inQuote && c === '\n') {
+            recordCount++;
+        }
+    }
+
+    return tabCount > commaCount ? '\t' : ',';
 }
 
 
@@ -1404,23 +1446,29 @@ function sanitizeIrBlock(block) {
 /** 텍스트 입력 디코딩: BOM 우선, 유효 UTF-8, 마지막으로 EUC-KR(CP949) */
 function decodeTextBuffer(arrayBuffer) {
     const bytes = new Uint8Array(arrayBuffer);
+    let text;
     if (bytes.length >= 2 && bytes[0] === 0xFF && bytes[1] === 0xFE) {
-        return new TextDecoder('utf-16le').decode(bytes.subarray(2));
+        text = new TextDecoder('utf-16le').decode(bytes.subarray(2));
+        return text.replace(/\r\n?/g, '\n');
     }
     if (bytes.length >= 2 && bytes[0] === 0xFE && bytes[1] === 0xFF) {
-        return new TextDecoder('utf-16be').decode(bytes.subarray(2));
+        text = new TextDecoder('utf-16be').decode(bytes.subarray(2));
+        return text.replace(/\r\n?/g, '\n');
     }
     const utf8Bytes = bytes.length >= 3 && bytes[0] === 0xEF && bytes[1] === 0xBB && bytes[2] === 0xBF
         ? bytes.subarray(3) : bytes;
     try {
-        return new TextDecoder('utf-8', { fatal: true }).decode(utf8Bytes);
+        text = new TextDecoder('utf-8', { fatal: true }).decode(utf8Bytes);
     } catch (_) {
         try {
-            return new TextDecoder('euc-kr', { fatal: true }).decode(bytes);
+            text = new TextDecoder('euc-kr', { fatal: true }).decode(bytes);
         } catch (e) {
             throw new Error('텍스트 인코딩을 해석할 수 없습니다. UTF-8 또는 EUC-KR로 다시 저장해 주세요.');
         }
     }
+    // textarea는 줄바꿈을 LF로 정규화한다. 파일 입력도 같은 기준을 써야
+    // 문단·목록·표 파싱 결과가 운영체제의 CRLF/LF 차이에 좌우되지 않는다.
+    return text.replace(/\r\n?/g, '\n');
 }
 
 

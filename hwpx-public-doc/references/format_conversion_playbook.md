@@ -73,6 +73,7 @@
 - CSS 레이아웃, 반응형 배치, 클래스 기반 디자인은 보존하지 않는다.
 - `script`, `style`, `head`, `nav`, `footer`, `aside` 등 비본문 요소는 건너뛴다.
 - 이미지, SVG, 외부 리소스는 안내상 제외 가능으로 둔다.
+- 직접 입력에는 HTML 소스를 붙여넣는 것이 기본이다. 다만 웹 화면에서 복사해 태그 없이 들어온 일반 텍스트도 빈 문서가 되지 않도록 문단으로 보존한다.
 - HTML 변경 후에는 Markdown fallback 경로도 같이 깨지지 않았는지 확인한다.
 
 검증:
@@ -117,6 +118,8 @@
 
 주의:
 - XLSX는 SheetJS로 첫 시트를 CSV로 바꾼 뒤 CSV 파서를 재사용한다.
+- 직접 입력의 CSV 모드는 쉼표 CSV와 Excel·Google Sheets에서 복사한 탭 구분 표(TSV)를 따옴표 밖 구분자 개수로 자동 판별한다.
+- 행마다 열 수가 다르면 가장 넓은 행에 맞춰 빈 셀을 보충해 HWPX 표 격자 불일치를 막는다.
 - 여러 시트, 차트, 이미지, 셀 병합, 색상, 폰트, 세부 서식은 보존 대상이 아니다.
 - 수식 자체가 아니라 계산된 표시 값 중심으로 안내한다.
 - 표 폭/열 너비 변경은 HWPX 렌더링에 민감하므로 `buildTable()`의 grid/rowSpan/colSpan 무결성을 확인한다.
@@ -128,6 +131,7 @@
 - `tests/fixtures/sample.csv`
 - `tests/fixtures/long-table.csv`
 - `tests/fixtures/sample.xlsx`
+- `tests/golden.js` 직접 입력 회귀: MD/HTML/TXT/CSV/JSON 파일 입력과 직접 입력 HWPX 본문·표 개수 동등성, TSV 표 생성, 태그 없는 HTML 텍스트 보존
 - 빈 셀, 열 개수, 긴 텍스트, 표 존재 여부를 본다.
 - 일반 표의 `pageBreak="TABLE"`, `repeatHeader="1"`, `treatAsChar="0"`, 단 오른쪽 정렬, `hp:outMargin@bottom="850"`, 첫 행 제목 셀 지정을 XML로 검사한다. 한컴에서는 짧은 표 뒤 3mm 간격과 긴 표의 실제 쪽 나눔·제목 줄 반복을 함께 확인한다.
 

@@ -454,52 +454,73 @@ async function runCase(page, testCase) {
   console.log(`PASS ${testCase.format.padEnd(5)} ${testCase.file}`);
 }
 
-async function validateLabControl(page) {
+async function convertThroughUi(page, { inputPath, format, text, baseName }) {
   const baseUrl = `http://127.0.0.1:${PORT}/index.html`;
-
   await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
-  await page.evaluate(() => {
-    localStorage.removeItem('tohwpx_lab');
-    localStorage.removeItem('tohwpx_lab_access');
+  await page.waitForFunction(() => window.JSZip && window.marked && window.XLSX, null, { timeout: 30000 });
+  assert(await page.locator('.input-mode-tabs').isVisible(), 'direct: 입력 방식 탭이 기본 노출되지 않음');
+
+  const downloadPromise = page.waitForEvent('download', { timeout: 30000 });
+  if (inputPath) {
+    await page.setInputFiles('#file-input', inputPath);
+  } else {
+    await page.locator('#mode-paste').click();
+    await page.locator('#paste-format').selectOption(format);
+    await page.locator('#paste-name').fill(baseName);
+    await page.locator('#paste-input').fill(text);
+  }
+  await page.locator('#convert-btn').click();
+  const download = await downloadPromise;
+  const outPath = path.join(os.tmpdir(), `to-hwpx-direct-${format}-${inputPath ? 'file' : 'paste'}.hwpx`);
+  await download.saveAs(outPath);
+  const zip = await JSZip.loadAsync(fs.readFileSync(outPath));
+  return zip.file('Contents/section0.xml').async('string');
+}
+
+async function validateDirectInput(page) {
+  const cases = [
+    ['md', 'sample.md'],
+    ['html', 'sample.html'],
+    ['txt', 'sample.txt'],
+    ['csv', 'sample.csv'],
+    ['json', 'sample.json'],
+  ];
+
+  for (const [format, file] of cases) {
+    const inputPath = path.join(FIXTURES, file);
+    const baseName = path.basename(file, path.extname(file));
+    const text = fs.readFileSync(inputPath, 'utf8');
+    const fileXml = await convertThroughUi(page, { inputPath, format, baseName });
+    const pasteXml = await convertThroughUi(page, { format, text, baseName });
+    assert(extractHpText(pasteXml) === extractHpText(fileXml),
+      `direct ${format}: 파일 업로드와 직접 입력의 HWPX 본문이 다름`);
+    assert((pasteXml.match(/<hp:tbl\b/g) || []).length === (fileXml.match(/<hp:tbl\b/g) || []).length,
+      `direct ${format}: 파일 업로드와 직접 입력의 표 개수가 다름`);
+    console.log(`PASS DIRECT ${format.toUpperCase().padEnd(4)} file/paste parity`);
+  }
+
+  const tsv = '이름\t수량\t비고\n사과\t2\t신선함\n배\t\t빈 셀 보존';
+  const tsvXml = await convertThroughUi(page, { format: 'csv', text: tsv, baseName: '표-붙여넣기' });
+  const tsvText = extractHpText(tsvXml);
+  for (const expected of ['이름', '수량', '비고', '사과', '2', '신선함', '배', '빈 셀 보존']) {
+    assert(tsvText.includes(expected), `direct TSV: 텍스트 누락 "${expected}"`);
+  }
+  assert((tsvXml.match(/<hp:tbl\b/g) || []).length >= 1, 'direct TSV: HWPX 표가 생성되지 않음');
+
+  const plainHtmlXml = await convertThroughUi(page, {
+    format: 'html',
+    text: '웹 화면에서 복사한 일반 텍스트도 보존됩니다.',
+    baseName: '일반-텍스트-html',
   });
-  await page.reload({ waitUntil: 'domcontentloaded' });
+  assert(extractHpText(plainHtmlXml).includes('웹 화면에서 복사한 일반 텍스트도 보존됩니다.'),
+    'direct HTML: 태그 없는 일반 텍스트가 누락됨');
+
+  await page.goto(`http://127.0.0.1:${PORT}/index.html`, { waitUntil: 'domcontentloaded' });
   await page.locator('#open-changelog').click();
   await page.locator('.changelog-tab[data-tab="dev"]').click();
   assert(await page.locator('[data-lab-toggle]').count() === 0,
-    'lab: toggle exposed before initial authorization');
-
-  await page.goto(`${baseUrl}?lab=1`, { waitUntil: 'domcontentloaded' });
-  assert(await page.locator('.input-mode-tabs').isVisible(),
-    'lab: direct input tabs hidden after ?lab=1');
-  await page.locator('#open-changelog').click();
-  await page.locator('.changelog-tab[data-tab="dev"]').click();
-  assert(await page.locator('[data-lab-toggle]').getAttribute('aria-pressed') === 'true',
-    'lab: enabled switch state is not exposed');
-  assert((await page.locator('.changelog-lab-status').textContent()).trim() === '사용 중',
-    'lab: enabled status label mismatch');
-
-  await page.locator('[data-lab-toggle]').click();
-  await page.waitForLoadState('domcontentloaded');
-  assert(!await page.locator('.input-mode-tabs').isVisible(),
-    'lab: direct input tabs remain visible after toggle off');
-  await page.locator('#open-changelog').click();
-  await page.locator('.changelog-tab[data-tab="dev"]').click();
-  assert(await page.locator('[data-lab-toggle]').getAttribute('aria-pressed') === 'false',
-    'lab: disabled switch state is not exposed');
-  assert((await page.locator('.changelog-lab-status').textContent()).trim() === '꺼짐',
-    'lab: disabled status label mismatch');
-
-  await page.locator('[data-lab-toggle]').click();
-  await page.waitForLoadState('domcontentloaded');
-  assert(await page.locator('.input-mode-tabs').isVisible(),
-    'lab: direct input tabs hidden after toggle on');
-
-  await page.goto(`${baseUrl}?lab=0`, { waitUntil: 'domcontentloaded' });
-  await page.locator('#open-changelog').click();
-  await page.locator('.changelog-tab[data-tab="dev"]').click();
-  assert(await page.locator('[data-lab-toggle]').count() === 0,
-    'lab: toggle remains after full ?lab=0 reset');
-  console.log('PASS LAB   changelog toggle');
+    'direct: 정식 공개 후 실험실 토글이 남아 있음');
+  console.log('PASS DIRECT TSV + plain HTML + public UI');
 }
 
 async function validateCommercialUx(page) {
@@ -772,7 +793,7 @@ async function validatePretendardCompatibility(page) {
     for (const testCase of CASES) {
       await runCase(page, testCase);
     }
-    await validateLabControl(page);
+    await validateDirectInput(page);
     await validateCommercialUx(page);
     await validateRejectedInputs(page);
     await validatePaperMatrix(page);
