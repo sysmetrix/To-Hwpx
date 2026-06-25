@@ -225,3 +225,10 @@ Scope: static browser-only conversion flow from file selection to HWPX download.
 - [x] `npm run test:golden` PASS
 - [x] `node qa/gate.js qa/fixtures/md_hwpx_test.md` PASS
 - [ ] 한컴오피스에서 구분선 위아래 3mm와 불필요한 빈 문단 제거 확인
+
+## 18. v4.5.15 실험실 설정 UI
+
+- [x] 실험실 설정이 아이콘·상태 배지·스위치로 표시됨
+- [x] 활성/비활성 상태가 `aria-pressed`와 `사용 중`/`꺼짐` 문구에 함께 반영됨
+- [x] 모바일 폭과 다크 테마 디자인 토큰 대응
+- [x] `npm run test:golden` PASS

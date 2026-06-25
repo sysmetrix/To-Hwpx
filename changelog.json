@@ -1,6 +1,17 @@
 {
-  "current": "4.5.14",
+  "current": "4.5.15",
   "versions": [
+    {
+      "version": "4.5.15",
+      "date": "2026-06-25",
+      "user": [],
+      "dev": [
+        "[v4.5.15] app.js: 개발자 변경사항의 실험실 설정을 아이콘·상태 배지·스위치 구조로 개편",
+        "[v4.5.15] style.css: 실험실 컨트롤을 현대적인 설정 카드와 토글 트랙/썸 UI로 개선하고 모바일·다크 테마 토큰 대응",
+        "[v4.5.15] tests/golden.js: 실험실 스위치 aria-pressed와 사용 중/꺼짐 상태 배지 회귀 검사로 갱신",
+        "[v4.5.15] package.json/package-lock.json/sw.js/index.html: v4.5.15 반영"
+      ]
+    },
     {
       "version": "4.5.14",
       "date": "2026-06-25",
