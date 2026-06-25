@@ -185,10 +185,11 @@ function flattenMdList(listToken, level, out) {
         }
         const textParts = ownBlocks
             .filter(b => b.type === 'para' || b.type === 'heading')
-            .map(b => b.text || plainMdText(b.runs || ''))
+            .map(b => b.text ? sanitize(decodeMdEntities(b.text)) : plainMdText(b.runs || ''))
             .filter(Boolean);
         const codeBlocks = ownBlocks.filter(b => b.type === 'code');
-        const text = sanitize(textParts.join(' ').trim() || (typeof item.text === 'string' ? item.text : ''));
+        const fallbackText = typeof item.text === 'string' ? decodeMdEntities(item.text) : '';
+        const text = sanitize(textParts.join(' ').trim() || fallbackText);
         if (text || codeBlocks.length) {
             out.push({
                 text, codeBlocks, level, ordered,
@@ -238,7 +239,7 @@ function extractMarkdownTokens(tokens, blocks) {
         } else if (token.tokens) {
             extractMarkdownTokens(token.tokens, blocks);
         } else if (token.text) {
-            blocks.push({ type: 'para', text: sanitize(token.text) });
+            blocks.push({ type: 'para', text: sanitize(decodeMdEntities(token.text)) });
         }
     }
 }
