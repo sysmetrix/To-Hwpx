@@ -237,8 +237,11 @@ function buildImageRun(imgBlock, imgIndex, contentWidthHwp = 48000, options = {}
         h = Math.round(h * maxWidthHwp / w);
         w = maxWidthHwp;
     }
-    const paraId = imageOptions.align === 'center' ? '12' : imageOptions.align === 'right' ? '13' : '0';
-    const horzAlign = imageOptions.align === 'right' ? 'RIGHT' : imageOptions.align === 'center' ? 'CENTER' : 'LEFT';
+    // 이미지 블록 자체가 정렬을 가지면(예: DOCX 가운데 정렬) 전역 옵션보다 우선한다.
+    // 원본 우선 정책에서도 원본 위치가 보존되도록 한다.
+    const align = ['left', 'center', 'right'].includes(imgBlock.align) ? imgBlock.align : imageOptions.align;
+    const paraId = align === 'center' ? '12' : align === 'right' ? '13' : '0';
+    const horzAlign = align === 'right' ? 'RIGHT' : align === 'center' ? 'CENTER' : 'LEFT';
     // 그림 바이너리 참조 id = content.hpf manifest의 opf:item id = binName(확장자 제외)
     const imgId   = String(imgBlock.binName || `image${imgIndex + 1}`).replace(/\.[^.]+$/, '');
     const shapeId = 1500000000 + imgIndex;

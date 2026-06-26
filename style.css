@@ -1227,6 +1227,24 @@ a:hover { text-decoration: underline; }
 .detail-field--master .seg-control {
     max-width: 360px;
 }
+/* 원본 우선 안내 노트 + 세부 그리드 흐림(조정은 가능하되 전제임을 강조) */
+.detail-source-note {
+    margin: 0 0 10px;
+    padding: 8px 10px;
+    border-left: 3px solid var(--c-primary);
+    border-radius: var(--radius-sm);
+    background: var(--c-primary-light);
+    color: var(--c-text-sub);
+    font-size: 0.74rem;
+    line-height: 1.45;
+}
+.detail-source-note strong { color: var(--c-primary); }
+.detail-grid-dimmed { opacity: 0.55; }
+.detail-field-label.label-with-help {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
 .seg-control--sm .seg-btn {
     padding: 7px 4px;
     font-size: 0.8rem;
