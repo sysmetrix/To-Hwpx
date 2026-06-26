@@ -117,7 +117,7 @@
             <span>｢BWYF｣ AX Challenger 2026</span>
             <!-- [주의] id="open-changelog"는 app.js에서 업데이트 내역 모달을 여는 연결값 -->
             <button class="util-changelog-btn" id="open-changelog" aria-label="업데이트 내역 보기">
-                📋 v4.6.9 업데이트 내역
+                📋 v4.6.10 업데이트 내역
             </button>
         </div>
     </div>
@@ -383,7 +383,7 @@
 
                 <details class="advanced-settings">
                     <summary>
-                        <span class="adv-summary-text">문서 세부 설정 <small>상단 제목 블록 · 여백 · 진단 · 자동 다운로드</small></span>
+                        <span class="adv-summary-text">문서 세부 설정 <small>상단 제목 블록 · 구분선 · 여백 · 진단 · 자동 다운로드</small></span>
                         <span class="adv-summary-note">더 보기</span>
                         <span class="adv-chevron" aria-hidden="true">▾</span>
                     </summary>
@@ -428,6 +428,16 @@
                                     </div>
                                 </div>
                                 <p class="form-hint">문서 맨 위에 머리말 표를 넣습니다. '기본'은 회색 띠, '표지'는 색 밴드이며, 모두 가운데에 제목, 아래에 [팀명/이름](점선)과 작성일(오른쪽)이 들어갑니다. 빈 항목은 변환 후 한글에서 채워주세요.</p>
+                                <div class="form-row hr-display-row">
+                                    <span class="form-row-label label-with-help">
+                                        <span>가로 구분선</span>
+                                        <button type="button" class="help-dot" data-help="Markdown의 --- 같은 구분선을 선으로 표시할지 정합니다. 숨김은 선을 만들지 않고 빈 줄로 처리합니다." aria-label="가로 구분선 도움말">?</button>
+                                    </span>
+                                    <div class="seg-control" role="group" aria-label="가로 구분선 표시 여부">
+                                        <button type="button" class="seg-btn is-active" data-hr-display="hide">숨김</button>
+                                        <button type="button" class="seg-btn" data-hr-display="show">표시</button>
+                                    </div>
+                                </div>
 
                             </div>
 

@@ -1,6 +1,22 @@
 {
-  "current": "4.6.9",
+  "current": "4.6.10",
   "versions": [
+    {
+      "version": "4.6.10",
+      "date": "2026-06-26",
+      "user": [
+        "가로 구분선 옵션을 다시 제공하고, 기본값인 숨김에서는 선을 만들지 않고 빈 줄로 처리합니다.",
+        "가로 구분선 표시를 선택하면 Markdown/HTML 구분선이 기존처럼 HWPX 구분선으로 출력됩니다.",
+        "문서 세부 설정 안내와 도움말 문구를 숨김/표시 동작에 맞춰 정리했습니다."
+      ],
+      "dev": [
+        "[v4.6.10] index.html/js/app.js: 가로 구분선 숨김/표시 세그먼트 UI, localStorage 상태, buildHwpx 옵션 전달 복구",
+        "[v4.6.10] js/hwpx.js: showHorizontalRules 옵션에 따라 hr을 buildBlankPara() 또는 buildHrPara()로 분기",
+        "[v4.6.10] tests/golden.js: 구분선 옵션 존재, 숨김 빈 줄, 표시 구분선 표 출력을 회귀 테스트로 검증",
+        "[v4.6.10] AGENTS.md/format_conversion_playbook.md/qa/release-qa.md: 구분선 옵션별 처리 기준 갱신",
+        "[v4.6.10] package.json/package-lock.json/sw.js/index.html/changelog.json: v4.6.10 반영"
+      ]
+    },
     {
       "version": "4.6.9",
       "date": "2026-06-26",

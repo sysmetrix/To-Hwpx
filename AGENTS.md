@@ -37,7 +37,7 @@
 - **자동은 well‑formed/구조만 본다. 렌더링은 못 본다.** 비주얼(색·음영·그림·표지)은 **반드시 한컴에서 눈으로** 확인 → 사용자에게 "캐시 비우고 `📋 vX.Y.Z` 버전 확인 후 보이나요?"로 요청.
 - 회귀 입력·체크리스트: [qa/fixtures/README.md](qa/fixtures/README.md), [qa/release-qa.md](qa/release-qa.md).
 - 포맷 파서·HWPX 생성·포맷 안내 문구를 새로 작업할 때는 먼저 [format_conversion_playbook.md](hwpx-public-doc/references/format_conversion_playbook.md)의 해당 포맷 섹션을 읽고, 보존/손실 안내와 테스트를 함께 갱신한다.
-- 일반 데이터 표와 코드 블록 표는 다음 본문과 붙지 않도록 `hp:outMargin@bottom="${mmToHwp(3)}"`(실제 XML 값 850, 약 3mm)를 유지한다. 인용구는 표가 아니라 `paraPr id=19`의 `hh:next=850`으로 같은 아래 간격을 적용한다. Markdown/HTML 구분선(`hr`)은 별도 선 표를 만들지 않고 `paraPr id=9` 빈 줄로 대체한다. 표지처럼 다른 레이아웃 개체에는 표 여백 값을 일괄 적용하지 않는다.
+- 일반 데이터 표와 코드 블록 표는 다음 본문과 붙지 않도록 `hp:outMargin@bottom="${mmToHwp(3)}"`(실제 XML 값 850, 약 3mm)를 유지한다. 인용구는 표가 아니라 `paraPr id=19`의 `hh:next=850`으로 같은 아래 간격을 적용한다. Markdown/HTML 구분선(`hr`)은 가로 구분선 옵션이 숨김이면 `paraPr id=9` 빈 줄, 표시이면 `buildHrPara()`의 구분선 표로 출력한다. 표지처럼 다른 레이아웃 개체에는 표 여백 값을 일괄 적용하지 않는다.
 
 ### 포맷 분리와 공통 IR 계약
 

@@ -440,6 +440,16 @@ function assertHorizontalRuleAsBlank(sectionXml, label) {
     `${label}: 구분선이 빈 줄 문단으로 대체되지 않음`);
 }
 
+function assertHorizontalRuleTable(sectionXml, label) {
+  const tables = [...sectionXml.matchAll(/<hp:tbl\b[\s\S]*?<\/hp:tbl>/g)].map(match => match[0]);
+  const hrTable = tables.find(table => /<hp:tc\b[^>]*\bborderFillIDRef="10"/.test(table));
+  assert(hrTable, `${label}: 표시 옵션에서 구분선 표가 생성되지 않음`);
+  const outMarginOpen = (/<hp:outMargin\b[^>]*\/>/.exec(hrTable) || [])[0] || '';
+  assert(/\btop="850"/.test(outMarginOpen) && /\bbottom="850"/.test(outMarginOpen),
+    `${label}: 구분선 표 위아래 바깥 여백이 3mm가 아님`);
+  assert(/\btreatAsChar="1"/.test(hrTable), `${label}: 구분선 표가 글자처럼 취급되지 않음`);
+}
+
 async function runCase(page, testCase) {
   const inputPath = path.join(FIXTURES, testCase.file);
   assert(fs.existsSync(inputPath), `${testCase.name}: fixture 없음 ${inputPath}`);
@@ -725,6 +735,7 @@ async function validateCommercialUx(page) {
     && serviceWorker.includes("'./icons/edge-install.svg'"),
     'pwa: 설치 안내 아이콘이 오프라인 앱 셸 캐시에 없음');
   assert(await page.locator('.help-dot[aria-label="줄 간격 도움말"]').count() === 0
+    && await page.locator('.help-dot[aria-label="가로 구분선 도움말"]').count() === 1
     && await page.locator('.help-dot[aria-label="페이지 여백 도움말"]').count() === 1
     && await page.locator('.help-dot[aria-label="문서 세부 설정 도움말"]').count() === 1
     && await page.locator('#open-advanced-guide').count() === 1,
@@ -874,13 +885,18 @@ async function validateDetailSettingsUx(page) {
   await page.locator('.advanced-settings > summary').click();
 
   const defaults = await page.evaluate(() => ({
-    hrButtonCount: document.querySelectorAll('[data-hr-display]').length,
+    hrButtons: [...document.querySelectorAll('[data-hr-display]')].map(btn => ({
+      value: btn.dataset.hrDisplay,
+      active: btn.classList.contains('is-active'),
+    })),
     marginMap: !!document.querySelector('.margin-paper-map .margin-paper-inner'),
     marginSideLabels: document.querySelectorAll('.margin-page-label--left, .margin-page-label--right').length,
     marginInputs: ['top', 'header', 'left', 'right', 'bottom', 'footer']
       .filter(side => document.querySelector(`#margin-${side}`)).length,
   }));
-  assert(defaults.hrButtonCount === 0, 'detail settings: 가로 구분선 표시 옵션이 남아 있음');
+  assert(defaults.hrButtons.length === 2, 'detail settings: 가로 구분선 표시 옵션 누락');
+  assert(defaults.hrButtons.some(btn => btn.value === 'hide' && btn.active),
+    'detail settings: 가로 구분선 기본값이 숨김이 아님');
   assert(defaults.marginMap, 'detail settings: 페이지 여백 종이 미니맵 누락');
   assert(defaults.marginSideLabels === 0, 'detail settings: 페이지 여백 좌우 배지가 남아 있음');
   assert(defaults.marginInputs === 6, 'detail settings: 페이지 여백 입력 6개가 유지되지 않음');
@@ -963,7 +979,23 @@ async function validateDetailSettingsUx(page) {
     return zip.file('Contents/section0.xml').async('string');
   });
   assertHorizontalRuleAsBlank(hrBlankSection, 'detail settings');
-  console.log('PASS DETAIL blank hr + margin paper map');
+  const hrTableSection = await page.evaluate(async () => {
+    const blob = await buildHwpx(
+      { title: 'hr show', doc_type: 'plain', blocks: [{ type: 'para', text: '앞' }, { type: 'hr' }, { type: 'para', text: '뒤' }] },
+      '휴먼명조',
+      12,
+      null,
+      'A4',
+      null,
+      'portrait',
+      160,
+      { showHorizontalRules: true }
+    );
+    const zip = await JSZip.loadAsync(await blob.arrayBuffer());
+    return zip.file('Contents/section0.xml').async('string');
+  });
+  assertHorizontalRuleTable(hrTableSection, 'detail settings');
+  console.log('PASS DETAIL hr option + margin paper map');
 }
 
 async function validatePretendardCompatibility(page) {
