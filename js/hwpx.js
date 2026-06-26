@@ -79,6 +79,54 @@ function normalizeLineSpacingPercent(value = 160) {
     return [130, 150, 160, 180, 200].includes(n) ? n : 160;
 }
 
+function normalizeParagraphSpacingPreset(value = 'normal') {
+    const preset = String(value || 'normal');
+    if (preset === 'compact') {
+        return { bodyPrev: 0, bodyNext: 283, headingPrev: 567, headingNext: 283, listNext: 57 };
+    }
+    if (preset === 'relaxed') {
+        return { bodyPrev: 0, bodyNext: 1134, headingPrev: 1134, headingNext: 850, listNext: 283 };
+    }
+    return { bodyPrev: 0, bodyNext: 850, headingPrev: 850, headingNext: 567, listNext: 100 };
+}
+
+function headingSizeMap(basePt, headingStyle = 'standard') {
+    const bp = Math.max(6, Math.min(36, parseInt(basePt, 10) || 12));
+    const style = String(headingStyle || 'standard');
+    const add = style === 'compact'
+        ? { h1: 4, h2: 3, h3: 1, h4: 0, h6: -1 }
+        : style === 'prominent'
+            ? { h1: 8, h2: 6, h3: 3, h4: 2, h6: -1 }
+            : { h1: 6, h2: 4, h3: 2, h4: 1, h6: -1 };
+    return {
+        body:  bp * 100,
+        h1:    (bp + add.h1) * 100,
+        h2:    (bp + add.h2) * 100,
+        h3:    (bp + add.h3) * 100,
+        h4:    Math.max((bp + add.h4) * 100, 800),
+        h5:    bp * 100,
+        h6:    Math.max((bp + add.h6) * 100, 800),
+        tblHd: bp * 100,
+        code:  Math.max((bp - 1) * 100, 800),
+    };
+}
+
+function normalizeTableStyle(value = 'standard') {
+    return ['standard', 'plain', 'report'].includes(value) ? value : 'standard';
+}
+
+function normalizeLinkStyle(value = 'blue') {
+    return ['blue', 'plain', 'url'].includes(value) ? value : 'blue';
+}
+
+function normalizeImageOptions(options = {}) {
+    const pct = parseInt(options.imageMaxWidth, 10);
+    return {
+        maxWidth: [50, 75, 100].includes(pct) ? pct : 100,
+        align: ['left', 'center', 'right'].includes(options.imageAlign) ? options.imageAlign : 'left',
+    };
+}
+
 
 // ─────────────────────────────────────────────────────────────────────────
 // [베이스 템플릿 상수]
@@ -178,21 +226,25 @@ function replaceEmoji(s) {
  * @param {number} imgIndex        imageBlocks 배열 내 0-기반 인덱스
  * @param {number} contentWidthHwp 본문 폭(HWPUNIT) — 초과 시 비율 유지 축소
  */
-function buildImageRun(imgBlock, imgIndex, contentWidthHwp = 48000) {
+function buildImageRun(imgBlock, imgIndex, contentWidthHwp = 48000, options = {}) {
     const pid = _nextParaId();
     let w = imgBlock.widthHwp  || 40000;
     let h = imgBlock.heightHwp || 30000;
-    // 본문 폭보다 넓으면 비율 유지하면서 축소
-    if (w > contentWidthHwp) {
-        h = Math.round(h * contentWidthHwp / w);
-        w = contentWidthHwp;
+    const imageOptions = normalizeImageOptions(options);
+    const maxWidthHwp = Math.max(1000, Math.round(contentWidthHwp * imageOptions.maxWidth / 100));
+    // 본문 폭과 사용자가 고른 최대 폭보다 넓으면 비율 유지하면서 축소
+    if (w > maxWidthHwp) {
+        h = Math.round(h * maxWidthHwp / w);
+        w = maxWidthHwp;
     }
+    const paraId = imageOptions.align === 'center' ? '12' : imageOptions.align === 'right' ? '13' : '0';
+    const horzAlign = imageOptions.align === 'right' ? 'RIGHT' : imageOptions.align === 'center' ? 'CENTER' : 'LEFT';
     // 그림 바이너리 참조 id = content.hpf manifest의 opf:item id = binName(확장자 제외)
     const imgId   = String(imgBlock.binName || `image${imgIndex + 1}`).replace(/\.[^.]+$/, '');
     const shapeId = 1500000000 + imgIndex;
     const instId  = 1600000000 + imgIndex;
     // OWPML 정식 그림 구조 (hwpxlib SimplePicture.hwpx 기준). hc: 요소는 section0 루트에 xmlns:hc 선언됨.
-    return `<hp:p id="${pid}" paraPrIDRef="0" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0">` +
+    return `<hp:p id="${pid}" paraPrIDRef="${paraId}" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0">` +
         `<hp:run charPrIDRef="0">` +
         `<hp:pic id="${shapeId}" zOrder="0" numberingType="PICTURE" textWrap="TOP_AND_BOTTOM" ` +
         `textFlow="BOTH_SIDES" lock="0" dropcapstyle="None" href="" groupLevel="0" instid="${instId}" reverse="0">` +
@@ -213,7 +265,7 @@ function buildImageRun(imgBlock, imgIndex, contentWidthHwp = 48000) {
         `<hc:img binaryItemIDRef="${imgId}" bright="0" contrast="0" effect="REAL_PIC" alpha="0"/>` +
         `<hp:sz width="${w}" widthRelTo="ABSOLUTE" height="${h}" heightRelTo="ABSOLUTE" protect="0"/>` +
         `<hp:pos treatAsChar="1" affectLSpacing="0" flowWithText="1" allowOverlap="0" holdAnchorAndSO="0" ` +
-        `vertRelTo="PARA" horzRelTo="COLUMN" vertAlign="TOP" horzAlign="CENTER" vertOffset="0" horzOffset="0"/>` +
+        `vertRelTo="PARA" horzRelTo="COLUMN" vertAlign="TOP" horzAlign="${horzAlign}" vertOffset="0" horzOffset="0"/>` +
         `<hp:outMargin left="0" right="0" top="0" bottom="0"/>` +
         `</hp:pic>` +
         `</hp:run>` +
@@ -302,13 +354,14 @@ function getBoldFontName(name) {
  * [borderFill] 1=테두리없음, 2=실선(표셀), 3=실선+회색음영(표머리)
  *              4~9=표 좌/우 바깥 테두리 제거 변형
  */
-function buildHeaderXml(fontName, basePt, customBfMap = new Map(), imageBlocks = [], docHeaderFooter = {}, customCharMap = new Map(), lineSpacingPercent = 160) {
+function buildHeaderXml(fontName, basePt, customBfMap = new Map(), imageBlocks = [], docHeaderFooter = {}, customCharMap = new Map(), lineSpacingPercent = 160, options = {}) {
     const resolvedFontName = fontName || '휴먼명조';
     const fn = xmlEsc(resolvedFontName);
     const bp = Math.max(6, Math.min(36, parseInt(basePt, 10) || 12));
     const bodyLineSpacing = normalizeLineSpacingPercent(lineSpacingPercent);
     const h1LineSpacing = Math.max(bodyLineSpacing, 180);
     const h2LineSpacing = Math.max(bodyLineSpacing, 170);
+    const paragraphSpacing = normalizeParagraphSpacingPreset(options.paragraphSpacing);
     const { familyType, weight, type } = getFontMeta(resolvedFontName);
     // 현재 PC의 실제 등록명을 주 글꼴로 쓰고 반대 등록명을 OWPML 대체 글꼴로 둔다.
     const substFontName = resolvedFontName === 'Pretendard GOV Variable'
@@ -324,17 +377,7 @@ function buildHeaderXml(fontName, basePt, customBfMap = new Map(), imageBlocks =
     const totalFontCnt = boldFn ? 2 : 1;
 
     // 글자 크기 HWPUNIT (1pt = 100)
-    const sz = {
-        body:  bp * 100,
-        h1:    (bp + 6) * 100,
-        h2:    (bp + 4) * 100,
-        h3:    (bp + 2) * 100,
-        h4:    (bp + 1) * 100,
-        h5:    bp * 100,                        // H5: 본문 크기(굵게)
-        h6:    Math.max((bp - 1) * 100, 800),   // H6: 본문보다 한 단계 작게(굵게)
-        tblHd: bp * 100,
-        code:  Math.max((bp - 1) * 100, 800),
-    };
+    const sz = headingSizeMap(bp, options.headingStyle);
 
     const fontFaceBlock = (lang) => `
       <hh:fontface lang="${lang}" fontCnt="${totalFontCnt}">
@@ -411,12 +454,12 @@ ${[...customCharMap.entries()].map(([key, cid]) => {
     </hh:charProperties>
     <hh:paraProperties itemCnt="20">
       <!-- id  정렬    행간  전    후   들여  테두리참조 -->
-${paraBase(0, 'JUSTIFY', bodyLineSpacing,   0,  850,    0)}
-${paraBase(1, 'LEFT',    h1LineSpacing, 850,  567,    0)}
-${paraBase(2, 'LEFT',    h2LineSpacing, 700,  425,    0)}
-${paraBase(3, 'LEFT',    bodyLineSpacing, 567,  283,    0)}
-${paraBase(4, 'LEFT',    bodyLineSpacing, 425,  200,    0)}
-${paraBase(5, 'LEFT',    bodyLineSpacing,   0,  100,  600)}
+${paraBase(0, 'JUSTIFY', bodyLineSpacing, paragraphSpacing.bodyPrev, paragraphSpacing.bodyNext,    0)}
+${paraBase(1, 'LEFT',    h1LineSpacing, paragraphSpacing.headingPrev, paragraphSpacing.headingNext,    0)}
+${paraBase(2, 'LEFT',    h2LineSpacing, Math.max(0, paragraphSpacing.headingPrev - 150), Math.max(0, paragraphSpacing.headingNext - 142),    0)}
+${paraBase(3, 'LEFT',    bodyLineSpacing, Math.max(0, paragraphSpacing.headingPrev - 283), Math.max(0, paragraphSpacing.headingNext - 284),    0)}
+${paraBase(4, 'LEFT',    bodyLineSpacing, Math.max(0, paragraphSpacing.headingPrev - 425), Math.max(0, paragraphSpacing.headingNext - 367),    0)}
+${paraBase(5, 'LEFT',    bodyLineSpacing,   0,  paragraphSpacing.listNext,  600)}
 ${paraBase(6, 'LEFT',    140, 200,  200,  400)}
       <!-- id=7  표 셀 가운데 정렬 -->
 ${paraBase(7, 'CENTER',  150,   0,    0,    0)}
@@ -433,11 +476,11 @@ ${paraBase(13, 'RIGHT',  bodyLineSpacing,   0,  850,    0)}
       <!-- id=14  코드 라인: 사용자가 선택한 문서 글꼴 -->
 ${paraBase(14, 'LEFT',   120,   0,    0,    0)}
       <!-- id=15/16  H5/H6 제목 -->
-${paraBase(15, 'LEFT',   bodyLineSpacing, 300,  150,    0)}
-${paraBase(16, 'LEFT',   bodyLineSpacing, 200,  100,    0)}
+${paraBase(15, 'LEFT',   bodyLineSpacing, Math.max(0, paragraphSpacing.headingPrev - 550), Math.max(0, paragraphSpacing.headingNext - 417),    0)}
+${paraBase(16, 'LEFT',   bodyLineSpacing, Math.max(0, paragraphSpacing.headingPrev - 650), Math.max(0, paragraphSpacing.headingNext - 467),    0)}
       <!-- id=17/18  중첩 목록 들여쓰기 (레벨1/레벨2). 레벨0은 id=5 사용 -->
-${paraBase(17, 'LEFT',   bodyLineSpacing,   0,  100, 1200)}
-${paraBase(18, 'LEFT',   bodyLineSpacing,   0,  100, 1800)}
+${paraBase(17, 'LEFT',   bodyLineSpacing,   0,  paragraphSpacing.listNext, 1200)}
+${paraBase(18, 'LEFT',   bodyLineSpacing,   0,  paragraphSpacing.listNext, 1800)}
       <!-- id=19  인용구: 왼쪽 선+옅은 배경, 본문보다 조금 들여쓰기, 아래 3mm -->
 ${paraBase(19, 'LEFT',   bodyLineSpacing, 300,  850,  900, '19')}
     </hh:paraProperties>
@@ -731,8 +774,9 @@ function buildHyperlinkEnd(ids) {
  *            10~ = 동적 확장(밑줄/취소선/글자색) — customCharMap 조회.
  * run.footnote 가 있는 경우 각주 컨트롤(hp:ctrl) 을 삽입한다.
  */
-function buildParaRuns(runs, paraId = '0', customCharMap = new Map()) {
+function buildParaRuns(runs, paraId = '0', customCharMap = new Map(), options = {}) {
     const pid = _nextParaId();
+    const linkStyle = normalizeLinkStyle(options.linkStyle);
     let runsXml = '';
     let ctrlsXml = '';   // 각주 컨트롤은 run 뒤에 배치
     for (const run of (runs || [])) {
@@ -741,10 +785,18 @@ function buildParaRuns(runs, paraId = '0', customCharMap = new Map()) {
             continue;
         }
         if (!run.text) continue;
-        const safe = xmlEsc(replaceEmoji(run.text));
+        const href = normalizeSafeHyperlink(run.href);
+        const visibleText = href && linkStyle === 'url' && !String(run.text).includes(href)
+            ? `${run.text} (${href})`
+            : run.text;
+        const safe = xmlEsc(replaceEmoji(visibleText));
         let cId = '0';
         if (run.code) {
             cId = '6';
+        } else if (href && linkStyle === 'plain') {
+            if (run.bold && run.italic) cId = '9';
+            else if (run.bold) cId = '7';
+            else if (run.italic) cId = '8';
         } else if (runNeedsExtChar(run) && customCharMap.has(extCharKey(run))) {
             // 동적 확장 charPr (밑줄/취소선/색). 미스 시 아래 bold/italic 폴백으로 안전 처리
             cId = String(customCharMap.get(extCharKey(run)));
@@ -755,7 +807,6 @@ function buildParaRuns(runs, paraId = '0', customCharMap = new Map()) {
         } else if (run.italic) {
             cId = '8';
         }
-        const href = normalizeSafeHyperlink(run.href);
         if (href) {
             const ids = _nextHyperlinkIds();
             runsXml += buildHyperlinkBegin(href, ids);
@@ -1062,9 +1113,10 @@ function getContentWidthHwp(marginsHwp, paperKey, landscape = false) {
     return Math.max(12000, paper.w - m.left - m.right);
 }
 
-function buildTable(header, rows, contentWidthHwp = 48000, customBfMap = new Map(), customCharMap = new Map()) {
+function buildTable(header, rows, contentWidthHwp = 48000, customBfMap = new Map(), customCharMap = new Map(), options = {}) {
     const allRows = (header && header.length ? [header] : []).concat(rows || []);
     if (!allRows.length) return buildBlankPara();
+    const tableStyle = normalizeTableStyle(options.tableStyle);
 
     const nRows = allRows.length;
     // 열 수: 각 행의 셀 수 + colSpan - 1 합산으로 실제 논리 열 수 계산
@@ -1079,7 +1131,9 @@ function buildTable(header, rows, contentWidthHwp = 48000, customBfMap = new Map
     // 자식 순서: subList → cellAddr → cellSpan → cellSz → cellMargin
     // (rhwp serializer/hwpx/table.rs 기준 OWPML 공식 순서)
     const renderCell = (r, c, cs, rs, val, bg, isHd, color) => {
-        let cId      = isHd ? '5' : '0';                               // 표머리=5(bold), 일반=0
+        const styledHeader = isHd && tableStyle !== 'plain';
+        const effectiveBg = (!bg && isHd && tableStyle === 'report') ? 'EAF2FF' : bg;
+        let cId      = styledHeader ? '5' : '0';                               // 표머리=5(bold), 일반=0
         // 셀 글자색(예: 흰 글자 머리행)이 있으면 동적 charPr 사용 (미스 시 기본값 유지)
         if (color && runNeedsExtChar({ color })) {
             const key = extCharKey({ bold: isHd, color });
@@ -1087,16 +1141,16 @@ function buildTable(header, rows, contentWidthHwp = 48000, customBfMap = new Map
         }
         const paraId = isHd ? '7' : (isNumericCell(val) ? '11' : '10');
         let bfId;
-        if (bg) {
+        if (effectiveBg) {
             const variant = tableSideVariant(nCols, c, cs);
-            bfId = customBfMap.get(bgBorderKey(bg, variant))
-                || customBfMap.get(bgBorderKey(bg, 'full'));
+            bfId = customBfMap.get(bgBorderKey(effectiveBg, variant))
+                || customBfMap.get(bgBorderKey(effectiveBg, 'full'));
         }
         if (!bfId) {
-            if (nCols === 1)          bfId = isHd ? '9' : '8';
-            else if (c === 0)         bfId = isHd ? '6' : '4';
-            else if (c + cs >= nCols) bfId = isHd ? '7' : '5';
-            else                      bfId = isHd ? '3' : '2';
+            if (nCols === 1)          bfId = styledHeader ? '9' : '8';
+            else if (c === 0)         bfId = styledHeader ? '6' : '4';
+            else if (c + cs >= nCols) bfId = styledHeader ? '7' : '5';
+            else                      bfId = styledHeader ? '3' : '2';
         }
         const cellWidth = colWidths.slice(c, c + cs).reduce((a, b) => a + b, 0);
         return `<hp:tc name="" header="${isHd ? '1' : '0'}" hasMargin="1" protect="0" editable="0" dirty="0" borderFillIDRef="${bfId}">` +
@@ -1263,7 +1317,7 @@ function buildSection(ir, marginsHwp, paperKey, landscape = false, customBfMap =
             if (qType === 'para') {
                 if (quoteBlock.runs && quoteBlock.runs.length > 0) {
                     const hasText = quoteBlock.runs.some(r => r.text && r.text.trim());
-                    parts.push(hasText ? buildParaRuns(quoteBlock.runs, '19', customCharMap) : buildBlankPara());
+                    parts.push(hasText ? buildParaRuns(quoteBlock.runs, '19', customCharMap, options) : buildBlankPara());
                 } else if (quoteBlock.text && quoteBlock.text.trim()) {
                     parts.push(buildPara(quoteBlock.text, '0', '19'));
                 } else {
@@ -1285,7 +1339,7 @@ function buildSection(ir, marginsHwp, paperKey, landscape = false, customBfMap =
                     else if (ordered) marker = `${item.marker != null ? item.marker : (++autoNum)}. `;
                     else marker = bullets[level];
                     if (item.runs && item.runs.length) {
-                        parts.push(buildParaRuns([{ text: marker }, ...item.runs], '19', customCharMap));
+                        parts.push(buildParaRuns([{ text: marker }, ...item.runs], '19', customCharMap, options));
                     } else if (item.text) {
                         parts.push(buildPara(marker + item.text, '0', '19'));
                     }
@@ -1296,10 +1350,10 @@ function buildSection(ir, marginsHwp, paperKey, landscape = false, customBfMap =
             } else if (qType === 'code') {
                 parts.push(buildCodeBlock(quoteBlock, '', contentWidthHwp));
             } else if (qType === 'table') {
-                parts.push(buildTable(quoteBlock.header, quoteBlock.rows, contentWidthHwp, customBfMap, customCharMap));
+                parts.push(buildTable(quoteBlock.header, quoteBlock.rows, contentWidthHwp, customBfMap, customCharMap, options));
             } else if (qType === 'image') {
                 const imgIndex = imageBlocks.indexOf(quoteBlock);
-                if (imgIndex >= 0) parts.push(buildImageRun(quoteBlock, imgIndex, contentWidthHwp));
+                if (imgIndex >= 0) parts.push(buildImageRun(quoteBlock, imgIndex, contentWidthHwp, options));
             } else if (qType === 'hr' && showHorizontalRules) {
                 parts.push(buildHrPara(contentWidthHwp));
             } else if (qType === 'quote') {
@@ -1324,7 +1378,7 @@ function buildSection(ir, marginsHwp, paperKey, landscape = false, customBfMap =
             if (block.runs && block.runs.length > 0) {
                 // 인라인 서식(bold/italic/code) 보존 경로
                 const hasText = block.runs.some(r => r.text && r.text.trim());
-                parts.push(hasText ? buildParaRuns(block.runs, alignParaId, customCharMap) : buildBlankPara());
+                parts.push(hasText ? buildParaRuns(block.runs, alignParaId, customCharMap, options) : buildBlankPara());
             } else if (!block.text || !block.text.trim()) {
                 parts.push(buildBlankPara());
             } else {
@@ -1357,7 +1411,7 @@ function buildSection(ir, marginsHwp, paperKey, landscape = false, customBfMap =
                 else if (ordered) marker = `${item.marker != null ? item.marker : (++autoNum)}. `;
                 else marker = bullets[level];
                 if (item.runs && item.runs.length) {
-                    parts.push(buildParaRuns([{ text: marker }, ...item.runs], listParaId, customCharMap));
+                    parts.push(buildParaRuns([{ text: marker }, ...item.runs], listParaId, customCharMap, options));
                 } else if (item.text) {
                     parts.push(buildPara(marker + item.text, '0', listParaId));
                 }
@@ -1367,7 +1421,7 @@ function buildSection(ir, marginsHwp, paperKey, landscape = false, customBfMap =
             });
 
         } else if (bt === 'table') {
-            parts.push(buildTable(block.header, block.rows, contentWidthHwp, customBfMap, customCharMap));
+            parts.push(buildTable(block.header, block.rows, contentWidthHwp, customBfMap, customCharMap, options));
 
         } else if (bt === 'code') {
             parts.push(buildCodeBlock(block, '', contentWidthHwp));
@@ -1378,7 +1432,7 @@ function buildSection(ir, marginsHwp, paperKey, landscape = false, customBfMap =
         } else if (bt === 'image') {
             const imgIndex = imageBlocks.indexOf(block);
             if (imgIndex >= 0) {
-                parts.push(buildImageRun(block, imgIndex, contentWidthHwp));
+                parts.push(buildImageRun(block, imgIndex, contentWidthHwp, options));
             }
 
         } else if (block.text) {
@@ -1412,6 +1466,15 @@ async function buildHwpx(ir, fontName = '휴먼명조', fontSize = 12, marginsMm
     if (typeof JSZip === 'undefined') throw new Error('JSZip 미로드: 인터넷 연결을 확인하세요.');
 
     validateCodeAudit(ir);
+    const buildOptions = Object.assign({
+        paragraphSpacing: 'normal',
+        headingStyle: 'standard',
+        tableStyle: 'standard',
+        linkStyle: 'blue',
+        imageMaxWidth: 100,
+        imageAlign: 'left',
+        showHorizontalRules: false,
+    }, options || {});
 
     const marginsHwp = marginsMmToHwp(marginsMm || DEFAULT_MARGINS_MM);
     const landscape  = orientation === 'landscape';
@@ -1419,6 +1482,9 @@ async function buildHwpx(ir, fontName = '휴먼명조', fontSize = 12, marginsMm
     // 표 셀 배경색 수집 → 동적 borderFill 생성용
     const customBfMap = new Map();
     let nextBfId = 20;   // 1~11 기본 + 12~18 표지 밴드 + 19 인용구 이후부터 DOCX 셀 배경색
+    if (normalizeTableStyle(buildOptions.tableStyle) === 'report') {
+        nextBfId = addBgBorderFillVariants(customBfMap, 'EAF2FF', nextBfId);
+    }
     const scanBorderFills = (blocks) => {
         for (const block of (blocks || [])) {
             if (block.type === 'table') {
@@ -1452,10 +1518,11 @@ async function buildHwpx(ir, fontName = '휴먼명조', fontSize = 12, marginsMm
     };
     // 제목 색 보존용 제목 크기(HWPUNIT) — buildHeaderXml sz와 동일 계산
     const _bp = Math.max(6, Math.min(36, parseInt(fontSize, 10) || 12));
+    const _headingSizes = headingSizeMap(_bp, buildOptions.headingStyle);
     const headingHeightHwp = (lvl) => ({
-        1: (_bp + 6) * 100, 2: (_bp + 4) * 100, 3: (_bp + 2) * 100,
-        4: (_bp + 1) * 100, 5: _bp * 100, 6: Math.max((_bp - 1) * 100, 800),
-    }[lvl] || _bp * 100);
+        1: _headingSizes.h1, 2: _headingSizes.h2, 3: _headingSizes.h3,
+        4: _headingSizes.h4, 5: _headingSizes.h5, 6: _headingSizes.h6,
+    }[lvl] || _headingSizes.body);
     const scanCharProps = (blocks) => {
         for (const block of (blocks || [])) {
             if (block.type === 'para' && Array.isArray(block.runs)) {
@@ -1484,8 +1551,8 @@ async function buildHwpx(ir, fontName = '휴먼명조', fontSize = 12, marginsMm
     const imageBlocks = collectImageBlocks(ir.blocks || []);
     const docHeaderFooter = { header: ir.header || '', footer: ir.footer || '' };
 
-    const headerXml   = buildHeaderXml(fontName, fontSize, customBfMap, imageBlocks, docHeaderFooter, customCharMap, lineSpacingPercent);
-    const section0Xml = buildSection(ir, marginsHwp, paperSize, landscape, customBfMap, customCharMap, options);
+    const headerXml   = buildHeaderXml(fontName, fontSize, customBfMap, imageBlocks, docHeaderFooter, customCharMap, lineSpacingPercent, buildOptions);
+    const section0Xml = buildSection(ir, marginsHwp, paperSize, landscape, customBfMap, customCharMap, buildOptions);
 
     // 이미지가 있을 때 manifest를 동적으로 생성하여 BinData 파일 선언
     const manifestXml = imageBlocks.length

@@ -1,6 +1,22 @@
 {
-  "current": "4.6.7",
+  "current": "4.6.8",
   "versions": [
+    {
+      "version": "4.6.8",
+      "date": "2026-06-26",
+      "user": [
+        "빠른 사용 안내를 더 명확한 이름과 위치로 정리하고, 물음표 도움말이 실제 설명 팝오버로 열리도록 개선했습니다.",
+        "페이지 여백 미니맵의 왼쪽·오른쪽 라벨이 본문 영역을 가리지 않도록 바깥 배지로 이동했습니다.",
+        "문단 앞/뒤 간격, 제목 스타일, 표 스타일, 링크 표시, 이미지 최대 폭/정렬, 첫 제목 본문 유지/제거 세부 설정을 추가했습니다."
+      ],
+      "dev": [
+        "[v4.6.8] index.html/style.css/js/app.js: 빠른 사용법 문구, 커스텀 help-popover, 여백 미니맵 라벨, 문서 세부 설정 UI와 localStorage 상태 연결",
+        "[v4.6.8] js/hwpx.js: paragraphSpacing/headingStyle/tableStyle/linkStyle/imageMaxWidth/imageAlign 옵션을 header.xml·section0.xml 출력에 반영",
+        "[v4.6.8] js/app.js: titleBodyPolicy를 applyDocumentTitlePolicy에 연결해 문서 첫 제목 본문 유지/제거 토글 구현",
+        "[v4.6.8] tests/golden.js: 세부 설정 컨트롤, HWPX XML 반영, 커스텀 도움말 팝오버, 첫 제목 유지 정책 회귀 테스트 추가",
+        "[v4.6.8] package.json/package-lock.json/sw.js/index.html/changelog.json: v4.6.8 반영"
+      ]
+    },
     {
       "version": "4.6.7",
       "date": "2026-06-26",

@@ -117,7 +117,7 @@
             <span>｢BWYF｣ AX Challenger 2026</span>
             <!-- [주의] id="open-changelog"는 app.js에서 업데이트 내역 모달을 여는 연결값 -->
             <button class="util-changelog-btn" id="open-changelog" aria-label="업데이트 내역 보기">
-                📋 v4.6.7 업데이트 내역
+                📋 v4.6.8 업데이트 내역
             </button>
         </div>
     </div>
@@ -200,17 +200,17 @@
             <div class="drop-sub">입력: MD · HTML · TXT · CSV · XLSX · JSON · IPYNB · DOCX · HWP (여러 개 가능)<br>출력: HWPX</div>
         </div>
         <div id="quick-guide" class="quick-guide" role="status" aria-live="polite">
-            <span><b>처음이면</b> 파일 선택 → 기본 설정 확인 → HWPX 다운로드 순서로 진행하세요.</span>
+            <span><b>처음 사용</b> 파일 선택 → 기본 설정 확인 → 변환 → HWPX 다운로드 순서로 진행하세요.</span>
             <div class="quick-guide-actions">
-                <button type="button" id="quick-guide-open">20초 안내</button>
-                <button type="button" id="quick-guide-hide" aria-label="처음 사용 안내 바 숨기기">숨기기</button>
+                <button type="button" id="quick-guide-open">빠른 사용법</button>
+                <button type="button" id="quick-guide-hide" aria-label="빠른 사용법 안내 바 숨기기">숨기기</button>
             </div>
         </div>
 
         <!-- 보조 안내 버튼 — 첫 행동(파일 선택)을 방해하지 않도록 드롭존 아래에 배치 -->
         <div class="hero-badges" aria-label="지원 실행 환경">
             <!-- [주의] 아래 버튼 id는 app.js 모달 열기 기능과 연결됨. 글자만 수정 -->
-            <button type="button" id="open-onboarding-guide">처음 사용 안내</button>
+            <button type="button" id="open-onboarding-guide">사용법</button>
             <button type="button" id="open-pc-guide">PC 브라우저 지원</button>
             <button type="button" id="open-mobile-guide">모바일 브라우저 지원</button>
             <button type="button" id="open-install-guide">앱처럼 설치 가능</button>
@@ -357,7 +357,7 @@
                         <div class="form-row line-spacing-row">
                             <label for="line-spacing" class="label-with-help">
                                 <span>줄 간격</span>
-                                <button type="button" class="help-dot" title="본문과 목록 문단에 적용되는 기본 줄 간격입니다. 코드 블록은 읽기 좋도록 별도 간격을 유지합니다." aria-label="줄 간격 도움말">?</button>
+                                <button type="button" class="help-dot" data-help="본문과 목록 문단에 적용되는 기본 줄 간격입니다. 코드 블록은 읽기 좋도록 별도 간격을 유지합니다." aria-label="줄 간격 도움말">?</button>
                             </label>
                             <select id="line-spacing" name="line-spacing">
                                 <option value="130">130%</option>
@@ -399,7 +399,7 @@
                                 <div class="form-row">
                                     <span class="form-row-label label-with-help">
                                         <span>상단 제목 블록</span>
-                                        <button type="button" class="help-dot" title="문서 첫 페이지 맨 위에 보고서형 제목 표를 넣습니다. 일반 메모 변환에는 '없음'이 가장 깔끔합니다." aria-label="상단 제목 블록 도움말">?</button>
+                                        <button type="button" class="help-dot" data-help="문서 첫 페이지 맨 위에 보고서형 제목 표를 넣습니다. 일반 메모 변환에는 '없음'이 가장 깔끔합니다." aria-label="상단 제목 블록 도움말">?</button>
                                     </span>
                                     <div class="card-radio-group" role="radiogroup" aria-label="상단 제목 블록">
                                         <label class="card-radio">
@@ -437,7 +437,7 @@
                                 <div class="form-row hr-display-row">
                                     <label class="label-with-help">
                                         <span>가로 구분선</span>
-                                        <button type="button" class="help-dot" title="Markdown의 --- 같은 구분선을 HWPX에 표시할지 정합니다. 실무 문서에서는 숨김이 보통 더 자연스럽습니다." aria-label="가로 구분선 도움말">?</button>
+                                        <button type="button" class="help-dot" data-help="Markdown의 --- 같은 구분선을 HWPX에 표시할지 정합니다. 실무 문서에서는 숨김이 보통 더 자연스럽습니다." aria-label="가로 구분선 도움말">?</button>
                                     </label>
                                     <div class="seg-control" role="group" aria-label="가로 구분선 표시 여부">
                                         <button type="button" class="seg-btn is-active" data-hr-display="hide">숨김</button>
@@ -452,7 +452,7 @@
                             <div class="form-row advanced-margins">
                                 <label class="label-with-help">
                                     <span>페이지 여백 (mm)</span>
-                                    <button type="button" class="help-dot" title="숫자를 바꾸면 종이 미니맵이 즉시 반응합니다. 실제 HWPX 여백값도 같은 mm 기준으로 생성됩니다." aria-label="페이지 여백 도움말">?</button>
+                                    <button type="button" class="help-dot" data-help="숫자를 바꾸면 종이 미니맵이 즉시 반응합니다. 실제 HWPX 여백값도 같은 mm 기준으로 생성됩니다." aria-label="페이지 여백 도움말">?</button>
                                 </label>
                                 <div class="margin-paper-map" aria-label="페이지 여백 설정">
                                     <div class="margin-paper">
@@ -500,13 +500,76 @@
                                     </div>
                                 </div>
                             </div>
+                            <div class="form-row document-detail-settings">
+                                <span class="form-row-label label-with-help">
+                                    <span>문서 세부 설정</span>
+                                    <button type="button" class="help-dot" data-help="문단 간격, 제목, 표, 링크, 이미지, 첫 제목 처리처럼 변환 결과의 세부 모양을 조정합니다. 기본값만으로도 일반 문서에는 충분합니다." aria-label="문서 세부 설정 도움말">?</button>
+                                </span>
+                                <div class="detail-settings-grid">
+                                    <label>
+                                        <span>문단 앞/뒤 간격</span>
+                                        <select id="paragraph-spacing" name="paragraph-spacing">
+                                            <option value="compact">좁게</option>
+                                            <option value="normal" selected>기본</option>
+                                            <option value="relaxed">넓게</option>
+                                        </select>
+                                    </label>
+                                    <label>
+                                        <span>제목 스타일</span>
+                                        <select id="heading-style" name="heading-style">
+                                            <option value="compact">차분하게</option>
+                                            <option value="standard" selected>기본</option>
+                                            <option value="prominent">강조</option>
+                                        </select>
+                                    </label>
+                                    <label>
+                                        <span>표 스타일</span>
+                                        <select id="table-style" name="table-style">
+                                            <option value="standard" selected>기본</option>
+                                            <option value="plain">단순</option>
+                                            <option value="report">보고서형</option>
+                                        </select>
+                                    </label>
+                                    <label>
+                                        <span>링크 표시</span>
+                                        <select id="link-style" name="link-style">
+                                            <option value="blue" selected>파란 밑줄</option>
+                                            <option value="plain">본문처럼</option>
+                                            <option value="url">주소 함께</option>
+                                        </select>
+                                    </label>
+                                    <label>
+                                        <span>이미지 최대 폭</span>
+                                        <select id="image-max-width" name="image-max-width">
+                                            <option value="50">본문의 50%</option>
+                                            <option value="75">본문의 75%</option>
+                                            <option value="100" selected>본문 폭까지</option>
+                                        </select>
+                                    </label>
+                                    <label>
+                                        <span>이미지 정렬</span>
+                                        <select id="image-align" name="image-align">
+                                            <option value="left" selected>왼쪽</option>
+                                            <option value="center">가운데</option>
+                                            <option value="right">오른쪽</option>
+                                        </select>
+                                    </label>
+                                    <label>
+                                        <span>첫 제목 본문 처리</span>
+                                        <select id="title-body-policy" name="title-body-policy">
+                                            <option value="remove" selected>본문에서 제거</option>
+                                            <option value="keep">본문에 유지</option>
+                                        </select>
+                                    </label>
+                                </div>
+                            </div>
                         </div>
 
                 <label class="toggle-row" for="auto-download">
                     <span class="toggle-text">
                         <strong class="label-with-help">
                             <span>자동 다운로드</span>
-                            <button type="button" class="help-dot" title="변환이 끝나면 바로 저장합니다. 꺼도 완료 카드에서 언제든 다시 다운로드할 수 있습니다." aria-label="자동 다운로드 도움말">?</button>
+                            <button type="button" class="help-dot" data-help="변환이 끝나면 바로 저장합니다. 꺼도 완료 카드에서 언제든 다시 다운로드할 수 있습니다." aria-label="자동 다운로드 도움말">?</button>
                         </strong>
                         <small>완료 카드에서도 다시 다운로드할 수 있습니다.</small>
                     </span>

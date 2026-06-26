@@ -32,6 +32,13 @@ const state = {
     orientation:  'portrait',          // 용지 방향: "portrait" | "landscape"
     lineSpacing:  160,                 // 줄 간격 (%)
     showHorizontalRules: false,        // 가로 구분선 표시 여부
+    paragraphSpacing: 'normal',        // 문단 앞/뒤 간격 프리셋
+    headingStyle: 'standard',          // 제목 크기/굵기 프리셋
+    tableStyle: 'standard',            // 표 스타일 프리셋
+    linkStyle: 'blue',                 // 링크 표시 방식
+    imageMaxWidth: 100,                // 이미지 최대 폭(%)
+    imageAlign: 'left',                // 이미지 정렬
+    titleBodyPolicy: 'remove',         // 문서 첫 제목 본문 유지/제거
     pageMargins:  { top: 10, bottom: 10, left: 20, right: 20, header: 10, footer: 10 },  // 단위: mm
     autoDownload: true,                // 변환 완료 시 자동 다운로드
     isConverting: false,               // 변환 중 중복 실행 방지 플래그
@@ -98,12 +105,58 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function initHelpDots() {
+    let tip = document.getElementById('help-popover');
+    if (!tip) {
+        tip = document.createElement('div');
+        tip.id = 'help-popover';
+        tip.className = 'help-popover';
+        tip.setAttribute('role', 'tooltip');
+        tip.hidden = true;
+        document.body.appendChild(tip);
+    }
+    const hideTip = () => {
+        tip.hidden = true;
+        document.querySelectorAll('.help-dot[aria-describedby="help-popover"]').forEach(btn => {
+            btn.removeAttribute('aria-describedby');
+            btn.setAttribute('aria-expanded', 'false');
+        });
+    };
+    const showTip = (btn) => {
+        const text = btn.dataset.help || btn.getAttribute('title') || btn.getAttribute('aria-label') || '';
+        if (!text.trim()) return;
+        btn.removeAttribute('title');
+        tip.textContent = text;
+        tip.hidden = false;
+        btn.setAttribute('aria-describedby', 'help-popover');
+        btn.setAttribute('aria-expanded', 'true');
+        const rect = btn.getBoundingClientRect();
+        const gap = 8;
+        const maxLeft = window.innerWidth - tip.offsetWidth - 12;
+        const left = Math.max(12, Math.min(maxLeft, rect.left + rect.width / 2 - tip.offsetWidth / 2));
+        const top = rect.bottom + tip.offsetHeight + gap > window.innerHeight
+            ? Math.max(12, rect.top - tip.offsetHeight - gap)
+            : rect.bottom + gap;
+        tip.style.left = `${left}px`;
+        tip.style.top = `${top}px`;
+    };
     document.querySelectorAll('.help-dot').forEach(btn => {
+        btn.setAttribute('aria-haspopup', 'true');
+        btn.setAttribute('aria-expanded', 'false');
+        btn.addEventListener('mouseenter', () => showTip(btn));
+        btn.addEventListener('focus', () => showTip(btn));
+        btn.addEventListener('mouseleave', hideTip);
+        btn.addEventListener('blur', hideTip);
         btn.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
+            showTip(btn);
         });
     });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') hideTip();
+    });
+    window.addEventListener('scroll', hideTip, { passive: true });
+    window.addEventListener('resize', hideTip);
 }
 
 function initQuickGuide() {
@@ -629,11 +682,12 @@ function findFirstDocumentTitleCandidate(ir) {
     return null;
 }
 
-function applyDocumentTitlePolicy(ir, file, customTitle, titleSource) {
+function applyDocumentTitlePolicy(ir, file, customTitle, titleSource, titleBodyPolicy = 'remove') {
     const fallback = fileBaseName(file);
     const ext = getFileExtension(file?.name || '');
     const parsedTitle = normalizeTitleCandidate(ir.title);
     const direct = normalizeTitleCandidate(customTitle);
+    const keepFirstTitleInBody = titleBodyPolicy === 'keep';
     if (direct) {
         restoreTitleToBodyIfNeeded(ir, parsedTitle, direct);
         ir.title = direct;
@@ -654,7 +708,7 @@ function applyDocumentTitlePolicy(ir, file, customTitle, titleSource) {
     const firstTitle = findFirstDocumentTitleCandidate(ir);
     if (firstTitle) {
         ir.title = firstTitle.text;
-        if (firstTitle.block.type === 'heading') {
+        if (!keepFirstTitleInBody && firstTitle.block.type === 'heading') {
             ir.blocks.splice(ir.blocks.indexOf(firstTitle.block), 1);
         }
         return;
@@ -1336,6 +1390,31 @@ function initOptions() {
         });
     }
 
+    const detailSelects = [
+        { id: 'paragraph-spacing', key: 'paragraphSpacing', store: 'tohwpx_paragraphSpacing', allowed: ['compact', 'normal', 'relaxed'] },
+        { id: 'heading-style', key: 'headingStyle', store: 'tohwpx_headingStyle', allowed: ['compact', 'standard', 'prominent'] },
+        { id: 'table-style', key: 'tableStyle', store: 'tohwpx_tableStyle', allowed: ['standard', 'plain', 'report'] },
+        { id: 'link-style', key: 'linkStyle', store: 'tohwpx_linkStyle', allowed: ['blue', 'plain', 'url'] },
+        { id: 'image-max-width', key: 'imageMaxWidth', store: 'tohwpx_imageMaxWidth', allowed: ['50', '75', '100'], parse: v => parseInt(v, 10) },
+        { id: 'image-align', key: 'imageAlign', store: 'tohwpx_imageAlign', allowed: ['left', 'center', 'right'] },
+        { id: 'title-body-policy', key: 'titleBodyPolicy', store: 'tohwpx_titleBodyPolicy', allowed: ['remove', 'keep'] },
+    ];
+    detailSelects.forEach(cfg => {
+        const el = document.getElementById(cfg.id);
+        if (!el) return;
+        const saved = localStorage.getItem(cfg.store);
+        if (saved && cfg.allowed.includes(saved)) {
+            el.value = saved;
+            state[cfg.key] = cfg.parse ? cfg.parse(saved) : saved;
+        }
+        el.addEventListener('change', () => {
+            if (!cfg.allowed.includes(el.value)) return;
+            state[cfg.key] = cfg.parse ? cfg.parse(el.value) : el.value;
+            localStorage.setItem(cfg.store, el.value);
+            updateAdvancedSettingsSummary();
+        });
+    });
+
     // 페이지 여백 입력 (mm 단위, #margin-top/bottom/left/right/header/footer)
     const marginIds = ['top', 'bottom', 'left', 'right', 'header', 'footer'];
     marginIds.forEach(side => {
@@ -1403,7 +1482,10 @@ function updateAdvancedSettingsSummary() {
     const summary = document.getElementById('advanced-settings-summary');
     if (!summary) return;
     const orientationLabel = state.orientation === 'landscape' ? '가로' : '세로';
-    summary.textContent = `현재: ${state.docFont} · ${state.fontSize}pt · 줄 ${state.lineSpacing}% · ${state.paperSize} · ${orientationLabel}`;
+    const paragraphLabel = ({ compact: '문단 좁게', normal: '문단 기본', relaxed: '문단 넓게' })[state.paragraphSpacing] || '문단 기본';
+    const headingLabel = ({ compact: '제목 차분', standard: '제목 기본', prominent: '제목 강조' })[state.headingStyle] || '제목 기본';
+    const tableLabel = ({ standard: '표 기본', plain: '표 단순', report: '표 보고서형' })[state.tableStyle] || '표 기본';
+    summary.textContent = `현재: ${state.docFont} · ${state.fontSize}pt · 줄 ${state.lineSpacing}% · ${state.paperSize} ${orientationLabel} · ${paragraphLabel} · ${headingLabel} · ${tableLabel}`;
 }
 
 
@@ -1828,7 +1910,7 @@ async function convertOneFile(file, statusPrefix = '', outputFontName = state.do
 
     // 제목: 단일일 때만 직접 입력(customTitle) 적용, 배치는 파일별 자동 기준 규칙
     const customTitle = state.queue.length === 1 ? state.customTitle : '';
-    applyDocumentTitlePolicy(ir, file, customTitle, state.titleSource);
+    applyDocumentTitlePolicy(ir, file, customTitle, state.titleSource, state.titleBodyPolicy);
     state.ir = ir;
 
     // [보안] IR 미리보기는 textContent로만 표시 (innerHTML 사용 금지)
@@ -1847,7 +1929,15 @@ async function convertOneFile(file, statusPrefix = '', outputFontName = state.do
         hwpxBlob = await buildHwpx(ir, outputFontName, state.fontSize, state.pageMargins, state.paperSize, (pct) => {
             setProgress(58 + (pct * 0.14)); // 58% ~ 72%
             st(`HWPX 파일을 압축하는 중... ${Math.round(pct)}%`);
-        }, state.orientation, state.lineSpacing, { showHorizontalRules: state.showHorizontalRules });
+        }, state.orientation, state.lineSpacing, {
+            showHorizontalRules: state.showHorizontalRules,
+            paragraphSpacing: state.paragraphSpacing,
+            headingStyle: state.headingStyle,
+            tableStyle: state.tableStyle,
+            linkStyle: state.linkStyle,
+            imageMaxWidth: state.imageMaxWidth,
+            imageAlign: state.imageAlign,
+        });
     } catch (e) {
         throw new Error('HWPX 생성 실패: ' + e.message);
     }
@@ -3031,10 +3121,22 @@ function resetConverterState() {
     state.orientation = 'portrait';
     state.lineSpacing = 160;
     state.showHorizontalRules = false;
+    state.paragraphSpacing = 'normal';
+    state.headingStyle = 'standard';
+    state.tableStyle = 'standard';
+    state.linkStyle = 'blue';
+    state.imageMaxWidth = 100;
+    state.imageAlign = 'left';
+    state.titleBodyPolicy = 'remove';
     state.pageMargins = { top: 10, bottom: 10, left: 20, right: 20, header: 10, footer: 10 };
     state.autoDownload = true;
 
-    for (const key of ['tohwpx_font', 'tohwpx_fontSize', 'tohwpx_paperSize', 'tohwpx_autoDownload', 'tohwpx_orientation', 'tohwpx_lineSpacing', 'tohwpx_showHorizontalRules']) {
+    for (const key of [
+        'tohwpx_font', 'tohwpx_fontSize', 'tohwpx_paperSize', 'tohwpx_autoDownload',
+        'tohwpx_orientation', 'tohwpx_lineSpacing', 'tohwpx_showHorizontalRules',
+        'tohwpx_paragraphSpacing', 'tohwpx_headingStyle', 'tohwpx_tableStyle',
+        'tohwpx_linkStyle', 'tohwpx_imageMaxWidth', 'tohwpx_imageAlign', 'tohwpx_titleBodyPolicy'
+    ]) {
         localStorage.removeItem(key);
     }
 
@@ -3042,6 +3144,13 @@ function resetConverterState() {
     const fontSize = document.getElementById('font-size');
     const paperSize = document.getElementById('paper-size');
     const lineSpacing = document.getElementById('line-spacing');
+    const paragraphSpacing = document.getElementById('paragraph-spacing');
+    const headingStyle = document.getElementById('heading-style');
+    const tableStyle = document.getElementById('table-style');
+    const linkStyle = document.getElementById('link-style');
+    const imageMaxWidth = document.getElementById('image-max-width');
+    const imageAlign = document.getElementById('image-align');
+    const titleBodyPolicy = document.getElementById('title-body-policy');
     const autoDownload = document.getElementById('auto-download');
     const plainRadio = document.querySelector('input[name="doc-type"][value="plain"]');
     if (plainRadio) plainRadio.checked = true;
@@ -3052,6 +3161,13 @@ function resetConverterState() {
     if (fontSize) fontSize.value = '12';
     if (paperSize) paperSize.value = 'A4';
     if (lineSpacing) lineSpacing.value = '160';
+    if (paragraphSpacing) paragraphSpacing.value = 'normal';
+    if (headingStyle) headingStyle.value = 'standard';
+    if (tableStyle) tableStyle.value = 'standard';
+    if (linkStyle) linkStyle.value = 'blue';
+    if (imageMaxWidth) imageMaxWidth.value = '100';
+    if (imageAlign) imageAlign.value = 'left';
+    if (titleBodyPolicy) titleBodyPolicy.value = 'remove';
     if (autoDownload) autoDownload.checked = true;
 
     for (const [side, value] of Object.entries(state.pageMargins)) {
