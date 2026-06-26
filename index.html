@@ -117,7 +117,7 @@
             <span>｢BWYF｣ AX Challenger 2026</span>
             <!-- [주의] id="open-changelog"는 app.js에서 업데이트 내역 모달을 여는 연결값 -->
             <button class="util-changelog-btn" id="open-changelog" aria-label="업데이트 내역 보기">
-                📋 v4.6.14 업데이트 내역
+                📋 v4.6.15 업데이트 내역
             </button>
         </div>
     </div>
@@ -197,7 +197,7 @@
              aria-label="파일을 드래그하거나 클릭하여 선택">
             <div class="drop-icon">📂</div>
             <div class="drop-title">파일을 여기에 드래그하거나 클릭하세요</div>
-            <div class="drop-sub">입력: MD · HTML · TXT · CSV · XLSX · JSON · IPYNB · DOCX · HWP (여러 개 가능)<br>출력: HWPX</div>
+            <div class="drop-sub">입력: MD · DOCX · HTML · CSV/XLSX · JSON · TXT · HWP · IPYNB (여러 개 가능)<br>출력: HWPX</div>
         </div>
         <div id="quick-guide" class="quick-guide" role="status" aria-live="polite">
             <span><b>처음 사용</b> 파일 선택 → 기본 설정 확인 → 변환 → HWPX 다운로드 순서로 진행하세요.</span>
@@ -221,7 +221,7 @@
         <!-- [포맷 추가 시] accept에 새 확장자를 추가해야 파일 선택창에서 보입니다. -->
         <!-- multiple: 여러 파일을 한 번에 선택해 배치 변환 -->
         <input type="file" id="file-input" hidden multiple
-               accept=".md,.markdown,.html,.htm,.txt,.csv,.xlsx,.xls,.json,.ipynb,.docx,.hwp,.hwpx">
+               accept=".md,.markdown,.docx,.html,.htm,.csv,.xlsx,.xls,.json,.txt,.hwp,.ipynb,.hwpx">
     </div>
 </section>
 
