@@ -1277,6 +1277,7 @@ function buildSection(ir, marginsHwp, paperKey, landscape = false, customBfMap =
     const NS_HS = 'http://www.hancom.co.kr/hwpml/2011/section';
     const NS_HP = 'http://www.hancom.co.kr/hwpml/2011/paragraph';
     const docType = ir.doc_type || 'plain';
+    const showHorizontalRules = !!options.showHorizontalRules;
 
     // 섹션마다 문단 ID 및 각주 ID를 재시작
     _resetParaId();
@@ -1354,7 +1355,7 @@ function buildSection(ir, marginsHwp, paperKey, landscape = false, customBfMap =
                 const imgIndex = imageBlocks.indexOf(quoteBlock);
                 if (imgIndex >= 0) parts.push(buildImageRun(quoteBlock, imgIndex, contentWidthHwp, options));
             } else if (qType === 'hr') {
-                parts.push(buildBlankPara());
+                parts.push(showHorizontalRules ? buildHrPara(contentWidthHwp) : buildBlankPara());
             } else if (qType === 'quote') {
                 pushQuoteBlocks(quoteBlock.blocks || []);
             } else if (quoteBlock.text) {
@@ -1389,8 +1390,8 @@ function buildSection(ir, marginsHwp, paperKey, landscape = false, customBfMap =
             parts.push(buildBlankPara());
 
         } else if (bt === 'hr') {
-            // 구분선은 시각 요소 대신 빈 줄로 대체해 본문 흐름만 유지한다.
-            parts.push(buildBlankPara());
+            // 숨김은 시각 요소 대신 빈 줄로 대체해 본문 흐름만 유지한다.
+            parts.push(showHorizontalRules ? buildHrPara(contentWidthHwp) : buildBlankPara());
 
         } else if (bt === 'list') {
             // 중첩 레벨(level)별 들여쓰기 paraPr: 0→5, 1→17, 2+→18
@@ -1466,6 +1467,7 @@ async function buildHwpx(ir, fontName = '휴먼명조', fontSize = 12, marginsMm
 
     validateCodeAudit(ir);
     const buildOptions = Object.assign({
+        showHorizontalRules: false,
         paragraphSpacing: 'normal',
         headingStyle: 'standard',
         tableStyle: 'standard',

@@ -31,6 +31,7 @@ const state = {
     paperSize:    'A4',                // 용지 크기: "A4" | "B5" | "Letter"
     orientation:  'portrait',          // 용지 방향: "portrait" | "landscape"
     lineSpacing:  160,                 // 줄 간격 (%)
+    showHorizontalRules: false,        // 가로 구분선 표시 여부 (false면 빈 줄 처리)
     paragraphSpacing: 'normal',        // 문단 앞/뒤 간격 프리셋
     headingStyle: 'standard',          // 제목 크기/굵기 프리셋
     tableStyle: 'standard',            // 표 스타일 프리셋
@@ -1366,6 +1367,22 @@ function initOptions() {
         });
     }
 
+    // 가로 구분선 표시 여부 — 숨김이면 선 대신 빈 줄로 문서 흐름만 유지
+    const hrDisplayBtns = document.querySelectorAll('.seg-btn[data-hr-display]');
+    if (hrDisplayBtns.length) {
+        const savedHrDisplay = localStorage.getItem('tohwpx_showHorizontalRules');
+        state.showHorizontalRules = savedHrDisplay === 'true';
+        applyHrDisplayUi(state.showHorizontalRules);
+        hrDisplayBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                state.showHorizontalRules = btn.dataset.hrDisplay === 'show';
+                applyHrDisplayUi(state.showHorizontalRules);
+                localStorage.setItem('tohwpx_showHorizontalRules', String(state.showHorizontalRules));
+                updateAdvancedSettingsSummary();
+            });
+        });
+    }
+
     const detailSelects = [
         { id: 'paragraph-spacing', key: 'paragraphSpacing', store: 'tohwpx_paragraphSpacing', allowed: ['compact', 'normal', 'relaxed'] },
         { id: 'heading-style', key: 'headingStyle', store: 'tohwpx_headingStyle', allowed: ['compact', 'standard', 'prominent'] },
@@ -1915,6 +1932,7 @@ async function convertOneFile(file, statusPrefix = '', outputFontName = state.do
             setProgress(58 + (pct * 0.14)); // 58% ~ 72%
             st(`HWPX 파일을 압축하는 중... ${Math.round(pct)}%`);
         }, state.orientation, state.lineSpacing, {
+            showHorizontalRules: state.showHorizontalRules,
             paragraphSpacing: state.paragraphSpacing,
             headingStyle: state.headingStyle,
             tableStyle: state.tableStyle,
@@ -2477,6 +2495,14 @@ function applyOrientationUi(orientation) {
     const landscape = orientation === 'landscape';
     document.querySelectorAll('.seg-btn[data-orient]').forEach(btn => {
         const active = (btn.dataset.orient === 'landscape') === landscape;
+        btn.classList.toggle('is-active', active);
+        btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+    });
+}
+
+function applyHrDisplayUi(show) {
+    document.querySelectorAll('.seg-btn[data-hr-display]').forEach(btn => {
+        const active = (btn.dataset.hrDisplay === 'show') === !!show;
         btn.classList.toggle('is-active', active);
         btn.setAttribute('aria-pressed', active ? 'true' : 'false');
     });
@@ -3093,6 +3119,7 @@ function resetConverterState() {
     state.paperSize = 'A4';
     state.orientation = 'portrait';
     state.lineSpacing = 160;
+    state.showHorizontalRules = false;
     state.paragraphSpacing = 'normal';
     state.headingStyle = 'standard';
     state.tableStyle = 'standard';
@@ -3105,7 +3132,7 @@ function resetConverterState() {
 
     for (const key of [
         'tohwpx_font', 'tohwpx_fontSize', 'tohwpx_paperSize', 'tohwpx_autoDownload',
-        'tohwpx_orientation', 'tohwpx_lineSpacing',
+        'tohwpx_orientation', 'tohwpx_lineSpacing', 'tohwpx_showHorizontalRules',
         'tohwpx_paragraphSpacing', 'tohwpx_headingStyle', 'tohwpx_tableStyle',
         'tohwpx_linkStyle', 'tohwpx_imageMaxWidth', 'tohwpx_imageAlign', 'tohwpx_titleBodyPolicy'
     ]) {
@@ -3145,6 +3172,7 @@ function resetConverterState() {
         if (el) el.value = value;
     }
     applyOrientationUi('portrait');
+    applyHrDisplayUi(false);
     updateMarginPreview();
     updateAdvancedSettingsSummary();
     updateConvertButton(false);

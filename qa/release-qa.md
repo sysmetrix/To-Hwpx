@@ -58,7 +58,7 @@ Scope: static browser-only conversion flow from file selection to HWPX download.
 - `hp:fieldBegin type="HYPERLINK"`와 `hp:fieldEnd`의 `id/fieldid` 쌍, 안전한 `Path` 프로토콜, URL XML escape 확인
 - 일반 데이터 표가 `pageBreak="TABLE"`, `repeatHeader="1"`, `treatAsChar="0"`, `hp:outMargin@bottom="850"`이고 첫 행 셀이 `header="1"`인지 확인
 - 코드 블록 표의 `hp:outMargin@bottom="850"`, 인용구 `paraPr id=19`의 `hh:next value="850"` 및 코드 글자 모양이 사용자가 선택한 글꼴 id를 참조하는지 확인
-- 구분선(`hr`)이 선 표가 아니라 `paraPrIDRef="9"` 빈 줄로 대체되는지 확인
+- 가로 구분선 옵션 기본값이 숨김이고, 숨김일 때 `hr`이 `paraPrIDRef="9"` 빈 줄로 대체되는지 확인
 - 다운로드 링크의 파일명과 `type="application/hwp+zip"` 확인
 
 ## 5. Security and Privacy Checks
@@ -232,10 +232,10 @@ Scope: static browser-only conversion flow from file selection to HWPX download.
 
 ## 17. v4.5.14 표 여백 및 구분선 처리
 
-- [x] 구분선(`hr`)이 선 표가 아니라 `paraPrIDRef="9"` 빈 줄로 대체되는지 자동 검사
+- [x] 구분선(`hr`)은 숨김 옵션에서 `paraPrIDRef="9"` 빈 줄, 표시 옵션에서 구분선 표로 처리되는지 자동 검사
 - [x] `npm run test:golden` PASS
 - [x] `node qa/gate.js qa/fixtures/md_hwpx_test.md` PASS
-- [ ] 한컴오피스에서 구분선 자리가 빈 줄로 자연스럽게 보이는지 확인
+- [ ] 한컴오피스에서 숨김 모드의 구분선 자리가 빈 줄로, 표시 모드의 구분선이 선으로 자연스럽게 보이는지 확인
 
 ## 18. v4.5.15 실험실 설정 UI
 
