@@ -1,6 +1,18 @@
 {
-  "current": "4.6.20",
+  "current": "4.6.21",
   "versions": [
+    {
+      "version": "4.6.21",
+      "date": "2026-06-26",
+      "user": [
+        "문서 기본 설정의 현재값 요약이 말줄임으로 잘리지 않도록 한 줄 안에 들어가는 핵심 설정만 표시하게 정리했습니다."
+      ],
+      "dev": [
+        "[v4.6.21] js/app.js/style.css: advanced-settings-summary를 폰트·글꼴 크기·줄 간격·용지/방향만 표시하고 ellipsis 제거",
+        "[v4.6.21] tests/golden.js: 현재값 요약이 nowrap 상태에서 잘리지 않는지 회귀 테스트 추가",
+        "[v4.6.21] package.json/package-lock.json/sw.js/index.html/changelog.json: v4.6.21 반영"
+      ]
+    },
     {
       "version": "4.6.20",
       "date": "2026-06-26",

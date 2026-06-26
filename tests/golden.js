@@ -983,6 +983,18 @@ async function validateDetailSettingsUx(page) {
   const baseUrl = `http://127.0.0.1:${PORT}/index.html`;
   await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => window.JSZip && window.marked && window.XLSX, null, { timeout: 30000 });
+  const shapeSummary = await page.locator('#advanced-settings-summary').evaluate(el => ({
+    text: el.textContent.trim(),
+    scrollWidth: el.scrollWidth,
+    clientWidth: el.clientWidth,
+    whiteSpace: getComputedStyle(el).whiteSpace,
+  }));
+  assert(shapeSummary.text.includes('현재:')
+    && shapeSummary.text.includes('줄 160%')
+    && !shapeSummary.text.includes('문단')
+    && shapeSummary.whiteSpace === 'nowrap'
+    && shapeSummary.scrollWidth <= shapeSummary.clientWidth + 1,
+    'detail settings: 문서 기본 설정 현재값 요약이 한 줄에서 잘림');
   const closedSummaryStyle = await page.locator('.advanced-settings > summary').evaluate(el => {
     const style = getComputedStyle(el);
     return { background: style.backgroundColor, color: style.color };
