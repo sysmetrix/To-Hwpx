@@ -694,6 +694,17 @@ async function validateDirectInput(page) {
   await page.locator('.changelog-tab[data-tab="admin"]').click();
   assert(await page.locator('[data-lab-toggle]').getAttribute('aria-pressed') === 'true',
     'admin: 호환용 ?lab=1 후 관리자 토글 상태가 켜짐으로 표시되지 않음');
+  // 개별 기능 토글이 실제로 켜고 꺼지는지 — isAdminMode 부수효과로 즉시 리셋되던 회귀 방지
+  const featBtn = page.locator('.admin-feature-toggle[data-admin-feature="direct_input"]');
+  const featBefore = await featBtn.getAttribute('aria-pressed');
+  await featBtn.click();
+  await page.waitForTimeout(150);
+  const featAfter = await featBtn.getAttribute('aria-pressed');
+  const featLs = await page.evaluate(() => localStorage.getItem('tohwpx_feature_direct_input'));
+  assert(featBefore === 'true' && featAfter === 'false' && featLs === '0',
+    'admin: 기능 토글 클릭이 반영되지 않음(isAdminMode 부수효과로 리셋되는 회귀)');
+  await featBtn.click();   // 원복
+  await page.waitForTimeout(100);
   await page.locator('[data-lab-toggle]').click();
   await page.waitForLoadState('domcontentloaded');
   assert(!await page.locator('.input-mode-tabs').isVisible(),

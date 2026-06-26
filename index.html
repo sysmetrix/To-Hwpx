@@ -117,7 +117,7 @@
             <span>｢BWYF｣ AX Challenger 2026</span>
             <!-- [주의] id="open-changelog"는 app.js에서 관리자 모드일 때 업데이트 내역 모달을 여는 연결값 -->
             <button class="util-changelog-btn" id="open-changelog" aria-label="버전 정보" data-admin-enabled="false">
-                📋 v4.6.30
+                📋 v4.6.31
             </button>
         </div>
     </div>
@@ -442,6 +442,22 @@
                                 </div>
                                 <p class="form-hint">문서 맨 위에 머리말 표를 넣습니다. '기본'은 회색 띠, '표지'는 색 밴드이며, 모두 가운데에 제목, 아래에 [팀명/이름](점선)과 작성일(오른쪽)이 들어갑니다. 빈 항목은 변환 후 한글에서 채워주세요.</p>
 
+                                <!-- 본문 서식 처리: 변환 결과의 전반 서식 정책(원본 우선/혼합/앱 정리). 상단 제목 블록 바로 아래.
+                                     detail-field 클래스를 유지해야 app.js 세그먼트 배선(.detail-field .seg-btn[data-seg-for])이 잡힌다. -->
+                                <div class="detail-field detail-field--master style-policy-row">
+                                    <span class="detail-field-label">본문 서식 처리 <small>원본 서식을 얼마나 따를지 정하는 기본 전제입니다</small></span>
+                                    <div class="seg-control seg-control--sm" role="group" aria-label="본문 서식 처리">
+                                        <button type="button" class="seg-btn is-active" data-seg-for="style-policy" data-seg-value="source" title="원본 우선">원본</button>
+                                        <button type="button" class="seg-btn" data-seg-for="style-policy" data-seg-value="balanced" title="원본+앱 설정 혼합">혼합</button>
+                                        <button type="button" class="seg-btn" data-seg-for="style-policy" data-seg-value="app" title="앱 설정으로 정리">앱 정리</button>
+                                    </div>
+                                    <select id="style-policy" name="style-policy" class="sr-only" aria-hidden="true" tabindex="-1">
+                                        <option value="source" selected>원본 우선</option>
+                                        <option value="balanced">원본+앱 설정 혼합</option>
+                                        <option value="app">앱 설정으로 정리</option>
+                                    </select>
+                                </div>
+
                             </div>
 
                             <!-- 페이지 여백 — 용지 크기 설정 옆에 배치
@@ -503,21 +519,8 @@
                                     <button type="button" class="help-dot" data-help="문단 간격, 제목, 표, 링크, 이미지, 첫 제목 처리, 가로 구분선처럼 변환 결과의 본문 서식을 세부 조정합니다. DOCX·HTML·XLSX처럼 원본 서식이 있는 파일은 원본 우선을 기본으로 둡니다." aria-label="본문 고급 서식 도움말">?</button>
                                 </span>
                                 <!-- 세그먼트 버튼이 화면 UI, 숨김 select가 값/state/저장의 단일 소스.
-                                     버튼 클릭 → 대응 select.value 변경 + change 디스패치 (app.js segmentize). -->
-                                <!-- 마스터: 원본 서식 처리 — 아래 세부 옵션의 적용 범위를 정하는 상위 전제이므로 그리드 밖에 둔다 -->
-                                <div class="detail-field detail-field--master">
-                                    <span class="detail-field-label">원본 서식 처리 <small>아래 세부 옵션의 적용 범위를 정하는 기본 전제입니다</small></span>
-                                    <div class="seg-control seg-control--sm" role="group" aria-label="원본 서식 처리">
-                                        <button type="button" class="seg-btn is-active" data-seg-for="style-policy" data-seg-value="source" title="원본 우선">원본</button>
-                                        <button type="button" class="seg-btn" data-seg-for="style-policy" data-seg-value="balanced" title="원본+앱 설정 혼합">혼합</button>
-                                        <button type="button" class="seg-btn" data-seg-for="style-policy" data-seg-value="app" title="앱 설정으로 정리">앱 정리</button>
-                                    </div>
-                                    <select id="style-policy" name="style-policy" class="sr-only" aria-hidden="true" tabindex="-1">
-                                        <option value="source" selected>원본 우선</option>
-                                        <option value="balanced">원본+앱 설정 혼합</option>
-                                        <option value="app">앱 설정으로 정리</option>
-                                    </select>
-                                </div>
+                                     버튼 클릭 → 대응 select.value 변경 + change 디스패치 (app.js segmentize).
+                                     '본문 서식 처리'(style-policy)는 상단 제목 블록 아래(advanced-main)로 이동했다. -->
                                 <!-- 원본 우선일 때 아래 세부 옵션의 적용 범위 안내. app.js가 정책에 따라 표시/숨김 -->
                                 <p class="detail-source-note" id="detail-source-note" hidden>
                                     <strong>원본 우선</strong> — 원본 서식이 있는 파일(DOCX·HTML·XLSX)은 아래 세부 설정 대신 <b>원본 서식</b>을 따릅니다. 그 외 입력(MD·TXT·CSV·JSON)에는 아래 설정이 그대로 적용됩니다.
@@ -626,12 +629,8 @@
                         </div>
 
                 <label class="toggle-row" for="auto-download">
-                    <span class="toggle-text">
-                        <strong class="label-with-help">
-                            <span>자동 다운로드</span>
-                            <button type="button" class="help-dot" data-help="변환이 끝나면 바로 저장합니다. 꺼도 완료 카드에서 언제든 다시 다운로드할 수 있습니다." aria-label="자동 다운로드 도움말">?</button>
-                        </strong>
-                        <small>완료 카드에서도 다시 다운로드할 수 있습니다.</small>
+                    <span class="toggle-title label-with-help">자동 다운로드
+                        <button type="button" class="help-dot" data-help="변환이 끝나면 바로 저장합니다. 꺼도 완료 카드에서 언제든 다시 다운로드할 수 있습니다." aria-label="자동 다운로드 도움말">?</button>
                     </span>
                     <input type="checkbox" id="auto-download" class="toggle-input" checked>
                     <span class="toggle-switch" aria-hidden="true"></span>

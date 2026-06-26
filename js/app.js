@@ -82,6 +82,7 @@ if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
 
 document.addEventListener('DOMContentLoaded', () => {
     window.scrollTo(0, 0);      // 새로고침 시 첫 화면(맨 위)으로
+    initAdminParam();           // ?admin/?lab을 1회 반영 (isAdminMode는 순수 read)
     renderPipelineSteps();      // 파이프라인 단계 DOM 렌더링
     setProgressPanelState('empty');
     initDropZone();             // 파일 드롭/선택 영역 (히어로 드롭존)
@@ -1942,19 +1943,33 @@ function migrateLegacyLabState() {
     }
 }
 
+// 순수 read여야 한다. 부수효과(setAdminEnabled)를 넣으면 호출될 때마다 기능 플래그가
+// 기본값으로 리셋돼 개별 기능 토글이 즉시 되돌아간다(끄기 불가). 파라미터 반영은 initAdminParam()에서 1회만.
 function isAdminMode() {
     try {
         const params = new URLSearchParams(location.search);
-        if (params.has('admin') || params.has('lab')) {
-            const on = parseModeFlag(params.get(params.has('admin') ? 'admin' : 'lab'));
-            setAdminEnabled(on, on);
-            return on;
-        }
+        if (params.has('admin')) return parseModeFlag(params.get('admin'));
+        if (params.has('lab'))   return parseModeFlag(params.get('lab'));
         migrateLegacyLabState();
         return localStorage.getItem(ADMIN_STATE_KEY) === '1';
     } catch (e) {
         return false;
     }
+}
+
+// URL의 ?admin/?lab을 localStorage에 1회 반영. 이미 관리자면 개별 기능 선택을 보존한다.
+function initAdminParam() {
+    try {
+        const params = new URLSearchParams(location.search);
+        if (!params.has('admin') && !params.has('lab')) return;
+        const on = parseModeFlag(params.get(params.has('admin') ? 'admin' : 'lab'));
+        if (!on) { setAdminEnabled(false); return; }
+        if (localStorage.getItem(ADMIN_STATE_KEY) === '1') {
+            localStorage.setItem(ADMIN_ACCESS_KEY, '1');   // 접근만 보장, 기능 선택 보존
+        } else {
+            setAdminEnabled(true, true);                   // 첫 활성화: 기본값으로 켜기
+        }
+    } catch (e) { /* localStorage 차단 환경은 세션 한정 */ }
 }
 
 function canManageAdmin() {
