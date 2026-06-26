@@ -101,6 +101,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initTheme();                // 다크/라이트 테마 토글·시스템 동기화
     showFormatHintPlaceholder();// 파일 선택 전 포맷 힌트 영역 안내(빈칸 방지)
     maybeShowOnboardingGuide(); // 첫 방문 1회 기본 사용 안내
+    initAdminModeUi();          // 관리자 모드에서만 버전 내역 클릭 허용
 });
 
 function initHelpDots() {
@@ -1555,50 +1556,75 @@ const PASTE_MIME = {
 };
 
 /**
- * 실험실(lab) 기능 활성 여부.
- * - URL에 ?lab=1 (또는 ?lab=on/true) → localStorage 'tohwpx_lab'='1' 저장 후 활성
- * - URL에 ?lab=0 (또는 off/false) → 기능과 토글 자격 해제
+ * 관리자 모드 활성 여부.
+ * - URL에 ?admin=1 → localStorage 'tohwpx_admin'='1' 저장 후 활성
+ * - URL에 ?admin=0 → 관리자 모드와 권한 해제
+ * - 기존 호환용 ?lab=1/0도 같은 관리자 상태로 처리한다.
  * - 파라미터가 없으면 저장값을 따른다.
  * 공개 정적 사이트이므로 보안 기능이 아니라 일반 사용자 동선에서 숨기는 용도다.
  */
-const LAB_STATE_KEY = 'tohwpx_lab';
-const LAB_ACCESS_KEY = 'tohwpx_lab_access';
+const ADMIN_STATE_KEY = 'tohwpx_admin';
+const ADMIN_ACCESS_KEY = 'tohwpx_admin_access';
+const LEGACY_LAB_STATE_KEY = 'tohwpx_lab';
+const LEGACY_LAB_ACCESS_KEY = 'tohwpx_lab_access';
 
-function isLabEnabled() {
+function parseModeFlag(value) {
+    const v = (value || '').toLowerCase();
+    return v !== '0' && v !== 'off' && v !== 'false';
+}
+
+function setAdminEnabled(enabled, grantAccess = true) {
+    if (enabled) {
+        localStorage.setItem(ADMIN_STATE_KEY, '1');
+        if (grantAccess) localStorage.setItem(ADMIN_ACCESS_KEY, '1');
+    } else {
+        localStorage.removeItem(ADMIN_STATE_KEY);
+        localStorage.removeItem(ADMIN_ACCESS_KEY);
+    }
+    localStorage.removeItem(LEGACY_LAB_STATE_KEY);
+    localStorage.removeItem(LEGACY_LAB_ACCESS_KEY);
+}
+
+function migrateLegacyLabState() {
+    if (localStorage.getItem(LEGACY_LAB_STATE_KEY) === '1'
+        || localStorage.getItem(LEGACY_LAB_ACCESS_KEY) === '1') {
+        localStorage.setItem(ADMIN_STATE_KEY, '1');
+        localStorage.setItem(ADMIN_ACCESS_KEY, '1');
+        localStorage.removeItem(LEGACY_LAB_STATE_KEY);
+        localStorage.removeItem(LEGACY_LAB_ACCESS_KEY);
+    }
+}
+
+function isAdminMode() {
     try {
         const params = new URLSearchParams(location.search);
-        if (params.has('lab')) {
-            const v = (params.get('lab') || '').toLowerCase();
-            const on = v !== '0' && v !== 'off' && v !== 'false';
-            if (on) {
-                localStorage.setItem(LAB_STATE_KEY, '1');
-                localStorage.setItem(LAB_ACCESS_KEY, '1');
-            } else {
-                localStorage.removeItem(LAB_STATE_KEY);
-                localStorage.removeItem(LAB_ACCESS_KEY);
-            }
+        if (params.has('admin') || params.has('lab')) {
+            const on = parseModeFlag(params.get(params.has('admin') ? 'admin' : 'lab'));
+            setAdminEnabled(on, on);
             return on;
         }
-        return localStorage.getItem(LAB_STATE_KEY) === '1';
+        migrateLegacyLabState();
+        return localStorage.getItem(ADMIN_STATE_KEY) === '1';
     } catch (e) {
         return false;
     }
 }
 
-function canManageLab() {
+function canManageAdmin() {
     try {
-        return localStorage.getItem(LAB_ACCESS_KEY) === '1'
-            || localStorage.getItem(LAB_STATE_KEY) === '1';
+        migrateLegacyLabState();
+        return localStorage.getItem(ADMIN_ACCESS_KEY) === '1'
+            || localStorage.getItem(ADMIN_STATE_KEY) === '1';
     } catch (e) {
         return false;
     }
 }
 
 function renderLabControl() {
-    if (!canManageLab()) return '';
-    const enabled = isLabEnabled();
+    if (!canManageAdmin()) return '';
+    const enabled = isAdminMode();
     return `
-        <section class="changelog-lab-control" aria-label="실험실 기능 설정">
+        <section class="changelog-lab-control" aria-label="관리자 모드 설정">
             <span class="changelog-lab-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24" focusable="false">
                     <path d="M9 3h6M10 3v5.2l-5.2 8.5A2.8 2.8 0 0 0 7.2 21h9.6a2.8 2.8 0 0 0 2.4-4.3L14 8.2V3"/>
@@ -1607,18 +1633,29 @@ function renderLabControl() {
             </span>
             <div class="changelog-lab-copy">
                 <div class="changelog-lab-heading">
-                    <strong>실험실</strong>
+                    <strong>관리자 모드</strong>
                     <span class="changelog-lab-status">${enabled ? '사용 중' : '꺼짐'}</span>
                 </div>
-                <p>개발 중인 기능을 미리 사용해 볼 수 있어요.</p>
+                <p>업데이트 내역, 개발자 변경사항, 실험 기능을 확인합니다.</p>
             </div>
             <button type="button" class="changelog-lab-toggle"
                     data-lab-toggle aria-pressed="${enabled}"
-                    aria-label="실험실 기능 ${enabled ? '끄기' : '켜기'}">
+                    aria-label="관리자 모드 ${enabled ? '끄기' : '켜기'}">
                 <span class="changelog-lab-toggle-track" aria-hidden="true">
                     <span class="changelog-lab-toggle-thumb"></span>
                 </span>
             </button>
+        </section>
+        <section class="changelog-experiment-panel" aria-label="추천 실험 기능">
+            <div class="changelog-experiment-head">
+                <strong>추천 실험 기능</strong>
+                <span>관리자 모드에서 검토할 후보</span>
+            </div>
+            <ul>
+                <li><b>변환 전 보존 예상</b><span>선택한 포맷에서 제목·표·링크·이미지가 어느 정도 보존될지 미리 보여줍니다.</span></li>
+                <li><b>상세 구조 진단</b><span>HWPX 패키지, XML, IDRef 문제를 개발자용으로 더 자세히 확인합니다.</span></li>
+                <li><b>결과 카드 문구 실험</b><span>성공·경고·실패 안내 문구를 비교해 사용자가 다음 행동을 더 빨리 고르게 합니다.</span></li>
+            </ul>
         </section>
     `;
 }
@@ -1626,23 +1663,23 @@ function renderLabControl() {
 function bindLabControl() {
     document.querySelector('[data-lab-toggle]')?.addEventListener('click', () => {
         try {
-            const enabled = isLabEnabled();
-            localStorage.setItem(LAB_ACCESS_KEY, '1');
-            if (enabled) localStorage.removeItem(LAB_STATE_KEY);
-            else localStorage.setItem(LAB_STATE_KEY, '1');
+            const enabled = isAdminMode();
+            if (enabled) setAdminEnabled(false);
+            else setAdminEnabled(true);
 
             const url = new URL(location.href);
             url.searchParams.delete('lab');
+            url.searchParams.delete('admin');
             history.replaceState(null, '', url);
             location.reload();
         } catch (e) {
-            showToast('실험실 설정을 저장하지 못했습니다.', 'error');
+            showToast('관리자 모드 설정을 저장하지 못했습니다.', 'error');
         }
     });
 }
 
 function initInputMode() {
-    if (!isLabEnabled()) {
+    if (!isAdminMode()) {
         document.querySelector('.input-mode-tabs')?.setAttribute('hidden', '');
         document.getElementById('paste-mode')?.setAttribute('hidden', '');
         const upload = document.getElementById('upload-mode');
@@ -1661,9 +1698,17 @@ function initInputMode() {
         if (saved && Array.from(fmt.options).some(o => o.value === saved)) fmt.value = saved;
         fmt.addEventListener('change', () => {
             localStorage.setItem('tohwpx_pasteFormat', fmt.value);
+            applyPasteFormatUi(fmt.value);
             updatePasteFormatHelp(fmt.value);
             if (state.inputMode === 'paste') updateFormatExpectation(fmt.value);
         });
+        document.querySelectorAll('.paste-format-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                fmt.value = btn.dataset.pasteFormat || 'md';
+                fmt.dispatchEvent(new Event('change'));
+            });
+        });
+        applyPasteFormatUi(fmt.value);
         updatePasteFormatHelp(fmt.value);
     }
 
@@ -1688,6 +1733,14 @@ function updatePasteFormatHelp(ext) {
         json: '유효한 JSON 또는 To HWPX IR 구조를 입력하세요.',
     };
     help.textContent = messages[ext] || '';
+}
+
+function applyPasteFormatUi(ext) {
+    document.querySelectorAll('.paste-format-btn').forEach(btn => {
+        const active = btn.dataset.pasteFormat === ext;
+        btn.classList.toggle('is-active', active);
+        btn.setAttribute('aria-pressed', String(active));
+    });
 }
 
 /** 입력 방식 전환 (파일 ↔ 직접 입력). 전환 시 진행 중 입력은 초기화한다. */
@@ -2800,8 +2853,15 @@ function initModals() {
         showAdvancedGuide();
     });
 
-    // 업데이트 내역 열기 버튼 (유틸리티 바)
-    document.getElementById('open-changelog')?.addEventListener('click', showChangelog);
+    // 업데이트 내역 열기 버튼 (관리자 모드에서만 활성)
+    document.getElementById('open-changelog')?.addEventListener('click', (e) => {
+        if (!isAdminMode()) {
+            e.preventDefault();
+            showToast('<strong>관리자 모드 전용</strong> <span>?admin=1에서 업데이트 내역을 볼 수 있습니다.</span>');
+            return;
+        }
+        showChangelog();
+    });
     document.getElementById('open-help')?.addEventListener('click', showOnboardingGuide);
     document.getElementById('open-pc-guide')?.addEventListener('click', showPcGuide);
     document.getElementById('open-mobile-guide')?.addEventListener('click', showMobileGuide);
@@ -3070,6 +3130,16 @@ function initResetButton() {
     const btn = document.getElementById('reset-btn');
     if (!btn) return;
     btn.addEventListener('click', resetConverterState);
+}
+
+function initAdminModeUi() {
+    const btn = document.getElementById('open-changelog');
+    if (!btn) return;
+    const admin = isAdminMode();
+    btn.classList.toggle('is-admin-enabled', admin);
+    btn.dataset.adminEnabled = String(admin);
+    btn.title = admin ? '업데이트 내역 보기' : '관리자 모드에서 업데이트 내역을 볼 수 있습니다 (?admin=1)';
+    btn.setAttribute('aria-label', admin ? '업데이트 내역 보기' : '버전 정보');
 }
 
 

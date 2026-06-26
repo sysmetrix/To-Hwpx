@@ -1,6 +1,24 @@
 {
-  "current": "4.6.19",
+  "current": "4.6.20",
   "versions": [
+    {
+      "version": "4.6.20",
+      "date": "2026-06-26",
+      "user": [
+        "상단 버전 버튼 문구를 '📋 v4.6.20'처럼 버전만 보이도록 줄이고, 업데이트 내역 창은 관리자 모드에서만 열리게 정리했습니다.",
+        "관리자 모드에서 직접 입력, 개발자 변경사항, 추천 실험 기능 후보를 확인할 수 있게 했습니다.",
+        "하단 소개 문구와 관련 링크를 더 간결하게 정리하고, 중복된 로컬 처리 문구를 제거했습니다."
+      ],
+      "dev": [
+        "[v4.6.20] js/app.js/index.html/style.css: ?admin=1 관리자 모드 도입, 기존 ?lab=1/0 호환 처리, 일반 모드 버전 버튼 내역 차단",
+        "[v4.6.20] index.html/js/app.js/style.css: 관리자 직접 입력의 입력 형식 선택을 select에서 버튼 UI로 개편하고 #paste-format 값 동기화 유지",
+        "[v4.6.20] js/app.js/style.css: 개발자 변경사항 탭에 추천 실험 기능 후보 패널 추가",
+        "[v4.6.20] README.md/DEV.md/AGENTS.md/qa/release-qa.md/format_conversion_playbook.md: 관리자 모드, 제목 정책, 직접 입력 버튼 UI 기준으로 문서 정합성 갱신",
+        "[v4.6.20] qa/bump-version.js: 간소화된 '📋 vX.Y.Z' 버튼 문구도 자동 버전 범프 대상에 포함",
+        "[v4.6.20] tests/golden.js: 관리자 게이트, ?lab 호환, 버전 버튼 문구, 푸터 문구, 직접 입력 형식 버튼 회귀 테스트 추가",
+        "[v4.6.20] package.json/package-lock.json/sw.js/index.html/changelog.json: v4.6.20 반영"
+      ]
+    },
     {
       "version": "4.6.19",
       "date": "2026-06-26",

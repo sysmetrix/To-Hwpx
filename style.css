@@ -2653,16 +2653,20 @@ a:hover { text-decoration: underline; }
 .util-changelog-btn {
     background: rgba(255,255,255,0.15);
     border: 1px solid rgba(255,255,255,0.35);
-    color: rgba(255,255,255,0.9);
+    color: rgba(255,255,255,0.78);
     padding: 3px 12px;
     border-radius: 100px;
     font-size: 0.75rem;
     font-family: var(--font-main);
-    cursor: pointer;
+    cursor: default;
     transition: background var(--trans), color var(--trans);
     white-space: nowrap;
 }
-.util-changelog-btn:hover {
+.util-changelog-btn.is-admin-enabled {
+    color: rgba(255,255,255,0.9);
+    cursor: pointer;
+}
+.util-changelog-btn.is-admin-enabled:hover {
     background: rgba(255,255,255,0.28);
     color: #fff;
 }
@@ -3722,6 +3726,52 @@ a:hover { text-decoration: underline; }
     outline: 2px solid var(--c-primary);
     outline-offset: 2px;
 }
+.changelog-experiment-panel {
+    margin: 0 16px 16px;
+    padding: 14px;
+    border: 1px solid var(--c-border);
+    border-radius: var(--radius-md);
+    background: var(--c-surface);
+}
+.changelog-experiment-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+.changelog-experiment-head strong {
+    color: var(--c-text);
+    font-size: 0.9rem;
+}
+.changelog-experiment-head span {
+    color: var(--c-text-muted);
+    font-size: 0.74rem;
+    font-weight: 700;
+}
+.changelog-experiment-panel ul {
+    display: grid;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+.changelog-experiment-panel li {
+    display: grid;
+    gap: 2px;
+    padding: 9px 10px;
+    border-radius: var(--radius-sm);
+    background: var(--c-surface-alt);
+}
+.changelog-experiment-panel b {
+    color: var(--c-primary);
+    font-size: 0.8rem;
+}
+.changelog-experiment-panel li span {
+    color: var(--c-text-sub);
+    font-size: 0.76rem;
+    line-height: 1.5;
+}
 @media (max-width: 480px) {
     .changelog-lab-control {
         grid-template-columns: auto minmax(0, 1fr) auto;
@@ -4281,6 +4331,39 @@ a:hover { text-decoration: underline; }
 }
 .input-mode-tab:focus-visible { outline: 2px solid var(--c-primary); outline-offset: 2px; }
 
+.paste-format-buttons {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 6px;
+}
+.paste-format-btn {
+    min-height: 36px;
+    padding: 7px 8px;
+    border: 1px solid var(--c-border);
+    border-radius: var(--radius-sm);
+    background: var(--c-surface);
+    color: var(--c-text-sub);
+    font-family: var(--font-main);
+    font-size: 0.8rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: background var(--trans), border-color var(--trans), color var(--trans), box-shadow var(--trans);
+}
+.paste-format-btn:hover {
+    border-color: var(--c-primary);
+    color: var(--c-primary);
+}
+.paste-format-btn.is-active {
+    border-color: var(--c-primary);
+    background: var(--c-primary);
+    color: #fff;
+    box-shadow: var(--shadow-sm);
+}
+.paste-format-btn:focus-visible {
+    outline: 2px solid var(--c-primary);
+    outline-offset: 2px;
+}
+
 /* 직접 입력: 텍스트 영역 */
 .paste-textarea {
     width: 100%;
@@ -4321,4 +4404,10 @@ a:hover { text-decoration: underline; }
     color: var(--c-text-muted);
     font-size: 0.9rem;
     font-weight: 700;
+}
+
+@media (max-width: 560px) {
+    .paste-format-buttons {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
 }

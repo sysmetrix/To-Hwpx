@@ -535,10 +535,10 @@ async function runCase(page, testCase) {
 
 async function convertThroughUi(page, { inputPath, format, text, baseName }) {
   const baseUrl = `http://127.0.0.1:${PORT}/index.html`;
-  await page.goto(inputPath ? baseUrl : `${baseUrl}?lab=1`, { waitUntil: 'domcontentloaded' });
+  await page.goto(inputPath ? baseUrl : `${baseUrl}?admin=1`, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => window.JSZip && window.marked && window.XLSX, null, { timeout: 30000 });
   if (!inputPath) {
-    assert(await page.locator('.input-mode-tabs').isVisible(), 'lab: ?lab=1에서 직접 입력 탭이 보이지 않음');
+    assert(await page.locator('.input-mode-tabs').isVisible(), 'admin: ?admin=1에서 직접 입력 탭이 보이지 않음');
   }
 
   const downloadPromise = page.waitForEvent('download', { timeout: 30000 });
@@ -546,7 +546,9 @@ async function convertThroughUi(page, { inputPath, format, text, baseName }) {
     await page.setInputFiles('#file-input', inputPath);
   } else {
     await page.locator('#mode-paste').click();
-    await page.locator('#paste-format').selectOption(format);
+    await page.locator(`.paste-format-btn[data-paste-format="${format}"]`).click();
+    assert(await page.locator('#paste-format').inputValue() === format,
+      `direct ${format}: 입력 형식 버튼 선택이 select 값과 동기화되지 않음`);
     await page.locator('#paste-name').fill(baseName);
     await page.locator('#paste-input').fill(text);
   }
@@ -560,10 +562,16 @@ async function convertThroughUi(page, { inputPath, format, text, baseName }) {
 
 async function validateDirectInput(page) {
   const baseUrl = `http://127.0.0.1:${PORT}/index.html`;
-  await page.goto(`${baseUrl}?lab=0`, { waitUntil: 'domcontentloaded' });
+  await page.goto(`${baseUrl}?admin=0`, { waitUntil: 'domcontentloaded' });
   assert(!await page.locator('.input-mode-tabs').isVisible(),
-    'lab: 일반 사용자에게 직접 입력 탭이 노출됨');
+    'admin: 일반 사용자에게 직접 입력 탭이 노출됨');
   await page.locator('#open-changelog').click();
+  assert(!(await page.locator('#changelog-modal').isVisible()),
+    'admin: 일반 모드에서 버전 클릭으로 업데이트 내역이 열림');
+  await page.goto(`${baseUrl}?admin=1`, { waitUntil: 'domcontentloaded' });
+  await page.locator('#open-changelog').click();
+  assert(await page.locator('#changelog-modal').isVisible(),
+    'admin: 관리자 모드에서 버전 클릭으로 업데이트 내역이 열리지 않음');
   await page.locator('.changelog-tab[data-tab="dev"]').click();
   const changelogTabGap = await page.evaluate(() => {
     const header = document.querySelector('#changelog-modal .modal-header')?.getBoundingClientRect();
@@ -571,8 +579,11 @@ async function validateDirectInput(page) {
     return header && tabs ? Math.round(tabs.top - header.bottom) : null;
   });
   assert(changelogTabGap === 0, 'ux: 업데이트 내역 탭 라인이 모달 제목 영역과 떨어져 있음');
-  assert(await page.locator('[data-lab-toggle]').count() === 0,
-    'lab: 승인 전 사용자에게 실험실 토글이 노출됨');
+  assert(await page.locator('[data-lab-toggle]').getAttribute('aria-pressed') === 'true',
+    'admin: 관리자 모드 토글 상태가 켜짐으로 표시되지 않음');
+  assert((await page.locator('.changelog-experiment-panel').textContent()).includes('변환 전 보존 예상'),
+    'admin: 추천 실험 기능 안내가 누락됨');
+  await page.keyboard.press('Escape');
 
   const cases = [
     ['md', 'sample.md'],
@@ -616,21 +627,22 @@ async function validateDirectInput(page) {
     'direct HTML: 태그 없는 일반 텍스트가 누락됨');
 
   await page.goto(`${baseUrl}?lab=1`, { waitUntil: 'domcontentloaded' });
+  assert(await page.locator('.input-mode-tabs').isVisible(),
+    'admin: 호환용 ?lab=1에서 직접 입력 탭이 보이지 않음');
   await page.locator('#open-changelog').click();
   await page.locator('.changelog-tab[data-tab="dev"]').click();
   assert(await page.locator('[data-lab-toggle]').getAttribute('aria-pressed') === 'true',
-    'lab: 승인 후 실험실 토글 상태가 켜짐으로 표시되지 않음');
+    'admin: 호환용 ?lab=1 후 관리자 토글 상태가 켜짐으로 표시되지 않음');
   await page.locator('[data-lab-toggle]').click();
   await page.waitForLoadState('domcontentloaded');
   assert(!await page.locator('.input-mode-tabs').isVisible(),
-    'lab: 토글을 끈 뒤 직접 입력 탭이 남아 있음');
+    'admin: 토글을 끈 뒤 직접 입력 탭이 남아 있음');
   await page.locator('#open-changelog').click();
-  await page.locator('.changelog-tab[data-tab="dev"]').click();
-  assert(await page.locator('[data-lab-toggle]').getAttribute('aria-pressed') === 'false',
-    'lab: 토글을 끈 상태가 반영되지 않음');
+  assert(!(await page.locator('#changelog-modal').isVisible()),
+    'admin: 토글을 끈 뒤 일반 모드에서 업데이트 내역이 열림');
 
-  await page.goto(`${baseUrl}?lab=0`, { waitUntil: 'domcontentloaded' });
-  console.log('PASS DIRECT TSV + plain HTML + hidden Lab UI');
+  await page.goto(`${baseUrl}?admin=0`, { waitUntil: 'domcontentloaded' });
+  console.log('PASS DIRECT TSV + plain HTML + admin-gated input UI');
 }
 
 async function validateCommercialUx(page) {
@@ -643,11 +655,17 @@ async function validateCommercialUx(page) {
     'ux: 첫 화면 드롭존 입력 포맷 순서가 안내 기준과 다름');
   assert((await page.locator('#file-input').getAttribute('accept')).startsWith('.md,.markdown,.docx,.html,.htm,.csv,.xlsx,.xls,.json,.txt,.hwp,.ipynb'),
     'ux: 파일 선택 accept 순서가 드롭존 입력 포맷 순서와 다름');
+  const versionButtonText = (await page.locator('#open-changelog').textContent()).trim();
+  assert(/^📋 v\d+\.\d+\.\d+$/.test(versionButtonText) && !versionButtonText.includes('업데이트 내역'),
+    'ux: 상단 버전 버튼 문구가 버전만 표시하지 않음');
   assert(await page.locator('#open-onboarding-guide').count() === 0,
     'ux: 드롭존 아래 중복 도움말 버튼이 남아 있음');
-  assert(!(await page.locator('footer').textContent()).includes('버그 신고')
-    && !(await page.locator('footer').textContent()).includes('스킬 문서'),
-    'ux: 하단 관련 링크에 버그 신고 또는 스킬 문서가 남아 있음');
+  const footerText = await page.locator('footer').textContent();
+  assert(!footerText.includes('버그 신고')
+    && !footerText.includes('스킬 문서')
+    && !footerText.includes('파일은 서버에 전송되지 않으며')
+    && !footerText.includes('브라우저 안에서 완전히 처리됩니다'),
+    'ux: 하단 관련 링크 또는 중복 로컬 처리 문구가 남아 있음');
 
   const helpButton = page.locator('#open-help');
   await page.locator('#open-help').click();

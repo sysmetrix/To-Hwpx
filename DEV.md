@@ -22,7 +22,7 @@
 | 설치형 폰트 제공 | `fonts/` | `fonts/README.md` | HWPX에는 폰트가 임베딩되지 않으므로 사용자가 PC에 설치해야 합니다. |
 | 캐시 버전 갱신 | `sw.js` | `CACHE_VERSION` | 배포할 때마다 버전을 올려야 이전 캐시가 사라집니다. |
 | 업데이트 내역 변경 | `changelog.json` | `versions` | JSON 형식을 깨뜨리지 않도록 마지막 항목 쉼표에 주의하세요. |
-| 상단 버전 버튼 문구 | `index.html` | `📋 v4.0.x 업데이트 내역` | changelog.json `current` 버전과 일치시키세요. |
+| 상단 버전 버튼 문구 | `index.html` | `📋 v4.0.x` | changelog.json `current` 버전과 일치시키세요. 업데이트 내역 창은 관리자 모드(`?admin=1`, 기존 `?lab=1` 호환)에서만 열립니다. |
 
 ### 절대 함부로 바꾸면 안 되는 것
 
@@ -157,7 +157,7 @@ python -m http.server 8080
 
 1. `sw.js` → `CACHE_VERSION = 'to-hwpx-vX.X.X'`
 2. `changelog.json` → `"current": "X.X.X"` + `versions` 배열 최상단에 항목 추가
-3. `index.html` → `📋 vX.X.X 업데이트 내역` 버튼 문구
+3. `index.html` → `📋 vX.X.X` 버튼 문구
 
 ### 폰트 파일 제공
 

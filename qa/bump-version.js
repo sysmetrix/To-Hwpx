@@ -46,7 +46,9 @@ function writeVersion(version) {
     fs.writeFileSync(lockPath, `${JSON.stringify(lock, null, 2)}\n`);
 
     replaceInFile(swPath, text => text.replace(/to-hwpx-v\d+\.\d+\.\d+/g, `to-hwpx-v${version}`));
-    replaceInFile(indexPath, text => text.replace(/v\d+\.\d+\.\d+ 업데이트 내역/g, `v${version} 업데이트 내역`));
+    replaceInFile(indexPath, text => text
+        .replace(/v\d+\.\d+\.\d+ 업데이트 내역/g, `v${version} 업데이트 내역`)
+        .replace(/📋 v\d+\.\d+\.\d+/g, `📋 v${version}`));
 }
 
 const changelog = JSON.parse(fs.readFileSync(changelogPath, 'utf8'));

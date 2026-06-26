@@ -90,8 +90,9 @@ Scope: static browser-only conversion flow from file selection to HWPX download.
 - [ ] 배치 변환 후 파일별 상태(완료/경고/실패) 표시
 - [ ] 전체 ZIP 다운로드 열림 + 파일별 개별 받기 동작
 - [ ] 단일 파일 변환은 기존과 동일(결과 카드 1개 + 자동 다운로드)
-- [x] `?lab=1`에서만 직접 입력 탭 노출: MD/HTML/TXT/CSV/JSON 형식 선택 + 내용 붙여넣기 → 변환·다운로드 동작
-- [x] 일반 접속에서는 직접 입력 탭과 실험실 토글 자격이 보이지 않음
+- [x] `?admin=1`에서만 직접 입력 탭 노출: MD/HTML/TXT/CSV/JSON 형식 버튼 선택 + 내용 붙여넣기 → 변환·다운로드 동작
+- [x] 기존 호환용 `?lab=1`도 관리자 모드를 켜며 직접 입력 탭이 노출됨
+- [x] 일반 접속에서는 직접 입력 탭과 관리자 모드 토글 자격이 보이지 않음
 - [x] 동일 입력의 파일 업로드·직접 입력 HWPX 본문 및 표 개수 동등성
 - [x] Excel·Google Sheets 탭 구분 표 붙여넣기 → HWPX 표 변환
 - [x] HTML 태그 없는 일반 텍스트 붙여넣기 → 문단 보존
@@ -141,7 +142,7 @@ Scope: static browser-only conversion flow from file selection to HWPX download.
 
 ### 자동 승인 기준
 
-- [x] `npm run test:golden` PASS — 기존 7개 입력 + Lab + 상용 UX 회귀
+- [x] `npm run test:golden` PASS — 기존 입력 + 관리자 모드 직접 입력 + 상용 UX 회귀
 - [x] `node qa/gate.js qa/fixtures/md_hwpx_test.md` PASS
 - [x] `node qa/gate.js qa/fixtures/sample.docx` PASS
 - [x] package/lock/SW/index/changelog 버전 4.5.4 일치
@@ -237,9 +238,9 @@ Scope: static browser-only conversion flow from file selection to HWPX download.
 - [x] `node qa/gate.js qa/fixtures/md_hwpx_test.md` PASS
 - [ ] 한컴오피스에서 숨김 모드의 구분선 자리가 빈 줄로, 표시 모드의 구분선이 선으로 자연스럽게 보이는지 확인
 
-## 18. v4.5.15 실험실 설정 UI
+## 18. v4.5.15 관리자/실험 기능 설정 UI
 
-- [x] 실험실 설정이 아이콘·상태 배지·스위치로 표시됨
+- [x] 관리자 모드 설정이 아이콘·상태 배지·스위치로 표시됨
 - [x] 활성/비활성 상태가 `aria-pressed`와 `사용 중`/`꺼짐` 문구에 함께 반영됨
 - [x] 모바일 폭과 다크 테마 디자인 토큰 대응
 - [x] `npm run test:golden` PASS
@@ -290,7 +291,7 @@ Scope: static browser-only conversion flow from file selection to HWPX download.
 - [x] `npm run test:golden` PASS
 - [ ] 배포 후 Chrome·Edge 실제 화면에서 아이콘 식별성 확인
 
-## 22. v4.5.20 직접 입력 실험실 품질 강화
+## 22. v4.5.20 직접 입력 관리자 기능 품질 강화
 
 공개 기준:
 
@@ -300,22 +301,23 @@ Scope: static browser-only conversion flow from file selection to HWPX download.
 - [x] 열 수가 다른 표 행에 빈 셀을 보충해 HWPX 표 격자 유지
 - [x] HTML 소스와 태그 없는 일반 텍스트 모두 본문 보존
 - [x] CRLF/LF 줄바꿈을 LF로 정규화해 운영체제와 textarea 간 문단 파싱 차이 제거
-- [x] 실험실 플래그와 업데이트 내역의 실험실 토글 유지, `?lab=1` 승인 브라우저에서만 노출
+- [x] 관리자 모드 플래그와 업데이트 내역의 관리자 토글 유지, `?admin=1` 또는 호환용 `?lab=1` 승인 브라우저에서만 노출
 - [x] `FORMAT_INFO`, 결과 카드 보존/손실 안내, 플레이북, AGENTS 작업 지침 정합성 갱신
 - [x] `npm run test:golden` PASS
-- [x] 데스크톱 1280px·모바일 390px에서 Lab 활성 시 직접 입력 안내가 자연스럽게 보이는지 확인
-- [x] Lab 비활성 일반 화면에서 파일 업로드만 보이는지 확인
+- [x] 데스크톱 1280px·모바일 390px에서 관리자 모드 활성 시 직접 입력 안내가 자연스럽게 보이는지 확인
+- [x] 관리자 모드 비활성 일반 화면에서 파일 업로드만 보이는지 확인
 - [ ] 직접 입력으로 만든 MD·HTML·TSV 결과를 한컴오피스에서 열어 시각 확인
 
-## 23. v4.5.21 직접 입력 Lab 비공개 복원
+## 23. v4.5.21 직접 입력 관리자 모드 비공개 복원
 
 - [x] 일반 접속에서 입력 방식 탭과 직접 입력 패널 비노출
-- [x] Lab 승인 전 개발자 변경사항에 실험실 토글 비노출
-- [x] `?lab=1`에서 직접 입력 탭과 활성 상태 토글 노출
-- [x] 토글을 끄면 직접 입력 탭은 숨겨지고 토글 자격만 유지
-- [x] `?lab=0`에서 기능 상태와 토글 자격 모두 제거
+- [x] 관리자 모드 승인 전 개발자 변경사항에 관리자 토글 비노출
+- [x] `?admin=1`에서 직접 입력 탭과 활성 상태 토글 노출
+- [x] `?lab=1`은 호환용으로 같은 관리자 모드를 활성화
+- [x] 토글을 끄면 직접 입력 탭과 업데이트 내역 접근이 숨겨짐
+- [x] `?admin=0` 또는 `?lab=0`에서 기능 상태와 토글 자격 모두 제거
 - [x] v4.5.20 사용자 changelog의 직접 입력 공개 공지 제거
-- [x] 데스크톱 1280px·모바일 390px 일반/Lab 화면 시각 확인
+- [x] 데스크톱 1280px·모바일 390px 일반/관리자 모드 화면 시각 확인
 - [x] 직접 입력 품질 개선과 5개 형식 동등성 회귀는 유지
 
 ## 24. v4.6.4 Markdown 링크·이미지 및 포맷 경계 품질 기준
