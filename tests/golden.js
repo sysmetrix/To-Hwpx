@@ -740,6 +740,10 @@ async function validateCommercialUx(page) {
     && await page.locator('.help-dot[aria-label="문서 세부 설정 도움말"]').count() === 1
     && await page.locator('#open-advanced-guide').count() === 1,
     'ux: 세부 설정 도움말 또는 고급 사용 팁 진입점 누락');
+  const titleSourceLabel = await page.locator('[data-title-source="heading"]').textContent();
+  const titlePlaceholder = await page.locator('#doc-title').getAttribute('placeholder');
+  assert(titleSourceLabel.trim() === '문서 첫 문장' && titlePlaceholder.includes('문서 첫 문장'),
+    'ux: 제목 비움 기준 문구가 문서 첫 문장으로 표시되지 않음');
   if (!(await page.locator('.advanced-settings').getAttribute('open'))) {
     await page.locator('.advanced-settings > summary').click();
   }
@@ -882,6 +886,12 @@ async function validateDetailSettingsUx(page) {
   const baseUrl = `http://127.0.0.1:${PORT}/index.html`;
   await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => window.JSZip && window.marked && window.XLSX, null, { timeout: 30000 });
+  const closedSummaryStyle = await page.locator('.advanced-settings > summary').evaluate(el => {
+    const style = getComputedStyle(el);
+    return { background: style.backgroundColor, color: style.color };
+  });
+  assert(closedSummaryStyle.background !== closedSummaryStyle.color,
+    'detail settings: 문서 세부 설정 진입 탭의 회색 배경 스타일을 확인할 수 없음');
   await page.locator('.advanced-settings > summary').click();
 
   const defaults = await page.evaluate(() => ({
@@ -901,6 +911,13 @@ async function validateDetailSettingsUx(page) {
     })(),
     marginInputs: ['top', 'header', 'left', 'right', 'bottom', 'footer']
       .filter(side => document.querySelector(`#margin-${side}`)).length,
+    detailOptionLabels: {
+      paragraph: [...document.querySelector('#paragraph-spacing').options].map(option => option.textContent.trim()),
+      heading: [...document.querySelector('#heading-style').options].map(option => option.textContent.trim()),
+      table: [...document.querySelector('#table-style').options].map(option => option.textContent.trim()),
+      link: [...document.querySelector('#link-style').options].map(option => option.textContent.trim()),
+      titleBody: [...document.querySelector('#title-body-policy').options].map(option => option.textContent.trim()),
+    },
   }));
   assert(defaults.hrButtons.length === 2, 'detail settings: 가로 구분선 표시 옵션 누락');
   assert(defaults.hrButtons.some(btn => btn.value === 'hide' && btn.active),
@@ -909,6 +926,11 @@ async function validateDetailSettingsUx(page) {
   assert(defaults.marginSideLabels === 2, 'detail settings: 페이지 여백 좌우 라벨 누락');
   assert(defaults.marginSideLabelsInsidePaper, 'detail settings: 페이지 여백 좌우 라벨이 종이 영역 밖으로 침범함');
   assert(defaults.marginInputs === 6, 'detail settings: 페이지 여백 입력 6개가 유지되지 않음');
+  assert(defaults.detailOptionLabels.heading.includes('큰 제목·굵게')
+    && defaults.detailOptionLabels.table.includes('머리행 음영')
+    && defaults.detailOptionLabels.link.includes('텍스트+주소')
+    && defaults.detailOptionLabels.titleBody.includes('본문 첫 제목 제거'),
+    'detail settings: 세부 옵션명이 변환 결과 중심 문구로 표시되지 않음');
   for (const id of ['paragraph-spacing', 'heading-style', 'table-style', 'link-style', 'image-max-width', 'image-align', 'title-body-policy']) {
     assert(await page.locator(`#${id}`).count() === 1, `detail settings: #${id} 컨트롤 누락`);
   }
