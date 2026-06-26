@@ -565,6 +565,12 @@ async function validateDirectInput(page) {
     'lab: 일반 사용자에게 직접 입력 탭이 노출됨');
   await page.locator('#open-changelog').click();
   await page.locator('.changelog-tab[data-tab="dev"]').click();
+  const changelogTabGap = await page.evaluate(() => {
+    const header = document.querySelector('#changelog-modal .modal-header')?.getBoundingClientRect();
+    const tabs = document.querySelector('#changelog-modal .changelog-tabs')?.getBoundingClientRect();
+    return header && tabs ? Math.round(tabs.top - header.bottom) : null;
+  });
+  assert(changelogTabGap === 0, 'ux: 업데이트 내역 탭 라인이 모달 제목 영역과 떨어져 있음');
   assert(await page.locator('[data-lab-toggle]').count() === 0,
     'lab: 승인 전 사용자에게 실험실 토글이 노출됨');
 
@@ -698,7 +704,23 @@ async function validateCommercialUx(page) {
     'ux: 설치 안내 종료 후 열기 버튼으로 포커스가 복귀하지 않음');
 
   const mdCard = page.locator('.format-card[data-ext="md"]');
-  await page.locator('.service-info .format-tab[data-target="panel-basic"]').click();
+  assert(await page.locator('#format-more-tabs').isVisible()
+    && await page.locator('#format-more-panels').count() === 1
+    && await page.locator('#format-more-toggle').count() === 0,
+    'ux: 포맷 안내 버튼 라인이 기본 표시 상태가 아님');
+  assert(await page.locator('.service-info-label').textContent() === '더 알아보기'
+    && await page.locator('.service-info .format-panel.active').count() === 0,
+    'ux: 더 알아보기 라벨이 없거나 기본 열린 포맷 패널이 남아 있음');
+  const basicTab = page.locator('.service-info .format-tab[data-target="panel-basic"]');
+  await basicTab.click();
+  assert(await page.locator('#panel-basic').isVisible()
+    && await basicTab.getAttribute('aria-selected') === 'true',
+    'ux: 입력 포맷 버튼 클릭 후 패널이 열리지 않음');
+  await basicTab.click();
+  assert(await page.locator('.service-info .format-panel.active').count() === 0
+    && await basicTab.getAttribute('aria-selected') === 'false',
+    'ux: 입력 포맷 버튼 재클릭 후 패널이 닫히지 않음');
+  await basicTab.click();
   await mdCard.focus();
   await mdCard.press('Enter');
   assert(await page.locator('#format-modal').isVisible(), 'ux: 포맷 카드 Enter 조작 실패');
@@ -706,10 +728,35 @@ async function validateCommercialUx(page) {
   assert(await mdCard.evaluate(el => document.activeElement === el), 'ux: 포맷 모달 종료 후 카드로 포커스가 복귀하지 않음');
 
   const tabs = page.locator('.service-info .format-tab');
-  assert(await tabs.first().getAttribute('data-target') === 'panel-how'
-    && await tabs.nth(1).getAttribute('data-target') === 'panel-basic'
-    && await tabs.nth(2).getAttribute('data-target') === 'panel-ext',
-    'ux: 포맷 탭 순서가 더 알아보기 / 입력 포맷 / 예정 포맷이 아님');
+  assert(await page.locator('#formats-title').count() === 0,
+    'ux: 입력 포맷 섹션에 별도 상단 타이틀이 다시 노출됨');
+  assert(await tabs.first().getAttribute('data-target') === 'panel-basic'
+    && await tabs.nth(1).getAttribute('data-target') === 'panel-ext'
+    && await tabs.nth(2).getAttribute('data-target') === 'panel-how',
+    'ux: 포맷 탭 순서가 입력 포맷 / 예정 포맷 / 변환 과정이 아님');
+  assert((await tabs.first().textContent()).trim() === '입력 포맷',
+    'ux: 입력 포맷 탭에 설명 문구가 섞여 있음');
+  assert((await tabs.nth(1).textContent()).trim() === '예정 포맷',
+    'ux: 예정 포맷 탭에 불필요한 이모지 또는 설명 문구가 섞여 있음');
+  assert((await page.locator('#panel-basic > .section-sub').textContent()).includes('보존 범위와 제한사항'),
+    'ux: 입력 포맷 패널 리드문에 카드 선택 안내 문구가 없음');
+  const basicCardOrder = await page.locator('#panel-basic .format-card').evaluateAll(cards =>
+    cards.map(card => card.getAttribute('data-ext')));
+  assert(JSON.stringify(basicCardOrder) === JSON.stringify(['md', 'docx', 'html', 'csv', 'json', 'txt', 'hwp']),
+    'ux: 입력 포맷 카드 순서가 MD/DOCX/HTML/CSV/XLSX/JSON/TXT/HWP 기준과 다름');
+  await tabs.nth(1).click();
+  assert((await page.locator('#panel-ext > .section-sub').textContent()).includes('변환 품질 검증'),
+    'ux: 예정 포맷 패널 리드문 누락');
+  assert(await page.locator('#panel-ext .format-card').first().getAttribute('data-ext') === 'ipynb',
+    'ux: 예정 포맷 안내에서 IPYNB 위치가 일관되지 않음');
+  await tabs.nth(3).click();
+  assert(!(await page.locator('#panel-support').textContent()).includes('PC / 모바일 브라우저'),
+    'ux: 지원 현황에 포맷이 아닌 PC / 모바일 브라우저 행이 남아 있음');
+  const supportOrder = await page.locator('#panel-support tbody tr').evaluateAll(rows =>
+    rows.slice(0, 9).map(row => row.cells[0].textContent.trim()));
+  assert(JSON.stringify(supportOrder) === JSON.stringify([
+    'MD (Markdown)', 'DOCX', 'HTML', 'CSV', 'XLSX', 'JSON', 'TXT', 'HWP', 'IPYNB',
+  ]), 'ux: 지원 현황 표 순서가 포맷 카드/안내 순서와 다름');
   await tabs.first().focus();
   await tabs.first().press('ArrowRight');
   assert(await tabs.nth(1).getAttribute('aria-selected') === 'true', 'ux: 포맷 탭 방향키 전환 실패');
