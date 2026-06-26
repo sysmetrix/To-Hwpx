@@ -907,7 +907,7 @@ async function validateCommercialUx(page) {
   assert(await page.locator('.help-dot[aria-label="줄 간격 도움말"]').count() === 0
     && await page.locator('.help-dot[aria-label="가로 구분선 도움말"]').count() === 1
     && await page.locator('.help-dot[aria-label="페이지 여백 도움말"]').count() === 1
-    && await page.locator('.help-dot[aria-label="본문 서식 도움말"]').count() === 1
+    && await page.locator('.help-dot[aria-label="본문 고급 서식 도움말"]').count() === 1
     && await page.locator('#open-advanced-guide').count() === 0,
     'ux: 세부 설정 도움말 또는 고급 사용 팁 중복 진입점 상태가 기준과 다름');
   const titleSourceLabel = await page.locator('[data-title-source="heading"]').textContent();
@@ -925,7 +925,7 @@ async function validateCommercialUx(page) {
   if (!(await page.locator('.advanced-settings').getAttribute('open'))) {
     await page.locator('.advanced-settings > summary').click();
   }
-  const detailHelpDot = page.locator('.help-dot[aria-label="본문 서식 도움말"]');
+  const detailHelpDot = page.locator('.help-dot[aria-label="본문 고급 서식 도움말"]');
   await detailHelpDot.scrollIntoViewIfNeeded();
   await page.waitForTimeout(50);
   await detailHelpDot.click();
@@ -1202,6 +1202,19 @@ async function validateDetailSettingsUx(page) {
   assert(detailOutput.section.includes('링크 (https://example.com/path)'), 'detail settings: 링크 주소 함께 표시가 본문에 반영되지 않음');
   assert(detailOutput.section.includes('horzAlign="RIGHT"') && imageWidth > 0 && imageWidth < 26000,
     'detail settings: 이미지 최대 폭/오른쪽 정렬이 그림 XML에 반영되지 않음');
+
+  // 이미지 블록 자체 정렬(예: DOCX 가운데)이 전역 옵션(left)보다 우선되는지 — 원본 정렬 보존
+  const perImageAlign = await page.evaluate(async () => {
+    const ir = { title: 't', doc_type: 'plain', blocks: [{
+      type: 'image', align: 'center', alt: 'c', widthHwp: 40000, heightHwp: 20000,
+      binName: 'image1.png', mimeType: 'image/png', data: new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]),
+    }] };
+    const blob = await buildHwpx(ir, '휴먼명조', 12, null, 'A4', null, 'portrait', 160, { imageAlign: 'left' });
+    const zip = await JSZip.loadAsync(await blob.arrayBuffer());
+    return zip.file('Contents/section0.xml').async('string');
+  });
+  assert(perImageAlign.includes('horzAlign="CENTER"') && /<hp:p\b[^>]*\bparaPrIDRef="12"/.test(perImageAlign),
+    'detail settings: 이미지 블록 자체 정렬(원본 가운데)이 전역 옵션보다 우선되지 않음');
 
   const keptTitle = await page.evaluate(() => {
     const ir = { title: '', doc_type: 'plain', blocks: [{ type: 'heading', level: 1, text: '본문 제목' }, { type: 'para', text: '본문' }] };

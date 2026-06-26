@@ -1053,6 +1053,12 @@ async function parseDocx(arrayBuffer, docType = 'plain') {
             if (hasDrawing) {
                 const imgBlock = await extractDocxImage(node, relsMap, zip, imageCounter);
                 if (imgBlock) {
+                    // 이미지가 든 단락의 정렬(가운데/오른쪽/왼쪽)을 이미지 블록에 보존한다.
+                    // 원본 우선이어도 한컴에서 같은 위치로 보이도록 buildImageRun이 이 값을 우선 적용.
+                    const imgAlign = docxParagraphAlign(node);
+                    if (imgAlign === 'center' || imgAlign === 'right' || imgAlign === 'left') {
+                        imgBlock.align = imgAlign;
+                    }
                     ir.blocks.push(imgBlock);
                     imageCounter++;
                     continue;
@@ -1077,6 +1083,22 @@ async function parseDocx(arrayBuffer, docType = 'plain') {
     for (const b of ir.blocks) if (b && b.docTitle) delete b.docTitle;
 
     return ir;
+}
+
+/** w:p 단락의 정렬(w:pPr/w:jc) → 'center'|'right'|'left'|'justify'|null */
+function docxParagraphAlign(pNode) {
+    const pPrEl = pNode.getElementsByTagNameNS(DOCX_NS, 'pPr')[0];
+    if (!pPrEl) return null;
+    const jcEl = pPrEl.getElementsByTagNameNS(DOCX_NS, 'jc')[0];
+    if (!jcEl) return null;
+    const v = jcEl.getAttributeNS(DOCX_NS, 'val')
+           || jcEl.getAttribute('w:val')
+           || jcEl.getAttribute('val') || '';
+    if (v === 'center') return 'center';
+    if (v === 'right')  return 'right';
+    if (v === 'left')   return 'left';
+    if (v === 'both' || v === 'distribute') return 'justify';
+    return null;
 }
 
 /** w:r 안의 토글 속성(w:u/w:strike 등) on/off 판정 — val=0/false/none/off면 off */
@@ -1107,20 +1129,9 @@ function extractDocxParagraph(pNode, stylesMap = {}, footnotesMap = {}) {
         if (!styleId) styleId = pStyles[0].getAttribute('val') || '';
     }
 
-    // 단락 정렬 (w:pPr/w:jc)
     const pPrEl = pNode.getElementsByTagNameNS(DOCX_NS, 'pPr')[0];
-    let align = null;
-    if (pPrEl) {
-        const jcEl = pPrEl.getElementsByTagNameNS(DOCX_NS, 'jc')[0];
-        if (jcEl) {
-            const v = jcEl.getAttributeNS(DOCX_NS, 'val')
-                   || jcEl.getAttribute('w:val')
-                   || jcEl.getAttribute('val') || '';
-            if (v === 'center')                    align = 'center';
-            else if (v === 'right')                align = 'right';
-            else if (v === 'both' || v === 'distribute') align = 'justify';
-        }
-    }
+    // 단락 정렬 (w:pPr/w:jc)
+    const align = docxParagraphAlign(pNode);
 
     // w:r 단위로 텍스트를 읽어 bold/italic 같은 인라인 서식을 일부 보존
     // w:r 내 w:footnoteReference도 감지하여 각주 삽입

@@ -1,6 +1,25 @@
 {
-  "current": "4.6.29",
+  "current": "4.6.30",
   "versions": [
+    {
+      "version": "4.6.30",
+      "date": "2026-06-26",
+      "user": [
+        "DOCX 등 원본에 가운데/오른쪽 정렬된 이미지가 원본 우선 변환에서도 그 정렬 그대로 유지됩니다. 이미지 정렬 기본값도 가운데로 바꿨습니다.",
+        "'본문 서식'을 '본문 고급 서식'으로 바꾸고 가로 구분선을 그 안 끝으로 옮겼습니다.",
+        "원본 우선을 고르면 아래 세부 설정이 원본 서식 있는 파일에서는 원본을 따른다는 안내가 표시되고, 세부 설정 영역이 흐리게 강조됩니다."
+      ],
+      "dev": [
+        "[v4.6.30] js/parsers.js: docxParagraphAlign() 추가, 이미지 단락의 w:jc 정렬을 imgBlock.align에 보존",
+        "[v4.6.30] js/hwpx.js: buildImageRun이 imgBlock.align을 전역 imageAlign보다 우선 적용",
+        "[v4.6.30] index.html: 본문 서식→본문 고급 서식, 가로 구분선을 세부 그리드 끝으로 이동, 이미지 정렬 기본값 center, #detail-source-note 추가",
+        "[v4.6.30] js/app.js: imageAlign 기본 center(state/reset), applyStylePolicyUi()로 원본 우선 시 그리드 흐림+안내 노트",
+        "[v4.6.30] style.css: .detail-source-note/.detail-grid-dimmed/.detail-field-label.label-with-help 추가",
+        "[v4.6.30] tests/golden.js: 본문 고급 서식 aria-label, 이미지 블록 자체 정렬 우선 검증 추가",
+        "[v4.6.30] format_conversion_playbook.md: 이미지 정렬 보존·원본 우선 UI 메모 추가",
+        "[v4.6.30] package.json/package-lock.json/sw.js/index.html/changelog.json: v4.6.30 반영"
+      ]
+    },
     {
       "version": "4.6.29",
       "date": "2026-06-26",

@@ -64,6 +64,9 @@
 - `원본 서식 처리`(style-policy)는 나머지 7개 옵션의 전제이므로 그리드 밖 상위 마스터(`.detail-field--master`)로 분리한다. golden `validateDetailSettingsUx`가 마스터 분리와 `.detail-settings-grid` 밖 위치를 검사한다.
 - 직접 입력 미리보기 표(`.paste-preview-doc .ir-table`)와 진단 미리보기 표는 실제 HWPX 표의 하드코딩 속성(또렷한 테두리, 머리행 가운데+굵게+음영, 숫자 셀 오른쪽 정렬)을 반영한다. 숫자 셀 판별은 `irTableToHtml()`이 `isNumericCell()`로 `.ir-cell-num`을 붙여 처리한다.
 - 직접 입력(`state.inputMode==='paste'`) 변환의 출력 파일명은 가상 파일명이 아니라 제목 옵션이 반영된 `ir.title`(`sanitizeBaseName`) 기반으로 만든다. 파일 업로드는 입력 파일명을 유지한다.
+- 이미지 정렬: IR `image` 블록이 자체 `align`('left'|'center'|'right')을 가지면 전역 `imageAlign` 옵션보다 우선한다(`buildImageRun`). DOCX는 이미지가 든 단락의 `w:jc`를 `docxParagraphAlign()`로 읽어 `imgBlock.align`에 보존하므로 원본 우선에서도 가운데/오른쪽 정렬이 유지된다. 전역 `imageAlign` 기본값은 가운데(`center`)다.
+- `원본 우선`(stylePolicy='source')일 때는 `applyStylePolicyUi()`가 `.detail-settings-grid`를 흐리게(`.detail-grid-dimmed`) 하고 `#detail-source-note`를 띄워, 세부 설정이 원본 서식 있는 파일에서는 원본에 양보됨을 강조한다(조정 자체는 가능).
+- 가로 구분선 토글은 `본문 고급 서식`(이전 '본문 서식') 그리드 끝에 둔다. `본문 고급 서식` 도움말 aria-label도 함께 갱신한다.
 - UI 라벨은 사용자가 예상하는 결과 중심으로 쓴다. 예를 들어 `prominent`는 "강조"가 아니라 `큰 제목·굵게`, `report`는 "보고서형"이 아니라 `머리행 음영`처럼 실제 출력 변화를 드러낸다.
 - 옵션의 `value`는 저장값/localStorage/HWPX 생성 계약이므로 라벨만 바꿀 때는 `value`를 바꾸지 않는다.
 - 세부 설정을 바꿨는데 HWPX XML이 변하지 않는 회귀를 막기 위해 UI 라벨, `state`, `buildHwpx()` 옵션 전달, XML 검증을 한 묶음으로 본다.

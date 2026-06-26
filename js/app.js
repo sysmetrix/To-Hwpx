@@ -37,7 +37,7 @@ const state = {
     tableStyle: 'standard',            // 표 스타일 프리셋
     linkStyle: 'blue',                 // 링크 표시 방식
     imageMaxWidth: 100,                // 이미지 최대 폭(%)
-    imageAlign: 'left',                // 이미지 정렬
+    imageAlign: 'center',              // 이미지 정렬 (기본 가운데; 원본에 정렬이 있으면 원본 우선)
     titleBodyPolicy: 'remove',         // 문서 첫 제목 본문 유지/제거
     stylePolicy: 'source',             // 원본 서식 처리: source|balanced|app
     pageMargins:  { top: 10, bottom: 10, left: 20, right: 20, header: 10, footer: 10 },  // 단위: mm
@@ -1677,8 +1677,10 @@ function initOptions() {
             localStorage.setItem(cfg.store, el.value);
             updateAdvancedSettingsSummary();
             if (cfg.key === 'titleBodyPolicy') scheduleSelectedFileIrAnalysis();
+            if (cfg.key === 'stylePolicy') applyStylePolicyUi(el.value);
         });
     });
+    applyStylePolicyUi();
 
     // 본문 서식 세그먼트 버튼 ↔ 숨김 select 동기화.
     // select가 값/state/저장의 단일 소스. 버튼은 select.value만 바꾸고 change를 디스패치한다(위 리스너가 처리).
@@ -3863,6 +3865,15 @@ function syncDetailSegButtons() {
     });
 }
 
+// 원본 우선이면 세부 그리드를 흐리게 하고 안내 노트를 띄운다(조정은 가능하되 전제임을 강조).
+function applyStylePolicyUi(policy = state.stylePolicy) {
+    const isSource = policy === 'source';
+    const note = document.getElementById('detail-source-note');
+    if (note) note.hidden = !isSource;
+    const grid = document.querySelector('.detail-settings-grid');
+    if (grid) grid.classList.toggle('detail-grid-dimmed', isSource);
+}
+
 function resetConverterState() {
     clearSelectedFile();
     hideAlert();
@@ -3888,7 +3899,7 @@ function resetConverterState() {
     state.tableStyle = 'standard';
     state.linkStyle = 'blue';
     state.imageMaxWidth = 100;
-    state.imageAlign = 'left';
+    state.imageAlign = 'center';
     state.titleBodyPolicy = 'remove';
     state.stylePolicy = 'source';
     state.pageMargins = { top: 10, bottom: 10, left: 20, right: 20, header: 10, footer: 10 };
@@ -3930,10 +3941,11 @@ function resetConverterState() {
     if (tableStyle) tableStyle.value = 'standard';
     if (linkStyle) linkStyle.value = 'blue';
     if (imageMaxWidth) imageMaxWidth.value = '100';
-    if (imageAlign) imageAlign.value = 'left';
+    if (imageAlign) imageAlign.value = 'center';
     if (titleBodyPolicy) titleBodyPolicy.value = 'remove';
     if (autoDownload) autoDownload.checked = true;
     syncDetailSegButtons();
+    applyStylePolicyUi('source');
 
     for (const [side, value] of Object.entries(state.pageMargins)) {
         const el = document.getElementById(`margin-${side}`);
