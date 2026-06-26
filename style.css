@@ -1072,7 +1072,7 @@ a:hover { text-decoration: underline; }
 .advanced-settings {
     border: 1.5px solid var(--c-border);
     border-radius: var(--radius-md);
-    background: var(--c-surface-alt);
+    background: color-mix(in srgb, var(--c-surface-alt) 88%, var(--c-border) 12%);
     margin: 2px 0 14px;
     overflow: hidden;
 }
@@ -1082,14 +1082,17 @@ a:hover { text-decoration: underline; }
     color: var(--c-text);
     font-size: 0.92rem;
     font-weight: 800;
-    background: var(--c-surface);   /* 패널 본문과 구분되는 헤더 바 */
+    background: color-mix(in srgb, var(--c-surface-alt) 72%, var(--c-border) 28%);
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 10px;
     list-style: none;
 }
-.advanced-settings[open] summary { border-bottom: 1px solid var(--c-border); }
+.advanced-settings[open] summary {
+    border-bottom: 1px solid var(--c-border);
+    background: color-mix(in srgb, var(--c-surface-alt) 64%, var(--c-border) 36%);
+}
 .advanced-settings summary::-webkit-details-marker { display: none; }
 .advanced-settings summary::marker { content: ''; }
 .adv-summary-text small {
@@ -1100,15 +1103,15 @@ a:hover { text-decoration: underline; }
     margin-top: 2px;
 }
 .adv-summary-text {
-    color: var(--c-primary);
+    color: var(--c-text);
     min-width: 0;
 }
 .adv-summary-note {
     margin-left: auto;
     padding: 4px 8px;
     border-radius: 999px;
-    background: var(--c-primary-light);
-    color: var(--c-primary);
+    background: var(--c-surface);
+    color: var(--c-text-sub);
     font-size: 0.72rem;
     font-weight: 700;
     white-space: nowrap;
@@ -1127,7 +1130,7 @@ a:hover { text-decoration: underline; }
     font-size: 0.78rem;
 }
 .advanced-settings[open] .adv-chevron { transform: rotate(180deg); }
-.advanced-settings summary:hover { background: var(--c-primary-light); }
+.advanced-settings summary:hover { background: color-mix(in srgb, var(--c-primary-light) 42%, var(--c-surface-alt)); }
 .advanced-settings summary:hover .adv-chevron { background: var(--c-primary); color: #fff; }
 .advanced-settings summary:hover .adv-summary-note { background: var(--c-surface); }
 .advanced-settings-body {

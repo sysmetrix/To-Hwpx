@@ -25,7 +25,7 @@ const state = {
     ir:           null,                // 파싱 완료된 IR JSON
     docType:      'plain',             // 상단 제목 블록: plain(없음)|titleblock(기본)|cover-unit(표지단위)|cover-annual(표지연간)
     customTitle:  '',                  // 사용자가 입력한 제목 (비어 있으면 자동 기준 적용)
-    titleSource:  'heading',           // 제목을 비웠을 때: 'filename'(파일 이름) | 'heading'(문서 첫 제목/문장)
+    titleSource:  'heading',           // 제목을 비웠을 때: 'filename'(파일 이름) | 'heading'(문서 첫 문장/제목)
     docFont:      '휴먼명조',          // 출력 폰트 (기본: 휴먼명조)
     fontSize:     12,                  // 기본 글꼴 크기 (pt)
     paperSize:    'A4',                // 용지 크기: "A4" | "B5" | "Letter"
@@ -1264,7 +1264,7 @@ function initOptions() {
         });
     }
 
-    // 제목을 비웠을 때 적용할 기준 (문서 첫 제목/문장 또는 파일 이름)
+    // 제목을 비웠을 때 적용할 기준 (문서 첫 문장/제목 또는 파일 이름)
     const titleSourceBtns = document.querySelectorAll('.seg-btn[data-title-source]');
     if (titleSourceBtns.length) {
         applyTitleSourceUi(state.titleSource);
@@ -1468,7 +1468,7 @@ function updateTitlePlaceholder(titleSource = state.titleSource) {
     if (!titleEl) return;
     titleEl.placeholder = titleSource === 'filename'
         ? '비워두면 파일 이름을 제목으로 씁니다'
-        : '비워두면 문서에서 제목을 찾습니다';
+        : '비워두면 문서 첫 문장을 제목으로 씁니다';
 }
 
 function applyTitleSourceUi(titleSource = state.titleSource) {
@@ -1484,9 +1484,9 @@ function updateAdvancedSettingsSummary() {
     const summary = document.getElementById('advanced-settings-summary');
     if (!summary) return;
     const orientationLabel = state.orientation === 'landscape' ? '가로' : '세로';
-    const paragraphLabel = ({ compact: '문단 좁게', normal: '문단 기본', relaxed: '문단 넓게' })[state.paragraphSpacing] || '문단 기본';
-    const headingLabel = ({ compact: '제목 차분', standard: '제목 기본', prominent: '제목 강조' })[state.headingStyle] || '제목 기본';
-    const tableLabel = ({ standard: '표 기본', plain: '표 단순', report: '표 보고서형' })[state.tableStyle] || '표 기본';
+    const paragraphLabel = ({ compact: '문단 간격 작게', normal: '문단 기본 간격', relaxed: '문단 간격 크게' })[state.paragraphSpacing] || '문단 기본 간격';
+    const headingLabel = ({ compact: '작은 제목', standard: '기본 제목', prominent: '큰 제목·굵게' })[state.headingStyle] || '기본 제목';
+    const tableLabel = ({ standard: '기본 테두리', plain: '단순 테두리', report: '머리행 음영' })[state.tableStyle] || '기본 테두리';
     summary.textContent = `현재: ${state.docFont} · ${state.fontSize}pt · 줄 ${state.lineSpacing}% · ${state.paperSize} ${orientationLabel} · ${paragraphLabel} · ${headingLabel} · ${tableLabel}`;
 }
 
