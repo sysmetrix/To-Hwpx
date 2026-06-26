@@ -1462,7 +1462,7 @@ a:hover { text-decoration: underline; }
     border-color: var(--c-primary);
     box-shadow: 0 0 0 3px rgba(56, 108, 255, 0.15);
 }
-/* 제목을 비웠을 때 적용할 기준 */
+/* 문서 제목 적용 기준 */
 .title-source-row {
     display: flex;
     align-items: center;
@@ -1483,6 +1483,19 @@ a:hover { text-decoration: underline; }
 .title-source-control .seg-btn {
     padding: 7px 12px;
     font-size: 0.8rem;
+}
+.title-input-wrap {
+    margin-top: 10px;
+}
+.title-input-wrap[hidden] {
+    display: none;
+}
+.title-input-wrap label {
+    display: block;
+    margin-bottom: 6px;
+    color: var(--c-text-sub);
+    font-size: 0.78rem;
+    font-weight: 800;
 }
 /* 옵션 보조 안내문 */
 .form-hint {
@@ -4235,61 +4248,38 @@ a:hover { text-decoration: underline; }
 
 
 /* ─────────────────────────────────────────────────────────────────
-   [직접 입력]  버튼으로 여는 텍스트 입력 전환
+   [입력 방식 탭 + 직접 입력]  파일 업로드 / 텍스트 직접 입력 전환
    - 색은 디자인 토큰 → 다크 테마 자동 적용
    ───────────────────────────────────────────────────────────────── */
-.input-mode-actions {
-    display: flex;
-    justify-content: flex-end;
-    margin: -6px 0 12px;
-}
-.input-mode-actions[hidden] { display: none; }
-.input-mode-action {
+.input-mode-tabs {
     display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 34px;
-    padding: 7px 13px;
-    border: 1px solid var(--c-border);
-    border-radius: var(--radius-sm);
-    background: var(--c-surface-alt);
-    color: var(--c-primary);
-    font-family: var(--font-main);
-    font-size: 0.82rem;
-    font-weight: 800;
-    cursor: pointer;
-    transition: background var(--trans), border-color var(--trans), color var(--trans);
-}
-.input-mode-action:hover {
-    border-color: var(--c-primary);
-    background: var(--c-primary-light);
-}
-.input-mode-action--ghost {
-    background: var(--c-surface);
-    color: var(--c-text-sub);
-}
-.input-mode-action:focus-visible {
-    outline: 2px solid var(--c-primary);
-    outline-offset: 2px;
-}
-.paste-mode-panel {
+    gap: 4px;
+    padding: 4px;
     margin-bottom: 14px;
-    padding: 14px;
+    background: var(--c-surface-alt);
     border: 1px solid var(--c-border);
     border-radius: var(--radius-md);
-    background: var(--c-surface-alt);
 }
-.paste-mode-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    margin-bottom: 12px;
+.input-mode-tabs[hidden] { display: none; }
+.input-mode-tab {
+    border: none;
+    background: transparent;
+    color: var(--c-text-sub);
+    font-family: var(--font-main);
+    font-size: 0.88rem;
+    font-weight: 700;
+    padding: 7px 16px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: background var(--trans), color var(--trans), box-shadow var(--trans);
 }
-.paste-mode-head strong {
-    color: var(--c-text);
-    font-size: 0.98rem;
+.input-mode-tab:hover { color: var(--c-primary); }
+.input-mode-tab.is-active {
+    background: var(--c-surface);
+    color: var(--c-primary);
+    box-shadow: var(--shadow-sm);
 }
+.input-mode-tab:focus-visible { outline: 2px solid var(--c-primary); outline-offset: 2px; }
 
 /* 직접 입력: 텍스트 영역 */
 .paste-textarea {

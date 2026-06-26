@@ -25,7 +25,7 @@ const state = {
     ir:           null,                // 파싱 완료된 IR JSON
     docType:      'plain',             // 상단 제목 블록: plain(없음)|titleblock(기본)|cover-unit(표지단위)|cover-annual(표지연간)
     customTitle:  '',                  // 사용자가 입력한 제목 (비어 있으면 자동 기준 적용)
-    titleSource:  'heading',           // 제목을 비웠을 때: 'filename'(파일 이름) | 'heading'(문서 첫 문장/제목)
+    titleSource:  'heading',           // 문서 제목 기준: 'heading'(문서 첫 문장/제목) | 'filename'(파일 이름) | 'custom'(직접 입력)
     docFont:      '휴먼명조',          // 출력 폰트 (기본: 휴먼명조)
     fontSize:     12,                  // 기본 글꼴 크기 (pt)
     paperSize:    'A4',                // 용지 크기: "A4" | "B5" | "Letter"
@@ -490,9 +490,10 @@ function setCustomTitleEnabled(enabled) {
     const help = document.querySelector('.title-help');
     if (help) {
         help.innerHTML = enabled
-            ? '상단 제목 블록은 세부 설정에서 켤 수 있습니다.'
+            ? '직접 입력한 제목은 단일 파일 변환에만 적용됩니다.'
             : '여러 파일은 <b>제목 기준 규칙</b>으로 파일마다 제목을 자동 생성합니다.';
     }
+    updateTitleInputVisibility();
 }
 
 function clearSelectedFile() {
@@ -533,7 +534,7 @@ function clearSelectedFile() {
     const titleInput = document.getElementById('doc-title');
     if (titleInput) {
         titleInput.value = '';
-        updateTitlePlaceholder();
+        updateTitleInputVisibility();
     }
 
     const fileInput = document.getElementById('file-input');
@@ -1267,15 +1268,16 @@ function initOptions() {
         });
     }
 
-    // 제목을 비웠을 때 적용할 기준 (문서 첫 문장/제목 또는 파일 이름)
+    // 문서 제목 기준 (문서 첫 문장/파일 이름/직접 입력)
     const titleSourceBtns = document.querySelectorAll('.seg-btn[data-title-source]');
     if (titleSourceBtns.length) {
         applyTitleSourceUi(state.titleSource);
         titleSourceBtns.forEach(btn => {
             btn.addEventListener('click', () => {
-                state.titleSource = btn.dataset.titleSource === 'filename' ? 'filename' : 'heading';
+                state.titleSource = ['heading', 'filename', 'custom'].includes(btn.dataset.titleSource)
+                    ? btn.dataset.titleSource
+                    : 'heading';
                 applyTitleSourceUi(state.titleSource);
-                updateTitlePlaceholder(state.titleSource);
             });
         });
     }
@@ -1469,9 +1471,24 @@ function initOptions() {
 function updateTitlePlaceholder(titleSource = state.titleSource) {
     const titleEl = document.getElementById('doc-title');
     if (!titleEl) return;
-    titleEl.placeholder = titleSource === 'filename'
-        ? '비워두면 파일 이름을 제목으로 씁니다'
-        : '비워두면 문서 첫 문장을 제목으로 씁니다';
+    titleEl.placeholder = titleSource === 'custom'
+        ? '문서 제목을 입력하세요'
+        : '';
+}
+
+function updateTitleInputVisibility(titleSource = state.titleSource) {
+    const wrap = document.querySelector('.title-input-wrap');
+    const titleEl = document.getElementById('doc-title');
+    const show = titleSource === 'custom';
+    if (wrap) wrap.hidden = !show;
+    if (titleEl) {
+        titleEl.required = show;
+        if (!show) {
+            titleEl.value = '';
+            state.customTitle = '';
+        }
+    }
+    updateTitlePlaceholder(titleSource);
 }
 
 function applyTitleSourceUi(titleSource = state.titleSource) {
@@ -1480,7 +1497,7 @@ function applyTitleSourceUi(titleSource = state.titleSource) {
         btn.classList.toggle('is-active', active);
         btn.setAttribute('aria-pressed', active ? 'true' : 'false');
     });
-    updateTitlePlaceholder(titleSource);
+    updateTitleInputVisibility(titleSource);
 }
 
 function updateAdvancedSettingsSummary() {
@@ -1626,7 +1643,7 @@ function bindLabControl() {
 
 function initInputMode() {
     if (!isLabEnabled()) {
-        document.querySelector('.input-mode-actions')?.setAttribute('hidden', '');
+        document.querySelector('.input-mode-tabs')?.setAttribute('hidden', '');
         document.getElementById('paste-mode')?.setAttribute('hidden', '');
         const upload = document.getElementById('upload-mode');
         if (upload) upload.hidden = false;
@@ -1634,7 +1651,6 @@ function initInputMode() {
         return;
     }
 
-    document.querySelector('.input-mode-actions')?.removeAttribute('hidden');
     document.getElementById('mode-upload')?.addEventListener('click', () => setInputMode('upload'));
     document.getElementById('mode-paste')?.addEventListener('click', () => setInputMode('paste'));
 
@@ -1687,8 +1703,12 @@ function setInputMode(mode) {
     if (upload) upload.hidden = mode !== 'upload';
     if (paste)  paste.hidden  = mode !== 'paste';
 
-    const pasteButton = document.getElementById('mode-paste');
-    pasteButton?.setAttribute('aria-expanded', String(mode === 'paste'));
+    const tabU = document.getElementById('mode-upload');
+    const tabP = document.getElementById('mode-paste');
+    tabU?.classList.toggle('is-active', mode === 'upload');
+    tabP?.classList.toggle('is-active', mode === 'paste');
+    tabU?.setAttribute('aria-selected', String(mode === 'upload'));
+    tabP?.setAttribute('aria-selected', String(mode === 'paste'));
 
     // 공통 초기화(큐·결과·업로드 UI). clearSelectedFile은 inputMode를 바꾸지 않는다.
     clearSelectedFile();
@@ -1910,8 +1930,8 @@ async function convertOneFile(file, statusPrefix = '', outputFontName = state.do
         throw new Error('파일 파싱 실패: ' + e.message);
     }
 
-    // 제목: 단일일 때만 직접 입력(customTitle) 적용, 배치는 파일별 자동 기준 규칙
-    const customTitle = state.queue.length === 1 ? state.customTitle : '';
+    // 제목: '직접 입력' 선택 + 단일 변환일 때만 customTitle 적용
+    const customTitle = state.queue.length === 1 && state.titleSource === 'custom' ? state.customTitle : '';
     applyDocumentTitlePolicy(ir, file, customTitle, state.titleSource, state.titleBodyPolicy);
     state.ir = ir;
 
