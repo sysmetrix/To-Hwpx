@@ -440,3 +440,19 @@ Scope: static browser-only conversion flow from file selection to HWPX download.
 - [ ] 직접 입력 MD/HTML/CSV에서 미리보기가 입력 흐름을 과하게 밀어내지 않고 복사 버튼이 동작함
 - [ ] 캐시를 비우고 `📋 v4.6.22` 확인
 - [ ] 직접 입력으로 만든 MD·HTML·TSV 결과를 한컴오피스에서 열어 표/문단/링크가 기존 직접 입력 기준과 동일하게 보이는지 확인
+
+## 30. v4.6.23 직접 입력 HTML 복사와 개발 환경 정리
+
+자동 승인 기준:
+
+- [x] 상단 도움말 버튼에 다른 유틸 버튼과 맞는 아이콘 추가
+- [x] 직접 입력 미리보기에 `HTML 복사` 버튼 추가
+- [x] 직접 입력 변환도 파일 업로드와 같은 HWPX 생성 경로를 쓰고, 링크 표시·줄 간격 같은 문서 설정이 적용되는지 golden에서 확인
+- [x] GitHub CLI 설치 확인: `gh version 2.95.0`
+
+수동 확인 기준:
+
+- [ ] 새 터미널에서 `gh --version`이 바로 실행되는지 확인
+- [ ] `gh auth login` 저장 인증은 현재 git credential 토큰 scope 부족으로 미완료. 필요 시 `read:org` 포함 토큰 또는 브라우저 로그인으로 인증
+- [ ] 직접 입력 미리보기에서 `HTML 복사`가 표/문단 HTML 조각을 클립보드에 복사하는지 확인
+- [ ] 캐시를 비우고 `📋 v4.6.23` 확인

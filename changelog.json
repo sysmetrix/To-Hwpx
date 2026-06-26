@@ -1,6 +1,20 @@
 {
-  "current": "4.6.22",
+  "current": "4.6.23",
   "versions": [
+    {
+      "version": "4.6.23",
+      "date": "2026-06-26",
+      "user": [
+        "상단 도움말 버튼에 아이콘을 더해 다크 모드·초기화 버튼과 시각 기준을 맞췄습니다."
+      ],
+      "dev": [
+        "[v4.6.23] index.html/js/app.js: 직접 입력 미리보기에 HTML 복사 버튼 추가, 미리보기 DOM의 정리된 HTML 조각 복사 지원",
+        "[v4.6.23] tests/golden.js: 직접 입력 변환이 파일 업로드와 같은 HWPX 생성 경로를 쓰고 링크 표시·줄 간격 설정을 반영하는지 회귀 테스트 추가",
+        "[v4.6.23] hwpx-public-doc/references/format_conversion_playbook.md/qa/release-qa.md: 직접 입력 HTML 복사와 gh 설치/인증 기준 기록",
+        "[v4.6.23] 개발 환경: GitHub CLI 2.95.0 설치, 현재 토큰은 GH_TOKEN 방식 사용 가능하나 저장 인증에는 read:org scope 필요",
+        "[v4.6.23] package.json/package-lock.json/sw.js/index.html/changelog.json: v4.6.23 반영"
+      ]
+    },
     {
       "version": "4.6.22",
       "date": "2026-06-26",

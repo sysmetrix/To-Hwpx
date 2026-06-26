@@ -45,7 +45,7 @@
 - 직접 입력은 관리자 모드 전용이며 MD/HTML/TXT/CSV/JSON 텍스트를 가상 `File`로 감싸 기존 `fileToIR()` 변환 파이프라인을 재사용한다.
 - 입력 아래 미리보기는 실제 HWPX 렌더러가 아니라 변환 전 IR 해석 결과다. `parseMd()`, `parseHtml()`, `parseTxt()`, `parseCsv()`, `parseJson()`을 직접 호출하고 `irBlocksToHtml()`로 표시한다.
 - 미리보기는 타이핑마다 즉시 무거운 변환을 돌리지 않고 짧은 debounce를 둔다. Markdown 원격 이미지는 미리보기 단계에서 resolve하지 않는다.
-- 복사는 `원문 복사`와 `미리보기 복사`를 분리한다. Clipboard API가 막힌 브라우저에서는 textarea fallback을 사용한다.
+- 복사는 `원문 복사`, `미리보기 복사`, `HTML 복사`를 분리한다. HTML 복사는 미리보기 DOM의 정리된 HTML 조각을 복사하며, HWPX 최종 XML이나 한컴 렌더링 결과가 아니다. Clipboard API가 막힌 브라우저에서는 textarea fallback을 사용한다.
 - JSON처럼 형식 오류가 생길 수 있는 입력은 변환 전 미리보기 패널에서 오류를 보여주고, 실제 변환 버튼은 기존 검증/실패 카드 흐름을 유지한다.
 
 검증:
