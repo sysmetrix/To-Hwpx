@@ -1111,6 +1111,28 @@ async function validateDetailSettingsUx(page) {
     assert(await page.locator(`#${id}`).count() === 1, `detail settings: #${id} 컨트롤 누락`);
   }
 
+  // 본문 서식이 세그먼트 버튼 UI로 노출되고, 버튼이 숨김 select(값 소스)를 구동하는지 검증
+  const segDefault = await page.evaluate(() => ({
+    styleBtns: document.querySelectorAll('.detail-field .seg-btn[data-seg-for="style-policy"]').length,
+    activeMatchesSelect: [...document.querySelectorAll('.detail-field .seg-btn.is-active[data-seg-for]')]
+      .every(btn => document.getElementById(btn.dataset.segFor)?.value === btn.dataset.segValue),
+    selectHidden: (() => {
+      const sel = document.getElementById('style-policy');
+      return !!sel && sel.getBoundingClientRect().width <= 2;
+    })(),
+  }));
+  assert(segDefault.styleBtns === 3, 'detail settings: 원본 서식 처리 세그먼트 버튼 3개가 없음');
+  assert(segDefault.activeMatchesSelect, 'detail settings: 세그먼트 활성 버튼이 숨김 select 값과 어긋남');
+  assert(segDefault.selectHidden, 'detail settings: 데이터 소스 select가 화면에서 숨겨지지 않음');
+  await page.locator('.detail-field .seg-btn[data-seg-for="heading-style"][data-seg-value="prominent"]').click();
+  const headingAfter = await page.evaluate(() => ({
+    value: document.getElementById('heading-style').value,
+    active: document.querySelector('.detail-field .seg-btn.is-active[data-seg-for="heading-style"]')?.dataset.segValue,
+    stored: localStorage.getItem('tohwpx_headingStyle'),
+  }));
+  assert(headingAfter.value === 'prominent' && headingAfter.active === 'prominent' && headingAfter.stored === 'prominent',
+    'detail settings: 세그먼트 버튼 클릭이 select 값/활성표시/localStorage에 반영되지 않음');
+
   const detailOutput = await page.evaluate(async () => {
     const ir = {
       title: 'detail output',

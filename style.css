@@ -557,6 +557,27 @@ a:hover { text-decoration: underline; }
     font-weight: 800;
 }
 
+/* 변환(서비스) 화면 헤더의 베타 식별자 — 작업 중에도 베타임을 알 수 있게 */
+.options-panel-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.svc-beta-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 9px;
+    border: 1px solid var(--c-warnwash-border);
+    border-radius: 100px;
+    background: var(--c-warning-light);
+    color: var(--c-warning);
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+}
+
 /* 드롭존 — 히어로 영역 내 (화면에서 가장 강한 행동 유도 요소) */
 .drop-zone {
     background: var(--c-surface);
@@ -1173,42 +1194,46 @@ a:hover { text-decoration: underline; }
 .document-detail-settings > .form-row-label {
     margin-bottom: 10px;
 }
+/* 본문 서식 — 세그먼트 버튼형 필드(숨김 select가 값 소스).
+   패널 내 용지 방향·구분선과 같은 .seg-control 룩으로 통일, 다크모드 토큰을 그대로 사용해 색감 일관. */
 .detail-settings-grid {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 10px 12px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px 14px;
 }
-.detail-settings-grid label {
+.detail-field {
     display: grid;
-    gap: 5px;
+    gap: 6px;
     margin-bottom: 0;
 }
-.detail-settings-grid label span {
+.detail-field-label {
     color: var(--c-text-sub);
     font-size: 0.78rem;
     font-weight: 700;
     letter-spacing: 0.01em;
 }
-/* 본문 서식 — 회색 컨테이너 위에서 또렷이 떠 보이는 현대형 필드.
-   .form-row select(뒤에 정의)보다 특이도를 높여 패딩·테두리를 확정한다. */
-.document-detail-settings .detail-settings-grid select {
-    padding: 8px 32px 8px 11px;
-    border: 1.5px solid color-mix(in srgb, var(--c-border) 65%, transparent);
-    border-radius: var(--radius-md);
-    font-size: 0.84rem;
-    font-weight: 600;
-    background-color: var(--c-surface);
-    background-position: right 11px center;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
-    transition: border-color var(--trans), box-shadow var(--trans), background-color var(--trans);
+.seg-control--sm .seg-btn {
+    padding: 7px 4px;
+    font-size: 0.8rem;
 }
-.document-detail-settings .detail-settings-grid select:hover {
-    border-color: color-mix(in srgb, var(--c-primary) 55%, var(--c-border));
-    background-color: color-mix(in srgb, var(--c-primary-light) 55%, var(--c-surface));
+/* 화면에서 숨기되 값/접근성 트리에는 남기는 데이터 소스용 */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
 }
-.document-detail-settings .detail-settings-grid select:focus {
-    border-color: var(--c-primary);
-    box-shadow: 0 0 0 3px rgba(56, 108, 255, 0.16);
+/* .form-row select(width:100%·padding)보다 특이도를 높여 숨김 select를 1×1로 확정 */
+.document-detail-settings select.sr-only {
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    border: 0;
 }
 
 /* 변환기 섹션 파일 드롭 영역 — mini-drop-zone·detected-row 통합 */

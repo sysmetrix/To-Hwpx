@@ -1641,6 +1641,19 @@ function initOptions() {
         });
     });
 
+    // 본문 서식 세그먼트 버튼 ↔ 숨김 select 동기화.
+    // select가 값/state/저장의 단일 소스. 버튼은 select.value만 바꾸고 change를 디스패치한다(위 리스너가 처리).
+    document.querySelectorAll('.detail-field .seg-btn[data-seg-for]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const sel = document.getElementById(btn.dataset.segFor);
+            if (!sel || sel.value === btn.dataset.segValue) return;
+            sel.value = btn.dataset.segValue;
+            sel.dispatchEvent(new Event('change'));
+            syncDetailSegButtons();
+        });
+    });
+    syncDetailSegButtons();
+
     // 페이지 여백 입력 (mm 단위, #margin-top/bottom/left/right/header/footer)
     const marginIds = ['top', 'bottom', 'left', 'right', 'header', 'footer'];
     marginIds.forEach(side => {
@@ -3440,7 +3453,7 @@ function initModals() {
     document.getElementById('open-changelog')?.addEventListener('click', (e) => {
         if (!isAdminMode()) {
             e.preventDefault();
-            showToast('<strong>관리자 모드 전용</strong> <span>?admin=1에서 업데이트 내역을 볼 수 있습니다.</span>');
+            showToast('<strong>관리자 전용</strong> <span>관리자 모드에서만 업데이트 내역을 볼 수 있습니다.</span>');
             return;
         }
         showChangelog();
@@ -3721,7 +3734,7 @@ function initAdminModeUi() {
     const admin = isAdminMode();
     btn.classList.toggle('is-admin-enabled', admin);
     btn.dataset.adminEnabled = String(admin);
-    btn.title = admin ? '업데이트 내역 보기' : '관리자 모드에서 업데이트 내역을 볼 수 있습니다 (?admin=1)';
+    btn.title = admin ? '업데이트 내역 보기' : '관리자 전용 기능입니다';
     btn.setAttribute('aria-label', admin ? '업데이트 내역 보기' : '버전 정보');
 }
 
@@ -3800,6 +3813,15 @@ function initTheme() {
     }
 }
 
+// 본문 서식 세그먼트 버튼의 활성 표시를 숨김 select 값에 맞춘다(초기 로드·리셋 후 호출).
+function syncDetailSegButtons() {
+    document.querySelectorAll('.detail-field .seg-btn[data-seg-for]').forEach(btn => {
+        const sel = document.getElementById(btn.dataset.segFor);
+        if (!sel) return;
+        btn.classList.toggle('is-active', sel.value === btn.dataset.segValue);
+    });
+}
+
 function resetConverterState() {
     clearSelectedFile();
     hideAlert();
@@ -3870,6 +3892,7 @@ function resetConverterState() {
     if (imageAlign) imageAlign.value = 'left';
     if (titleBodyPolicy) titleBodyPolicy.value = 'remove';
     if (autoDownload) autoDownload.checked = true;
+    syncDetailSegButtons();
 
     for (const [side, value] of Object.entries(state.pageMargins)) {
         const el = document.getElementById(`margin-${side}`);

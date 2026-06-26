@@ -1,6 +1,23 @@
 {
-  "current": "4.6.26",
+  "current": "4.6.27",
   "versions": [
+    {
+      "version": "4.6.27",
+      "date": "2026-06-26",
+      "user": [
+        "본문 서식 옵션을 드롭다운에서 세그먼트 버튼으로 바꿔 더 또렷하고 현대적으로 다듬고, 다크모드 색감도 자연스럽게 맞췄습니다.",
+        "변환 화면 상단에 '서식 변환 베타' 배지를 추가해 작업 중에도 베타 품질임을 알 수 있게 했습니다.",
+        "버전 버튼은 일반 사용자에게 관리자 진입 방법을 노출하지 않고 '관리자 전용'만 안내하도록 정리했습니다."
+      ],
+      "dev": [
+        "[v4.6.27] index.html: 본문 서식 8개 select를 세그먼트 버튼(.detail-field .seg-btn[data-seg-for])+숨김 select(.sr-only, 값 소스)로 교체, 변환 헤더에 .svc-beta-badge 추가",
+        "[v4.6.27] style.css: .detail-field/.seg-control--sm/.sr-only/.svc-beta-badge 추가, v4.6.26의 깨진 detail select 규칙 제거(다크 색감 정상화)",
+        "[v4.6.27] js/app.js: 세그먼트 버튼→select.value+change 디스패치 배선, syncDetailSegButtons() 초기/리셋 동기화, 업데이트 토스트·툴팁에서 ?admin=1 진입법 제거",
+        "[v4.6.27] tests/golden.js: 세그먼트 버튼 노출·숨김 select·클릭 반영(값/활성/localStorage) 회귀 검증 추가",
+        "[v4.6.27] format_conversion_playbook.md: 본문 서식 세그먼트 UI ↔ 숨김 select 계약 메모 추가",
+        "[v4.6.27] package.json/package-lock.json/sw.js/index.html/changelog.json: v4.6.27 반영"
+      ]
+    },
     {
       "version": "4.6.26",
       "date": "2026-06-26",
