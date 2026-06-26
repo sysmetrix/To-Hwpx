@@ -117,7 +117,7 @@
             <span>｢BWYF｣ AX Challenger 2026</span>
             <!-- [주의] id="open-changelog"는 app.js에서 업데이트 내역 모달을 여는 연결값 -->
             <button class="util-changelog-btn" id="open-changelog" aria-label="업데이트 내역 보기">
-                📋 v4.6.13 업데이트 내역
+                📋 v4.6.14 업데이트 내역
             </button>
         </div>
     </div>
@@ -678,22 +678,12 @@
 <!-- ════════════════════════════════════════════════════════════════
      [입력 포맷 + 동작 원리 + 지원 현황]  탭 전환
      ════════════════════════════════════════════════════════════════ -->
-<section class="formats-section" id="formats" aria-labelledby="formats-title">
+<section class="formats-section" id="formats" aria-label="입력 포맷">
     <div class="container">
-        <h2 class="section-title" id="formats-title">입력 포맷</h2>
-        <p class="section-sub">카드를 선택하면 포맷별 보존 범위와 제한사항을 확인할 수 있습니다</p>
-
         <div class="service-info">
             <div class="service-info-bar">
-                <span class="service-info-label">포맷 안내</span>
-                <div class="format-tabs service-tabs" role="tablist" aria-label="포맷 안내">
-                    <button class="format-tab active"
-                            data-target="panel-how"
-                            role="tab"
-                            aria-selected="true"
-                            aria-controls="panel-how">
-                        더 알아보기
-                    </button>
+                <span class="service-info-label">더 알아보기</span>
+                <div class="format-tabs service-tabs" id="format-more-tabs" role="tablist" aria-label="포맷 안내">
                     <button class="format-tab"
                             data-target="panel-basic"
                             role="tab"
@@ -706,7 +696,14 @@
                             role="tab"
                             aria-selected="false"
                             aria-controls="panel-ext">
-                        🔜 예정 포맷
+                        예정 포맷
+                    </button>
+                    <button class="format-tab"
+                            data-target="panel-how"
+                            role="tab"
+                            aria-selected="false"
+                            aria-controls="panel-how">
+                        변환 과정
                     </button>
                     <button class="format-tab"
                             data-target="panel-support"
@@ -717,6 +714,7 @@
                     </button>
                 </div>
             </div>
+            <div id="format-more-panels" class="format-more-panels">
 
         <!-- ── 기본 서비스 패널 ─────────────────────────────────────
              [수정 시] 새 포맷 카드 추가 → .format-card 복사 후 data-ext/내용 수정
@@ -724,6 +722,7 @@
              비개발자는 카드 안의 표시 문구(card-ext/card-name/card-quality/badge)만 바꾸는 것이 안전합니다.
              ─────────────────────────────────────────────────────── -->
         <div class="format-panel" id="panel-basic" role="tabpanel">
+            <p class="section-sub" style="margin:16px 0 24px">카드를 선택하면 포맷별 보존 범위와 제한사항을 확인할 수 있습니다</p>
             <div class="format-grid">
 
                 <!-- Markdown -->
@@ -753,15 +752,6 @@
                     <span class="card-badge badge-available">지원됨</span>
                 </div>
 
-                <!-- TXT -->
-                <div class="format-card" data-ext="txt" role="button" tabindex="0">
-                    <div class="card-icon">📄</div>
-                    <div class="card-ext">TXT</div>
-                    <div class="card-name">일반 텍스트</div>
-                    <div class="card-quality">★★★</div>
-                    <span class="card-badge badge-available">지원됨</span>
-                </div>
-
                 <!-- CSV / XLSX -->
                 <div class="format-card" data-ext="csv" role="button" tabindex="0">
                     <div class="card-icon"><img src="https://api.iconify.design/simple-icons/microsoftexcel.svg?color=%23217346" alt="" class="format-brand-icon" loading="lazy" aria-hidden="true"></div>
@@ -777,6 +767,15 @@
                     <div class="card-ext">JSON</div>
                     <div class="card-name">JSON 데이터</div>
                     <div class="card-quality">★★☆</div>
+                    <span class="card-badge badge-available">지원됨</span>
+                </div>
+
+                <!-- TXT -->
+                <div class="format-card" data-ext="txt" role="button" tabindex="0">
+                    <div class="card-icon">📄</div>
+                    <div class="card-ext">TXT</div>
+                    <div class="card-name">일반 텍스트</div>
+                    <div class="card-quality">★★★</div>
                     <span class="card-badge badge-available">지원됨</span>
                 </div>
 
@@ -797,6 +796,7 @@
                  나머지는 향후 백엔드 연동 예정
                  ─────────────────────────────────────────────────────── -->
             <div class="format-panel" id="panel-ext" role="tabpanel">
+                <p class="section-sub" style="margin:16px 0 24px">현재 입력 가능한 IPYNB와, 변환 품질 검증 후 열 예정인 포맷을 함께 보여드립니다</p>
                 <div class="format-grid">
 
                     <!-- IPYNB -->
@@ -848,7 +848,7 @@
             </div><!-- /#panel-ext -->
 
         <!-- ── 동작 원리 패널 ────────────────────────────────────── -->
-            <div class="format-panel active" id="panel-how" role="tabpanel">
+            <div class="format-panel" id="panel-how" role="tabpanel">
             <span id="how-it-works" aria-hidden="true"></span>
             <p class="section-sub" style="margin:16px 0 32px">PC와 모바일 브라우저 안에서 7단계로 완전히 처리됩니다</p>
             <div class="steps-grid">
@@ -889,7 +889,7 @@
         <!-- ── 지원 현황 패널 ────────────────────────────────────── -->
             <div class="format-panel" id="panel-support" role="tabpanel">
             <span id="support" aria-hidden="true"></span>
-            <p class="section-sub" style="margin:16px 0 24px">★★★: 구조 보존 양호 / ★★☆: 기본 구조 변환 / ★☆☆: 내용 추출 중심</p>
+            <p class="section-sub" style="margin:16px 0 24px">입력 포맷별 현재 변환 상태입니다. ★★★: 구조 보존 양호 / ★★☆: 기본 구조 변환 / ★☆☆: 내용 추출 중심</p>
             <div class="support-table-wrap">
                 <table class="support-table">
                     <thead>
@@ -910,13 +910,6 @@
                             <td>상대경로·접근 차단 이미지 제외 가능</td>
                         </tr>
                         <tr>
-                            <td><strong>HTML</strong></td>
-                            <td>★★☆</td>
-                            <td><span class="card-badge badge-available">지원됨</span></td>
-                            <td>DOMParser → IR</td>
-                            <td>CSS 스타일 손실, 이미지 미지원</td>
-                        </tr>
-                        <tr>
                             <td><strong>DOCX</strong></td>
                             <td>★★☆</td>
                             <td><span class="card-badge badge-available">지원됨</span></td>
@@ -924,18 +917,11 @@
                             <td>페이지 배치·스타일 테마·주석·변경 추적 손실 가능</td>
                         </tr>
                         <tr>
-                            <td><strong>HWP</strong></td>
-                            <td>★☆☆</td>
-                            <td><span class="card-badge badge-beta">베타</span></td>
-                            <td>ZIP 시도 → 텍스트 추출</td>
-                            <td>HWP5(바이너리) 파싱 제한적</td>
-                        </tr>
-                        <tr>
-                            <td><strong>TXT</strong></td>
-                            <td>★★★</td>
+                            <td><strong>HTML</strong></td>
+                            <td>★★☆</td>
                             <td><span class="card-badge badge-available">지원됨</span></td>
-                            <td>줄바꿈 분석 → IR</td>
-                            <td>없음</td>
+                            <td>DOMParser → IR</td>
+                            <td>CSS 스타일 손실, 이미지 미지원</td>
                         </tr>
                         <tr>
                             <td><strong>CSV</strong></td>
@@ -959,18 +945,25 @@
                             <td>보고서형 레이아웃 자동 설계 없음</td>
                         </tr>
                         <tr>
+                            <td><strong>TXT</strong></td>
+                            <td>★★★</td>
+                            <td><span class="card-badge badge-available">지원됨</span></td>
+                            <td>줄바꿈 분석 → IR</td>
+                            <td>없음</td>
+                        </tr>
+                        <tr>
+                            <td><strong>HWP</strong></td>
+                            <td>★☆☆</td>
+                            <td><span class="card-badge badge-beta">베타</span></td>
+                            <td>ZIP 시도 → 텍스트 추출</td>
+                            <td>HWP5(바이너리) 파싱 제한적</td>
+                        </tr>
+                        <tr>
                             <td><strong>IPYNB</strong></td>
                             <td>★★☆</td>
                             <td><span class="card-badge badge-available">지원됨</span></td>
                             <td>JSON 파싱 → cell_type별 처리</td>
                             <td>이미지 출력 셀 미지원</td>
-                        </tr>
-                        <tr>
-                            <td><strong>PC / 모바일 브라우저</strong></td>
-                            <td>★★★</td>
-                            <td><span class="card-badge badge-available">지원됨</span></td>
-                            <td>브라우저 로컬 처리</td>
-                            <td>iOS/Android 저장 UI는 브라우저 정책을 따름</td>
                         </tr>
                         <tr>
                             <td><strong>PDF</strong></td>
@@ -1004,6 +997,7 @@
                 </table>
             </div><!-- /.support-table-wrap -->
             </div><!-- /#panel-support -->
+            </div><!-- /#format-more-panels -->
         </div>
 
     </div><!-- /.container -->
@@ -1395,7 +1389,7 @@
             <span class="modal-title">📋 업데이트 내역</span>
             <button class="modal-close" id="close-changelog" aria-label="닫기">✕</button>
         </div>
-        <div class="modal-body">
+        <div class="modal-body changelog-modal-body">
             <div class="changelog-tabs" role="tablist">
                 <button class="changelog-tab active" data-tab="user"
                         role="tab" aria-selected="true">사용자 변경사항</button>

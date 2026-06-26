@@ -735,7 +735,7 @@ a:hover { text-decoration: underline; }
    [포맷 그리드]  지원 포맷 카드 목록
    ───────────────────────────────────────────────────────────────── */
 .formats-section {
-    padding: clamp(64px, 8vw, 100px) 0;
+    padding: clamp(16px, 3vw, 32px) 0 clamp(64px, 8vw, 100px);
     background: var(--c-surface);
 }
 
@@ -789,9 +789,9 @@ a:hover { text-decoration: underline; }
 .format-panel.active { display: block; }
 
 .service-info {
-    margin-top: 20px;
+    margin-top: 0;
     border-top: 1px solid var(--c-border);
-    padding-top: 12px;
+    padding-top: 10px;
 }
 .service-info-bar {
     display: flex;
@@ -805,6 +805,7 @@ a:hover { text-decoration: underline; }
     color: var(--c-text-muted);
     font-size: 0.82rem;
     font-weight: 800;
+    white-space: nowrap;
 }
 .service-tabs {
     margin-bottom: 0;
@@ -812,6 +813,9 @@ a:hover { text-decoration: underline; }
     gap: 8px;
 }
 .service-tabs .format-tab {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     border: 1px solid var(--c-border);
     border-radius: 999px;
     margin-bottom: 0;
@@ -1321,7 +1325,8 @@ a:hover { text-decoration: underline; }
 }
 .margin-controls {
     display: grid;
-    grid-template-columns: repeat(3, minmax(58px, 1fr));
+    grid-template-columns: repeat(2, 64px);
+    justify-content: center;
     gap: 7px 8px;
 }
 
@@ -1349,7 +1354,7 @@ a:hover { text-decoration: underline; }
     margin-bottom: 0;
 }
 .margin-item > input[type="number"] {
-    width: 100%;
+    width: 64px;
     min-width: 0;
     padding: 5px 6px;
     border: 1.5px solid var(--c-border);
@@ -2604,7 +2609,8 @@ a:hover { text-decoration: underline; }
         min-height: 0;
     }
     .margin-controls {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: repeat(2, 64px);
+        justify-content: center;
     }
     #pipeline-steps { grid-template-columns: repeat(2, 1fr); }
     .steps-grid  { grid-template-columns: 1fr; }
@@ -3532,6 +3538,9 @@ a:hover { text-decoration: underline; }
 /* ─────────────────────────────────────────────────────────────────
    [업데이트 내역 모달]
    ───────────────────────────────────────────────────────────────── */
+.changelog-modal-body {
+    padding: 0;
+}
 .changelog-tabs {
     position: sticky;
     top: 0;
@@ -3539,7 +3548,7 @@ a:hover { text-decoration: underline; }
     display: flex;
     border-bottom: 2px solid var(--c-border);
     padding: 0 24px;
-    margin: -20px -24px 0;
+    margin: 0;
     background: var(--c-surface);
     flex-shrink: 0;
 }
