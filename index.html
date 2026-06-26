@@ -115,9 +115,9 @@
         <div class="container">
             <!-- [문구 수정 가능] 행사명/서비스명을 바꾸려면 아래 글자만 수정 -->
             <span>｢BWYF｣ AX Challenger 2026</span>
-            <!-- [주의] id="open-changelog"는 app.js에서 업데이트 내역 모달을 여는 연결값 -->
-            <button class="util-changelog-btn" id="open-changelog" aria-label="업데이트 내역 보기">
-                📋 v4.6.19 업데이트 내역
+            <!-- [주의] id="open-changelog"는 app.js에서 관리자 모드일 때 업데이트 내역 모달을 여는 연결값 -->
+            <button class="util-changelog-btn" id="open-changelog" aria-label="버전 정보" data-admin-enabled="false">
+                📋 v4.6.20
             </button>
         </div>
     </div>
@@ -254,8 +254,15 @@
                 <!-- ── 모드 2: 직접 입력 (텍스트 기반 포맷을 붙여넣어 변환) ── -->
                 <div id="paste-mode" role="tabpanel" aria-labelledby="mode-paste" hidden>
                     <div class="form-row">
-                        <label for="paste-format">입력 형식</label>
-                        <select id="paste-format" name="paste-format" aria-label="직접 입력 내용의 형식">
+                        <span class="form-row-label">입력 형식</span>
+                        <div class="paste-format-buttons" role="group" aria-label="직접 입력 내용의 형식">
+                            <button type="button" class="paste-format-btn is-active" data-paste-format="md">MD</button>
+                            <button type="button" class="paste-format-btn" data-paste-format="html">HTML</button>
+                            <button type="button" class="paste-format-btn" data-paste-format="txt">TXT</button>
+                            <button type="button" class="paste-format-btn" data-paste-format="csv">CSV/TSV</button>
+                            <button type="button" class="paste-format-btn" data-paste-format="json">JSON</button>
+                        </div>
+                        <select id="paste-format" name="paste-format" aria-label="직접 입력 내용의 형식" hidden>
                             <option value="md">Markdown (.md)</option>
                             <option value="html">HTML 소스 (.html)</option>
                             <option value="txt">텍스트 (.txt)</option>
@@ -1008,10 +1015,8 @@
             <div class="footer-brand">
                 <span class="footer-logo">To HWPX</span>
                 <p>
-                    다양한 문서 포맷을 한글(HWPX)로 변환하는<br>
-                    오픈소스 브라우저 기반 도구입니다.<br>
-                    파일은 서버에 전송되지 않으며<br>
-                    브라우저 안에서 완전히 처리됩니다.
+                    다양한 문서 포맷을 한글(HWPX)로 변환합니다.<br>
+                    오픈소스 브라우저 기반 도구입니다.
                 </p>
             </div>
 
