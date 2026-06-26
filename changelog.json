@@ -1,6 +1,20 @@
 {
-  "current": "4.6.16",
+  "current": "4.6.17",
   "versions": [
+    {
+      "version": "4.6.17",
+      "date": "2026-06-26",
+      "user": [
+        "상단 단축키 버튼과 첫 화면 사용법 버튼을 '도움말'로 정리하고, 도움말 안에서 사용법과 단축키를 탭으로 나눠 볼 수 있게 했습니다.",
+        "첫 화면의 서비스 가치 오른쪽 설명을 반복 문구 대신 입력·보존·출력 기준으로 바꿔, 무엇을 넣으면 어떤 HWPX가 나오는지 더 바로 알 수 있게 했습니다."
+      ],
+      "dev": [
+        "[v4.6.17] index.html/js/app.js/style.css: 도움말 모달에 사용법·단축키 탭 통합, 상단 도움말 버튼과 Shift+/ 단축키 연결",
+        "[v4.6.17] index.html: value-section 오른쪽 요약을 입력·보존·출력 기준 안내로 개편",
+        "[v4.6.17] tests/golden.js: 도움말 탭, Shift+/ 단축키 연결, 물음표 도움말 스크롤 타이밍 회귀 테스트 갱신",
+        "[v4.6.17] package.json/package-lock.json/sw.js/index.html/changelog.json: v4.6.17 반영"
+      ]
+    },
     {
       "version": "4.6.16",
       "date": "2026-06-26",
