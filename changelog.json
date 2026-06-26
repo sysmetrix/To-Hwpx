@@ -1,6 +1,23 @@
 {
-  "current": "4.6.30",
+  "current": "4.6.31",
   "versions": [
+    {
+      "version": "4.6.31",
+      "date": "2026-06-26",
+      "user": [
+        "관리자 모드의 '현재 구현된 기능' 개별 토글이 실제로 켜고 꺼지도록 고쳤습니다. (이전엔 클릭해도 바로 되돌아갔습니다)",
+        "'본문 서식 처리'(원본 우선/혼합/앱 정리)를 상단 제목 블록 바로 아래로 옮기고 이름도 바꿨습니다.",
+        "자동 다운로드 항목을 설명 줄 없이 작은 한 줄 + 작은 스위치로 더 줄였습니다."
+      ],
+      "dev": [
+        "[v4.6.31] js/app.js: isAdminMode()를 순수 read로 변경(부수효과 setAdminEnabled 제거) — ?admin=1에서 기능 플래그가 매번 리셋돼 토글이 안 먹던 버그 해결. initAdminParam()을 init 1회 호출로 분리",
+        "[v4.6.31] index.html: 본문 서식 처리(style-policy 마스터)를 advanced-main 상단 제목 블록 아래로 이동·라벨 변경, 자동 다운로드 마크업 축소(toggle-title)",
+        "[v4.6.31] style.css: .toggle-row/.toggle-title/스위치 크기 축소, 본문 서식 처리 이동에 따른 영향 없음",
+        "[v4.6.31] tests/golden.js: 관리자 개별 기능 토글 on→off 지속(부수효과 회귀) 검증 추가",
+        "[v4.6.31] format_conversion_playbook.md: isAdminMode 순수 read 원칙·style-policy 위치 메모 추가",
+        "[v4.6.31] package.json/package-lock.json/sw.js/index.html/changelog.json: v4.6.31 반영"
+      ]
+    },
     {
       "version": "4.6.30",
       "date": "2026-06-26",
