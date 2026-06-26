@@ -1,6 +1,23 @@
 {
-  "current": "4.6.23",
+  "current": "4.6.24",
   "versions": [
+    {
+      "version": "4.6.24",
+      "date": "2026-06-26",
+      "user": [
+        "직접 입력 미리보기의 HTML 버튼에서 복사와 다운로드를 선택할 수 있게 했습니다.",
+        "관리자 모드에 전체 사용/전체 사용 안함 스위치와 현재 구현된 베타·실험 기능별 토글을 추가했습니다.",
+        "DOCX·HTML·XLSX처럼 원본에 서식이 있는 입력은 문서 세부 설정에서 원본 우선을 기본으로 표시하고 적용하도록 정리했습니다."
+      ],
+      "dev": [
+        "[v4.6.24] index.html/js/app.js/style.css: 직접 입력 HTML 액션을 복사/다운로드 메뉴로 변경하고 HTML 파일 다운로드 지원",
+        "[v4.6.24] js/app.js/style.css: 관리자 전체 토글과 tohwpx_feature_* 기반 개별 실험 기능 토글, 구현된 기능 목록, 추천 실험 상태판 추가",
+        "[v4.6.24] js/app.js/index.html/tests/golden.js: 원본 서식 처리 옵션(source/balanced/app) 추가, 서식 있는 입력의 기본 원본 우선 정책과 회귀 테스트 반영",
+        "[v4.6.24] js/app.js: 단일 파일 선택 즉시 IR 분석 캐시를 생성하고 변환 시 같은 정책이면 재사용",
+        "[v4.6.24] hwpx-public-doc/references/format_conversion_playbook.md/qa/release-qa.md: 관리자 기능 토글, HTML 메뉴, 원본 서식 우선 기준 기록",
+        "[v4.6.24] package.json/package-lock.json/sw.js/index.html/changelog.json: v4.6.24 반영"
+      ]
+    },
     {
       "version": "4.6.23",
       "date": "2026-06-26",

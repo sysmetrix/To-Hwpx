@@ -39,6 +39,7 @@ const state = {
     imageMaxWidth: 100,                // 이미지 최대 폭(%)
     imageAlign: 'left',                // 이미지 정렬
     titleBodyPolicy: 'remove',         // 문서 첫 제목 본문 유지/제거
+    stylePolicy: 'source',             // 원본 서식 처리: source|balanced|app
     pageMargins:  { top: 10, bottom: 10, left: 20, right: 20, header: 10, footer: 10 },  // 단위: mm
     autoDownload: true,                // 변환 완료 시 자동 다운로드
     isConverting: false,               // 변환 중 중복 실행 방지 플래그
@@ -325,6 +326,7 @@ function addFilesToQueue(files) {
             file, ext,
             status: 'pending',   // pending | converting | done | warn | error
             blob: null, url: null, fileName: null, validation: null, error: null,
+            previewIr: null, previewIrSignature: '', previewIrStatus: 'idle', previewIrError: null,
         });
     }
 
@@ -386,6 +388,7 @@ function onQueueChanged({ scroll = false } = {}) {
 
     renderQueueList();
     updateTitlePlaceholder();
+    scheduleSelectedFileIrAnalysis();
 
     if (scroll) {
         document.getElementById('converter')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -715,6 +718,85 @@ function applyDocumentTitlePolicy(ir, file, customTitle, titleSource, titleBodyP
     ir.title = fallback;
 }
 
+function cloneIrForBuild(ir) {
+    if (!ir) return ir;
+    if (typeof structuredClone === 'function') return structuredClone(ir);
+    return JSON.parse(JSON.stringify(ir));
+}
+
+function irPolicySignature(file) {
+    return [
+        file?.name || '',
+        file?.size || 0,
+        file?.lastModified || 0,
+        state.docType,
+        state.titleSource,
+        state.titleBodyPolicy,
+        state.titleSource === 'custom' ? state.customTitle : '',
+    ].join('|');
+}
+
+function applyCurrentTitlePolicy(ir, file) {
+    const customTitle = state.queue.length === 1 && state.titleSource === 'custom' ? state.customTitle : '';
+    applyDocumentTitlePolicy(ir, file, customTitle, state.titleSource, state.titleBodyPolicy);
+    return ir;
+}
+
+let selectedIrAnalysisTimer = null;
+
+function scheduleSelectedFileIrAnalysis() {
+    window.clearTimeout(selectedIrAnalysisTimer);
+    if (!isAdminFeatureEnabled('ir_preanalysis')) return;
+    selectedIrAnalysisTimer = window.setTimeout(analyzeSelectedFileIr, 180);
+}
+
+async function analyzeSelectedFileIr() {
+    if (!isAdminFeatureEnabled('ir_preanalysis') || state.isConverting || state.inputMode !== 'upload' || state.queue.length !== 1) return null;
+    const item = state.queue[0];
+    if (!item?.file) return null;
+    const signature = irPolicySignature(item.file);
+    if (item.previewIr && item.previewIrSignature === signature) {
+        state.ir = cloneIrForBuild(item.previewIr);
+        updateIrPreview(state.ir);
+        return state.ir;
+    }
+    item.previewIrStatus = 'loading';
+    item.previewIrError = null;
+    updateIrPreview(null, `${item.file.name} 분석 중입니다...`);
+    try {
+        const ir = await fileToIR(item.file, state.docType);
+        applyCurrentTitlePolicy(ir, item.file);
+        item.previewIr = ir;
+        item.previewIrSignature = signature;
+        item.previewIrStatus = 'ready';
+        state.ir = cloneIrForBuild(ir);
+        updateIrPreview(state.ir);
+        return state.ir;
+    } catch (err) {
+        item.previewIrStatus = 'error';
+        item.previewIrError = err;
+        updateIrPreview(null, `IR 분석 실패: ${err.message || err}`);
+        return null;
+    }
+}
+
+async function getPreparedIrForFile(file) {
+    const item = state.queue.find(q => q.file === file);
+    const signature = irPolicySignature(file);
+    if (item?.previewIr && item.previewIrSignature === signature) {
+        return cloneIrForBuild(item.previewIr);
+    }
+    const ir = await fileToIR(file, state.docType);
+    applyCurrentTitlePolicy(ir, file);
+    if (item) {
+        item.previewIr = cloneIrForBuild(ir);
+        item.previewIrSignature = signature;
+        item.previewIrStatus = 'ready';
+        item.previewIrError = null;
+    }
+    return ir;
+}
+
 
 // ─────────────────────────────────────────────────────────────────────────
 // [포맷 탭 전환]
@@ -779,7 +861,7 @@ const FORMAT_INFO = {
     },
     html: {
         icon: '🌐', name: 'HTML 문서',
-        quality: '★★☆', available: true,
+        quality: '★★☆', available: true, badge: '베타',
         desc: 'HTML 소스의 문서 구조를 옮기며, 웹 화면에서 복사한 일반 텍스트도 문단으로 보존합니다.',
         tech: 'DOMParser API → DOM 트리 순회 → IR → HWPX',
         features: [
@@ -792,8 +874,8 @@ const FORMAT_INFO = {
     },
     docx: {
         icon: '📘', name: 'Word 문서 (DOCX)',
-        quality: '★★☆', available: true,
-        desc: 'Word 문서를 본문 구조 중심으로 재구성합니다. 내용 보존은 계속 강화 중이지만 원본 편집 화면을 그대로 복제하는 용도는 아닙니다.',
+        quality: '★★☆', available: true, badge: '베타',
+        desc: 'Word 문서를 본문 구조 중심으로 재구성합니다. 서식 있는 원본은 원본 우선을 기본으로 존중하지만, 원본 편집 화면을 그대로 복제하는 용도는 아닙니다.',
         tech: 'JSZip으로 압축 해제 → word/document.xml 본문·표 추출 → IR → HWPX',
         features: [
             '문서 순서 기준으로 제목 후보, 문단, 기본 표를 추출',
@@ -840,7 +922,7 @@ const FORMAT_INFO = {
     },
     csv: {
         icon: '📊', name: 'CSV / XLSX 스프레드시트',
-        quality: '★★☆', available: true,
+        quality: '★★☆', available: true, badge: '베타',
         desc: '표 데이터의 행과 열을 HWPX 표로 옮기는 데 초점을 둔 입력 포맷입니다.',
         tech: 'CSV: RFC 4180 파서 / XLSX: SheetJS 라이브러리 → 표 IR → HWPX',
         features: [
@@ -1389,7 +1471,10 @@ function initOptions() {
     // 상단 제목 블록 선택 (라디오 카드: plain/titleblock/cover-unit/cover-annual)
     document.querySelectorAll('input[name="doc-type"]').forEach(radio => {
         radio.addEventListener('change', () => {
-            if (radio.checked) state.docType = radio.value;
+            if (radio.checked) {
+                state.docType = radio.value;
+                scheduleSelectedFileIrAnalysis();
+            }
         });
     });
 
@@ -1398,6 +1483,7 @@ function initOptions() {
     if (titleEl) {
         titleEl.addEventListener('input', () => {
             state.customTitle = titleEl.value.trim();
+            scheduleSelectedFileIrAnalysis();
         });
     }
 
@@ -1411,6 +1497,7 @@ function initOptions() {
                     ? btn.dataset.titleSource
                     : 'heading';
                 applyTitleSourceUi(state.titleSource);
+                scheduleSelectedFileIrAnalysis();
             });
         });
     }
@@ -1522,6 +1609,7 @@ function initOptions() {
     }
 
     const detailSelects = [
+        { id: 'style-policy', key: 'stylePolicy', store: 'tohwpx_stylePolicy', allowed: ['source', 'balanced', 'app'] },
         { id: 'paragraph-spacing', key: 'paragraphSpacing', store: 'tohwpx_paragraphSpacing', allowed: ['compact', 'normal', 'relaxed'] },
         { id: 'heading-style', key: 'headingStyle', store: 'tohwpx_headingStyle', allowed: ['compact', 'standard', 'prominent'] },
         { id: 'table-style', key: 'tableStyle', store: 'tohwpx_tableStyle', allowed: ['standard', 'plain', 'report'] },
@@ -1543,6 +1631,7 @@ function initOptions() {
             state[cfg.key] = cfg.parse ? cfg.parse(el.value) : el.value;
             localStorage.setItem(cfg.store, el.value);
             updateAdvancedSettingsSummary();
+            if (cfg.key === 'titleBodyPolicy') scheduleSelectedFileIrAnalysis();
         });
     });
 
@@ -1637,7 +1726,10 @@ function updateAdvancedSettingsSummary() {
     const summary = document.getElementById('advanced-settings-summary');
     if (!summary) return;
     const orientationLabel = state.orientation === 'landscape' ? '가로' : '세로';
-    summary.textContent = `현재: ${state.docFont} · ${state.fontSize}pt · 줄 ${state.lineSpacing}% · ${state.paperSize} ${orientationLabel}`;
+    const styleLabel = state.stylePolicy === 'app' ? '앱 설정 정리'
+        : state.stylePolicy === 'balanced' ? '원본+앱 혼합'
+        : '원본 우선';
+    summary.textContent = `현재: ${state.docFont} · ${state.fontSize}pt · 줄 ${state.lineSpacing}% · ${state.paperSize} ${orientationLabel} · ${styleLabel}`;
 }
 
 
@@ -1697,19 +1789,84 @@ const ADMIN_STATE_KEY = 'tohwpx_admin';
 const ADMIN_ACCESS_KEY = 'tohwpx_admin_access';
 const LEGACY_LAB_STATE_KEY = 'tohwpx_lab';
 const LEGACY_LAB_ACCESS_KEY = 'tohwpx_lab_access';
+const ADMIN_FEATURES = [
+    {
+        id: 'direct_input',
+        label: '직접 입력',
+        status: '베타',
+        desc: 'MD·HTML·TXT·CSV·JSON을 붙여넣어 기존 변환 파이프라인으로 HWPX를 만듭니다.',
+        defaultOn: true,
+    },
+    {
+        id: 'paste_preview',
+        label: '직접 입력 미리보기',
+        status: '실험',
+        desc: '붙여넣은 내용을 변환 전 IR 기반 HTML 미리보기로 확인합니다.',
+        defaultOn: true,
+    },
+    {
+        id: 'html_actions',
+        label: 'HTML 복사/다운로드',
+        status: '실험',
+        desc: '직접 입력 미리보기 HTML을 복사하거나 .html 파일로 내려받습니다.',
+        defaultOn: true,
+    },
+    {
+        id: 'ir_preanalysis',
+        label: '파일 선택 즉시 IR 분석',
+        status: '실험',
+        desc: '변환 버튼을 누르기 전에 단일 파일의 IR 구조를 미리 계산해 보여줍니다.',
+        defaultOn: true,
+    },
+    {
+        id: 'format_quality',
+        label: '포맷 품질 평가',
+        status: '관리자',
+        desc: '포맷별 보존/손실 안내와 품질 탭을 관리자 검토용으로 확인합니다.',
+        defaultOn: true,
+    },
+];
 
 function parseModeFlag(value) {
     const v = (value || '').toLowerCase();
     return v !== '0' && v !== 'off' && v !== 'false';
 }
 
+function adminFeatureKey(id) {
+    return `tohwpx_feature_${id}`;
+}
+
+function isAdminFeatureEnabled(id) {
+    if (!isAdminMode()) return false;
+    const feature = ADMIN_FEATURES.find(item => item.id === id);
+    if (!feature) return false;
+    try {
+        const stored = localStorage.getItem(adminFeatureKey(id));
+        return stored === null ? feature.defaultOn !== false : stored === '1';
+    } catch (e) {
+        return feature.defaultOn !== false;
+    }
+}
+
+function setAdminFeatureEnabled(id, enabled) {
+    try {
+        localStorage.setItem(adminFeatureKey(id), enabled ? '1' : '0');
+    } catch (e) {
+        // 저장이 막힌 환경에서는 현재 세션 UI만 반영된다.
+    }
+}
+
 function setAdminEnabled(enabled, grantAccess = true) {
     if (enabled) {
         localStorage.setItem(ADMIN_STATE_KEY, '1');
         if (grantAccess) localStorage.setItem(ADMIN_ACCESS_KEY, '1');
+        ADMIN_FEATURES.forEach(feature => {
+            localStorage.setItem(adminFeatureKey(feature.id), feature.defaultOn === false ? '0' : '1');
+        });
     } else {
         localStorage.removeItem(ADMIN_STATE_KEY);
         localStorage.removeItem(ADMIN_ACCESS_KEY);
+        ADMIN_FEATURES.forEach(feature => localStorage.setItem(adminFeatureKey(feature.id), '0'));
     }
     localStorage.removeItem(LEGACY_LAB_STATE_KEY);
     localStorage.removeItem(LEGACY_LAB_ACCESS_KEY);
@@ -1764,9 +1921,9 @@ function renderLabControl() {
             <div class="changelog-lab-copy">
                 <div class="changelog-lab-heading">
                     <strong>관리자 모드</strong>
-                    <span class="changelog-lab-status">${enabled ? '사용 중' : '꺼짐'}</span>
+                    <span class="changelog-lab-status">${enabled ? '전체 사용' : '전체 사용 안함'}</span>
                 </div>
-                <p>업데이트 내역, 개발자 변경사항, 실험 기능을 확인합니다.</p>
+                <p>관리자 전용 기능 전체를 켜거나 끕니다. 아래 개별 기능은 관리자 모드가 켜져 있을 때만 동작합니다.</p>
             </div>
             <button type="button" class="changelog-lab-toggle"
                     data-lab-toggle aria-pressed="${enabled}"
@@ -1779,25 +1936,58 @@ function renderLabControl() {
     `;
 }
 
+function renderImplementedFeaturePanel() {
+    if (!canManageAdmin()) return '';
+    const adminOn = isAdminMode();
+    return `
+        <section class="changelog-implemented-panel" aria-label="현재 구현된 기능">
+            <div class="changelog-experiment-head">
+                <strong>현재 구현된 기능</strong>
+                <span>관리자 모드 전용 베타/실험 기능</span>
+            </div>
+            <ul class="admin-feature-list">
+                ${ADMIN_FEATURES.map(feature => {
+                    const enabled = adminOn && isAdminFeatureEnabled(feature.id);
+                    return `
+                        <li class="admin-feature-item">
+                            <div>
+                                <strong>${escHtml(feature.label)} <em>${escHtml(feature.status)}</em></strong>
+                                <span>${escHtml(feature.desc)}</span>
+                            </div>
+                            <button type="button" class="admin-feature-toggle"
+                                    data-admin-feature="${escHtml(feature.id)}"
+                                    aria-pressed="${enabled}"
+                                    ${adminOn ? '' : 'disabled'}
+                                    aria-label="${escHtml(feature.label)} ${enabled ? '끄기' : '켜기'}">
+                                ${enabled ? '사용' : '안함'}
+                            </button>
+                        </li>
+                    `;
+                }).join('')}
+            </ul>
+        </section>
+    `;
+}
+
 function renderExperimentPanel() {
     return `
         <section class="changelog-experiment-panel" aria-label="추천 실험 기능">
             <div class="changelog-experiment-head">
                 <strong>추천 실험 기능</strong>
-                <span>관리자 모드에서 검토할 후보</span>
+                <span>아직 기본 기능으로 공개하지 않은 후보</span>
             </div>
             <ul>
-                <li><b>변환 전 보존 예상</b><span>직접 입력 미리보기와 포맷별 품질 평가를 연결해 제목·표·링크·이미지 보존 가능성을 먼저 보여줍니다.</span></li>
-                <li><b>부분 롤백 기준</b><span>파서, HWPX 생성, UI 안내를 분리해 문제가 난 포맷만 되돌릴 수 있는 체크리스트를 유지합니다.</span></li>
-                <li><b>상세 구조 진단</b><span>HWPX 패키지, XML, IDRef, 링크 필드, 그림 참조 문제를 관리자용으로 더 자세히 확인합니다.</span></li>
-                <li><b>결과 카드 문구 실험</b><span>성공·경고·실패 안내 문구를 비교해 사용자가 다음 행동을 더 빨리 고르게 합니다.</span></li>
+                <li><b>원본 서식 우선 모드 고도화 <em>설계 중</em></b><span>DOCX·HTML·XLSX의 원본 서식 IR 계약을 넓혀 앱 설정과 충돌하지 않게 분리합니다.</span></li>
+                <li><b>상세 구조 진단 <em>후보</em></b><span>HWPX 패키지, XML, IDRef, 링크 필드, 그림 참조 문제를 관리자용으로 더 자세히 확인합니다.</span></li>
+                <li><b>결과 카드 문구 실험 <em>후보</em></b><span>성공·경고·실패 안내 문구를 비교해 사용자가 다음 행동을 더 빨리 고르게 합니다.</span></li>
+                <li><b>정식 공개 게이트 <em>후보</em></b><span>베타 기능이 사용자 화면에 노출되기 전 한컴 시각 확인과 golden 기준을 함께 통과시키는 체크를 추가합니다.</span></li>
             </ul>
         </section>
     `;
 }
 
 function renderAdminPanel() {
-    return `${renderLabControl()}${renderExperimentPanel()}`;
+    return `${renderLabControl()}${renderImplementedFeaturePanel()}${renderExperimentPanel()}`;
 }
 
 function bindLabControl() {
@@ -1816,10 +2006,19 @@ function bindLabControl() {
             showToast('관리자 모드 설정을 저장하지 못했습니다.', 'error');
         }
     });
+    document.querySelectorAll('[data-admin-feature]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const id = btn.dataset.adminFeature;
+            const enabled = btn.getAttribute('aria-pressed') === 'true';
+            setAdminFeatureEnabled(id, !enabled);
+            renderChangelogContent('admin');
+            applyAdminFeatureVisibility();
+        });
+    });
 }
 
 function initInputMode() {
-    if (!isAdminMode()) {
+    if (!isAdminMode() || !isAdminFeatureEnabled('direct_input')) {
         document.querySelector('.input-mode-tabs')?.setAttribute('hidden', '');
         document.getElementById('paste-mode')?.setAttribute('hidden', '');
         const upload = document.getElementById('upload-mode');
@@ -1827,6 +2026,7 @@ function initInputMode() {
         state.inputMode = 'upload';
         return;
     }
+    document.querySelector('.input-mode-tabs')?.removeAttribute('hidden');
 
     document.getElementById('mode-upload')?.addEventListener('click', () => setInputMode('upload'));
     document.getElementById('mode-paste')?.addEventListener('click', () => setInputMode('paste'));
@@ -1864,8 +2064,27 @@ function initInputMode() {
     });
     document.getElementById('copy-paste-source')?.addEventListener('click', copyPasteSource);
     document.getElementById('copy-paste-preview')?.addEventListener('click', copyPastePreview);
+    initPasteHtmlMenu();
     document.getElementById('copy-paste-html')?.addEventListener('click', copyPasteHtml);
+    document.getElementById('download-paste-html')?.addEventListener('click', downloadPasteHtml);
+    applyAdminFeatureVisibility();
     renderPastePreview();
+}
+
+function applyAdminFeatureVisibility() {
+    const directInputOn = isAdminMode() && isAdminFeatureEnabled('direct_input');
+    const tabs = document.querySelector('.input-mode-tabs');
+    const pastePanel = document.getElementById('paste-mode');
+    if (tabs) tabs.hidden = !directInputOn;
+    if (!directInputOn && pastePanel) pastePanel.hidden = true;
+
+    const previewOn = directInputOn && isAdminFeatureEnabled('paste_preview');
+    const previewPanel = document.querySelector('.paste-preview-panel');
+    if (previewPanel) previewPanel.hidden = !previewOn;
+
+    const htmlOn = previewOn && isAdminFeatureEnabled('html_actions');
+    const htmlMenu = document.querySelector('.paste-html-menu');
+    if (htmlMenu) htmlMenu.hidden = !htmlOn;
 }
 
 function updatePasteFormatHelp(ext) {
@@ -1958,6 +2177,7 @@ function summarizeIr(ir) {
 }
 
 function renderPastePreview() {
+    if (!isAdminFeatureEnabled('paste_preview')) return;
     const output = document.getElementById('paste-preview-output');
     const status = document.getElementById('paste-preview-status');
     const ta = document.getElementById('paste-input');
@@ -2024,10 +2244,68 @@ function copyPastePreview() {
     copyTextToClipboard(text, '미리보기 내용을 복사했습니다');
 }
 
-function copyPasteHtml() {
+function getPastePreviewHtml() {
     const doc = document.querySelector('#paste-preview-output .paste-preview-doc');
-    const html = doc?.innerHTML || '';
+    return doc?.innerHTML || '';
+}
+
+function closePasteHtmlMenu() {
+    const menu = document.getElementById('paste-html-menu');
+    const btn = document.getElementById('paste-html-action');
+    if (menu) menu.hidden = true;
+    if (btn) btn.setAttribute('aria-expanded', 'false');
+}
+
+function initPasteHtmlMenu() {
+    const btn = document.getElementById('paste-html-action');
+    const menu = document.getElementById('paste-html-menu');
+    if (!btn || !menu) return;
+    btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const open = menu.hidden;
+        menu.hidden = !open;
+        btn.setAttribute('aria-expanded', String(open));
+    });
+    document.addEventListener('click', (e) => {
+        if (!menu.hidden && !menu.contains(e.target) && e.target !== btn) closePasteHtmlMenu();
+    });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closePasteHtmlMenu();
+    });
+}
+
+function copyPasteHtml() {
+    const html = getPastePreviewHtml();
+    closePasteHtmlMenu();
     copyTextToClipboard(html, '미리보기 HTML을 복사했습니다');
+}
+
+function downloadPasteHtml() {
+    const html = getPastePreviewHtml();
+    closePasteHtmlMenu();
+    if (!html.trim()) {
+        showToast('<strong>다운로드할 HTML이 없습니다</strong>', { timeout: 2500 });
+        return;
+    }
+    const title = sanitizeBaseName(document.getElementById('paste-name')?.value)
+        || sanitizeBaseName(document.getElementById('doc-title')?.value)
+        || 'preview';
+    const doc = `<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <title>${escHtml(title)}</title>
+</head>
+<body>
+${html}
+</body>
+</html>
+`;
+    const blob = new Blob([doc], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    triggerDownload(url, `${title}-preview.html`);
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    showToast('<strong>HTML 다운로드를 시작했습니다</strong>', { timeout: 2500 });
 }
 
 /** 직접 입력 텍스트를 가짜 File로 감싸 단일 변환을 실행 */
@@ -2053,6 +2331,7 @@ function runPasteConversion() {
         id: `q_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
         file, ext,
         status: 'pending', blob: null, url: null, fileName: null, validation: null, error: null,
+        previewIr: null, previewIrSignature: '', previewIrStatus: 'idle', previewIrError: null,
     }];
     runConversionPipeline();
 }
@@ -2231,14 +2510,10 @@ async function convertOneFile(file, statusPrefix = '', outputFontName = state.do
 
     let ir;
     try {
-        ir = await fileToIR(file, state.docType);
+        ir = await getPreparedIrForFile(file);
     } catch (e) {
         throw new Error('파일 파싱 실패: ' + e.message);
     }
-
-    // 제목: '직접 입력' 선택 + 단일 변환일 때만 customTitle 적용
-    const customTitle = state.queue.length === 1 && state.titleSource === 'custom' ? state.customTitle : '';
-    applyDocumentTitlePolicy(ir, file, customTitle, state.titleSource, state.titleBodyPolicy);
     state.ir = ir;
 
     // [보안] IR 미리보기는 textContent로만 표시 (innerHTML 사용 금지)
@@ -2254,17 +2529,12 @@ async function convertOneFile(file, statusPrefix = '', outputFontName = state.do
 
     let hwpxBlob;
     try {
+        const buildOptions = effectiveBuildOptionsForFile(file);
         hwpxBlob = await buildHwpx(ir, outputFontName, state.fontSize, state.pageMargins, state.paperSize, (pct) => {
             setProgress(58 + (pct * 0.14)); // 58% ~ 72%
             st(`HWPX 파일을 압축하는 중... ${Math.round(pct)}%`);
         }, state.orientation, state.lineSpacing, {
-            showHorizontalRules: state.showHorizontalRules,
-            paragraphSpacing: state.paragraphSpacing,
-            headingStyle: state.headingStyle,
-            tableStyle: state.tableStyle,
-            linkStyle: state.linkStyle,
-            imageMaxWidth: state.imageMaxWidth,
-            imageAlign: state.imageAlign,
+            ...buildOptions,
         });
     } catch (e) {
         throw new Error('HWPX 생성 실패: ' + e.message);
@@ -2317,11 +2587,11 @@ async function convertOneFile(file, statusPrefix = '', outputFontName = state.do
 //   변환된 IR JSON을 코드 블록에 표시
 //   [보안] 반드시 textContent 사용 (innerHTML 절대 금지)
 // ─────────────────────────────────────────────────────────────────────────
-function updateIrPreview(ir) {
+function updateIrPreview(ir, message = '') {
     const el = document.getElementById('ir-content');
     if (!el) return;
     // textContent는 HTML 파싱 없이 텍스트로만 처리 → XSS 불가
-    el.textContent = JSON.stringify(ir, null, 2);
+    el.textContent = ir ? JSON.stringify(ir, null, 2) : (message || '파일을 업로드하면 중간 표현(IR)이 여기에 표시됩니다.');
 }
 
 
@@ -2680,7 +2950,7 @@ function getConversionSummaryForExt(ext) {
             lossy: '상대경로·접근 차단 이미지의 실제 그림, 표 안 링크 기능, 복잡한 HTML, 사용자 정의 스타일, 페이지 배치',
         },
         html: {
-            preserved: 'h1-h6, p, 중첩 ul/ol, 병합 표, strong/em/u/s, 일부 글자색과 태그 없는 일반 텍스트',
+            preserved: 'h1-h6, p, 중첩 ul/ol, 병합 표, strong/em/u/s, 일부 글자색과 태그 없는 일반 텍스트, 원본 우선 서식 정책',
             lossy: '웹 화면 배치, CSS 레이아웃, 이미지, SVG, 스크립트, 외부 리소스',
         },
         htm: {
@@ -2688,7 +2958,7 @@ function getConversionSummaryForExt(ext) {
             lossy: 'CSS 레이아웃, 이미지, SVG, 스크립트, 외부 리소스',
         },
         docx: {
-            preserved: '본문, 제목 후보, 기본 표, 일부 인라인 서식과 이미지',
+            preserved: '본문, 제목 후보, 기본 표, 일부 인라인 서식·색상·이미지, 원본 우선 서식 정책',
             lossy: 'Word 레이아웃, 스타일 테마, 주석, 변경 추적, 복잡한 개체',
         },
         txt: {
@@ -2704,8 +2974,8 @@ function getConversionSummaryForExt(ext) {
             lossy: '셀 병합, 수식 자체, 색상, 차트, 이미지, 여러 시트',
         },
         xlsx: {
-            preserved: '첫 번째 시트의 행/열, 빈 셀, 첫 행 머리글',
-            lossy: '여러 시트, 수식 자체, 차트, 이미지, 셀 병합과 세부 서식',
+            preserved: '첫 번째 시트의 행/열, 빈 셀, 첫 행 머리글, 원본 우선 서식 정책',
+            lossy: '여러 시트, 수식 자체, 차트, 이미지, 일부 셀 병합과 세부 서식',
         },
         xls: {
             preserved: '첫 번째 시트의 행/열, 빈 셀, 첫 행 머리글',
@@ -2737,6 +3007,46 @@ function getConversionSummaryForExt(ext) {
 function getConversionSummary() {
     const ext = state.file ? getFileExtension(state.file.name) : '';
     return getConversionSummaryForExt(ext);
+}
+
+function hasSourceFormatting(ext) {
+    return ['docx', 'html', 'htm', 'xlsx', 'xls', 'hwp', 'hwpx'].includes(String(ext || '').toLowerCase());
+}
+
+function effectiveBuildOptionsForFile(file) {
+    const ext = getFileExtension(file?.name || '');
+    const policy = state.stylePolicy || 'source';
+    if (policy === 'app' || !hasSourceFormatting(ext)) {
+        return {
+            showHorizontalRules: state.showHorizontalRules,
+            paragraphSpacing: state.paragraphSpacing,
+            headingStyle: state.headingStyle,
+            tableStyle: state.tableStyle,
+            linkStyle: state.linkStyle,
+            imageMaxWidth: state.imageMaxWidth,
+            imageAlign: state.imageAlign,
+        };
+    }
+    if (policy === 'balanced') {
+        return {
+            showHorizontalRules: state.showHorizontalRules,
+            paragraphSpacing: state.paragraphSpacing,
+            headingStyle: 'standard',
+            tableStyle: 'standard',
+            linkStyle: state.linkStyle,
+            imageMaxWidth: state.imageMaxWidth,
+            imageAlign: state.imageAlign,
+        };
+    }
+    return {
+        showHorizontalRules: state.showHorizontalRules,
+        paragraphSpacing: 'normal',
+        headingStyle: 'standard',
+        tableStyle: 'standard',
+        linkStyle: 'blue',
+        imageMaxWidth: 100,
+        imageAlign: 'left',
+    };
 }
 
 /** 결과 영역 숨기기 및 내용 초기화 */
@@ -3497,6 +3807,7 @@ function resetConverterState() {
     state.imageMaxWidth = 100;
     state.imageAlign = 'left';
     state.titleBodyPolicy = 'remove';
+    state.stylePolicy = 'source';
     state.pageMargins = { top: 10, bottom: 10, left: 20, right: 20, header: 10, footer: 10 };
     state.autoDownload = true;
 
@@ -3504,7 +3815,8 @@ function resetConverterState() {
         'tohwpx_font', 'tohwpx_fontSize', 'tohwpx_paperSize', 'tohwpx_autoDownload',
         'tohwpx_orientation', 'tohwpx_lineSpacing', 'tohwpx_showHorizontalRules',
         'tohwpx_paragraphSpacing', 'tohwpx_headingStyle', 'tohwpx_tableStyle',
-        'tohwpx_linkStyle', 'tohwpx_imageMaxWidth', 'tohwpx_imageAlign', 'tohwpx_titleBodyPolicy'
+        'tohwpx_linkStyle', 'tohwpx_imageMaxWidth', 'tohwpx_imageAlign', 'tohwpx_titleBodyPolicy',
+        'tohwpx_stylePolicy'
     ]) {
         localStorage.removeItem(key);
     }
@@ -3514,6 +3826,7 @@ function resetConverterState() {
     const paperSize = document.getElementById('paper-size');
     const lineSpacing = document.getElementById('line-spacing');
     const paragraphSpacing = document.getElementById('paragraph-spacing');
+    const stylePolicy = document.getElementById('style-policy');
     const headingStyle = document.getElementById('heading-style');
     const tableStyle = document.getElementById('table-style');
     const linkStyle = document.getElementById('link-style');
@@ -3529,6 +3842,7 @@ function resetConverterState() {
     if (paperSize) paperSize.value = 'A4';
     if (lineSpacing) lineSpacing.value = '160';
     if (paragraphSpacing) paragraphSpacing.value = 'normal';
+    if (stylePolicy) stylePolicy.value = 'source';
     if (headingStyle) headingStyle.value = 'standard';
     if (tableStyle) tableStyle.value = 'standard';
     if (linkStyle) linkStyle.value = 'blue';

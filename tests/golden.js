@@ -587,8 +587,11 @@ async function validateDirectInput(page) {
   assert(changelogTabGap === 0, 'ux: 업데이트 내역 탭 라인이 모달 제목 영역과 떨어져 있음');
   assert(await page.locator('[data-lab-toggle]').getAttribute('aria-pressed') === 'true',
     'admin: 관리자 모드 토글 상태가 켜짐으로 표시되지 않음');
-  assert((await page.locator('.changelog-experiment-panel').textContent()).includes('변환 전 보존 예상'),
-    'admin: 추천 실험 기능 안내가 누락됨');
+  assert((await page.locator('.changelog-implemented-panel').textContent()).includes('현재 구현된 기능')
+    && await page.locator('[data-admin-feature="direct_input"]').count() === 1,
+    'admin: 현재 구현된 기능 목록 또는 직접 입력 토글이 누락됨');
+  assert((await page.locator('.changelog-experiment-panel').textContent()).includes('원본 서식 우선 모드 고도화'),
+    'admin: 추천 실험 기능 안내가 상태판 기준으로 표시되지 않음');
   await page.locator('.changelog-tab[data-tab="quality"]').click();
   const qualityText = await page.locator('#changelog-content').textContent();
   assert(qualityText.includes('포맷별 변환 품질 평가')
@@ -606,8 +609,11 @@ async function validateDirectInput(page) {
   assert(previewText.includes('미리보기 제목') && previewText.includes('강조') && previewText.includes('1'),
     'direct preview: 직접 입력 미리보기가 해석 결과를 표시하지 않음');
   await page.locator('#copy-paste-preview').click();
-  assert(await page.locator('#copy-paste-html').count() === 1,
-    'direct preview: HTML 복사 버튼이 없음');
+  assert(await page.locator('#paste-html-action').count() === 1,
+    'direct preview: HTML 액션 버튼이 없음');
+  await page.locator('#paste-html-action').click();
+  assert(await page.locator('#download-paste-html').isVisible(),
+    'direct preview: HTML 다운로드 메뉴가 없음');
   await page.locator('#copy-paste-html').click();
 
   const directSettingsPackage = await convertThroughUi(page, {
@@ -1071,6 +1077,7 @@ async function validateDetailSettingsUx(page) {
     marginInputs: ['top', 'header', 'left', 'right', 'bottom', 'footer']
       .filter(side => document.querySelector(`#margin-${side}`)).length,
     detailOptionLabels: {
+      stylePolicy: [...document.querySelector('#style-policy').options].map(option => option.textContent.trim()),
       paragraph: [...document.querySelector('#paragraph-spacing').options].map(option => option.textContent.trim()),
       heading: [...document.querySelector('#heading-style').options].map(option => option.textContent.trim()),
       table: [...document.querySelector('#table-style').options].map(option => option.textContent.trim()),
@@ -1088,9 +1095,10 @@ async function validateDetailSettingsUx(page) {
   assert(defaults.detailOptionLabels.heading.includes('큰 제목·굵게')
     && defaults.detailOptionLabels.table.includes('머리행 음영')
     && defaults.detailOptionLabels.link.includes('텍스트+주소')
-    && defaults.detailOptionLabels.titleBody.includes('본문 첫 제목 제거'),
+    && defaults.detailOptionLabels.titleBody.includes('본문 첫 제목 제거')
+    && defaults.detailOptionLabels.stylePolicy.includes('원본 우선'),
     'detail settings: 세부 옵션명이 변환 결과 중심 문구로 표시되지 않음');
-  for (const id of ['paragraph-spacing', 'heading-style', 'table-style', 'link-style', 'image-max-width', 'image-align', 'title-body-policy']) {
+  for (const id of ['style-policy', 'paragraph-spacing', 'heading-style', 'table-style', 'link-style', 'image-max-width', 'image-align', 'title-body-policy']) {
     assert(await page.locator(`#${id}`).count() === 1, `detail settings: #${id} 컨트롤 누락`);
   }
 
