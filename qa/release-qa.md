@@ -456,3 +456,23 @@ Scope: static browser-only conversion flow from file selection to HWPX download.
 - [ ] `gh auth login` 저장 인증은 현재 git credential 토큰 scope 부족으로 미완료. 필요 시 `read:org` 포함 토큰 또는 브라우저 로그인으로 인증
 - [ ] 직접 입력 미리보기에서 `HTML 복사`가 표/문단 HTML 조각을 클립보드에 복사하는지 확인
 - [ ] 캐시를 비우고 `📋 v4.6.23` 확인
+
+## 31. v4.6.24 관리자 기능 토글과 원본 서식 우선 옵션
+
+자동 승인 기준:
+
+- [x] 직접 입력 미리보기의 `HTML` 버튼에서 `복사`와 `다운로드`를 선택할 수 있음
+- [x] 관리자 모드 탭에 전체 사용/전체 사용 안함 스위치와 현재 구현된 기능 목록, 개별 기능 토글이 표시됨
+- [x] 추천 실험 기능이 구현 완료 기능과 분리된 상태판 문구로 표시됨
+- [x] 문서 세부 설정에 `원본 서식 처리` 옵션이 추가되고 기본값이 `원본 우선`임
+- [x] 단일 파일 선택 직후 관리자 IR 미리 분석 캐시가 생성되고 변환 시 재사용됨
+- [x] `npm.cmd run test:golden` PASS
+- [x] `node tests/orientation-e2e.js` PASS
+- [x] `node qa/gate.js qa/fixtures/md_hwpx_test.md` ①~⑧ PASS
+
+수동 확인 기준:
+
+- [ ] `?admin=1`에서 현재 구현된 기능별 토글을 끄고 켰을 때 직접 입력/미리보기/HTML 메뉴 노출이 기대대로 바뀌는지 확인
+- [ ] DOCX·HTML·XLSX 대표 파일을 `원본 우선`과 `앱 설정으로 정리`로 각각 변환해 한컴에서 표/색상/링크/문단 간격 차이를 시각 확인
+- [ ] 파일 선택 후 변환 버튼을 누르기 전 IR 미리보기가 채워지는지 확인
+- [ ] 캐시를 비우고 `📋 v4.6.24` 확인

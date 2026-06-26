@@ -3724,7 +3724,8 @@ a:hover { text-decoration: underline; }
     outline: 2px solid var(--c-primary);
     outline-offset: 2px;
 }
-.changelog-experiment-panel {
+.changelog-experiment-panel,
+.changelog-implemented-panel {
     margin: 0 16px 16px;
     padding: 14px;
     border: 1px solid var(--c-border);
@@ -3769,6 +3770,69 @@ a:hover { text-decoration: underline; }
     color: var(--c-text-sub);
     font-size: 0.76rem;
     line-height: 1.5;
+}
+.changelog-experiment-panel em,
+.admin-feature-item em {
+    display: inline-block;
+    margin-left: 4px;
+    padding: 1px 6px;
+    border-radius: 999px;
+    background: var(--c-warning-light);
+    color: var(--c-warning);
+    font-size: 0.64rem;
+    font-style: normal;
+    font-weight: 800;
+    vertical-align: 1px;
+}
+.admin-feature-list {
+    display: grid;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+.admin-feature-item {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 10px;
+    border-radius: var(--radius-sm);
+    background: var(--c-surface-alt);
+}
+.admin-feature-item strong {
+    display: block;
+    color: var(--c-text);
+    font-size: 0.8rem;
+}
+.admin-feature-item span {
+    display: block;
+    margin-top: 2px;
+    color: var(--c-text-sub);
+    font-size: 0.74rem;
+    line-height: 1.45;
+}
+.admin-feature-toggle {
+    min-width: 56px;
+    min-height: 30px;
+    padding: 0 10px;
+    border: 1px solid var(--c-border);
+    border-radius: var(--radius-sm);
+    background: var(--c-surface);
+    color: var(--c-text-sub);
+    font-family: var(--font-main);
+    font-size: 0.72rem;
+    font-weight: 800;
+    cursor: pointer;
+}
+.admin-feature-toggle[aria-pressed="true"] {
+    border-color: var(--c-primary);
+    background: var(--c-primary-light);
+    color: var(--c-primary);
+}
+.admin-feature-toggle:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
 }
 .format-quality-intro,
 .quality-plan,
@@ -4610,6 +4674,41 @@ a:hover { text-decoration: underline; }
     display: flex;
     gap: 6px;
     flex-shrink: 0;
+}
+.paste-html-menu {
+    position: relative;
+}
+.paste-html-menu-popover {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 6px);
+    z-index: 20;
+    min-width: 110px;
+    padding: 5px;
+    border: 1px solid var(--c-border);
+    border-radius: var(--radius-sm);
+    background: var(--c-surface);
+    box-shadow: var(--shadow-md);
+}
+.paste-html-menu-popover button {
+    width: 100%;
+    min-height: 30px;
+    padding: 0 9px;
+    border: 0;
+    border-radius: var(--radius-xs);
+    background: transparent;
+    color: var(--c-text-sub);
+    font-family: var(--font-main);
+    font-size: 0.74rem;
+    font-weight: 800;
+    text-align: left;
+    cursor: pointer;
+}
+.paste-html-menu-popover button:hover,
+.paste-html-menu-popover button:focus-visible {
+    background: var(--c-primary-light);
+    color: var(--c-primary);
+    outline: none;
 }
 .paste-copy-btn {
     min-height: 30px;
