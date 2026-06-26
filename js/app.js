@@ -1747,7 +1747,7 @@ function initKeyboardShortcuts() {
     document.addEventListener('keydown', (e) => {
         const ae = document.activeElement;
         const typing = ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.isContentEditable);
-        if (e.key === '?' && !typing) {
+        if ((e.key === '?' || (e.shiftKey && e.key === '/')) && !typing) {
             e.preventDefault();
             showShortcuts();
             return;
@@ -2774,7 +2774,6 @@ function initModals() {
     document.getElementById('close-font-guide')?.addEventListener('click', closeFontGuide);
     document.getElementById('close-onboarding-guide')?.addEventListener('click', closeOnboardingGuide);
     document.getElementById('close-advanced-guide')?.addEventListener('click', closeAdvancedGuide);
-    document.getElementById('close-shortcuts')?.addEventListener('click', closeShortcuts);
     document.getElementById('recheck-fonts-btn')?.addEventListener('click', () => renderFontGuide());
     document.getElementById('onboarding-done')?.addEventListener('click', closeOnboardingGuide);
     document.getElementById('onboarding-open-advanced')?.addEventListener('click', () => {
@@ -2787,13 +2786,13 @@ function initModals() {
     // 업데이트 내역 열기 버튼 (유틸리티 바)
     document.getElementById('open-changelog')?.addEventListener('click', showChangelog);
     document.getElementById('open-onboarding-guide')?.addEventListener('click', showOnboardingGuide);
+    document.getElementById('open-help')?.addEventListener('click', showOnboardingGuide);
     document.getElementById('open-pc-guide')?.addEventListener('click', showPcGuide);
     document.getElementById('open-mobile-guide')?.addEventListener('click', showMobileGuide);
     document.getElementById('open-install-guide')?.addEventListener('click', showInstallGuide);
     document.getElementById('open-privacy-guide')?.addEventListener('click', showPrivacyGuide);
     document.getElementById('open-font-guide')?.addEventListener('click', showFontGuide);
     document.getElementById('open-advanced-guide')?.addEventListener('click', showAdvancedGuide);
-    document.getElementById('open-shortcuts')?.addEventListener('click', showShortcuts);
     document.getElementById('open-rhwp-precise')?.addEventListener('click', loadRhwpPrecise);
 
     // 오버레이 바깥 클릭으로 닫기
@@ -2823,9 +2822,6 @@ function initModals() {
     });
     document.getElementById('advanced-guide-modal')?.addEventListener('click', (e) => {
         if (e.target === e.currentTarget) closeAdvancedGuide();
-    });
-    document.getElementById('shortcuts-modal')?.addEventListener('click', (e) => {
-        if (e.target === e.currentTarget) closeShortcuts();
     });
 
     // ESC: 모달이 열려 있으면 닫고, 아니면 초기화 버튼과 동일하게 동작
@@ -2874,6 +2870,23 @@ function initModals() {
             renderChangelogContent(tab.dataset.tab);
         });
     });
+
+    document.querySelectorAll('.help-tab').forEach((tab, index) => {
+        tab.addEventListener('click', () => activateHelpTab(tab.dataset.helpTab));
+        tab.addEventListener('keydown', (e) => {
+            if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) return;
+            e.preventDefault();
+            const tabs = Array.from(document.querySelectorAll('.help-tab'));
+            let nextIndex = index;
+            if (e.key === 'ArrowRight') nextIndex = (index + 1) % tabs.length;
+            if (e.key === 'ArrowLeft') nextIndex = (index - 1 + tabs.length) % tabs.length;
+            if (e.key === 'Home') nextIndex = 0;
+            if (e.key === 'End') nextIndex = tabs.length - 1;
+            const nextTab = tabs[nextIndex];
+            activateHelpTab(nextTab.dataset.helpTab);
+            nextTab.focus();
+        });
+    });
 }
 
 function closePreview() {
@@ -2905,7 +2918,22 @@ function maybeShowOnboardingGuide() {
     }, 700);
 }
 
+function activateHelpTab(name = 'usage') {
+    const selected = name === 'shortcuts' ? 'shortcuts' : 'usage';
+    document.querySelectorAll('.help-tab').forEach(tab => {
+        const active = tab.dataset.helpTab === selected;
+        tab.classList.toggle('active', active);
+        tab.setAttribute('aria-selected', String(active));
+    });
+    document.querySelectorAll('.help-panel').forEach(panel => {
+        const active = panel.id === `help-panel-${selected}`;
+        panel.classList.toggle('active', active);
+        panel.hidden = !active;
+    });
+}
+
 function showOnboardingGuide() {
+    activateHelpTab('usage');
     openModal(document.getElementById('onboarding-guide-modal'));
 }
 
@@ -2947,11 +2975,12 @@ function closePrivacyGuide() {
 }
 
 function showShortcuts() {
-    openModal(document.getElementById('shortcuts-modal'));
+    activateHelpTab('shortcuts');
+    openModal(document.getElementById('onboarding-guide-modal'));
 }
 
 function closeShortcuts() {
-    closeModal(document.getElementById('shortcuts-modal'));
+    closeOnboardingGuide();
 }
 
 function showInstallGuide() {

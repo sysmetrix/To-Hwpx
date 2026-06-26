@@ -649,12 +649,30 @@ async function validateCommercialUx(page) {
     'ux: 처음 사용 안내 바의 핵심 흐름 문구 누락');
 
   const onboardingGuide = page.locator('#open-onboarding-guide');
+  assert((await onboardingGuide.textContent()).trim() === '도움말',
+    'ux: 보조 안내 첫 버튼이 도움말로 정리되지 않음');
+  await page.locator('#open-help').click();
+  assert(await page.locator('#onboarding-guide-modal').isVisible(), 'ux: 상단 도움말 버튼이 모달을 열지 못함');
+  assert(await page.locator('.help-tab[data-help-tab="usage"]').getAttribute('aria-selected') === 'true',
+    'ux: 상단 도움말 기본 탭이 사용법이 아님');
+  await page.locator('.help-tab[data-help-tab="shortcuts"]').click();
+  assert(await page.locator('#help-panel-shortcuts').isVisible()
+    && (await page.locator('#help-panel-shortcuts').textContent()).includes('Ctrl/⌘ + O'),
+    'ux: 도움말 안 단축키 탭 핵심 내용이 누락됨');
+  await page.keyboard.press('Escape');
+  await page.keyboard.press('Shift+/');
+  assert(await page.locator('#onboarding-guide-modal').isVisible()
+    && await page.locator('.help-tab[data-help-tab="shortcuts"]').getAttribute('aria-selected') === 'true',
+    'ux: Shift+/ 단축키가 도움말의 단축키 탭으로 연결되지 않음');
+  await page.keyboard.press('Escape');
+
   await onboardingGuide.click();
-  assert(await page.locator('#onboarding-guide-modal').isVisible(), 'ux: 처음 사용 안내 모달이 열리지 않음');
+  assert(await page.locator('#onboarding-guide-modal').isVisible(), 'ux: 도움말 모달이 열리지 않음');
   const onboardingText = await page.locator('#onboarding-guide-modal').textContent();
   assert(onboardingText.includes('대부분의 문서는 아래 순서만 기억하면 됩니다')
+    && onboardingText.includes('단축키')
     && onboardingText.includes('보고서처럼 맞출 때만'),
-    'ux: 축약된 라이트/헤비 유저 안내 문구가 누락됨');
+    'ux: 도움말 사용법/단축키 탭 문구가 누락됨');
   await page.keyboard.press('Escape');
   assert(await page.locator('#quick-guide').isVisible(),
     'ux: 처음 안내 모달을 닫은 뒤 잔존 안내 바가 사라짐');
@@ -799,9 +817,12 @@ async function validateCommercialUx(page) {
   if (!(await page.locator('.advanced-settings').getAttribute('open'))) {
     await page.locator('.advanced-settings > summary').click();
   }
-  await page.locator('.help-dot[aria-label="문서 세부 설정 도움말"]').click();
-  assert(await page.locator('#help-popover').isVisible()
-    && (await page.locator('#help-popover').textContent()).includes('문단 간격'),
+  const detailHelpDot = page.locator('.help-dot[aria-label="문서 세부 설정 도움말"]');
+  await detailHelpDot.scrollIntoViewIfNeeded();
+  await page.waitForTimeout(50);
+  await detailHelpDot.click();
+  await page.locator('#help-popover').waitFor({ state: 'visible', timeout: 3000 });
+  assert((await page.locator('#help-popover').textContent()).includes('문단 간격'),
     'ux: 물음표 도움말 커스텀 툴팁이 표시되지 않음');
   assert(await page.locator('#workflow-hint').count() === 0,
     'ux: 고정 1/2/3단계 안내가 남아 있음');

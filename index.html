@@ -117,7 +117,7 @@
             <span>｢BWYF｣ AX Challenger 2026</span>
             <!-- [주의] id="open-changelog"는 app.js에서 업데이트 내역 모달을 여는 연결값 -->
             <button class="util-changelog-btn" id="open-changelog" aria-label="업데이트 내역 보기">
-                📋 v4.6.16 업데이트 내역
+                📋 v4.6.17 업데이트 내역
             </button>
         </div>
     </div>
@@ -153,8 +153,8 @@
                         </a>
                     </li>
                     <li>
-                        <button class="nav-shortcut-btn" id="open-shortcuts" aria-label="단축키 도움말 열기" title="단축키 보기 (Shift + /)">
-                            ⌨ 단축키
+                        <button class="nav-shortcut-btn" id="open-help" aria-label="도움말 열기" title="도움말 보기 (Shift + /)">
+                            도움말
                         </button>
                     </li>
                     <li>
@@ -210,7 +210,7 @@
         <!-- 보조 안내 버튼 — 첫 행동(파일 선택)을 방해하지 않도록 드롭존 아래에 배치 -->
         <div class="hero-badges" aria-label="지원 실행 환경">
             <!-- [주의] 아래 버튼 id는 app.js 모달 열기 기능과 연결됨. 글자만 수정 -->
-            <button type="button" id="open-onboarding-guide">사용법</button>
+            <button type="button" id="open-onboarding-guide">도움말</button>
             <button type="button" id="open-pc-guide">PC 브라우저 지원</button>
             <button type="button" id="open-mobile-guide">모바일 브라우저 지원</button>
             <button type="button" id="open-install-guide">앱처럼 설치 가능</button>
@@ -658,16 +658,16 @@
             </div>
             <div class="value-points" aria-label="서비스 가치">
                 <div class="value-point">
-                    <strong>AI 결과물을 문서로</strong>
-                    <span>Markdown·표·JSON·노트북(.ipynb)을 HWPX로 재구성합니다.</span>
+                    <strong>입력</strong>
+                    <span>Markdown 초안, HTML, CSV/XLSX 표, JSON 데이터, 노트북(.ipynb), DOCX·HWP 파일을 읽습니다.</span>
                 </div>
                 <div class="value-point">
-                    <strong>행정 문서 형식에 맞추기</strong>
-                    <span>공공기관·한컴 환경에 맞는 HWPX 출력 파일을 만듭니다.</span>
+                    <strong>보존</strong>
+                    <span>제목, 문단, 목록, 표, 링크, 이미지처럼 문서로 다시 편집할 핵심 구조를 우선 살립니다.</span>
                 </div>
                 <div class="value-point">
-                    <strong>다시 편집할 시간 줄이기</strong>
-                    <span>반복 복사·붙여넣기와 오래 걸리는 서식 재작업을 줄입니다.</span>
+                    <strong>출력</strong>
+                    <span>한컴에서 열어 검토하고 제출용으로 다듬을 수 있는 HWPX 파일을 내려받습니다.</span>
                 </div>
             </div>
         </div>
@@ -1288,36 +1288,52 @@
 </div>
 
 <!-- ════════════════════════════════════════════════════════════════
-     [처음 사용 안내 모달]  라이트 유저 기본 흐름 + 헤비 유저 진입점
+     [도움말 모달]  기본 사용법 + 단축키
      ════════════════════════════════════════════════════════════════ -->
 <div id="onboarding-guide-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="onboarding-guide-title">
     <div class="modal-box modal-box--md">
         <div class="modal-header">
-            <span class="modal-title" id="onboarding-guide-title">처음 사용 안내</span>
-            <button class="modal-close" id="close-onboarding-guide" aria-label="처음 사용 안내 닫기">✕</button>
+            <span class="modal-title" id="onboarding-guide-title">도움말</span>
+            <button class="modal-close" id="close-onboarding-guide" aria-label="도움말 닫기">✕</button>
         </div>
         <div class="modal-body">
-            <p class="onboarding-lead">
-                대부분의 문서는 아래 순서만 기억하면 됩니다.
-            </p>
-            <ol class="onboarding-steps">
-                <li>
-                    <strong>파일 선택</strong>
-                    <span>드롭존에 입력 파일을 올립니다.</span>
-                </li>
-                <li>
-                    <strong>기본 설정 확인</strong>
-                    <span>글꼴, 줄 간격, 용지만 가볍게 봅니다.</span>
-                </li>
-                <li>
-                    <strong>변환 후 다운로드</strong>
-                    <span>HWPX를 한컴에서 열어 최종 확인합니다.</span>
-                </li>
-            </ol>
-            <p class="onboarding-footnote">보고서처럼 맞출 때만 문서 세부 설정과 고급 사용 팁을 열어보세요.</p>
-            <div class="onboarding-actions">
-                <button type="button" class="btn-secondary" id="onboarding-open-advanced">고급 사용 팁</button>
-                <button type="button" class="btn-primary-lite" id="onboarding-done">이해했어요</button>
+            <div class="help-tabs" role="tablist" aria-label="도움말 항목">
+                <button type="button" class="help-tab active" data-help-tab="usage" role="tab" aria-selected="true" aria-controls="help-panel-usage">사용법</button>
+                <button type="button" class="help-tab" data-help-tab="shortcuts" role="tab" aria-selected="false" aria-controls="help-panel-shortcuts">단축키</button>
+            </div>
+            <div class="help-panel active" id="help-panel-usage" role="tabpanel">
+                <p class="onboarding-lead">
+                    대부분의 문서는 아래 순서만 기억하면 됩니다.
+                </p>
+                <ol class="onboarding-steps">
+                    <li>
+                        <strong>파일 선택</strong>
+                        <span>드롭존에 입력 파일을 올립니다.</span>
+                    </li>
+                    <li>
+                        <strong>기본 설정 확인</strong>
+                        <span>글꼴, 줄 간격, 용지만 가볍게 봅니다.</span>
+                    </li>
+                    <li>
+                        <strong>변환 후 다운로드</strong>
+                        <span>HWPX를 한컴에서 열어 최종 확인합니다.</span>
+                    </li>
+                </ol>
+                <p class="onboarding-footnote">보고서처럼 맞출 때만 문서 세부 설정과 고급 사용 팁을 열어보세요.</p>
+                <div class="onboarding-actions">
+                    <button type="button" class="btn-secondary" id="onboarding-open-advanced">고급 사용 팁</button>
+                    <button type="button" class="btn-primary-lite" id="onboarding-done">이해했어요</button>
+                </div>
+            </div>
+            <div class="help-panel" id="help-panel-shortcuts" role="tabpanel" hidden>
+                <dl class="shortcut-list">
+                    <div><dt>Ctrl/⌘ + O</dt><dd>파일 선택 열기</dd></div>
+                    <div><dt>Ctrl/⌘ + Enter</dt><dd>선택한 파일 변환 시작</dd></div>
+                    <div><dt>Esc</dt><dd>열린 안내창 닫기, 없으면 초기화</dd></div>
+                    <div><dt>Ctrl/⌘ + D</dt><dd>브라우저 즐겨찾기</dd></div>
+                    <div><dt>Shift + D</dt><dd>다크/라이트 테마 전환</dd></div>
+                    <div><dt>Shift + / (?)</dt><dd>도움말의 단축키 탭 열기</dd></div>
+                </dl>
             </div>
         </div>
     </div>
@@ -1354,28 +1370,6 @@
             <div class="advanced-guide-note">
                 앞으로 추가하기 좋은 세부 설정은 문단 앞/뒤 간격, 제목 스타일 프리셋, 표 스타일, 링크 표시 방식, 이미지 최대 폭/정렬입니다.
             </div>
-        </div>
-    </div>
-</div>
-
-<!-- ════════════════════════════════════════════════════════════════
-     [단축키 안내 모달]
-     ════════════════════════════════════════════════════════════════ -->
-<div id="shortcuts-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="shortcuts-title">
-    <div class="modal-box modal-box--md">
-        <div class="modal-header">
-            <span class="modal-title" id="shortcuts-title">⌨ 단축키</span>
-            <button class="modal-close" id="close-shortcuts" aria-label="단축키 안내 닫기">✕</button>
-        </div>
-        <div class="modal-body">
-            <dl class="shortcut-list">
-                <div><dt>Ctrl/⌘ + O</dt><dd>파일 선택 열기</dd></div>
-                <div><dt>Ctrl/⌘ + Enter</dt><dd>선택한 파일 변환 시작</dd></div>
-                <div><dt>Esc</dt><dd>열린 안내창 닫기, 없으면 초기화</dd></div>
-                <div><dt>Ctrl/⌘ + D</dt><dd>브라우저 즐겨찾기</dd></div>
-                <div><dt>Shift + D</dt><dd>다크/라이트 테마 전환</dd></div>
-                <div><dt>Shift + / (?)</dt><dd>이 단축키 안내 열기</dd></div>
-            </dl>
         </div>
     </div>
 </div>
