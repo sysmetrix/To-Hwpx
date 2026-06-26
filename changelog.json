@@ -1,6 +1,21 @@
 {
-  "current": "4.6.27",
+  "current": "4.6.28",
   "versions": [
+    {
+      "version": "4.6.28",
+      "date": "2026-06-26",
+      "user": [
+        "베타 표시를 일반 사용자 화면에서 감추고, 관리자 모드에서만 해당 포맷 위치에 보이도록 정리했습니다.",
+        "변환 화면의 베타 표시는 DOCX·HTML·XLSX·CSV·HWP 파일을 선택했을 때만(관리자 모드) 나타납니다."
+      ],
+      "dev": [
+        "[v4.6.28] index.html: 히어로 generic 베타 배지 제거, 변환 헤더 generic 배지를 파일별 #converter-beta(기본 hidden)로 교체",
+        "[v4.6.28] js/app.js: applyBetaBadgeVisibility()로 .badge-beta를 관리자 모드에서만 노출(+admin-mode 루트 클래스), updateConverterBeta(ext/'__batch__')로 베타 포맷 선택 시에만 변환 헤더 마커 표시",
+        "[v4.6.28] style.css: 죽은 .hero-beta-badge 규칙 제거, .svc-beta-badge 주석 갱신",
+        "[v4.6.28] tests/golden.js: 일반 사용자 .badge-beta 전부 hidden·generic 배지 제거 검증, 관리자 모드 노출+admin-mode 루트 클래스 검증으로 교체",
+        "[v4.6.28] package.json/package-lock.json/sw.js/index.html/changelog.json: v4.6.28 반영"
+      ]
+    },
     {
       "version": "4.6.27",
       "date": "2026-06-26",

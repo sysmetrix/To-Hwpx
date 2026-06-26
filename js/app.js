@@ -103,6 +103,7 @@ document.addEventListener('DOMContentLoaded', () => {
     showFormatHintPlaceholder();// 파일 선택 전 포맷 힌트 영역 안내(빈칸 방지)
     maybeShowOnboardingGuide(); // 첫 방문 1회 기본 사용 안내
     initAdminModeUi();          // 관리자 모드에서만 버전 내역 클릭 허용
+    applyBetaBadgeVisibility(); // 베타 배지는 관리자 모드에서만 노출(일반 사용자엔 숨김)
 });
 
 function initHelpDots() {
@@ -419,6 +420,7 @@ function updateDropZoneMulti(n) {
 
     const badge = document.getElementById('detected-format');
     if (badge) { badge.textContent = `${n}개`; badge.style.display = 'inline-block'; }
+    updateConverterBeta('__batch__');
 
     // 여러 포맷이 섞일 수 있으므로 포맷 힌트는 일반 배치 안내로
     const hint = document.getElementById('format-hint');
@@ -518,6 +520,7 @@ function clearSelectedFile() {
         badge.textContent = '';
         badge.style.display = 'none';
     }
+    updateConverterBeta(null);
 
     const dz = document.getElementById('drop-zone');
     if (dz) {
@@ -576,6 +579,28 @@ function updateFormatBadge(ext) {
     if (!badge) return;
     badge.textContent   = ext.toUpperCase();
     badge.style.display = 'inline-block';
+    updateConverterBeta(ext);
+}
+
+// 베타 품질 입력 포맷 — 변환 화면 파일별 베타 마커 판별용
+const BETA_EXTS = new Set(['docx', 'html', 'htm', 'xlsx', 'xls', 'csv', 'hwp']);
+
+/** 변환 화면 헤더의 베타 마커: 관리자 모드 + 베타 포맷 파일일 때만 노출(일반 사용자엔 항상 숨김).
+ *  ext='__batch__'이면 큐에 베타 포맷이 하나라도 있는지로 판별. */
+function updateConverterBeta(ext) {
+    const el = document.getElementById('converter-beta');
+    if (!el) return;
+    const beta = ext === '__batch__'
+        ? state.queue.some(q => BETA_EXTS.has(String(q.ext || '').toLowerCase()))
+        : BETA_EXTS.has(String(ext || '').toLowerCase());
+    el.hidden = !(isAdminMode() && beta);
+}
+
+/** 정적 베타 배지(.badge-beta)는 관리자 모드에서만 노출. 마스터 토글은 reload하므로 init에서 1회 반영하면 충분. */
+function applyBetaBadgeVisibility() {
+    const admin = isAdminMode();
+    document.querySelectorAll('.badge-beta').forEach(el => { el.hidden = !admin; });
+    document.documentElement.classList.toggle('admin-mode', admin);
 }
 
 function qualityText(stars = '') {

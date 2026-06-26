@@ -714,8 +714,27 @@ async function validateCommercialUx(page) {
   const heroDropText = await page.locator('#drop-zone .drop-sub').textContent();
   assert(heroDropText.includes('MD · DOCX · HTML · CSV/XLSX · JSON · TXT · HWP · IPYNB'),
     'ux: 첫 화면 드롭존 입력 포맷 순서가 안내 기준과 다름');
-  assert((await page.locator('.hero-beta-badge').textContent()).includes('베타'),
-    'ux: 서비스 첫 화면에 서식 변환 베타 표시가 없음');
+  // 베타 배지는 관리자 전용 — 일반 사용자 화면엔 generic 배지 제거 + 모든 .badge-beta가 hidden
+  assert(await page.locator('.hero-beta-badge').count() === 0,
+    'ux: 첫 화면 generic 베타 배지가 일반 사용자에게 남아 있음');
+  const guestBeta = await page.evaluate(() => {
+    const all = [...document.querySelectorAll('.badge-beta')];
+    return { count: all.length, allHidden: all.every(el => el.hidden),
+      converterBetaHidden: document.getElementById('converter-beta')?.hidden !== false };
+  });
+  assert(guestBeta.count > 0 && guestBeta.allHidden && guestBeta.converterBetaHidden,
+    'ux: 일반 사용자에게 베타 배지가 노출됨(관리자 전용이어야 함)');
+  await page.goto(`${baseUrl}?admin=1`, { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => window.JSZip && window.marked && window.XLSX, null, { timeout: 30000 });
+  const adminBeta = await page.evaluate(() => {
+    const all = [...document.querySelectorAll('.badge-beta')];
+    return { count: all.length, allShown: all.every(el => !el.hidden),
+      rootClass: document.documentElement.classList.contains('admin-mode') };
+  });
+  assert(adminBeta.count > 0 && adminBeta.allShown && adminBeta.rootClass,
+    'ux: 관리자 모드에서 베타 배지가 표시되지 않음');
+  await page.goto(`${baseUrl}?admin=0`, { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => window.JSZip && window.marked && window.XLSX, null, { timeout: 30000 });
   assert((await page.locator('#file-input').getAttribute('accept')).startsWith('.md,.markdown,.docx,.html,.htm,.csv,.xlsx,.xls,.json,.txt,.hwp,.ipynb'),
     'ux: 파일 선택 accept 순서가 드롭존 입력 포맷 순서와 다름');
   const versionButtonText = (await page.locator('#open-changelog').textContent()).trim();

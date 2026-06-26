@@ -550,14 +550,7 @@ a:hover { text-decoration: underline; }
     color: var(--c-primary);
     transform: translateY(-1px);
 }
-.hero-beta-badge {
-    border-color: var(--c-warnwash-border);
-    background: var(--c-warning-light);
-    color: var(--c-warning);
-    font-weight: 800;
-}
-
-/* 변환(서비스) 화면 헤더의 베타 식별자 — 작업 중에도 베타임을 알 수 있게 */
+/* 변환(서비스) 화면 헤더의 베타 식별자 — 관리자 모드 + 베타 포맷 파일일 때만 노출(#converter-beta) */
 .options-panel-title {
     display: flex;
     align-items: center;
