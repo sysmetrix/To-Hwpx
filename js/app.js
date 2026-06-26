@@ -68,7 +68,7 @@ const SUPPORTED_EXTENSIONS = new Set([
     'csv', 'xlsx', 'xls', 'json', 'ipynb', 'docx', 'hwp', 'hwpx',
 ]);
 const BINARY_EXTENSIONS = new Set(['xlsx', 'xls', 'docx', 'hwp', 'hwpx']);
-const SUPPORTED_FORMAT_LABEL = 'MD, HTML, TXT, CSV, XLSX, JSON, IPYNB, DOCX, HWP';
+const SUPPORTED_FORMAT_LABEL = 'MD, DOCX, HTML, CSV/XLSX, JSON, TXT, HWP, IPYNB';
 const ONBOARDING_SEEN_KEY = 'tohwpx_onboarding_seen';
 const QUICK_GUIDE_HIDDEN_KEY = 'tohwpx_quick_guide_hidden';
 
@@ -519,7 +519,7 @@ function clearSelectedFile() {
         dz.innerHTML = `
             <div class="drop-icon">📂</div>
             <div class="drop-title">파일을 여기에 드래그하거나 클릭하세요</div>
-            <div class="drop-sub">입력: MD · HTML · TXT · CSV · XLSX · JSON · IPYNB · DOCX · HWP (여러 개 가능)<br>출력: HWPX</div>
+            <div class="drop-sub">입력: MD · DOCX · HTML · CSV/XLSX · JSON · TXT · HWP · IPYNB (여러 개 가능)<br>출력: HWPX</div>
         `;
     }
 

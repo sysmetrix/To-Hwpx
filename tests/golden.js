@@ -639,6 +639,11 @@ async function validateCommercialUx(page) {
   await page.waitForFunction(() => window.JSZip && window.marked && window.XLSX, null, { timeout: 30000 });
 
   assert(await page.locator('#quick-guide').isVisible(), 'ux: 닫아도 남는 처음 사용 안내 바가 보이지 않음');
+  const heroDropText = await page.locator('#drop-zone .drop-sub').textContent();
+  assert(heroDropText.includes('MD · DOCX · HTML · CSV/XLSX · JSON · TXT · HWP · IPYNB'),
+    'ux: 첫 화면 드롭존 입력 포맷 순서가 안내 기준과 다름');
+  assert((await page.locator('#file-input').getAttribute('accept')).startsWith('.md,.markdown,.docx,.html,.htm,.csv,.xlsx,.xls,.json,.txt,.hwp,.ipynb'),
+    'ux: 파일 선택 accept 순서가 드롭존 입력 포맷 순서와 다름');
   const quickGuideText = await page.locator('#quick-guide').textContent();
   assert(quickGuideText.includes('파일 선택') && quickGuideText.includes('HWPX 다운로드'),
     'ux: 처음 사용 안내 바의 핵심 흐름 문구 누락');

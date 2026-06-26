@@ -1,6 +1,19 @@
 {
-  "current": "4.6.14",
+  "current": "4.6.15",
   "versions": [
+    {
+      "version": "4.6.15",
+      "date": "2026-06-26",
+      "user": [
+        "첫 화면 드롭존의 입력 포맷 안내 순서를 포맷 카드와 같은 MD, DOCX, HTML, CSV/XLSX, JSON, TXT, HWP, IPYNB 기준으로 맞췄습니다.",
+        "지원하지 않는 파일 안내와 파일 선택창 확장자 순서도 같은 기준으로 정리했습니다."
+      ],
+      "dev": [
+        "[v4.6.15] index.html/js/app.js: 드롭존 입력 포맷 문구, accept 확장자 순서, 지원 포맷 오류 안내 라벨 정렬",
+        "[v4.6.15] tests/golden.js: 드롭존 입력 포맷과 accept 순서 회귀 테스트 추가",
+        "[v4.6.15] package.json/package-lock.json/sw.js/index.html/changelog.json: v4.6.15 반영"
+      ]
+    },
     {
       "version": "4.6.14",
       "date": "2026-06-26",
