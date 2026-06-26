@@ -680,7 +680,6 @@ a:hover { text-decoration: underline; }
 .value-section {
     padding: clamp(44px, 6vw, 72px) 0;
     background: var(--c-surface);
-    border-bottom: 1px solid var(--c-border);
 }
 .value-layout {
     display: grid;
@@ -735,7 +734,7 @@ a:hover { text-decoration: underline; }
    [포맷 그리드]  지원 포맷 카드 목록
    ───────────────────────────────────────────────────────────────── */
 .formats-section {
-    padding: clamp(16px, 3vw, 32px) 0 clamp(64px, 8vw, 100px);
+    padding: clamp(8px, 1.6vw, 16px) 0 clamp(32px, 4vw, 52px);
     background: var(--c-surface);
 }
 
@@ -790,8 +789,7 @@ a:hover { text-decoration: underline; }
 
 .service-info {
     margin-top: 0;
-    border-top: 1px solid var(--c-border);
-    padding-top: 10px;
+    padding-top: 0;
 }
 .service-info-bar {
     display: flex;
@@ -2583,6 +2581,7 @@ a:hover { text-decoration: underline; }
     .converter-section,
     .how-section,
     .support-section { padding: 48px 0; }
+    .formats-section { padding: 14px 0 38px; }
     .value-point { padding: 12px 0; }
     .format-grid { grid-template-columns: repeat(2, 1fr); }
     #panel-basic .format-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
