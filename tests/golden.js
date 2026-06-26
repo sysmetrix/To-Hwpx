@@ -891,6 +891,14 @@ async function validateDetailSettingsUx(page) {
     })),
     marginMap: !!document.querySelector('.margin-paper-map .margin-paper-inner'),
     marginSideLabels: document.querySelectorAll('.margin-page-label--left, .margin-page-label--right').length,
+    marginSideLabelsInsidePaper: (() => {
+      const paper = document.querySelector('.margin-paper')?.getBoundingClientRect();
+      const labels = [...document.querySelectorAll('.margin-page-label--left, .margin-page-label--right')]
+        .map(label => label.getBoundingClientRect());
+      return !!paper && labels.length === 2 && labels.every(rect =>
+        rect.left >= paper.left - 1 && rect.right <= paper.right + 1
+        && rect.top >= paper.top - 1 && rect.bottom <= paper.bottom + 1);
+    })(),
     marginInputs: ['top', 'header', 'left', 'right', 'bottom', 'footer']
       .filter(side => document.querySelector(`#margin-${side}`)).length,
   }));
@@ -898,7 +906,8 @@ async function validateDetailSettingsUx(page) {
   assert(defaults.hrButtons.some(btn => btn.value === 'hide' && btn.active),
     'detail settings: 가로 구분선 기본값이 숨김이 아님');
   assert(defaults.marginMap, 'detail settings: 페이지 여백 종이 미니맵 누락');
-  assert(defaults.marginSideLabels === 0, 'detail settings: 페이지 여백 좌우 배지가 남아 있음');
+  assert(defaults.marginSideLabels === 2, 'detail settings: 페이지 여백 좌우 라벨 누락');
+  assert(defaults.marginSideLabelsInsidePaper, 'detail settings: 페이지 여백 좌우 라벨이 종이 영역 밖으로 침범함');
   assert(defaults.marginInputs === 6, 'detail settings: 페이지 여백 입력 6개가 유지되지 않음');
   for (const id of ['paragraph-spacing', 'heading-style', 'table-style', 'link-style', 'image-max-width', 'image-align', 'title-body-policy']) {
     assert(await page.locator(`#${id}`).count() === 1, `detail settings: #${id} 컨트롤 누락`);
