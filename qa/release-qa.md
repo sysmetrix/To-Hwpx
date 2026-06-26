@@ -58,7 +58,7 @@ Scope: static browser-only conversion flow from file selection to HWPX download.
 - `hp:fieldBegin type="HYPERLINK"`와 `hp:fieldEnd`의 `id/fieldid` 쌍, 안전한 `Path` 프로토콜, URL XML escape 확인
 - 일반 데이터 표가 `pageBreak="TABLE"`, `repeatHeader="1"`, `treatAsChar="0"`, `hp:outMargin@bottom="850"`이고 첫 행 셀이 `header="1"`인지 확인
 - 코드 블록 표의 `hp:outMargin@bottom="850"`, 인용구 `paraPr id=19`의 `hh:next value="850"` 및 코드 글자 모양이 사용자가 선택한 글꼴 id를 참조하는지 확인
-- 구분선 표의 `hp:outMargin@top/bottom="850"`과 구분선 앞뒤 외부 빈 문단 제거 여부 확인
+- 구분선(`hr`)이 선 표가 아니라 `paraPrIDRef="9"` 빈 줄로 대체되는지 확인
 - 다운로드 링크의 파일명과 `type="application/hwp+zip"` 확인
 
 ## 5. Security and Privacy Checks
@@ -230,13 +230,12 @@ Scope: static browser-only conversion flow from file selection to HWPX download.
 - [x] `node qa/gate.js qa/fixtures/md_hwpx_test.md` PASS
 - [ ] 한컴오피스에서 인용구·코드문 아래 3mm 간격과 코드문 선택 글꼴 적용 확인
 
-## 17. v4.5.14 구분선 표 바깥 여백
+## 17. v4.5.14 표 여백 및 구분선 처리
 
-- [x] 구분선 표 `hp:outMargin@top/bottom="850"`(각 약 3mm) 자동 검사
-- [x] 구분선 앞뒤 외부 `paraPrIDRef="9"` 빈 문단이 없는지 자동 검사
+- [x] 구분선(`hr`)이 선 표가 아니라 `paraPrIDRef="9"` 빈 줄로 대체되는지 자동 검사
 - [x] `npm run test:golden` PASS
 - [x] `node qa/gate.js qa/fixtures/md_hwpx_test.md` PASS
-- [ ] 한컴오피스에서 구분선 위아래 3mm와 불필요한 빈 문단 제거 확인
+- [ ] 한컴오피스에서 구분선 자리가 빈 줄로 자연스럽게 보이는지 확인
 
 ## 18. v4.5.15 실험실 설정 UI
 
@@ -372,7 +371,7 @@ Scope: static browser-only conversion flow from file selection to HWPX download.
 
 - [x] 문서 기본 설정에서 `변환` 표현 제거
 - [x] 줄 간격을 글꼴 크기 오른쪽으로 이동하고 설정 요약에 `줄 N%` 표시
-- [x] 상단 제목 블록을 가로 구분선보다 먼저 노출
+- [x] 상단 제목 블록과 여백 설정을 세부 설정에서 우선 노출
 - [x] 첫 방문 1회 온보딩: 파일 선택 → 기본 설정 확인 → 변환 후 다운로드 3단계 안내
 - [x] 헤비 유저용 고급 사용 팁: 문서 모양, 폰트, 보존 한계, 추천 순서 분리 안내
 - [x] 세부 설정 항목별 짧은 도움말 버튼 추가

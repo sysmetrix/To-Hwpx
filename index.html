@@ -117,7 +117,7 @@
             <span>｢BWYF｣ AX Challenger 2026</span>
             <!-- [주의] id="open-changelog"는 app.js에서 업데이트 내역 모달을 여는 연결값 -->
             <button class="util-changelog-btn" id="open-changelog" aria-label="업데이트 내역 보기">
-                📋 v4.6.8 업데이트 내역
+                📋 v4.6.9 업데이트 내역
             </button>
         </div>
     </div>
@@ -256,10 +256,6 @@
                             <span id="detected-format" aria-live="polite"></span>
                         </div>
                     </div>
-                    <div id="workflow-hint" class="workflow-hint" role="status" aria-live="polite">
-                        <b>1단계</b> 파일을 선택하면 아래 기본 설정과 변환 버튼을 바로 확인할 수 있습니다.
-                    </div>
-
                     <!-- 선택한 파일 목록(배치) — 2개 이상일 때 app.js renderQueueList()가 채움 -->
                     <div id="file-queue" class="file-queue" hidden aria-label="선택한 파일 목록"></div>
                 </div>
@@ -303,10 +299,10 @@
                         <p class="form-hint title-help">상단 제목 블록은 세부 설정에서 켤 수 있습니다.</p>
                         <div class="title-source-row">
                             <span>제목을 비웠을 때</span>
-                            <select id="title-source" name="title-source" aria-label="문서 제목을 비워둘 때 적용할 제목 기준">
-                                <option value="heading" selected>문서 첫 제목/문장 사용</option>
-                                <option value="filename">파일 이름 사용</option>
-                            </select>
+                            <div class="seg-control title-source-control" role="group" aria-label="문서 제목을 비워둘 때 적용할 제목 기준">
+                                <button type="button" class="seg-btn is-active" data-title-source="heading">문서 첫 제목</button>
+                                <button type="button" class="seg-btn" data-title-source="filename">파일 이름</button>
+                            </div>
                         </div>
                     </div>
                     <!-- 포맷 힌트 — 파일 선택/포맷 카드 클릭 시 노출 -->
@@ -355,9 +351,8 @@
                             </select>
                         </div>
                         <div class="form-row line-spacing-row">
-                            <label for="line-spacing" class="label-with-help">
+                            <label for="line-spacing">
                                 <span>줄 간격</span>
-                                <button type="button" class="help-dot" data-help="본문과 목록 문단에 적용되는 기본 줄 간격입니다. 코드 블록은 읽기 좋도록 별도 간격을 유지합니다." aria-label="줄 간격 도움말">?</button>
                             </label>
                             <select id="line-spacing" name="line-spacing">
                                 <option value="130">130%</option>
@@ -388,7 +383,7 @@
 
                 <details class="advanced-settings">
                     <summary>
-                        <span class="adv-summary-text">문서 세부 설정 <small>상단 제목 블록 · 구분선 · 여백 · 자동 다운로드</small></span>
+                        <span class="adv-summary-text">문서 세부 설정 <small>상단 제목 블록 · 여백 · 진단 · 자동 다운로드</small></span>
                         <span class="adv-summary-note">더 보기</span>
                         <span class="adv-chevron" aria-hidden="true">▾</span>
                     </summary>
@@ -434,17 +429,6 @@
                                 </div>
                                 <p class="form-hint">문서 맨 위에 머리말 표를 넣습니다. '기본'은 회색 띠, '표지'는 색 밴드이며, 모두 가운데에 제목, 아래에 [팀명/이름](점선)과 작성일(오른쪽)이 들어갑니다. 빈 항목은 변환 후 한글에서 채워주세요.</p>
 
-                                <div class="form-row hr-display-row">
-                                    <label class="label-with-help">
-                                        <span>가로 구분선</span>
-                                        <button type="button" class="help-dot" data-help="Markdown의 --- 같은 구분선을 HWPX에 표시할지 정합니다. 실무 문서에서는 숨김이 보통 더 자연스럽습니다." aria-label="가로 구분선 도움말">?</button>
-                                    </label>
-                                    <div class="seg-control" role="group" aria-label="가로 구분선 표시 여부">
-                                        <button type="button" class="seg-btn is-active" data-hr-display="hide">숨김</button>
-                                        <button type="button" class="seg-btn" data-hr-display="show">표시</button>
-                                    </div>
-                                </div>
-
                             </div>
 
                             <!-- 페이지 여백 — 용지 크기 설정 옆에 배치
@@ -457,8 +441,6 @@
                                 <div class="margin-paper-map" aria-label="페이지 여백 설정">
                                     <div class="margin-paper">
                                         <div class="margin-page-label margin-page-label--top">위</div>
-                                        <div class="margin-page-label margin-page-label--left">왼쪽</div>
-                                        <div class="margin-page-label margin-page-label--right">오른쪽</div>
                                         <div class="margin-page-label margin-page-label--bottom">아래</div>
                                         <div class="margin-paper-inner">
                                             <div class="margin-header-zone">머리말</div>
@@ -577,13 +559,12 @@
                     <span class="toggle-switch" aria-hidden="true"></span>
                 </label>
 
-                <!-- IR 미리보기 토글 (개발자 전용 — 일반 사용자에게 노출 안 함) -->
+                <!-- IR 미리보기 토글 (고급 진단용) -->
                 <button id="ir-toggle"
                         class="ir-toggle-btn"
                         aria-expanded="false"
-                        aria-controls="ir-preview"
-                        hidden>
-                    ▶ IR 미리보기 보기
+                        aria-controls="ir-preview">
+                    ▶ 고급 진단: IR 미리보기
                 </button>
                 <pre id="ir-preview" hidden aria-label="IR 미리보기"><code id="ir-content">파일을 업로드하면 중간 표현(IR)이 여기에 표시됩니다.</code></pre>
                     <button type="button" id="open-advanced-guide" class="advanced-guide-link">고급 사용 팁 보기</button>
@@ -683,19 +664,54 @@
 
 
 <!-- ════════════════════════════════════════════════════════════════
-     [입력 가능 포맷 + 동작 원리 + 지원 현황]  탭 전환
+     [입력 포맷 + 동작 원리 + 지원 현황]  탭 전환
      ════════════════════════════════════════════════════════════════ -->
 <section class="formats-section" id="formats" aria-labelledby="formats-title">
     <div class="container">
-        <h2 class="section-title" id="formats-title">입력 가능 포맷</h2>
+        <h2 class="section-title" id="formats-title">입력 포맷</h2>
         <p class="section-sub">카드를 선택하면 포맷별 보존 범위와 제한사항을 확인할 수 있습니다</p>
+
+        <div class="service-info">
+            <div class="service-info-bar">
+                <span class="service-info-label">포맷 안내</span>
+                <div class="format-tabs service-tabs" role="tablist" aria-label="포맷 안내">
+                    <button class="format-tab active"
+                            data-target="panel-how"
+                            role="tab"
+                            aria-selected="true"
+                            aria-controls="panel-how">
+                        더 알아보기
+                    </button>
+                    <button class="format-tab"
+                            data-target="panel-basic"
+                            role="tab"
+                            aria-selected="false"
+                            aria-controls="panel-basic">
+                        입력 포맷
+                    </button>
+                    <button class="format-tab"
+                            data-target="panel-ext"
+                            role="tab"
+                            aria-selected="false"
+                            aria-controls="panel-ext">
+                        🔜 예정 포맷
+                    </button>
+                    <button class="format-tab"
+                            data-target="panel-support"
+                            role="tab"
+                            aria-selected="false"
+                            aria-controls="panel-support">
+                        지원 현황
+                    </button>
+                </div>
+            </div>
 
         <!-- ── 기본 서비스 패널 ─────────────────────────────────────
              [수정 시] 새 포맷 카드 추가 → .format-card 복사 후 data-ext/내용 수정
              [중요] data-ext 값은 js/app.js FORMAT_INFO, js/parsers.js PARSERS와 연결됨
              비개발자는 카드 안의 표시 문구(card-ext/card-name/card-quality/badge)만 바꾸는 것이 안전합니다.
              ─────────────────────────────────────────────────────── -->
-        <div class="format-panel active" id="panel-basic">
+        <div class="format-panel" id="panel-basic" role="tabpanel">
             <div class="format-grid">
 
                 <!-- Markdown -->
@@ -764,36 +780,6 @@
             </div><!-- /.format-grid -->
         </div><!-- /#panel-basic -->
 
-        <div class="service-info">
-            <div class="service-info-bar">
-                <span class="service-info-label">더 알아보기</span>
-                <!-- 탭: 예정 포맷 / 동작 원리 / 지원 현황 -->
-                <!-- app.js의 initFormatTabs에서 탭 전환 로직 처리 -->
-                <div class="format-tabs service-tabs" role="tablist" aria-label="보조 안내">
-                <button class="format-tab"
-                        data-target="panel-ext"
-                        role="tab"
-                        aria-selected="false"
-                        aria-controls="panel-ext">
-                    🔜 예정 포맷
-                </button>
-                <button class="format-tab"
-                        data-target="panel-how"
-                        role="tab"
-                        aria-selected="false"
-                        aria-controls="panel-how">
-                    🔍 동작 원리
-                </button>
-                <button class="format-tab"
-                        data-target="panel-support"
-                        role="tab"
-                        aria-selected="false"
-                        aria-controls="panel-support">
-                    📊 지원 현황
-                </button>
-                </div>
-            </div>
-
             <!-- ── 확장 서비스 패널 ─────────────────────────────────────
                  IPYNB는 JSON 기반이라 클라이언트에서 처리 가능
                  나머지는 향후 백엔드 연동 예정
@@ -850,7 +836,7 @@
             </div><!-- /#panel-ext -->
 
         <!-- ── 동작 원리 패널 ────────────────────────────────────── -->
-            <div class="format-panel" id="panel-how" role="tabpanel">
+            <div class="format-panel active" id="panel-how" role="tabpanel">
             <span id="how-it-works" aria-hidden="true"></span>
             <p class="section-sub" style="margin:16px 0 32px">PC와 모바일 브라우저 안에서 7단계로 완전히 처리됩니다</p>
             <div class="steps-grid">

@@ -31,7 +31,6 @@ const state = {
     paperSize:    'A4',                // 용지 크기: "A4" | "B5" | "Letter"
     orientation:  'portrait',          // 용지 방향: "portrait" | "landscape"
     lineSpacing:  160,                 // 줄 간격 (%)
-    showHorizontalRules: false,        // 가로 구분선 표시 여부
     paragraphSpacing: 'normal',        // 문단 앞/뒤 간격 프리셋
     headingStyle: 'standard',          // 제목 크기/굵기 프리셋
     tableStyle: 'standard',            // 표 스타일 프리셋
@@ -100,7 +99,6 @@ document.addEventListener('DOMContentLoaded', () => {
     initResetButton();          // 현재 선택 파일과 변환 옵션 초기화
     initTheme();                // 다크/라이트 테마 토글·시스템 동기화
     showFormatHintPlaceholder();// 파일 선택 전 포맷 힌트 영역 안내(빈칸 방지)
-    updateWorkflowHint('select');
     maybeShowOnboardingGuide(); // 첫 방문 1회 기본 사용 안내
 });
 
@@ -177,18 +175,6 @@ function initQuickGuide() {
         }
     });
 }
-
-function updateWorkflowHint(stage = 'select') {
-    const hint = document.getElementById('workflow-hint');
-    if (!hint) return;
-    const copy = {
-        select: '<b>1단계</b> 파일을 선택하면 아래 기본 설정과 변환 버튼을 바로 확인할 수 있습니다.',
-        settings: '<b>2단계</b> 대부분은 기본값 그대로 충분합니다. 보고서 모양만 필요할 때 세부 설정을 여세요.',
-        done: '<b>3단계</b> HWPX를 내려받은 뒤 한컴에서 여백, 표, 글꼴을 최종 확인하세요.',
-    };
-    hint.innerHTML = copy[stage] || copy.select;
-}
-
 
 // ─────────────────────────────────────────────────────────────────────────
 // [파이프라인 단계 UI]
@@ -398,7 +384,6 @@ function onQueueChanged({ scroll = false } = {}) {
 
     renderQueueList();
     updateTitlePlaceholder();
-    updateWorkflowHint('settings');
 
     if (scroll) {
         document.getElementById('converter')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -543,7 +528,6 @@ function clearSelectedFile() {
     if (cdaLabel) cdaLabel.textContent = '파일을 드래그하거나 클릭하여 선택 (여러 개 가능)';
 
     showFormatHintPlaceholder();   // 파일 전: 빈칸 대신 안내 placeholder로 레이아웃 유지
-    updateWorkflowHint('select');
 
     const titleInput = document.getElementById('doc-title');
     if (titleInput) {
@@ -688,6 +672,14 @@ function applyDocumentTitlePolicy(ir, file, customTitle, titleSource, titleBodyP
     const parsedTitle = normalizeTitleCandidate(ir.title);
     const direct = normalizeTitleCandidate(customTitle);
     const keepFirstTitleInBody = titleBodyPolicy === 'keep';
+    const firstTitle = findFirstDocumentTitleCandidate(ir);
+    const removeFirstHeadingFromBody = (titleText) => {
+        if (keepFirstTitleInBody || !Array.isArray(ir.blocks)) return;
+        const target = normalizeTitleCandidate(titleText);
+        const idx = ir.blocks.findIndex(block =>
+            block?.type === 'heading' && blockTitleText(block) === target);
+        if (idx >= 0) ir.blocks.splice(idx, 1);
+    };
     if (direct) {
         restoreTitleToBodyIfNeeded(ir, parsedTitle, direct);
         ir.title = direct;
@@ -702,15 +694,13 @@ function applyDocumentTitlePolicy(ir, file, customTitle, titleSource, titleBodyP
 
     if (ext !== 'docx' && parsedTitle && !isGenericTitleCandidate(parsedTitle)) {
         ir.title = parsedTitle;
+        removeFirstHeadingFromBody(parsedTitle);
         return;
     }
 
-    const firstTitle = findFirstDocumentTitleCandidate(ir);
     if (firstTitle) {
         ir.title = firstTitle.text;
-        if (!keepFirstTitleInBody && firstTitle.block.type === 'heading') {
-            ir.blocks.splice(ir.blocks.indexOf(firstTitle.block), 1);
-        }
+        removeFirstHeadingFromBody(firstTitle.text);
         return;
     }
 
@@ -732,21 +722,18 @@ function initFormatTabs() {
     tabs.forEach((tab, index) => {
         tab.addEventListener('click', () => {
             const scope = tab.closest('.service-info') || document;
-            const shouldOpen = !tab.classList.contains('active');
             // 모든 탭 비활성화 후 클릭된 탭만 활성화
             scope.querySelectorAll('.format-tab').forEach(t => {
                 t.classList.remove('active');
                 t.setAttribute('aria-selected', 'false');
             });
-            if (shouldOpen) {
-                tab.classList.add('active');
-                tab.setAttribute('aria-selected', 'true');
-            }
+            tab.classList.add('active');
+            tab.setAttribute('aria-selected', 'true');
 
             // 연결된 패널 표시 (data-target 속성으로 매핑)
             const targetId = tab.dataset.target;
             scope.querySelectorAll('.format-panel').forEach(panel => {
-                panel.classList.toggle('active', shouldOpen && panel.id === targetId);
+                panel.classList.toggle('active', panel.id === targetId);
             });
         });
         tab.addEventListener('keydown', (e) => {
@@ -1277,12 +1264,15 @@ function initOptions() {
     }
 
     // 제목을 비웠을 때 적용할 기준 (문서 첫 제목/문장 또는 파일 이름)
-    const titleSrcEl = document.getElementById('title-source');
-    if (titleSrcEl) {
-        updateTitlePlaceholder(titleSrcEl.value);
-        titleSrcEl.addEventListener('change', () => {
-            state.titleSource = titleSrcEl.value;
-            updateTitlePlaceholder(titleSrcEl.value);
+    const titleSourceBtns = document.querySelectorAll('.seg-btn[data-title-source]');
+    if (titleSourceBtns.length) {
+        applyTitleSourceUi(state.titleSource);
+        titleSourceBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                state.titleSource = btn.dataset.titleSource === 'filename' ? 'filename' : 'heading';
+                applyTitleSourceUi(state.titleSource);
+                updateTitlePlaceholder(state.titleSource);
+            });
         });
     }
 
@@ -1376,20 +1366,6 @@ function initOptions() {
         });
     }
 
-    const hrDisplayBtns = document.querySelectorAll('.seg-btn[data-hr-display]');
-    if (hrDisplayBtns.length) {
-        const savedHrDisplay = localStorage.getItem('tohwpx_showHorizontalRules');
-        state.showHorizontalRules = savedHrDisplay === 'true';
-        applyHrDisplayUi(state.showHorizontalRules);
-        hrDisplayBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                state.showHorizontalRules = btn.dataset.hrDisplay === 'show';
-                applyHrDisplayUi(state.showHorizontalRules);
-                localStorage.setItem('tohwpx_showHorizontalRules', String(state.showHorizontalRules));
-            });
-        });
-    }
-
     const detailSelects = [
         { id: 'paragraph-spacing', key: 'paragraphSpacing', store: 'tohwpx_paragraphSpacing', allowed: ['compact', 'normal', 'relaxed'] },
         { id: 'heading-style', key: 'headingStyle', store: 'tohwpx_headingStyle', allowed: ['compact', 'standard', 'prominent'] },
@@ -1462,7 +1438,7 @@ function initOptions() {
         irToggle.addEventListener('click', () => {
             const isHidden = irPreview.hidden;
             irPreview.hidden = !isHidden;
-            irToggle.textContent = isHidden ? '▼ IR 미리보기 숨기기' : '▶ IR 미리보기 보기';
+            irToggle.textContent = isHidden ? '▼ 고급 진단: IR 미리보기 숨기기' : '▶ 고급 진단: IR 미리보기';
             irToggle.setAttribute('aria-expanded', String(isHidden));
         });
     }
@@ -1476,6 +1452,15 @@ function updateTitlePlaceholder(titleSource = state.titleSource) {
     titleEl.placeholder = titleSource === 'filename'
         ? '비워두면 파일 이름을 제목으로 씁니다'
         : '비워두면 문서에서 제목을 찾습니다';
+}
+
+function applyTitleSourceUi(titleSource = state.titleSource) {
+    document.querySelectorAll('.seg-btn[data-title-source]').forEach(btn => {
+        const active = btn.dataset.titleSource === titleSource;
+        btn.classList.toggle('is-active', active);
+        btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+    });
+    updateTitlePlaceholder(titleSource);
 }
 
 function updateAdvancedSettingsSummary() {
@@ -1930,7 +1915,6 @@ async function convertOneFile(file, statusPrefix = '', outputFontName = state.do
             setProgress(58 + (pct * 0.14)); // 58% ~ 72%
             st(`HWPX 파일을 압축하는 중... ${Math.round(pct)}%`);
         }, state.orientation, state.lineSpacing, {
-            showHorizontalRules: state.showHorizontalRules,
             paragraphSpacing: state.paragraphSpacing,
             headingStyle: state.headingStyle,
             tableStyle: state.tableStyle,
@@ -2005,7 +1989,6 @@ function updateIrPreview(ir) {
 function showResult({ url, fileName, size, validation }) {
     const area = document.getElementById('result-area');
     if (!area) return;
-    updateWorkflowHint('done');
     const ext = state.file ? getFileExtension(state.file.name) : '';
     const inputLabel = getInputFormatLabel(ext);
     const summary = getConversionSummary();
@@ -2113,7 +2096,6 @@ function showResult({ url, fileName, size, validation }) {
 function showBatchResults({ okCount, warnCount, errCount, total }) {
     const area = document.getElementById('result-area');
     if (!area) return;
-    updateWorkflowHint('done');
 
     const successCount = okCount + warnCount;
     const cardClass = (errCount && !successCount) ? ' result-card--error'
@@ -2295,7 +2277,7 @@ function classifyConversionError(err, ext = '') {
             category: '지원하지 않는 포맷',
             title: '이 파일 형식은 바로 변환할 수 없습니다.',
             reason: msg,
-            action: `입력 가능 포맷(${SUPPORTED_FORMAT_LABEL})으로 저장한 뒤 다시 선택하세요.`,
+            action: `입력 포맷(${SUPPORTED_FORMAT_LABEL})으로 저장한 뒤 다시 선택하세요.`,
         };
     }
     if (/크기 초과|too large|50MB|100MB|용량|size/i.test(msg)) {
@@ -2521,15 +2503,6 @@ function updateMarginPreview() {
     paper.style.setProperty('--margin-preview-header', pct(m.header, contentHeightMm, 3.2, 30));
     paper.style.setProperty('--margin-preview-footer', pct(m.footer, contentHeightMm, 3.2, 30));
 }
-
-function applyHrDisplayUi(show) {
-    document.querySelectorAll('.seg-btn[data-hr-display]').forEach(btn => {
-        const active = (btn.dataset.hrDisplay === 'show') === !!show;
-        btn.classList.toggle('is-active', active);
-        btn.setAttribute('aria-pressed', active ? 'true' : 'false');
-    });
-}
-
 
 // ─────────────────────────────────────────────────────────────────────────
 // [진행률 표시]
@@ -3120,7 +3093,6 @@ function resetConverterState() {
     state.paperSize = 'A4';
     state.orientation = 'portrait';
     state.lineSpacing = 160;
-    state.showHorizontalRules = false;
     state.paragraphSpacing = 'normal';
     state.headingStyle = 'standard';
     state.tableStyle = 'standard';
@@ -3133,7 +3105,7 @@ function resetConverterState() {
 
     for (const key of [
         'tohwpx_font', 'tohwpx_fontSize', 'tohwpx_paperSize', 'tohwpx_autoDownload',
-        'tohwpx_orientation', 'tohwpx_lineSpacing', 'tohwpx_showHorizontalRules',
+        'tohwpx_orientation', 'tohwpx_lineSpacing',
         'tohwpx_paragraphSpacing', 'tohwpx_headingStyle', 'tohwpx_tableStyle',
         'tohwpx_linkStyle', 'tohwpx_imageMaxWidth', 'tohwpx_imageAlign', 'tohwpx_titleBodyPolicy'
     ]) {
@@ -3154,9 +3126,7 @@ function resetConverterState() {
     const autoDownload = document.getElementById('auto-download');
     const plainRadio = document.querySelector('input[name="doc-type"][value="plain"]');
     if (plainRadio) plainRadio.checked = true;
-    const titleSrc = document.getElementById('title-source');
-    if (titleSrc) titleSrc.value = 'heading';
-    updateTitlePlaceholder('heading');
+    applyTitleSourceUi('heading');
     if (docFont) docFont.value = '휴먼명조';
     if (fontSize) fontSize.value = '12';
     if (paperSize) paperSize.value = 'A4';
@@ -3175,7 +3145,6 @@ function resetConverterState() {
         if (el) el.value = value;
     }
     applyOrientationUi('portrait');
-    applyHrDisplayUi(false);
     updateMarginPreview();
     updateAdvancedSettingsSummary();
     updateConvertButton(false);

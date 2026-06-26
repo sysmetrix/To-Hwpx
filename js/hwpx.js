@@ -407,12 +407,12 @@ function buildHeaderXml(fontName, basePt, customBfMap = new Map(), imageBlocks =
       </hh:charPr>`;
     };
 
-    const paraBase = (id, align, spacing, prev, next, indentLeft = 0, borderRef = '1') =>
+    const paraBase = (id, align, spacing, prev, next, indentLeft = 0, borderRef = '1', intent = 0) =>
         `      <hh:paraPr id="${id}" tabPrIDRef="0" condense="0" fontLineHeight="0" snapToGrid="1" suppressLineNumbers="0" checked="0">
         <hh:align horizontal="${align}" vertical="BASELINE"/>
         <hh:heading type="NONE" idRef="0" level="0"/>
         <hh:breakSetting breakLatinWord="KEEP_WORD" breakNonLatinWord="KEEP_WORD" widowOrphan="0" keepWithNext="0" keepLines="0" pageBreakBefore="0" lineWrap="BREAK"/>
-        <hh:margin><hh:intent value="0" unit="HWPUNIT"/><hh:left value="${indentLeft}" unit="HWPUNIT"/><hh:right value="0" unit="HWPUNIT"/><hh:prev value="${prev}" unit="HWPUNIT"/><hh:next value="${next}" unit="HWPUNIT"/></hh:margin>
+        <hh:margin><hh:intent value="${intent}" unit="HWPUNIT"/><hh:left value="${indentLeft}" unit="HWPUNIT"/><hh:right value="0" unit="HWPUNIT"/><hh:prev value="${prev}" unit="HWPUNIT"/><hh:next value="${next}" unit="HWPUNIT"/></hh:margin>
         <hh:lineSpacing type="PERCENT" value="${spacing}" unit="HWPUNIT"/>
         <hh:border borderFillIDRef="${borderRef}" offsetLeft="0" offsetRight="0" offsetTop="0" offsetBottom="0" connect="0" ignoreMargin="0"/>
       </hh:paraPr>`;
@@ -459,7 +459,7 @@ ${paraBase(1, 'LEFT',    h1LineSpacing, paragraphSpacing.headingPrev, paragraphS
 ${paraBase(2, 'LEFT',    h2LineSpacing, Math.max(0, paragraphSpacing.headingPrev - 150), Math.max(0, paragraphSpacing.headingNext - 142),    0)}
 ${paraBase(3, 'LEFT',    bodyLineSpacing, Math.max(0, paragraphSpacing.headingPrev - 283), Math.max(0, paragraphSpacing.headingNext - 284),    0)}
 ${paraBase(4, 'LEFT',    bodyLineSpacing, Math.max(0, paragraphSpacing.headingPrev - 425), Math.max(0, paragraphSpacing.headingNext - 367),    0)}
-${paraBase(5, 'LEFT',    bodyLineSpacing,   0,  paragraphSpacing.listNext,  600)}
+${paraBase(5, 'LEFT',    bodyLineSpacing,   0,  paragraphSpacing.listNext,  600, '1', -600)}
 ${paraBase(6, 'LEFT',    140, 200,  200,  400)}
       <!-- id=7  표 셀 가운데 정렬 -->
 ${paraBase(7, 'CENTER',  150,   0,    0,    0)}
@@ -479,8 +479,8 @@ ${paraBase(14, 'LEFT',   120,   0,    0,    0)}
 ${paraBase(15, 'LEFT',   bodyLineSpacing, Math.max(0, paragraphSpacing.headingPrev - 550), Math.max(0, paragraphSpacing.headingNext - 417),    0)}
 ${paraBase(16, 'LEFT',   bodyLineSpacing, Math.max(0, paragraphSpacing.headingPrev - 650), Math.max(0, paragraphSpacing.headingNext - 467),    0)}
       <!-- id=17/18  중첩 목록 들여쓰기 (레벨1/레벨2). 레벨0은 id=5 사용 -->
-${paraBase(17, 'LEFT',   bodyLineSpacing,   0,  paragraphSpacing.listNext, 1200)}
-${paraBase(18, 'LEFT',   bodyLineSpacing,   0,  paragraphSpacing.listNext, 1800)}
+${paraBase(17, 'LEFT',   bodyLineSpacing,   0,  paragraphSpacing.listNext, 1200, '1', -600)}
+${paraBase(18, 'LEFT',   bodyLineSpacing,   0,  paragraphSpacing.listNext, 1800, '1', -600)}
       <!-- id=19  인용구: 왼쪽 선+옅은 배경, 본문보다 조금 들여쓰기, 아래 3mm -->
 ${paraBase(19, 'LEFT',   bodyLineSpacing, 300,  850,  900, '19')}
     </hh:paraProperties>
@@ -1274,7 +1274,6 @@ function buildSectionBootstrap(secPrXml, contentWidthHwp) {
  * [v4] 참조 앱(md-to-hwpx)처럼 첫 bootstrap 문단에 secPr를 배치한다.
  */
 function buildSection(ir, marginsHwp, paperKey, landscape = false, customBfMap = new Map(), customCharMap = new Map(), options = {}) {
-    const showHorizontalRules = !!options.showHorizontalRules;
     const NS_HS = 'http://www.hancom.co.kr/hwpml/2011/section';
     const NS_HP = 'http://www.hancom.co.kr/hwpml/2011/paragraph';
     const docType = ir.doc_type || 'plain';
@@ -1354,8 +1353,8 @@ function buildSection(ir, marginsHwp, paperKey, landscape = false, customBfMap =
             } else if (qType === 'image') {
                 const imgIndex = imageBlocks.indexOf(quoteBlock);
                 if (imgIndex >= 0) parts.push(buildImageRun(quoteBlock, imgIndex, contentWidthHwp, options));
-            } else if (qType === 'hr' && showHorizontalRules) {
-                parts.push(buildHrPara(contentWidthHwp));
+            } else if (qType === 'hr') {
+                parts.push(buildBlankPara());
             } else if (qType === 'quote') {
                 pushQuoteBlocks(quoteBlock.blocks || []);
             } else if (quoteBlock.text) {
@@ -1389,9 +1388,9 @@ function buildSection(ir, marginsHwp, paperKey, landscape = false, customBfMap =
             // 명시적 빈 줄 블록
             parts.push(buildBlankPara());
 
-        } else if (bt === 'hr' && showHorizontalRules) {
-            // 구분선 → 글자처럼 취급되는 표 객체
-            parts.push(buildHrPara(contentWidthHwp));
+        } else if (bt === 'hr') {
+            // 구분선은 시각 요소 대신 빈 줄로 대체해 본문 흐름만 유지한다.
+            parts.push(buildBlankPara());
 
         } else if (bt === 'list') {
             // 중첩 레벨(level)별 들여쓰기 paraPr: 0→5, 1→17, 2+→18
@@ -1473,7 +1472,6 @@ async function buildHwpx(ir, fontName = '휴먼명조', fontSize = 12, marginsMm
         linkStyle: 'blue',
         imageMaxWidth: 100,
         imageAlign: 'left',
-        showHorizontalRules: false,
     }, options || {});
 
     const marginsHwp = marginsMmToHwp(marginsMm || DEFAULT_MARGINS_MM);

@@ -1156,7 +1156,7 @@ a:hover { text-decoration: underline; }
     padding: 12px;
     border: 1px solid var(--c-border);
     border-radius: var(--radius-md);
-    background: var(--c-surface-alt);
+    background: color-mix(in srgb, var(--c-surface-alt) 82%, var(--c-border) 18%);
 }
 .document-detail-settings > .form-row-label {
     margin-bottom: 10px;
@@ -1398,10 +1398,10 @@ a:hover { text-decoration: underline; }
     z-index: 10000;
     max-width: min(320px, calc(100vw - 24px));
     padding: 9px 11px;
-    border: 1px solid var(--c-border);
+    border: 1px solid var(--c-border-strong);
     border-radius: var(--radius-sm);
-    background: var(--c-text);
-    color: #fff;
+    background: var(--c-surface);
+    color: var(--c-text);
     box-shadow: var(--shadow-md);
     font-size: 0.78rem;
     font-weight: 600;
@@ -1446,16 +1446,23 @@ a:hover { text-decoration: underline; }
 .title-source-row {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
     gap: 8px;
     margin-top: 8px;
     font-size: 0.8rem;
     color: var(--c-text-muted);
 }
-.title-source-row select {
-    width: auto;
-    flex: 0 0 auto;
-    padding: 6px 30px 6px 10px;
-    font-size: 0.82rem;
+.title-source-row > span {
+    white-space: nowrap;
+}
+.title-source-control {
+    width: min(100%, 420px);
+    min-width: 240px;
+    flex: 1 1 260px;
+}
+.title-source-control .seg-btn {
+    padding: 7px 12px;
+    font-size: 0.8rem;
 }
 /* 옵션 보조 안내문 */
 .form-hint {
@@ -2512,6 +2519,7 @@ a:hover { text-decoration: underline; }
 
     /* 포맷 그리드 작은 카드 */
     .format-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
+    #panel-basic .format-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
     /* How It Works 연결선 숨김 */
     .steps-grid::before { display: none; }
@@ -2558,6 +2566,7 @@ a:hover { text-decoration: underline; }
     .support-section { padding: 48px 0; }
     .value-point { padding: 12px 0; }
     .format-grid { grid-template-columns: repeat(2, 1fr); }
+    #panel-basic .format-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .format-card { padding: 16px 10px; }
     .card-name,
     .card-quality {
