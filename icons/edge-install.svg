@@ -1,25 +1,21 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="128" height="112" viewBox="0 0 128 112" role="img" aria-labelledby="title desc">
-  <title id="title">Edge 주소창 앱 설치 아이콘</title>
-  <desc id="desc">앱 창과 더하기 표시 모양의 Edge 앱 설치 아이콘</desc>
+  <title id="title">Edge install icon</title>
+  <desc id="desc">A thin browser window outline with a plus sign, matching Edge's app install icon style.</desc>
   <defs>
-    <linearGradient id="edgeFace" x1="22" y1="13" x2="99" y2="96" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#fffef9"/>
-      <stop offset=".58" stop-color="#f2eee5"/>
-      <stop offset="1" stop-color="#d9d3c8"/>
-    </linearGradient>
-    <linearGradient id="edgeStroke" x1="24" y1="14" x2="102" y2="98" gradientUnits="userSpaceOnUse">
+    <linearGradient id="edgeInstallSurface" x1="32" y1="52" x2="76" y2="70" gradientUnits="userSpaceOnUse">
       <stop offset="0" stop-color="#ffffff"/>
-      <stop offset=".5" stop-color="#d2ccc1"/>
-      <stop offset="1" stop-color="#a9a197"/>
+      <stop offset="1" stop-color="#f1f3f4"/>
     </linearGradient>
-    <filter id="edgeShadow" x="-18%" y="-20%" width="136%" height="145%">
-      <feDropShadow dx="0" dy="5" stdDeviation="4" flood-color="#101318" flood-opacity=".27"/>
-      <feDropShadow dx="0" dy="1" stdDeviation="1" flood-color="#ffffff" flood-opacity=".55"/>
+    <filter id="edgeInstallShadow" x="-12%" y="-12%" width="124%" height="130%">
+      <feDropShadow dx="0" dy="1" stdDeviation="1" flood-color="#202124" flood-opacity=".14"/>
     </filter>
   </defs>
-  <g filter="url(#edgeShadow)">
-    <path d="M24 24a8 8 0 0 1 8-8h22a8 8 0 0 1 8 8v20h28a8 8 0 0 1 8 8v28a8 8 0 0 1-8 8H32a8 8 0 0 1-8-8V24Zm14 6v23h21V30H38Zm0 37v7h46V58H62v1a8 8 0 0 1-8 8H38Z" fill="url(#edgeFace)" stroke="url(#edgeStroke)" stroke-width="3" stroke-linejoin="round"/>
-    <path d="M94 17.5a7.5 7.5 0 0 1 15 0V31h13.5a7.5 7.5 0 0 1 0 15H109v13.5a7.5 7.5 0 0 1-15 0V46H80.5a7.5 7.5 0 0 1 0-15H94V17.5Z" fill="url(#edgeFace)" stroke="url(#edgeStroke)" stroke-width="3" stroke-linejoin="round"/>
-    <path d="M39 31h18M39 68h41M101.5 16v42M80.5 38.5h42" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" opacity=".5"/>
+  <g fill="none" stroke="#5f6368" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="20" y="24" width="68" height="58" rx="8" filter="url(#edgeInstallShadow)"/>
+    <path d="M20 40h68"/>
+    <path d="M34 32h.1M46 32h.1"/>
+    <path d="M106 24v50"/>
+    <path d="M81 49h50"/>
   </g>
+  <path d="M32 52h44v18H32z" fill="url(#edgeInstallSurface)" stroke="#dadce0" stroke-width="3" stroke-linejoin="round"/>
 </svg>
