@@ -538,7 +538,8 @@ async function convertThroughUi(page, { inputPath, format, text, baseName }) {
   await page.goto(inputPath ? baseUrl : `${baseUrl}?lab=1`, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => window.JSZip && window.marked && window.XLSX, null, { timeout: 30000 });
   if (!inputPath) {
-    assert(await page.locator('.input-mode-tabs').isVisible(), 'lab: ?lab=1에서 직접 입력 탭이 보이지 않음');
+    assert(await page.locator('.input-mode-actions').isVisible(), 'lab: ?lab=1에서 직접 입력 버튼이 보이지 않음');
+    assert(!(await page.locator('#paste-mode').isVisible()), 'lab: 직접 입력칸이 버튼 클릭 전부터 보임');
   }
 
   const downloadPromise = page.waitForEvent('download', { timeout: 30000 });
@@ -561,8 +562,8 @@ async function convertThroughUi(page, { inputPath, format, text, baseName }) {
 async function validateDirectInput(page) {
   const baseUrl = `http://127.0.0.1:${PORT}/index.html`;
   await page.goto(`${baseUrl}?lab=0`, { waitUntil: 'domcontentloaded' });
-  assert(!await page.locator('.input-mode-tabs').isVisible(),
-    'lab: 일반 사용자에게 직접 입력 탭이 노출됨');
+  assert(!await page.locator('.input-mode-actions').isVisible(),
+    'lab: 일반 사용자에게 직접 입력 버튼이 노출됨');
   await page.locator('#open-changelog').click();
   await page.locator('.changelog-tab[data-tab="dev"]').click();
   const changelogTabGap = await page.evaluate(() => {
@@ -622,8 +623,8 @@ async function validateDirectInput(page) {
     'lab: 승인 후 실험실 토글 상태가 켜짐으로 표시되지 않음');
   await page.locator('[data-lab-toggle]').click();
   await page.waitForLoadState('domcontentloaded');
-  assert(!await page.locator('.input-mode-tabs').isVisible(),
-    'lab: 토글을 끈 뒤 직접 입력 탭이 남아 있음');
+  assert(!await page.locator('.input-mode-actions').isVisible(),
+    'lab: 토글을 끈 뒤 직접 입력 버튼이 남아 있음');
   await page.locator('#open-changelog').click();
   await page.locator('.changelog-tab[data-tab="dev"]').click();
   assert(await page.locator('[data-lab-toggle]').getAttribute('aria-pressed') === 'false',
@@ -638,19 +639,18 @@ async function validateCommercialUx(page) {
   await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => window.JSZip && window.marked && window.XLSX, null, { timeout: 30000 });
 
-  assert(await page.locator('#quick-guide').isVisible(), 'ux: 닫아도 남는 처음 사용 안내 바가 보이지 않음');
   const heroDropText = await page.locator('#drop-zone .drop-sub').textContent();
   assert(heroDropText.includes('MD · DOCX · HTML · CSV/XLSX · JSON · TXT · HWP · IPYNB'),
     'ux: 첫 화면 드롭존 입력 포맷 순서가 안내 기준과 다름');
   assert((await page.locator('#file-input').getAttribute('accept')).startsWith('.md,.markdown,.docx,.html,.htm,.csv,.xlsx,.xls,.json,.txt,.hwp,.ipynb'),
     'ux: 파일 선택 accept 순서가 드롭존 입력 포맷 순서와 다름');
-  const quickGuideText = await page.locator('#quick-guide').textContent();
-  assert(quickGuideText.includes('파일 선택') && quickGuideText.includes('HWPX 다운로드'),
-    'ux: 처음 사용 안내 바의 핵심 흐름 문구 누락');
+  assert(await page.locator('#open-onboarding-guide').count() === 0,
+    'ux: 드롭존 아래 중복 도움말 버튼이 남아 있음');
+  assert(!(await page.locator('footer').textContent()).includes('버그 신고')
+    && !(await page.locator('footer').textContent()).includes('스킬 문서'),
+    'ux: 하단 관련 링크에 버그 신고 또는 스킬 문서가 남아 있음');
 
-  const onboardingGuide = page.locator('#open-onboarding-guide');
-  assert((await onboardingGuide.textContent()).trim() === '도움말',
-    'ux: 보조 안내 첫 버튼이 도움말로 정리되지 않음');
+  const helpButton = page.locator('#open-help');
   await page.locator('#open-help').click();
   assert(await page.locator('#onboarding-guide-modal').isVisible(), 'ux: 상단 도움말 버튼이 모달을 열지 못함');
   assert(await page.locator('.help-tab[data-help-tab="usage"]').getAttribute('aria-selected') === 'true',
@@ -666,7 +666,7 @@ async function validateCommercialUx(page) {
     'ux: Shift+/ 단축키가 도움말의 단축키 탭으로 연결되지 않음');
   await page.keyboard.press('Escape');
 
-  await onboardingGuide.click();
+  await helpButton.click();
   assert(await page.locator('#onboarding-guide-modal').isVisible(), 'ux: 도움말 모달이 열리지 않음');
   const onboardingText = await page.locator('#onboarding-guide-modal').textContent();
   assert(onboardingText.includes('대부분의 문서는 아래 순서만 기억하면 됩니다')
@@ -674,9 +674,7 @@ async function validateCommercialUx(page) {
     && onboardingText.includes('보고서처럼 맞출 때만'),
     'ux: 도움말 사용법/단축키 탭 문구가 누락됨');
   await page.keyboard.press('Escape');
-  assert(await page.locator('#quick-guide').isVisible(),
-    'ux: 처음 안내 모달을 닫은 뒤 잔존 안내 바가 사라짐');
-  await onboardingGuide.click();
+  await helpButton.click();
   await page.locator('#onboarding-open-advanced').click();
   assert(await page.locator('#advanced-guide-modal').isVisible(), 'ux: 처음 안내에서 고급 사용 팁으로 이동하지 못함');
   const advancedText = await page.locator('#advanced-guide-modal').textContent();
@@ -685,16 +683,17 @@ async function validateCommercialUx(page) {
     && advancedText.includes('문단 앞/뒤 간격'),
     'ux: 고급 사용 팁 핵심 내용이 누락됨');
   await page.keyboard.press('Escape');
-  assert(await onboardingGuide.evaluate(el => document.activeElement === el),
-    'ux: 고급 사용 팁 종료 후 처음 안내 버튼으로 포커스가 복귀하지 않음');
-  await page.locator('#quick-guide-hide').click();
-  assert(!(await page.locator('#quick-guide').isVisible()),
-    'ux: 안내 바 숨기기 버튼이 동작하지 않음');
+  assert(await helpButton.evaluate(el => document.activeElement === el),
+    'ux: 고급 사용 팁 종료 후 상단 도움말 버튼으로 포커스가 복귀하지 않음');
 
   const pcGuide = page.locator('#open-pc-guide');
   await pcGuide.focus();
   await pcGuide.press('Enter');
   assert(await page.locator('#pc-guide-modal').isVisible(), 'ux: PC 안내 모달이 키보드로 열리지 않음');
+  await page.waitForFunction(() => {
+    const modal = document.querySelector('#pc-guide-modal');
+    return modal?.contains(document.activeElement);
+  });
   await page.keyboard.press('Tab');
   assert(await page.locator('#pc-guide-modal').evaluate(modal => modal.contains(document.activeElement)),
     'ux: 모달 Tab 포커스가 배경으로 이탈함');
@@ -808,8 +807,8 @@ async function validateCommercialUx(page) {
     && await page.locator('.help-dot[aria-label="가로 구분선 도움말"]').count() === 1
     && await page.locator('.help-dot[aria-label="페이지 여백 도움말"]').count() === 1
     && await page.locator('.help-dot[aria-label="문서 세부 설정 도움말"]').count() === 1
-    && await page.locator('#open-advanced-guide').count() === 1,
-    'ux: 세부 설정 도움말 또는 고급 사용 팁 진입점 누락');
+    && await page.locator('#open-advanced-guide').count() === 0,
+    'ux: 세부 설정 도움말 또는 고급 사용 팁 중복 진입점 상태가 기준과 다름');
   const titleSourceLabel = await page.locator('[data-title-source="heading"]').textContent();
   const titlePlaceholder = await page.locator('#doc-title').getAttribute('placeholder');
   assert(titleSourceLabel.trim() === '문서 첫 문장' && titlePlaceholder.includes('문서 첫 문장'),

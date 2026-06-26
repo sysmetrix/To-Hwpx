@@ -1626,7 +1626,7 @@ function bindLabControl() {
 
 function initInputMode() {
     if (!isLabEnabled()) {
-        document.querySelector('.input-mode-tabs')?.setAttribute('hidden', '');
+        document.querySelector('.input-mode-actions')?.setAttribute('hidden', '');
         document.getElementById('paste-mode')?.setAttribute('hidden', '');
         const upload = document.getElementById('upload-mode');
         if (upload) upload.hidden = false;
@@ -1634,6 +1634,7 @@ function initInputMode() {
         return;
     }
 
+    document.querySelector('.input-mode-actions')?.removeAttribute('hidden');
     document.getElementById('mode-upload')?.addEventListener('click', () => setInputMode('upload'));
     document.getElementById('mode-paste')?.addEventListener('click', () => setInputMode('paste'));
 
@@ -1686,12 +1687,8 @@ function setInputMode(mode) {
     if (upload) upload.hidden = mode !== 'upload';
     if (paste)  paste.hidden  = mode !== 'paste';
 
-    const tabU = document.getElementById('mode-upload');
-    const tabP = document.getElementById('mode-paste');
-    tabU?.classList.toggle('is-active', mode === 'upload');
-    tabP?.classList.toggle('is-active', mode === 'paste');
-    tabU?.setAttribute('aria-selected', String(mode === 'upload'));
-    tabP?.setAttribute('aria-selected', String(mode === 'paste'));
+    const pasteButton = document.getElementById('mode-paste');
+    pasteButton?.setAttribute('aria-expanded', String(mode === 'paste'));
 
     // 공통 초기화(큐·결과·업로드 UI). clearSelectedFile은 inputMode를 바꾸지 않는다.
     clearSelectedFile();
@@ -2779,20 +2776,18 @@ function initModals() {
     document.getElementById('onboarding-open-advanced')?.addEventListener('click', () => {
         markOnboardingSeen();
         closeModal(document.getElementById('onboarding-guide-modal'), false);
-        document.getElementById('open-onboarding-guide')?.focus({ preventScroll: true });
+        document.getElementById('open-help')?.focus({ preventScroll: true });
         showAdvancedGuide();
     });
 
     // 업데이트 내역 열기 버튼 (유틸리티 바)
     document.getElementById('open-changelog')?.addEventListener('click', showChangelog);
-    document.getElementById('open-onboarding-guide')?.addEventListener('click', showOnboardingGuide);
     document.getElementById('open-help')?.addEventListener('click', showOnboardingGuide);
     document.getElementById('open-pc-guide')?.addEventListener('click', showPcGuide);
     document.getElementById('open-mobile-guide')?.addEventListener('click', showMobileGuide);
     document.getElementById('open-install-guide')?.addEventListener('click', showInstallGuide);
     document.getElementById('open-privacy-guide')?.addEventListener('click', showPrivacyGuide);
     document.getElementById('open-font-guide')?.addEventListener('click', showFontGuide);
-    document.getElementById('open-advanced-guide')?.addEventListener('click', showAdvancedGuide);
     document.getElementById('open-rhwp-precise')?.addEventListener('click', loadRhwpPrecise);
 
     // 오버레이 바깥 클릭으로 닫기
