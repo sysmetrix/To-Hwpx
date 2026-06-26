@@ -1505,10 +1505,7 @@ function updateAdvancedSettingsSummary() {
     const summary = document.getElementById('advanced-settings-summary');
     if (!summary) return;
     const orientationLabel = state.orientation === 'landscape' ? '가로' : '세로';
-    const paragraphLabel = ({ compact: '문단 간격 작게', normal: '문단 기본 간격', relaxed: '문단 간격 크게' })[state.paragraphSpacing] || '문단 기본 간격';
-    const headingLabel = ({ compact: '작은 제목', standard: '기본 제목', prominent: '큰 제목·굵게' })[state.headingStyle] || '기본 제목';
-    const tableLabel = ({ standard: '기본 테두리', plain: '단순 테두리', report: '머리행 음영' })[state.tableStyle] || '기본 테두리';
-    summary.textContent = `현재: ${state.docFont} · ${state.fontSize}pt · 줄 ${state.lineSpacing}% · ${state.paperSize} ${orientationLabel} · ${paragraphLabel} · ${headingLabel} · ${tableLabel}`;
+    summary.textContent = `현재: ${state.docFont} · ${state.fontSize}pt · 줄 ${state.lineSpacing}% · ${state.paperSize} ${orientationLabel}`;
 }
 
 
