@@ -432,18 +432,12 @@ async function validateHwpxPackage(page, zip, testCase) {
   }
 }
 
-function assertHorizontalRuleTable(sectionXml, label) {
+function assertHorizontalRuleAsBlank(sectionXml, label) {
   const hrTableMatch = [...sectionXml.matchAll(/<hp:tbl\b[\s\S]*?<\/hp:tbl>/g)]
     .find(match => /<hp:tc\b[^>]*\bborderFillIDRef="10"/.test(match[0]));
-  assert(hrTableMatch, `${label}: 구분선 표를 찾지 못함`);
-  const hrOutMargin = (/<hp:outMargin\b[^>]*\/>/.exec(hrTableMatch[0]) || [])[0] || '';
-  assert(/\btop="850"/.test(hrOutMargin) && /\bbottom="850"/.test(hrOutMargin),
-    `${label}: 구분선 표 위아래 바깥 여백이 각각 3mm가 아님`);
-  const aroundHr = sectionXml.slice(Math.max(0, hrTableMatch.index - 250), hrTableMatch.index + hrTableMatch[0].length + 250);
-  assert(!/<hp:p\b[^>]*\bparaPrIDRef="9"[^>]*>[\s\S]*?<\/hp:p>\s*<hp:p\b[^>]*>[\s\S]*?<hp:tbl\b/.test(aroundHr),
-    `${label}: 구분선 위에 외부 빈 문단이 남아 있음`);
-  assert(!/<\/hp:tbl>[\s\S]*?<\/hp:p>\s*<hp:p\b[^>]*\bparaPrIDRef="9"/.test(aroundHr),
-    `${label}: 구분선 아래에 외부 빈 문단이 남아 있음`);
+  assert(!hrTableMatch, `${label}: 구분선 표가 남아 있음`);
+  assert(/<hp:p\b[^>]*\bparaPrIDRef="9"[\s\S]*?<hp:t> <\/hp:t>[\s\S]*?<\/hp:p>/.test(sectionXml),
+    `${label}: 구분선이 빈 줄 문단으로 대체되지 않음`);
 }
 
 async function runCase(page, testCase) {
@@ -694,6 +688,7 @@ async function validateCommercialUx(page) {
     'ux: 설치 안내 종료 후 열기 버튼으로 포커스가 복귀하지 않음');
 
   const mdCard = page.locator('.format-card[data-ext="md"]');
+  await page.locator('.service-info .format-tab[data-target="panel-basic"]').click();
   await mdCard.focus();
   await mdCard.press('Enter');
   assert(await page.locator('#format-modal').isVisible(), 'ux: 포맷 카드 Enter 조작 실패');
@@ -701,6 +696,10 @@ async function validateCommercialUx(page) {
   assert(await mdCard.evaluate(el => document.activeElement === el), 'ux: 포맷 모달 종료 후 카드로 포커스가 복귀하지 않음');
 
   const tabs = page.locator('.service-info .format-tab');
+  assert(await tabs.first().getAttribute('data-target') === 'panel-how'
+    && await tabs.nth(1).getAttribute('data-target') === 'panel-basic'
+    && await tabs.nth(2).getAttribute('data-target') === 'panel-ext',
+    'ux: 포맷 탭 순서가 더 알아보기 / 입력 포맷 / 예정 포맷이 아님');
   await tabs.first().focus();
   await tabs.first().press('ArrowRight');
   assert(await tabs.nth(1).getAttribute('aria-selected') === 'true', 'ux: 포맷 탭 방향키 전환 실패');
@@ -725,7 +724,7 @@ async function validateCommercialUx(page) {
   assert(serviceWorker.includes("'./icons/chrome-install.svg'")
     && serviceWorker.includes("'./icons/edge-install.svg'"),
     'pwa: 설치 안내 아이콘이 오프라인 앱 셸 캐시에 없음');
-  assert(await page.locator('.help-dot[aria-label="줄 간격 도움말"]').count() === 1
+  assert(await page.locator('.help-dot[aria-label="줄 간격 도움말"]').count() === 0
     && await page.locator('.help-dot[aria-label="페이지 여백 도움말"]').count() === 1
     && await page.locator('.help-dot[aria-label="문서 세부 설정 도움말"]').count() === 1
     && await page.locator('#open-advanced-guide').count() === 1,
@@ -733,12 +732,12 @@ async function validateCommercialUx(page) {
   if (!(await page.locator('.advanced-settings').getAttribute('open'))) {
     await page.locator('.advanced-settings > summary').click();
   }
-  await page.locator('.help-dot[aria-label="줄 간격 도움말"]').hover();
+  await page.locator('.help-dot[aria-label="문서 세부 설정 도움말"]').click();
   assert(await page.locator('#help-popover').isVisible()
-    && (await page.locator('#help-popover').textContent()).includes('본문과 목록'),
+    && (await page.locator('#help-popover').textContent()).includes('문단 간격'),
     'ux: 물음표 도움말 커스텀 툴팁이 표시되지 않음');
-  assert((await page.locator('#workflow-hint').textContent()).includes('3단계'),
-    'ux: 변환 완료 후 상황별 흐름 안내가 완료 단계로 바뀌지 않음');
+  assert(await page.locator('#workflow-hint').count() === 0,
+    'ux: 고정 1/2/3단계 안내가 남아 있음');
   console.log('PASS UX    keyboard, modal, warning download, PWA scope');
 }
 
@@ -875,17 +874,15 @@ async function validateDetailSettingsUx(page) {
   await page.locator('.advanced-settings > summary').click();
 
   const defaults = await page.evaluate(() => ({
-    hrButtons: [...document.querySelectorAll('[data-hr-display]')].map(btn => ({
-      mode: btn.dataset.hrDisplay,
-      active: btn.classList.contains('is-active'),
-    })),
+    hrButtonCount: document.querySelectorAll('[data-hr-display]').length,
     marginMap: !!document.querySelector('.margin-paper-map .margin-paper-inner'),
+    marginSideLabels: document.querySelectorAll('.margin-page-label--left, .margin-page-label--right').length,
     marginInputs: ['top', 'header', 'left', 'right', 'bottom', 'footer']
       .filter(side => document.querySelector(`#margin-${side}`)).length,
   }));
-  assert(defaults.hrButtons.some(btn => btn.mode === 'hide' && btn.active),
-    'detail settings: 구분선 기본값이 숨김이 아님');
+  assert(defaults.hrButtonCount === 0, 'detail settings: 가로 구분선 표시 옵션이 남아 있음');
   assert(defaults.marginMap, 'detail settings: 페이지 여백 종이 미니맵 누락');
+  assert(defaults.marginSideLabels === 0, 'detail settings: 페이지 여백 좌우 배지가 남아 있음');
   assert(defaults.marginInputs === 6, 'detail settings: 페이지 여백 입력 6개가 유지되지 않음');
   for (const id of ['paragraph-spacing', 'heading-style', 'table-style', 'link-style', 'image-max-width', 'image-align', 'title-body-policy']) {
     assert(await page.locator(`#${id}`).count() === 1, `detail settings: #${id} 컨트롤 누락`);
@@ -925,9 +922,12 @@ async function validateDetailSettingsUx(page) {
     };
   });
   const bodyPara = (/<hh:paraPr\b[^>]*\bid="0"[\s\S]*?<\/hh:paraPr>/.exec(detailOutput.header) || [])[0] || '';
+  const listPara = (/<hh:paraPr\b[^>]*\bid="5"[\s\S]*?<\/hh:paraPr>/.exec(detailOutput.header) || [])[0] || '';
   const h1Char = (/<hh:charPr\b[^>]*\bid="1"[^>]*>/.exec(detailOutput.header) || [])[0] || '';
   const imageWidth = Number(((/<hp:curSz\b[^>]*\bwidth="(\d+)"/.exec(detailOutput.section) || [])[1]) || 0);
   assert(bodyPara.includes('<hh:next value="1134"'), 'detail settings: 문단 넓게 프리셋이 HWPX paraPr에 반영되지 않음');
+  assert(listPara.includes('<hh:intent value="-600"') && listPara.includes('<hh:left value="600"'),
+    'detail settings: 글머리 hanging indent가 첫 글자 기준으로 설정되지 않음');
   assert(h1Char.includes('height="2000"'), 'detail settings: 제목 강조 프리셋이 H1 크기에 반영되지 않음');
   assert(detailOutput.header.includes('faceColor="#EAF2FF"'), 'detail settings: 보고서형 표 머리행 색상이 생성되지 않음');
   assert(detailOutput.section.includes('링크 (https://example.com/path)'), 'detail settings: 링크 주소 함께 표시가 본문에 반영되지 않음');
@@ -941,42 +941,29 @@ async function validateDetailSettingsUx(page) {
   });
   assert(keptTitle.title === '본문 제목' && keptTitle.firstBlock === '본문 제목' && keptTitle.blockCount === 2,
     'detail settings: 첫 제목 본문 유지 토글 정책이 적용되지 않음');
+  const removedParsedTitle = await page.evaluate(() => {
+    const ir = { title: '본문 제목', doc_type: 'plain', blocks: [{ type: 'heading', level: 1, text: '본문 제목' }, { type: 'para', text: '본문' }] };
+    applyDocumentTitlePolicy(ir, new File(['# 본문 제목'], 'sample.md', { type: 'text/markdown' }), '', 'heading', 'remove');
+    return { title: ir.title, firstBlock: ir.blocks[0]?.text, blockCount: ir.blocks.length };
+  });
+  assert(removedParsedTitle.title === '본문 제목' && removedParsedTitle.firstBlock === '본문' && removedParsedTitle.blockCount === 1,
+    'detail settings: 파서가 제목을 선점한 경우 첫 제목 제거 정책이 적용되지 않음');
 
-  const hiddenHeader = await page.evaluate(async () => {
+  const hrBlankSection = await page.evaluate(async () => {
     const blob = await buildHwpx(
-      { title: 'hr hidden', doc_type: 'plain', blocks: [{ type: 'para', text: '앞' }, { type: 'hr' }, { type: 'para', text: '뒤' }] },
+      { title: 'hr blank', doc_type: 'plain', blocks: [{ type: 'para', text: '앞' }, { type: 'hr' }, { type: 'para', text: '뒤' }] },
       '휴먼명조',
       12,
       null,
       'A4',
       null,
-      'portrait',
-      160,
-      { showHorizontalRules: false }
+      'portrait'
     );
     const zip = await JSZip.loadAsync(await blob.arrayBuffer());
     return zip.file('Contents/section0.xml').async('string');
   });
-  assert(!/<hp:tc\b[^>]*\bborderFillIDRef="10"/.test(hiddenHeader),
-    'detail settings: 숨김 옵션에서 구분선 표가 생성됨');
-
-  const shownSection = await page.evaluate(async () => {
-    const blob = await buildHwpx(
-      { title: 'hr shown', doc_type: 'plain', blocks: [{ type: 'para', text: '앞' }, { type: 'hr' }, { type: 'para', text: '뒤' }] },
-      '휴먼명조',
-      12,
-      null,
-      'A4',
-      null,
-      'portrait',
-      160,
-      { showHorizontalRules: true }
-    );
-    const zip = await JSZip.loadAsync(await blob.arrayBuffer());
-    return zip.file('Contents/section0.xml').async('string');
-  });
-  assertHorizontalRuleTable(shownSection, 'detail settings');
-  console.log('PASS DETAIL hr toggle + margin paper map');
+  assertHorizontalRuleAsBlank(hrBlankSection, 'detail settings');
+  console.log('PASS DETAIL blank hr + margin paper map');
 }
 
 async function validatePretendardCompatibility(page) {

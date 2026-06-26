@@ -1,6 +1,26 @@
 {
-  "current": "4.6.8",
+  "current": "4.6.9",
   "versions": [
+    {
+      "version": "4.6.9",
+      "date": "2026-06-26",
+      "user": [
+        "포맷 안내 영역을 더 알아보기, 입력 포맷, 예정 포맷, 지원 현황 탭으로 같은 레벨에서 정리했습니다.",
+        "가로 구분선 옵션을 제거하고, 문서 안의 구분선은 선 대신 빈 줄로 자연스럽게 처리합니다.",
+        "제목을 비웠을 때 기준을 버튼형 선택으로 바꾸고, 페이지 여백·문서 세부 설정·도움말 표시를 더 일관되게 다듬었습니다.",
+        "글머리 목록은 줄바꿈 시 글머리 뒤 첫 글자 기준으로 정렬되도록 들여쓰기를 보정했습니다.",
+        "고급 진단용 IR 미리보기를 세부 설정에서 다시 열 수 있게 했습니다."
+      ],
+      "dev": [
+        "[v4.6.9] index.html/style.css/js/app.js: 포맷 탭 구조 재정렬, 제목 기준 세그먼트 버튼, 고정 1/2/3단계 안내 제거, IR 미리보기 진단 버튼 노출",
+        "[v4.6.9] js/hwpx.js: hr 블록을 buildBlankPara()로 대체하고 목록 paraPr에 hanging indent 적용",
+        "[v4.6.9] js/app.js: parsed title이 선점된 경우에도 titleBodyPolicy remove/keep이 본문 첫 heading에 적용되도록 보강",
+        "[v4.6.9] style.css: 문서 세부 설정 회색 배경, 다크 모드 도움말 팝오버 토큰화, 여백 좌우 배지 제거 및 모바일 입력 포맷 그리드 보정",
+        "[v4.6.9] tests/golden.js: hr 빈 줄 대체, 포맷 탭 순서, 제목 정책, 목록 hanging indent, 도움말/여백 UI 회귀 테스트 갱신",
+        "[v4.6.9] AGENTS.md/format_conversion_playbook.md/qa/release-qa.md: 구분선 처리와 입력 포맷 명칭 기준 갱신",
+        "[v4.6.9] package.json/package-lock.json/sw.js/index.html/changelog.json: v4.6.9 반영"
+      ]
+    },
     {
       "version": "4.6.8",
       "date": "2026-06-26",

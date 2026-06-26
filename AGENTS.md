@@ -37,7 +37,7 @@
 - **자동은 well‑formed/구조만 본다. 렌더링은 못 본다.** 비주얼(색·음영·그림·표지)은 **반드시 한컴에서 눈으로** 확인 → 사용자에게 "캐시 비우고 `📋 vX.Y.Z` 버전 확인 후 보이나요?"로 요청.
 - 회귀 입력·체크리스트: [qa/fixtures/README.md](qa/fixtures/README.md), [qa/release-qa.md](qa/release-qa.md).
 - 포맷 파서·HWPX 생성·포맷 안내 문구를 새로 작업할 때는 먼저 [format_conversion_playbook.md](hwpx-public-doc/references/format_conversion_playbook.md)의 해당 포맷 섹션을 읽고, 보존/손실 안내와 테스트를 함께 갱신한다.
-- 일반 데이터 표와 코드 블록 표는 다음 본문과 붙지 않도록 `hp:outMargin@bottom="${mmToHwp(3)}"`(실제 XML 값 850, 약 3mm)를 유지한다. 인용구는 표가 아니라 `paraPr id=19`의 `hh:next=850`으로 같은 아래 간격을 적용한다. 구분선 표는 `hp:outMargin@top/bottom="${mmToHwp(3)}"`를 쓰고 앞뒤 외부 빈 문단을 만들지 않는다. 표지처럼 다른 레이아웃 개체에는 이 값을 일괄 적용하지 않는다.
+- 일반 데이터 표와 코드 블록 표는 다음 본문과 붙지 않도록 `hp:outMargin@bottom="${mmToHwp(3)}"`(실제 XML 값 850, 약 3mm)를 유지한다. 인용구는 표가 아니라 `paraPr id=19`의 `hh:next=850`으로 같은 아래 간격을 적용한다. Markdown/HTML 구분선(`hr`)은 별도 선 표를 만들지 않고 `paraPr id=9` 빈 줄로 대체한다. 표지처럼 다른 레이아웃 개체에는 표 여백 값을 일괄 적용하지 않는다.
 
 ### 포맷 분리와 공통 IR 계약
 
@@ -65,7 +65,7 @@
 변환 품질만큼 중요한 것은 사용자가 **무엇이 보존되고 무엇이 빠지는지** 미리 알게 하는 것이다. 최근 UX 기준은 아래를 유지한다.
 
 - 첫 화면의 주 행동은 **파일 선택/드롭존**이다. PC/모바일/설치/개인정보 같은 보조 안내 버튼은 드롭존보다 먼저 시선을 빼앗지 않게 둔다.
-- 드롭존 문구는 `입력: MD · HTML · TXT · CSV · XLSX · JSON · IPYNB · DOCX · HWP` / `출력: HWPX`처럼 입력과 출력을 분리한다. HWPX를 입력 가능 포맷처럼 쓰지 않는다.
+- 드롭존 문구는 `입력: MD · HTML · TXT · CSV · XLSX · JSON · IPYNB · DOCX · HWP` / `출력: HWPX`처럼 입력과 출력을 분리한다. HWPX를 입력 포맷처럼 쓰지 않는다.
 - 지원하지 않는 파일을 넣었을 때는 흐름을 막는 alert보다 **토스트 안내**를 우선한다. 변환 도중 실패는 결과 카드/실패 카드로 다음 행동을 제시한다.
 - `문서 제목`은 선택 사항이다. 비워두면 기본값 `heading`(문서 첫 문장/제목)을 쓰고, 사용자가 원하면 `filename`(파일 이름 사용)을 고른다. 초기화 후에도 `heading`을 기본값으로 되돌린다.
 - 포맷 카드와 팝업은 일반론만 쓰지 않는다. [js/app.js](js/app.js)의 `FORMAT_INFO`와 `getConversionSummaryForExt()`는 실제 파서 구현 기준으로 **보존됨 / 제외 가능**을 설명해야 한다. DOCX·JSON처럼 내용은 읽히지만 원본 레이아웃 복제가 아닌 포맷은 보존도를 과장하지 않는다.
