@@ -533,7 +533,7 @@ async function runCase(page, testCase) {
   console.log(`PASS ${testCase.format.padEnd(5)} ${testCase.file}`);
 }
 
-async function convertThroughUi(page, { inputPath, format, text, baseName }) {
+async function convertThroughUi(page, { inputPath, format, text, baseName, setup, returnPackage = false }) {
   const baseUrl = `http://127.0.0.1:${PORT}/index.html`;
   await page.goto(inputPath ? baseUrl : `${baseUrl}?admin=1`, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => window.JSZip && window.marked && window.XLSX, null, { timeout: 30000 });
@@ -552,12 +552,18 @@ async function convertThroughUi(page, { inputPath, format, text, baseName }) {
     await page.locator('#paste-name').fill(baseName);
     await page.locator('#paste-input').fill(text);
   }
+  if (setup) await setup(page);
   await page.locator('#convert-btn').click();
   const download = await downloadPromise;
   const outPath = path.join(os.tmpdir(), `to-hwpx-direct-${format}-${inputPath ? 'file' : 'paste'}.hwpx`);
   await download.saveAs(outPath);
   const zip = await JSZip.loadAsync(fs.readFileSync(outPath));
-  return zip.file('Contents/section0.xml').async('string');
+  const section = await zip.file('Contents/section0.xml').async('string');
+  if (!returnPackage) return section;
+  return {
+    section,
+    header: await zip.file('Contents/header.xml').async('string'),
+  };
 }
 
 async function validateDirectInput(page) {
@@ -600,6 +606,32 @@ async function validateDirectInput(page) {
   assert(previewText.includes('미리보기 제목') && previewText.includes('강조') && previewText.includes('1'),
     'direct preview: 직접 입력 미리보기가 해석 결과를 표시하지 않음');
   await page.locator('#copy-paste-preview').click();
+  assert(await page.locator('#copy-paste-html').count() === 1,
+    'direct preview: HTML 복사 버튼이 없음');
+  await page.locator('#copy-paste-html').click();
+
+  const directSettingsPackage = await convertThroughUi(page, {
+    format: 'md',
+    text: '# 직접 설정\n\n[링크](https://example.com/direct)',
+    baseName: 'direct-settings',
+    returnPackage: true,
+    setup: async (p) => {
+      await p.locator('.advanced-settings > summary').click();
+      await p.locator('#line-spacing').selectOption('180');
+      await p.locator('#paragraph-spacing').selectOption('relaxed');
+      await p.locator('#link-style').selectOption('url');
+    },
+  });
+  assert(directSettingsPackage.section.includes('링크 (https://example.com/direct)'),
+    'direct settings: 직접 입력 변환에 링크 주소 표시 설정이 적용되지 않음');
+  const directBodyPara = (/<hh:paraPr\b[^>]*\bid="0"[\s\S]*?<\/hh:paraPr>/.exec(directSettingsPackage.header) || [])[0] || '';
+  assert(directBodyPara.includes('value="180"'),
+    'direct settings: 직접 입력 변환에 줄 간격 설정이 적용되지 않음');
+  await page.evaluate(() => {
+    localStorage.removeItem('tohwpx_lineSpacing');
+    localStorage.removeItem('tohwpx_paragraphSpacing');
+    localStorage.removeItem('tohwpx_linkStyle');
+  });
 
   const cases = [
     ['md', 'sample.md'],

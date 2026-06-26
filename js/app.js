@@ -968,9 +968,9 @@ const FORMAT_QUALITY_METRICS = {
 
 const QUALITY_HISTORY = [
     {
-        version: '4.6.22',
+        version: '4.6.23',
         date: '2026-06-26',
-        summary: '현재 기준. 직접 입력/관리자 모드/포맷 안내를 분리하고 구조 검증 중심 품질 평가를 추가.',
+        summary: '현재 기준. 직접 입력 미리보기 HTML 복사와 관리자 품질 평가를 포함한 구조 검증 중심 품질 기준.',
         scores: { md: 92, html: 68, docx: 72, txt: 88, csv: 82, json: 76, ipynb: 70, hwp: 25 },
     },
     {
@@ -1864,6 +1864,7 @@ function initInputMode() {
     });
     document.getElementById('copy-paste-source')?.addEventListener('click', copyPasteSource);
     document.getElementById('copy-paste-preview')?.addEventListener('click', copyPastePreview);
+    document.getElementById('copy-paste-html')?.addEventListener('click', copyPasteHtml);
     renderPastePreview();
 }
 
@@ -2021,6 +2022,12 @@ function copyPasteSource() {
 function copyPastePreview() {
     const text = document.getElementById('paste-preview-output')?.innerText || '';
     copyTextToClipboard(text, '미리보기 내용을 복사했습니다');
+}
+
+function copyPasteHtml() {
+    const doc = document.querySelector('#paste-preview-output .paste-preview-doc');
+    const html = doc?.innerHTML || '';
+    copyTextToClipboard(html, '미리보기 HTML을 복사했습니다');
 }
 
 /** 직접 입력 텍스트를 가짜 File로 감싸 단일 변환을 실행 */
