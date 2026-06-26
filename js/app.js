@@ -954,6 +954,138 @@ const FONT_DOWNLOADS = [
     },
 ];
 
+const QUALITY_FORMATS = ['md', 'html', 'docx', 'txt', 'csv', 'json', 'ipynb', 'hwp'];
+const FORMAT_QUALITY_METRICS = {
+    md:    { conversion: 92, success: 96, risk: '낮음',     next: '표 셀 run 계약과 상대경로 이미지 묶음 업로드 지원을 추가하면 고급 문서 보존률이 오른다.' },
+    html:  { conversion: 68, success: 88, risk: '중간',     next: 'CSS 중 일부(color/background/text-align)만 안전 allowlist로 승격하고, img/src data URL부터 그림 IR로 연결한다.' },
+    docx:  { conversion: 72, success: 84, risk: '중간',     next: '목록 번호 체계와 섹션/머리말 반복 규칙을 IR로 분리하고, WMF/EMF는 안내 fallback을 고도화한다.' },
+    txt:   { conversion: 88, success: 97, risk: '낮음',     next: '표처럼 보이는 탭/공백 열을 선택적으로 표 IR로 승격하는 실험을 관리자 모드에서 검증한다.' },
+    csv:   { conversion: 82, success: 94, risk: '낮음',     next: 'XLSX 다중 시트 선택, 셀 병합/색상 일부 보존을 별도 옵션으로 확장한다.' },
+    json:  { conversion: 76, success: 90, risk: '중간',     next: '깊은 중첩 요약 규칙과 큰 JSON 스트리밍/샘플링 미리보기를 추가한다.' },
+    ipynb: { conversion: 70, success: 86, risk: '중간',     next: 'PNG/JPEG 출력 셀, LaTeX 수식 fallback, 실행 결과 접기 옵션을 단계적으로 추가한다.' },
+    hwp:   { conversion: 25, success: 45, risk: '높음',     next: '구형 HWP는 브라우저 한계가 커서 HWPX 재저장 안내를 유지하고, HWPX 오업로드 복구만 안정화한다.' },
+};
+
+const QUALITY_HISTORY = [
+    {
+        version: '4.6.22',
+        date: '2026-06-26',
+        summary: '현재 기준. 직접 입력/관리자 모드/포맷 안내를 분리하고 구조 검증 중심 품질 평가를 추가.',
+        scores: { md: 92, html: 68, docx: 72, txt: 88, csv: 82, json: 76, ipynb: 70, hwp: 25 },
+    },
+    {
+        version: '4.6.4',
+        date: '2026-06-24',
+        summary: 'Markdown/IPYNB 링크와 data URL 그림, 위험 URL 차단, 직접 입력 동등성 회귀가 안정화된 기준점.',
+        scores: { md: 88, html: 64, docx: 70, txt: 86, csv: 80, json: 74, ipynb: 66, hwp: 25 },
+    },
+    {
+        version: '4.5.20',
+        date: '2026-06-24',
+        summary: '직접 입력 MD/HTML/TXT/CSV/JSON parity 검증을 도입한 기준점.',
+        scores: { md: 84, html: 60, docx: 68, txt: 84, csv: 78, json: 72, ipynb: 62, hwp: 25 },
+    },
+    {
+        version: '4.4.8',
+        date: '2026-06-23',
+        summary: 'FORMAT_INFO를 실제 파서 구현 범위 기준으로 재작성해 보존/손실 안내를 정렬한 기준점.',
+        scores: { md: 80, html: 56, docx: 58, txt: 82, csv: 74, json: 66, ipynb: 58, hwp: 22 },
+    },
+];
+
+function getQualityMetric(ext) {
+    return FORMAT_QUALITY_METRICS[ext] || { conversion: 0, success: 0, risk: '확인 필요', next: '구현 범위를 먼저 정의해야 합니다.' };
+}
+
+function metricClass(value) {
+    if (value >= 85) return 'is-high';
+    if (value >= 65) return 'is-mid';
+    return 'is-low';
+}
+
+function renderQualityBar(value) {
+    const n = Math.max(0, Math.min(100, Number(value) || 0));
+    return `<span class="quality-meter ${metricClass(n)}"><span style="width:${n}%"></span></span>`;
+}
+
+function renderQualityPanel() {
+    const rows = QUALITY_FORMATS.map(ext => {
+        const info = getFormatInfoForExt(ext);
+        const metric = getQualityMetric(ext);
+        const limits = (info?.limits || []).slice(0, 3).map(item => `<li>${escHtml(item)}</li>`).join('');
+        return `
+            <article class="format-quality-card">
+                <div class="format-quality-head">
+                    <div>
+                        <strong>${escHtml(info?.name || ext.toUpperCase())}</strong>
+                        <span>${escHtml(info?.tech || '')}</span>
+                    </div>
+                    <em class="quality-risk quality-risk-${metric.risk === '높음' ? 'high' : metric.risk === '중간' ? 'mid' : 'low'}">${escHtml(metric.risk)}</em>
+                </div>
+                <div class="quality-score-grid">
+                    <div>
+                        <span>변환률</span>
+                        <b>${metric.conversion}%</b>
+                        ${renderQualityBar(metric.conversion)}
+                    </div>
+                    <div>
+                        <span>성공률</span>
+                        <b>${metric.success}%</b>
+                        ${renderQualityBar(metric.success)}
+                    </div>
+                </div>
+                <div class="format-quality-columns">
+                    <div>
+                        <h4>현재 제한사항</h4>
+                        <ul>${limits}</ul>
+                    </div>
+                    <div>
+                        <h4>개선 방안</h4>
+                        <p>${escHtml(metric.next)}</p>
+                    </div>
+                </div>
+            </article>
+        `;
+    }).join('');
+
+    const history = QUALITY_HISTORY.map(item => `
+        <section class="quality-history-item">
+            <div class="quality-history-head">
+                <strong>v${escHtml(item.version)}</strong>
+                <span>${escHtml(item.date)}</span>
+            </div>
+            <p>${escHtml(item.summary)}</p>
+            <div class="quality-history-bars">
+                ${QUALITY_FORMATS.map(ext => {
+                    const info = getFormatInfoForExt(ext);
+                    const score = item.scores[ext] || 0;
+                    return `<span title="${escHtml(info?.name || ext)} ${score}%"><b>${escHtml(ext.toUpperCase())}</b>${renderQualityBar(score)}</span>`;
+                }).join('')}
+            </div>
+        </section>
+    `).join('');
+
+    return `
+        <section class="format-quality-intro">
+            <strong>포맷별 변환 품질 평가</strong>
+            <p>이 지표는 사용자 파일 원격 수집 통계가 아니라, 현재 파서 구현 범위와 golden/게이트 fixture 기준의 추정 품질입니다. 변환률은 원본 기능이 HWPX IR로 의미 있게 옮겨지는 비율, 성공률은 오류 없이 HWPX 생성·구조 검증을 통과할 가능성을 뜻합니다.</p>
+        </section>
+        <div class="format-quality-grid">${rows}</div>
+        <section class="quality-plan">
+            <h3>검토 의견과 계획</h3>
+            <ol>
+                <li>단기: HTML 이미지 data URL, 직접 입력 미리보기, 관리자 품질 리포트를 분리 배포해 UI 회귀 시 부분 롤백 가능하게 유지합니다.</li>
+                <li>중기: 표 셀 run 계약, XLSX 다중 시트, DOCX 목록 번호를 공통 IR 확장으로 설계합니다.</li>
+                <li>장기: 포맷별 fixture 수를 늘려 추정 지표를 실제 테스트 통과율로 대체하고, 한컴 수동 확인 항목을 릴리스 체크리스트에 연결합니다.</li>
+            </ol>
+        </section>
+        <section class="quality-history">
+            <h3>버전/일자별 추이</h3>
+            ${history}
+        </section>
+    `;
+}
+
 /** 포맷 카드 클릭 → 상세 정보 팝업 표시 */
 function initFormatCards() {
     document.querySelectorAll('.format-card').forEach(card => {
@@ -1551,6 +1683,7 @@ const PASTE_MIME = {
     csv:  'text/csv',
     json: 'application/json',
 };
+let pastePreviewTimer = null;
 
 /**
  * 관리자 모드 활성 여부.
@@ -1643,18 +1776,28 @@ function renderLabControl() {
                 </span>
             </button>
         </section>
+    `;
+}
+
+function renderExperimentPanel() {
+    return `
         <section class="changelog-experiment-panel" aria-label="추천 실험 기능">
             <div class="changelog-experiment-head">
                 <strong>추천 실험 기능</strong>
                 <span>관리자 모드에서 검토할 후보</span>
             </div>
             <ul>
-                <li><b>변환 전 보존 예상</b><span>선택한 포맷에서 제목·표·링크·이미지가 어느 정도 보존될지 미리 보여줍니다.</span></li>
-                <li><b>상세 구조 진단</b><span>HWPX 패키지, XML, IDRef 문제를 개발자용으로 더 자세히 확인합니다.</span></li>
+                <li><b>변환 전 보존 예상</b><span>직접 입력 미리보기와 포맷별 품질 평가를 연결해 제목·표·링크·이미지 보존 가능성을 먼저 보여줍니다.</span></li>
+                <li><b>부분 롤백 기준</b><span>파서, HWPX 생성, UI 안내를 분리해 문제가 난 포맷만 되돌릴 수 있는 체크리스트를 유지합니다.</span></li>
+                <li><b>상세 구조 진단</b><span>HWPX 패키지, XML, IDRef, 링크 필드, 그림 참조 문제를 관리자용으로 더 자세히 확인합니다.</span></li>
                 <li><b>결과 카드 문구 실험</b><span>성공·경고·실패 안내 문구를 비교해 사용자가 다음 행동을 더 빨리 고르게 합니다.</span></li>
             </ul>
         </section>
     `;
+}
+
+function renderAdminPanel() {
+    return `${renderLabControl()}${renderExperimentPanel()}`;
 }
 
 function bindLabControl() {
@@ -1698,6 +1841,7 @@ function initInputMode() {
             applyPasteFormatUi(fmt.value);
             updatePasteFormatHelp(fmt.value);
             if (state.inputMode === 'paste') updateFormatExpectation(fmt.value);
+            schedulePastePreview();
         });
         document.querySelectorAll('.paste-format-btn').forEach(btn => {
             btn.addEventListener('click', () => {
@@ -1716,7 +1860,11 @@ function initInputMode() {
         const hasText = !!ta.value.trim();
         updateConvertButton(hasText);
         if (hasText) setProgressPanelState('ready');
+        schedulePastePreview();
     });
+    document.getElementById('copy-paste-source')?.addEventListener('click', copyPasteSource);
+    document.getElementById('copy-paste-preview')?.addEventListener('click', copyPastePreview);
+    renderPastePreview();
 }
 
 function updatePasteFormatHelp(ext) {
@@ -1771,7 +1919,108 @@ function setInputMode(mode) {
         updateConvertButton(hasText);
         if (hasText) setProgressPanelState('ready');
         ta?.focus();
+        renderPastePreview();
     }
+}
+
+function schedulePastePreview() {
+    window.clearTimeout(pastePreviewTimer);
+    pastePreviewTimer = window.setTimeout(renderPastePreview, 220);
+}
+
+function getPastePreviewIr(text, ext) {
+    const parserMap = {
+        md: parseMd,
+        html: parseHtml,
+        txt: parseTxt,
+        csv: parseCsv,
+        json: parseJson,
+    };
+    const parser = parserMap[ext] || parseTxt;
+    const ir = parser(text, state.docType || 'plain');
+    const baseName = sanitizeBaseName(document.getElementById('paste-name')?.value) || '문서';
+    const file = new File([text], `${baseName}.${ext}`, { type: PASTE_MIME[ext] || 'text/plain' });
+    applyDocumentTitlePolicy(ir, file, state.customTitle, state.titleSource, state.titleBodyPolicy);
+    return ir;
+}
+
+function summarizeIr(ir) {
+    const blocks = Array.isArray(ir?.blocks) ? ir.blocks : [];
+    const count = type => blocks.filter(block => block?.type === type).length;
+    return [
+        `제목 ${ir?.title ? '1' : '0'}`,
+        `문단 ${count('para')}`,
+        `목록 ${count('list')}`,
+        `표 ${count('table')}`,
+        `그림 ${count('image') + count('image-source')}`,
+    ].join(' · ');
+}
+
+function renderPastePreview() {
+    const output = document.getElementById('paste-preview-output');
+    const status = document.getElementById('paste-preview-status');
+    const ta = document.getElementById('paste-input');
+    if (!output || !ta) return;
+    const text = ta.value || '';
+    if (!text.trim()) {
+        output.innerHTML = '<p class="paste-preview-empty">아직 입력된 내용이 없습니다.</p>';
+        if (status) status.textContent = '입력하면 해석 결과가 표시됩니다.';
+        return;
+    }
+    try {
+        const ext = document.getElementById('paste-format')?.value || 'md';
+        const ir = getPastePreviewIr(text, ext);
+        output.innerHTML = `
+            <div class="paste-preview-doc">
+                ${ir.title && ir.title.trim() ? `<h4>${escHtml(ir.title.trim())}</h4>` : ''}
+                ${irBlocksToHtml(ir.blocks) || '<p class="paste-preview-empty">표시할 본문이 없습니다.</p>'}
+            </div>
+        `;
+        if (status) status.textContent = `${ext.toUpperCase()} 해석 완료 · ${summarizeIr(ir)}`;
+    } catch (err) {
+        output.innerHTML = `
+            <div class="paste-preview-error">
+                <strong>미리보기를 만들 수 없습니다.</strong>
+                <span>${escHtml(err.message || '입력 형식을 확인해 주세요.')}</span>
+            </div>
+        `;
+        if (status) status.textContent = '입력 형식 확인 필요';
+    }
+}
+
+async function copyTextToClipboard(text, successMessage) {
+    const value = String(text || '');
+    if (!value.trim()) {
+        showToast('<strong>복사할 내용이 없습니다</strong>', { timeout: 2500 });
+        return;
+    }
+    try {
+        if (navigator.clipboard?.writeText) {
+            await navigator.clipboard.writeText(value);
+        } else {
+            const ta = document.createElement('textarea');
+            ta.value = value;
+            ta.setAttribute('readonly', '');
+            ta.style.position = 'fixed';
+            ta.style.left = '-9999px';
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            ta.remove();
+        }
+        showToast(`<strong>${escHtml(successMessage)}</strong>`, { timeout: 2500 });
+    } catch (e) {
+        showToast('<strong>복사하지 못했습니다</strong> <span>브라우저 권한을 확인해 주세요.</span>', { timeout: 3500 });
+    }
+}
+
+function copyPasteSource() {
+    copyTextToClipboard(document.getElementById('paste-input')?.value || '', '원문을 복사했습니다');
+}
+
+function copyPastePreview() {
+    const text = document.getElementById('paste-preview-output')?.innerText || '';
+    copyTextToClipboard(text, '미리보기 내용을 복사했습니다');
 }
 
 /** 직접 입력 텍스트를 가짜 File로 감싸 단일 변환을 실행 */
@@ -3697,11 +3946,21 @@ async function showChangelog() {
     renderChangelogContent(_changelogTab);
 }
 
-/** 선택된 탭(user|dev)에 맞게 changelog-content 렌더링 */
+/** 선택된 탭(user|dev|admin|quality)에 맞게 changelog-content 렌더링 */
 function renderChangelogContent(tab) {
     _changelogTab = tab;
     const el = document.getElementById('changelog-content');
     if (!el || !_changelogData) return;
+
+    if (tab === 'admin') {
+        el.innerHTML = renderAdminPanel();
+        bindLabControl();
+        return;
+    }
+    if (tab === 'quality') {
+        el.innerHTML = renderQualityPanel();
+        return;
+    }
 
     const groups = [];
     for (const version of _changelogData.versions || []) {
@@ -3714,13 +3973,12 @@ function renderChangelogContent(tab) {
         group.versions.push(version);
     }
 
-    el.innerHTML = `${tab === 'dev' ? renderLabControl() : ''}${groups.map(group => `
+    el.innerHTML = groups.map(group => `
         <section class="changelog-date-group">
             <div class="changelog-date-heading">${escHtml(group.date)}</div>
             ${tab === 'user' ? renderMergedUserChangelog(group.versions) : renderVersionedChangelog(group.versions, tab)}
         </section>
-    `).join('')}`;
-    if (tab === 'dev') bindLabControl();
+    `).join('');
 }
 
 function versionLabel(version) {

@@ -117,7 +117,7 @@
             <span>｢BWYF｣ AX Challenger 2026</span>
             <!-- [주의] id="open-changelog"는 app.js에서 관리자 모드일 때 업데이트 내역 모달을 여는 연결값 -->
             <button class="util-changelog-btn" id="open-changelog" aria-label="버전 정보" data-admin-enabled="false">
-                📋 v4.6.21
+                📋 v4.6.22
             </button>
         </div>
     </div>
@@ -138,20 +138,6 @@
             <!-- [링크 수정 가능] href와 화면 글자만 바꾸세요. class는 스타일/툴팁에 사용됩니다. -->
             <nav id="main-nav" role="navigation" aria-label="주 메뉴">
                 <ul class="main-nav">
-                    <li>
-                        <a class="nav-related-link nav-tooltip-wrap" href="https://md-to-hwpx.vercel.app/" target="_blank" rel="noopener"
-                           aria-label="MD→HWPX 직접 입력 변환기 열기">
-                            MD→HWPX <span aria-hidden="true">↗</span>
-                            <span class="nav-tooltip">Markdown을 HWPX로 실시간 변환하는<br> 연계 서비스입니다</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a class="nav-related-link nav-tooltip-wrap" href="https://md-to-html-seven.vercel.app/" target="_blank" rel="noopener"
-                           aria-label="MD→HTML 변환기 열기">
-                            MD→HTML <span aria-hidden="true">↗</span>
-                            <span class="nav-tooltip">Markdown을 HTML로 실시간 변환하는<br> 연계 서비스입니다</span>
-                        </a>
-                    </li>
                     <li>
                         <button class="nav-shortcut-btn" id="open-help" aria-label="도움말 열기" title="도움말 보기 (Shift + /)">
                             도움말
@@ -276,6 +262,21 @@
                         <textarea id="paste-input" class="paste-textarea" rows="10"
                                   placeholder="여기에 내용을 붙여넣으세요. 선택한 형식의 규칙에 따라 변환합니다."></textarea>
                     </div>
+                    <section class="paste-preview-panel" aria-labelledby="paste-preview-title">
+                        <div class="paste-preview-toolbar">
+                            <div>
+                                <strong id="paste-preview-title">미리 보기</strong>
+                                <span id="paste-preview-status" aria-live="polite">입력하면 해석 결과가 표시됩니다.</span>
+                            </div>
+                            <div class="paste-preview-actions">
+                                <button type="button" class="paste-copy-btn" id="copy-paste-source">원문 복사</button>
+                                <button type="button" class="paste-copy-btn" id="copy-paste-preview">미리보기 복사</button>
+                            </div>
+                        </div>
+                        <div id="paste-preview-output" class="paste-preview-output" aria-label="직접 입력 미리 보기">
+                            <p class="paste-preview-empty">아직 입력된 내용이 없습니다.</p>
+                        </div>
+                    </section>
                     <div class="form-row paste-name-row">
                         <label for="paste-name">문서명 <small style="font-weight:400;color:var(--c-text-muted)">(선택)</small></label>
                         <div class="paste-name-wrap">
@@ -1385,6 +1386,10 @@
                         role="tab" aria-selected="true">사용자 변경사항</button>
                 <button class="changelog-tab" data-tab="dev"
                         role="tab" aria-selected="false">개발자 변경사항</button>
+                <button class="changelog-tab" data-tab="admin"
+                        role="tab" aria-selected="false">관리자 모드</button>
+                <button class="changelog-tab" data-tab="quality"
+                        role="tab" aria-selected="false">포맷 품질 평가</button>
             </div>
             <!-- JS에서 changelog.json 로드 후 렌더링 -->
             <div class="changelog-content" id="changelog-content">

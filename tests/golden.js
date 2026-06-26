@@ -572,7 +572,7 @@ async function validateDirectInput(page) {
   await page.locator('#open-changelog').click();
   assert(await page.locator('#changelog-modal').isVisible(),
     'admin: 관리자 모드에서 버전 클릭으로 업데이트 내역이 열리지 않음');
-  await page.locator('.changelog-tab[data-tab="dev"]').click();
+  await page.locator('.changelog-tab[data-tab="admin"]').click();
   const changelogTabGap = await page.evaluate(() => {
     const header = document.querySelector('#changelog-modal .modal-header')?.getBoundingClientRect();
     const tabs = document.querySelector('#changelog-modal .changelog-tabs')?.getBoundingClientRect();
@@ -583,7 +583,23 @@ async function validateDirectInput(page) {
     'admin: 관리자 모드 토글 상태가 켜짐으로 표시되지 않음');
   assert((await page.locator('.changelog-experiment-panel').textContent()).includes('변환 전 보존 예상'),
     'admin: 추천 실험 기능 안내가 누락됨');
+  await page.locator('.changelog-tab[data-tab="quality"]').click();
+  const qualityText = await page.locator('#changelog-content').textContent();
+  assert(qualityText.includes('포맷별 변환 품질 평가')
+    && qualityText.includes('버전/일자별 추이')
+    && qualityText.includes('HTML 문서')
+    && qualityText.includes('CSS'),
+    'admin: 포맷 품질 평가 탭의 핵심 내용이 누락됨');
   await page.keyboard.press('Escape');
+
+  await page.locator('#mode-paste').click();
+  await page.locator('.paste-format-btn[data-paste-format="md"]').click();
+  await page.locator('#paste-input').fill('# 미리보기 제목\n\n본문 **강조**\n\n| A | B |\n| - | - |\n| 1 | 2 |');
+  await page.waitForFunction(() => document.querySelector('#paste-preview-status')?.textContent.includes('MD 해석 완료'));
+  const previewText = await page.locator('#paste-preview-output').textContent();
+  assert(previewText.includes('미리보기 제목') && previewText.includes('강조') && previewText.includes('1'),
+    'direct preview: 직접 입력 미리보기가 해석 결과를 표시하지 않음');
+  await page.locator('#copy-paste-preview').click();
 
   const cases = [
     ['md', 'sample.md'],
@@ -630,7 +646,7 @@ async function validateDirectInput(page) {
   assert(await page.locator('.input-mode-tabs').isVisible(),
     'admin: 호환용 ?lab=1에서 직접 입력 탭이 보이지 않음');
   await page.locator('#open-changelog').click();
-  await page.locator('.changelog-tab[data-tab="dev"]').click();
+  await page.locator('.changelog-tab[data-tab="admin"]').click();
   assert(await page.locator('[data-lab-toggle]').getAttribute('aria-pressed') === 'true',
     'admin: 호환용 ?lab=1 후 관리자 토글 상태가 켜짐으로 표시되지 않음');
   await page.locator('[data-lab-toggle]').click();
@@ -658,6 +674,8 @@ async function validateCommercialUx(page) {
   const versionButtonText = (await page.locator('#open-changelog').textContent()).trim();
   assert(/^📋 v\d+\.\d+\.\d+$/.test(versionButtonText) && !versionButtonText.includes('업데이트 내역'),
     'ux: 상단 버전 버튼 문구가 버전만 표시하지 않음');
+  assert(await page.locator('.nav-related-link').count() === 0,
+    'ux: 상단 배너의 MD→HWPX/MD→HTML 연계 링크가 남아 있음');
   assert(await page.locator('#open-onboarding-guide').count() === 0,
     'ux: 드롭존 아래 중복 도움말 버튼이 남아 있음');
   const footerText = await page.locator('footer').textContent();

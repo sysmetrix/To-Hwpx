@@ -1,6 +1,22 @@
 {
-  "current": "4.6.21",
+  "current": "4.6.22",
   "versions": [
+    {
+      "version": "4.6.22",
+      "date": "2026-06-26",
+      "user": [
+        "상단 메뉴에서 MD→HWPX, MD→HTML 연계 링크를 제거해 파일 선택과 도움말 중심으로 더 단순하게 정리했습니다."
+      ],
+      "dev": [
+        "[v4.6.22] index.html: 상단 MD→HWPX/MD→HTML 외부 링크 제거, 직접 입력 영역에 미리보기 패널과 원문/미리보기 복사 버튼 추가",
+        "[v4.6.22] js/app.js: 직접 입력 미리보기를 포맷별 파서와 IR 미리보기 렌더러로 구성하고 입력 debounce·복사 fallback 추가",
+        "[v4.6.22] js/app.js/index.html/style.css: 업데이트 내역 모달에 관리자 모드 탭과 포맷 품질 평가 탭 추가, 추천 실험 기능을 관리자 모드 탭으로 이동",
+        "[v4.6.22] js/app.js/style.css: 포맷별 변환률/성공률 추정 지표, 제한사항, 개선 방안, 버전/일자별 품질 추이 리포트 추가",
+        "[v4.6.22] tests/golden.js: 직접 입력 미리보기, 관리자 탭, 품질 평가 탭, 상단 링크 제거 회귀 테스트 추가",
+        "[v4.6.22] format_conversion_playbook.md/qa/release-qa.md: 관리자 품질 평가와 직접 입력 미리보기 기준 및 수동 확인 항목 기록",
+        "[v4.6.22] package.json/package-lock.json/sw.js/index.html/changelog.json: v4.6.22 반영"
+      ]
+    },
     {
       "version": "4.6.21",
       "date": "2026-06-26",
