@@ -1052,8 +1052,8 @@ a:hover { text-decoration: underline; }
     line-height: 1.45;
 }
 .document-shape-summary {
-    flex-shrink: 0;
-    max-width: 48%;
+    flex: 0 1 auto;
+    max-width: min(100%, 560px);
     padding: 5px 9px;
     border-radius: var(--radius-sm);
     background: var(--c-primary-light);
@@ -1062,6 +1062,9 @@ a:hover { text-decoration: underline; }
     font-weight: 800;
     line-height: 1.35;
     text-align: right;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 .document-shape-grid {
     grid-template-columns: minmax(180px, 1.7fr) minmax(86px, 0.72fr) minmax(94px, 0.76fr) minmax(104px, 0.86fr) minmax(128px, 1fr);
@@ -1540,23 +1543,6 @@ a:hover { text-decoration: underline; }
     background: var(--c-primary-light);
     border-color: var(--c-primary);
     color: var(--c-primary-dark);
-}
-.advanced-guide-link {
-    width: 100%;
-    margin-top: 10px;
-    padding: 10px 12px;
-    border: 1px solid var(--c-border);
-    border-radius: var(--radius-sm);
-    background: var(--c-surface-alt);
-    color: var(--c-primary);
-    font-family: var(--font-main);
-    font-size: 0.84rem;
-    font-weight: 800;
-    cursor: pointer;
-}
-.advanced-guide-link:hover {
-    border-color: var(--c-primary);
-    background: var(--c-primary-light);
 }
 .paper-orient-btn {
     display: flex;
@@ -2519,6 +2505,7 @@ a:hover { text-decoration: underline; }
     .document-shape-summary {
         max-width: none;
         text-align: left;
+        white-space: normal;
     }
     .advanced-settings-grid { grid-template-columns: 1fr; }
     .detail-settings-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -4248,38 +4235,61 @@ a:hover { text-decoration: underline; }
 
 
 /* ─────────────────────────────────────────────────────────────────
-   [입력 방식 탭 + 직접 입력]  파일 업로드 / 텍스트 직접 입력 전환
+   [직접 입력]  버튼으로 여는 텍스트 입력 전환
    - 색은 디자인 토큰 → 다크 테마 자동 적용
    ───────────────────────────────────────────────────────────────── */
-.input-mode-tabs {
+.input-mode-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin: -6px 0 12px;
+}
+.input-mode-actions[hidden] { display: none; }
+.input-mode-action {
     display: inline-flex;
-    gap: 4px;
-    padding: 4px;
-    margin-bottom: 14px;
+    align-items: center;
+    justify-content: center;
+    min-height: 34px;
+    padding: 7px 13px;
+    border: 1px solid var(--c-border);
+    border-radius: var(--radius-sm);
     background: var(--c-surface-alt);
+    color: var(--c-primary);
+    font-family: var(--font-main);
+    font-size: 0.82rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: background var(--trans), border-color var(--trans), color var(--trans);
+}
+.input-mode-action:hover {
+    border-color: var(--c-primary);
+    background: var(--c-primary-light);
+}
+.input-mode-action--ghost {
+    background: var(--c-surface);
+    color: var(--c-text-sub);
+}
+.input-mode-action:focus-visible {
+    outline: 2px solid var(--c-primary);
+    outline-offset: 2px;
+}
+.paste-mode-panel {
+    margin-bottom: 14px;
+    padding: 14px;
     border: 1px solid var(--c-border);
     border-radius: var(--radius-md);
+    background: var(--c-surface-alt);
 }
-.input-mode-tabs[hidden] { display: none; }
-.input-mode-tab {
-    border: none;
-    background: transparent;
-    color: var(--c-text-sub);
-    font-family: var(--font-main);
-    font-size: 0.88rem;
-    font-weight: 700;
-    padding: 7px 16px;
-    border-radius: var(--radius-sm);
-    cursor: pointer;
-    transition: background var(--trans), color var(--trans), box-shadow var(--trans);
+.paste-mode-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
 }
-.input-mode-tab:hover { color: var(--c-primary); }
-.input-mode-tab.is-active {
-    background: var(--c-surface);
-    color: var(--c-primary);
-    box-shadow: var(--shadow-sm);
+.paste-mode-head strong {
+    color: var(--c-text);
+    font-size: 0.98rem;
 }
-.input-mode-tab:focus-visible { outline: 2px solid var(--c-primary); outline-offset: 2px; }
 
 /* 직접 입력: 텍스트 영역 */
 .paste-textarea {
