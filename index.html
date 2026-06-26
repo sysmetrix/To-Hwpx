@@ -117,7 +117,7 @@
             <span>｢BWYF｣ AX Challenger 2026</span>
             <!-- [주의] id="open-changelog"는 app.js에서 관리자 모드일 때 업데이트 내역 모달을 여는 연결값 -->
             <button class="util-changelog-btn" id="open-changelog" aria-label="버전 정보" data-admin-enabled="false">
-                📋 v4.6.26
+                📋 v4.6.27
             </button>
         </div>
     </div>
@@ -213,7 +213,9 @@
 
             <!-- ── 왼쪽: 옵션 패널 ──────────────────────────────── -->
             <div class="options-panel">
-                <h3>파일 선택 및 기본 옵션</h3>
+                <h3 class="options-panel-title">파일 선택 및 기본 옵션
+                    <span class="svc-beta-badge" title="DOCX·HTML·XLSX 서식 변환은 베타 품질입니다">서식 변환 베타</span>
+                </h3>
 
                 <!-- 입력 방식 탭: 파일 업로드 / 직접 입력 -->
                 <div class="input-mode-tabs" role="tablist" aria-label="입력 방식">
@@ -510,70 +512,111 @@
                                     <span>본문 서식</span>
                                     <button type="button" class="help-dot" data-help="문단 간격, 제목, 표, 링크, 이미지, 첫 제목 처리처럼 변환 결과의 본문 서식을 조정합니다. DOCX·HTML·XLSX처럼 원본 서식이 있는 파일은 원본 우선을 기본으로 둡니다." aria-label="본문 서식 도움말">?</button>
                                 </span>
+                                <!-- 세그먼트 버튼이 화면 UI, 숨김 select가 값/state/저장의 단일 소스.
+                                     버튼 클릭 → 대응 select.value 변경 + change 디스패치 (app.js segmentize). -->
                                 <div class="detail-settings-grid">
-                                    <label>
-                                        <span>원본 서식 처리</span>
-                                        <select id="style-policy" name="style-policy">
+                                    <div class="detail-field">
+                                        <span class="detail-field-label">원본 서식 처리</span>
+                                        <div class="seg-control seg-control--sm" role="group" aria-label="원본 서식 처리">
+                                            <button type="button" class="seg-btn is-active" data-seg-for="style-policy" data-seg-value="source" title="원본 우선">원본</button>
+                                            <button type="button" class="seg-btn" data-seg-for="style-policy" data-seg-value="balanced" title="원본+앱 설정 혼합">혼합</button>
+                                            <button type="button" class="seg-btn" data-seg-for="style-policy" data-seg-value="app" title="앱 설정으로 정리">앱 정리</button>
+                                        </div>
+                                        <select id="style-policy" name="style-policy" class="sr-only" aria-hidden="true" tabindex="-1">
                                             <option value="source" selected>원본 우선</option>
                                             <option value="balanced">원본+앱 설정 혼합</option>
                                             <option value="app">앱 설정으로 정리</option>
                                         </select>
-                                    </label>
-                                    <label>
-                                        <span>문단 앞/뒤 간격</span>
-                                        <select id="paragraph-spacing" name="paragraph-spacing">
+                                    </div>
+                                    <div class="detail-field">
+                                        <span class="detail-field-label">문단 앞/뒤 간격</span>
+                                        <div class="seg-control seg-control--sm" role="group" aria-label="문단 앞/뒤 간격">
+                                            <button type="button" class="seg-btn" data-seg-for="paragraph-spacing" data-seg-value="compact" title="간격 작게">작게</button>
+                                            <button type="button" class="seg-btn is-active" data-seg-for="paragraph-spacing" data-seg-value="normal" title="기본 간격">기본</button>
+                                            <button type="button" class="seg-btn" data-seg-for="paragraph-spacing" data-seg-value="relaxed" title="간격 크게">크게</button>
+                                        </div>
+                                        <select id="paragraph-spacing" name="paragraph-spacing" class="sr-only" aria-hidden="true" tabindex="-1">
                                             <option value="compact">간격 작게</option>
                                             <option value="normal" selected>기본 간격</option>
                                             <option value="relaxed">간격 크게</option>
                                         </select>
-                                    </label>
-                                    <label>
-                                        <span>제목 스타일</span>
-                                        <select id="heading-style" name="heading-style">
+                                    </div>
+                                    <div class="detail-field">
+                                        <span class="detail-field-label">제목 스타일</span>
+                                        <div class="seg-control seg-control--sm" role="group" aria-label="제목 스타일">
+                                            <button type="button" class="seg-btn" data-seg-for="heading-style" data-seg-value="compact" title="작은 제목">작게</button>
+                                            <button type="button" class="seg-btn is-active" data-seg-for="heading-style" data-seg-value="standard" title="기본 제목">기본</button>
+                                            <button type="button" class="seg-btn" data-seg-for="heading-style" data-seg-value="prominent" title="큰 제목·굵게">큰·굵게</button>
+                                        </div>
+                                        <select id="heading-style" name="heading-style" class="sr-only" aria-hidden="true" tabindex="-1">
                                             <option value="compact">작은 제목</option>
                                             <option value="standard" selected>기본 제목</option>
                                             <option value="prominent">큰 제목·굵게</option>
                                         </select>
-                                    </label>
-                                    <label>
-                                        <span>표 스타일</span>
-                                        <select id="table-style" name="table-style">
+                                    </div>
+                                    <div class="detail-field">
+                                        <span class="detail-field-label">표 스타일</span>
+                                        <div class="seg-control seg-control--sm" role="group" aria-label="표 스타일">
+                                            <button type="button" class="seg-btn is-active" data-seg-for="table-style" data-seg-value="standard" title="기본 테두리">기본</button>
+                                            <button type="button" class="seg-btn" data-seg-for="table-style" data-seg-value="plain" title="단순 테두리">단순</button>
+                                            <button type="button" class="seg-btn" data-seg-for="table-style" data-seg-value="report" title="머리행 음영">음영</button>
+                                        </div>
+                                        <select id="table-style" name="table-style" class="sr-only" aria-hidden="true" tabindex="-1">
                                             <option value="standard" selected>기본 테두리</option>
                                             <option value="plain">단순 테두리</option>
                                             <option value="report">머리행 음영</option>
                                         </select>
-                                    </label>
-                                    <label>
-                                        <span>링크 표시</span>
-                                        <select id="link-style" name="link-style">
+                                    </div>
+                                    <div class="detail-field">
+                                        <span class="detail-field-label">링크 표시</span>
+                                        <div class="seg-control seg-control--sm" role="group" aria-label="링크 표시">
+                                            <button type="button" class="seg-btn is-active" data-seg-for="link-style" data-seg-value="blue" title="파란색+밑줄">파랑</button>
+                                            <button type="button" class="seg-btn" data-seg-for="link-style" data-seg-value="plain" title="검정 본문">검정</button>
+                                            <button type="button" class="seg-btn" data-seg-for="link-style" data-seg-value="url" title="텍스트+주소">주소</button>
+                                        </div>
+                                        <select id="link-style" name="link-style" class="sr-only" aria-hidden="true" tabindex="-1">
                                             <option value="blue" selected>파란색+밑줄</option>
                                             <option value="plain">검정 본문</option>
                                             <option value="url">텍스트+주소</option>
                                         </select>
-                                    </label>
-                                    <label>
-                                        <span>이미지 최대 폭</span>
-                                        <select id="image-max-width" name="image-max-width">
+                                    </div>
+                                    <div class="detail-field">
+                                        <span class="detail-field-label">이미지 최대 폭</span>
+                                        <div class="seg-control seg-control--sm" role="group" aria-label="이미지 최대 폭">
+                                            <button type="button" class="seg-btn" data-seg-for="image-max-width" data-seg-value="50" title="본문의 50%">50%</button>
+                                            <button type="button" class="seg-btn" data-seg-for="image-max-width" data-seg-value="75" title="본문의 75%">75%</button>
+                                            <button type="button" class="seg-btn is-active" data-seg-for="image-max-width" data-seg-value="100" title="본문 폭까지">100%</button>
+                                        </div>
+                                        <select id="image-max-width" name="image-max-width" class="sr-only" aria-hidden="true" tabindex="-1">
                                             <option value="50">본문의 50%</option>
                                             <option value="75">본문의 75%</option>
                                             <option value="100" selected>본문 폭까지</option>
                                         </select>
-                                    </label>
-                                    <label>
-                                        <span>이미지 정렬</span>
-                                        <select id="image-align" name="image-align">
+                                    </div>
+                                    <div class="detail-field">
+                                        <span class="detail-field-label">이미지 정렬</span>
+                                        <div class="seg-control seg-control--sm" role="group" aria-label="이미지 정렬">
+                                            <button type="button" class="seg-btn is-active" data-seg-for="image-align" data-seg-value="left" title="왼쪽 정렬">왼쪽</button>
+                                            <button type="button" class="seg-btn" data-seg-for="image-align" data-seg-value="center" title="가운데 정렬">가운데</button>
+                                            <button type="button" class="seg-btn" data-seg-for="image-align" data-seg-value="right" title="오른쪽 정렬">오른쪽</button>
+                                        </div>
+                                        <select id="image-align" name="image-align" class="sr-only" aria-hidden="true" tabindex="-1">
                                             <option value="left" selected>왼쪽 정렬</option>
                                             <option value="center">가운데 정렬</option>
                                             <option value="right">오른쪽 정렬</option>
                                         </select>
-                                    </label>
-                                    <label>
-                                        <span>첫 제목 본문 처리</span>
-                                        <select id="title-body-policy" name="title-body-policy">
+                                    </div>
+                                    <div class="detail-field">
+                                        <span class="detail-field-label">첫 제목 본문 처리</span>
+                                        <div class="seg-control seg-control--sm" role="group" aria-label="첫 제목 본문 처리">
+                                            <button type="button" class="seg-btn is-active" data-seg-for="title-body-policy" data-seg-value="remove" title="본문 첫 제목 제거">제거</button>
+                                            <button type="button" class="seg-btn" data-seg-for="title-body-policy" data-seg-value="keep" title="본문 첫 제목 유지">유지</button>
+                                        </div>
+                                        <select id="title-body-policy" name="title-body-policy" class="sr-only" aria-hidden="true" tabindex="-1">
                                             <option value="remove" selected>본문 첫 제목 제거</option>
                                             <option value="keep">본문 첫 제목 유지</option>
                                         </select>
-                                    </label>
+                                    </div>
                                 </div>
                             </div>
                         </div>
