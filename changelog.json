@@ -1,6 +1,24 @@
 {
-  "current": "4.6.28",
+  "current": "4.6.29",
   "versions": [
+    {
+      "version": "4.6.29",
+      "date": "2026-06-26",
+      "user": [
+        "본문 서식에서 '원본 서식 처리'를 나머지 옵션의 상위 전제로 분리해 위계를 분명히 했습니다.",
+        "직접 입력 미리보기 표의 테두리·머리행·숫자 정렬을 실제 HWPX 표와 맞게 또렷이 표시합니다.",
+        "직접 입력으로 변환하면 문서 제목 옵션이 파일명에도 반영됩니다. 자동 다운로드 토글은 더 컴팩트하게 정리했고, 초기화 시 IR 미리보기도 함께 초기화됩니다.",
+        "변환 화면 베타 표시를 '베타'로 단순화하고, 내용 없이 HTML 메뉴를 열어도 다운로드 항목이 잘리지 않게 고쳤습니다."
+      ],
+      "dev": [
+        "[v4.6.29] index.html/style.css: 원본 서식 처리를 .detail-field--master로 그리드 밖 분리, #converter-beta 텍스트 '베타', 자동 다운로드 .toggle-row 컴팩트화",
+        "[v4.6.29] style.css: .paste-preview-panel overflow:hidden 제거(HTML 메뉴 팝오버 잘림 해결)+모서리 분배, 미리보기 .ir-table 테두리/머리행/숫자(.ir-cell-num) 정렬 개선, 관리자 토글을 단일 스위치로 단순화",
+        "[v4.6.29] js/app.js: resetIrPreview()로 초기화 시 IR 미리보기 복귀, 직접 입력(state.inputMode==='paste') 출력 파일명을 ir.title 기반으로, irTableToHtml에 숫자셀 .ir-cell-num, 관리자 기능 토글 라벨 span 제거",
+        "[v4.6.29] tests/golden.js: 원본 서식 처리 마스터 분리 검증 추가",
+        "[v4.6.29] format_conversion_playbook.md: 마스터 분리·미리보기 표 정렬·직접 입력 파일명 계약 메모 추가",
+        "[v4.6.29] package.json/package-lock.json/sw.js/index.html/changelog.json: v4.6.29 반영"
+      ]
+    },
     {
       "version": "4.6.28",
       "date": "2026-06-26",
