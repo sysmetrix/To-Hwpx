@@ -888,7 +888,7 @@ async function validateCommercialUx(page) {
   assert(await page.locator('.help-dot[aria-label="줄 간격 도움말"]').count() === 0
     && await page.locator('.help-dot[aria-label="가로 구분선 도움말"]').count() === 1
     && await page.locator('.help-dot[aria-label="페이지 여백 도움말"]').count() === 1
-    && await page.locator('.help-dot[aria-label="문서 세부 설정 도움말"]').count() === 1
+    && await page.locator('.help-dot[aria-label="본문 서식 도움말"]').count() === 1
     && await page.locator('#open-advanced-guide').count() === 0,
     'ux: 세부 설정 도움말 또는 고급 사용 팁 중복 진입점 상태가 기준과 다름');
   const titleSourceLabel = await page.locator('[data-title-source="heading"]').textContent();
@@ -906,7 +906,7 @@ async function validateCommercialUx(page) {
   if (!(await page.locator('.advanced-settings').getAttribute('open'))) {
     await page.locator('.advanced-settings > summary').click();
   }
-  const detailHelpDot = page.locator('.help-dot[aria-label="문서 세부 설정 도움말"]');
+  const detailHelpDot = page.locator('.help-dot[aria-label="본문 서식 도움말"]');
   await detailHelpDot.scrollIntoViewIfNeeded();
   await page.waitForTimeout(50);
   await detailHelpDot.click();

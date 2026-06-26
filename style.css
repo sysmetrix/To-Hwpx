@@ -1186,7 +1186,29 @@ a:hover { text-decoration: underline; }
 .detail-settings-grid label span {
     color: var(--c-text-sub);
     font-size: 0.78rem;
-    font-weight: 800;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+}
+/* 본문 서식 — 회색 컨테이너 위에서 또렷이 떠 보이는 현대형 필드.
+   .form-row select(뒤에 정의)보다 특이도를 높여 패딩·테두리를 확정한다. */
+.document-detail-settings .detail-settings-grid select {
+    padding: 8px 32px 8px 11px;
+    border: 1.5px solid color-mix(in srgb, var(--c-border) 65%, transparent);
+    border-radius: var(--radius-md);
+    font-size: 0.84rem;
+    font-weight: 600;
+    background-color: var(--c-surface);
+    background-position: right 11px center;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    transition: border-color var(--trans), box-shadow var(--trans), background-color var(--trans);
+}
+.document-detail-settings .detail-settings-grid select:hover {
+    border-color: color-mix(in srgb, var(--c-primary) 55%, var(--c-border));
+    background-color: color-mix(in srgb, var(--c-primary-light) 55%, var(--c-surface));
+}
+.document-detail-settings .detail-settings-grid select:focus {
+    border-color: var(--c-primary);
+    box-shadow: 0 0 0 3px rgba(56, 108, 255, 0.16);
 }
 
 /* 변환기 섹션 파일 드롭 영역 — mini-drop-zone·detected-row 통합 */

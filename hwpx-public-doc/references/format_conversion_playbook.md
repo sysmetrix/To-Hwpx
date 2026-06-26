@@ -59,6 +59,7 @@
 관련 코드: `initOptions()`, `updateAdvancedSettingsSummary()` in `js/app.js`; `buildHeaderXml()`, `buildSection()`, `buildTable()`, `buildParaRuns()`, `buildImageRun()` in `js/hwpx.js`
 
 목표:
+- 이 옵션들(원본 서식 처리·문단 간격·제목/표/링크·이미지·첫 제목 처리)은 `문서 세부 설정` 접힘 영역 안의 `본문 서식` 하위 블록(`.document-detail-settings`)에 모여 있다. 바깥 접힘 컨테이너 이름과 구분한다.
 - UI 라벨은 사용자가 예상하는 결과 중심으로 쓴다. 예를 들어 `prominent`는 "강조"가 아니라 `큰 제목·굵게`, `report`는 "보고서형"이 아니라 `머리행 음영`처럼 실제 출력 변화를 드러낸다.
 - 옵션의 `value`는 저장값/localStorage/HWPX 생성 계약이므로 라벨만 바꿀 때는 `value`를 바꾸지 않는다.
 - 세부 설정을 바꿨는데 HWPX XML이 변하지 않는 회귀를 막기 위해 UI 라벨, `state`, `buildHwpx()` 옵션 전달, XML 검증을 한 묶음으로 본다.
