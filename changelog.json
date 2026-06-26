@@ -1,6 +1,20 @@
 {
-  "current": "4.6.12",
+  "current": "4.6.13",
   "versions": [
+    {
+      "version": "4.6.13",
+      "date": "2026-06-26",
+      "user": [
+        "문서 세부 설정 옵션별 변환 의미를 더 촘촘하게 기록해, 이후 개선 때 같은 품질 기준을 재현하기 쉽게 했습니다.",
+        "문단 간격, 제목 스타일, 표 스타일, 링크 표시, 이미지, 첫 제목 처리, 구분선, 페이지 여백이 각각 HWPX에 어떻게 반영되는지 문서화했습니다."
+      ],
+      "dev": [
+        "[v4.6.13] format_conversion_playbook.md: 문서 세부 설정 옵션 매핑 표 추가",
+        "[v4.6.13] AGENTS.md: 세부 설정 변경 시 플레이북·validateDetailSettingsUx 동시 갱신 기준 추가",
+        "[v4.6.13] qa/release-qa.md: 문서 세부 설정 옵션 기록 기준과 수동 확인 항목 추가",
+        "[v4.6.13] package.json/package-lock.json/sw.js/index.html/changelog.json: v4.6.13 반영"
+      ]
+    },
     {
       "version": "4.6.12",
       "date": "2026-06-26",

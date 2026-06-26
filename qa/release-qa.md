@@ -399,3 +399,23 @@ Scope: static browser-only conversion flow from file selection to HWPX download.
 - [x] 데스크톱 캡처: 축약 온보딩 모달, 닫은 뒤 안내 바, 세부 설정 화면 확인
 - [ ] 배포 후 캐시를 비우고 `📋 v4.6.7` 확인
 - [ ] 실제 사용자 흐름에서 모달을 닫은 뒤 안내 바가 과하게 방해되지 않는지 확인
+
+## 28. v4.6.13 문서 세부 설정 옵션 기록 기준
+
+자동 승인 기준:
+
+- [x] 문서 세부 설정 옵션 매핑이 `format_conversion_playbook.md`에 UI 라벨, 내부 값, HWPX 반영 기준으로 기록됨
+- [x] `AGENTS.md`에 세부 설정 변경 시 플레이북 표와 `validateDetailSettingsUx()`를 함께 갱신하라는 기준이 있음
+- [x] `validateDetailSettingsUx()`가 문단 간격, 제목 스타일, 표 스타일, 링크 표시, 이미지 폭/정렬, 첫 제목 본문 처리, 가로 구분선, 페이지 여백의 UI 또는 XML 회귀를 확인함
+- [x] `npm run test:golden` PASS
+- [x] `node qa/gate.js qa/fixtures/md_hwpx_test.md` ①~⑧ PASS
+
+수동 문서 확인 기준:
+
+- [ ] 세부 설정 라벨만 바뀐 변경인지, `value`/localStorage/HWPX 생성 계약까지 바뀐 변경인지 changelog와 플레이북에서 구분됨
+- [ ] 새 세부 설정을 추가한 경우 `state`, reset, localStorage key, `buildHwpx()` 옵션 전달, HWPX XML 반영, UI 라벨, 도움말, 테스트가 같은 의미로 정렬됨
+
+실기기 승인 기준:
+
+- [ ] 캐시를 비우고 `📋 v4.6.13` 확인
+- [ ] 한컴에서 대표 MD 파일을 기본값과 세부 설정 변경값으로 각각 열어 문단 간격, 제목 크기, 표 머리행, 링크 표시, 이미지 정렬, 구분선 표시/숨김이 기대와 일치하는지 확인

@@ -68,6 +68,7 @@
 - 드롭존 문구는 `입력: MD · HTML · TXT · CSV · XLSX · JSON · IPYNB · DOCX · HWP` / `출력: HWPX`처럼 입력과 출력을 분리한다. HWPX를 입력 포맷처럼 쓰지 않는다.
 - 지원하지 않는 파일을 넣었을 때는 흐름을 막는 alert보다 **토스트 안내**를 우선한다. 변환 도중 실패는 결과 카드/실패 카드로 다음 행동을 제시한다.
 - `문서 제목`은 선택 사항이다. 비워두면 기본값 `heading`(문서 첫 문장/제목)을 쓰고, 사용자가 원하면 `filename`(파일 이름 사용)을 고른다. 초기화 후에도 `heading`을 기본값으로 되돌린다.
+- `문서 세부 설정`은 UI 라벨만 바꿔도 변환 기대치가 바뀐다. 문단 간격, 제목 스타일, 표 스타일, 링크 표시, 이미지 폭/정렬, 첫 제목 본문 처리, 가로 구분선, 페이지 여백을 수정할 때는 [format_conversion_playbook.md](hwpx-public-doc/references/format_conversion_playbook.md)의 `문서 세부 설정 옵션 매핑` 표와 `tests/golden.js`의 `validateDetailSettingsUx()`를 함께 갱신한다. 옵션 `value`는 localStorage/HWPX 생성 계약이므로 라벨 변경과 값 변경을 구분한다.
 - 포맷 카드와 팝업은 일반론만 쓰지 않는다. [js/app.js](js/app.js)의 `FORMAT_INFO`와 `getConversionSummaryForExt()`는 실제 파서 구현 기준으로 **보존됨 / 제외 가능**을 설명해야 한다. DOCX·JSON처럼 내용은 읽히지만 원본 레이아웃 복제가 아닌 포맷은 보존도를 과장하지 않는다.
 - 포맷 카드 클릭은 변환 모드 선택이 아니다. 파일 형식은 업로드한 파일 확장자로 결정된다. 따라서 “이 포맷으로 변환하기” 같은 버튼은 두지 않는다.
 

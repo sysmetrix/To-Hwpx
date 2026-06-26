@@ -21,6 +21,34 @@
 - 파서가 추출한 제목을 최상단 제목으로 쓰지 않는 경우, 의미 있는 제목 텍스트가 본문에서 사라지지 않도록 본문 heading으로 복구한다.
 - DOCX는 parser title만 믿지 말고 문서 순서의 heading/paragraph 후보를 다시 본다.
 
+## 문서 세부 설정 옵션 매핑
+
+관련 코드: `initOptions()`, `updateAdvancedSettingsSummary()` in `js/app.js`; `buildHeaderXml()`, `buildSection()`, `buildTable()`, `buildParaRuns()`, `buildImageRun()` in `js/hwpx.js`
+
+목표:
+- UI 라벨은 사용자가 예상하는 결과 중심으로 쓴다. 예를 들어 `prominent`는 "강조"가 아니라 `큰 제목·굵게`, `report`는 "보고서형"이 아니라 `머리행 음영`처럼 실제 출력 변화를 드러낸다.
+- 옵션의 `value`는 저장값/localStorage/HWPX 생성 계약이므로 라벨만 바꿀 때는 `value`를 바꾸지 않는다.
+- 세부 설정을 바꿨는데 HWPX XML이 변하지 않는 회귀를 막기 위해 UI 라벨, `state`, `buildHwpx()` 옵션 전달, XML 검증을 한 묶음으로 본다.
+
+옵션별 계약:
+
+| UI 항목 | UI 라벨/값 | 내부 값 | HWPX 반영 |
+| --- | --- | --- | --- |
+| 문단 앞/뒤 간격 | 간격 작게 / 기본 간격 / 간격 크게 | `compact` / `normal` / `relaxed` | `hh:paraPr`의 `hh:prev`, `hh:next` 값. 기본은 본문 아래 `850`, 제목 앞 `850`, 제목 뒤 `567`; 작게는 본문 아래 `283`; 크게는 본문 아래 `1134`, 제목 앞 `1134`, 제목 뒤 `850`. |
+| 제목 스타일 | 작은 제목 / 기본 제목 / 큰 제목·굵게 | `compact` / `standard` / `prominent` | `hh:charPr` 제목 크기. 기본 글꼴 pt 기준 H1은 `+4/+6/+8pt`, H2는 `+3/+4/+6pt`, H3는 `+1/+2/+3pt`; 제목은 기본적으로 bold. |
+| 표 스타일 | 기본 테두리 / 단순 테두리 / 머리행 음영 | `standard` / `plain` / `report` | `buildTable()`의 머리행 처리. `plain`은 머리행 bold/음영을 끄고, `report`는 머리행에 `EAF2FF` 배경 borderFill을 추가한다. 모든 표는 격자·병합·제목 행 반복 무결성을 유지해야 한다. |
+| 링크 표시 | 파란색+밑줄 / 검정 본문 / 텍스트+주소 | `blue` / `plain` / `url` | `buildParaRuns()`의 HYPERLINK 필드는 유지한다. `blue`는 동적 charPr로 파란 밑줄, `plain`은 일반 본문처럼 표시, `url`은 표시문자 뒤에 ` (URL)`을 붙인다. |
+| 이미지 최대 폭 | 본문의 50% / 75% / 본문 폭까지 | `50` / `75` / `100` | `buildImageRun()`의 `hp:curSz` 폭을 본문 폭 기준으로 제한한다. 원본 비율을 유지하며 0 또는 본문 폭 초과가 나오면 안 된다. |
+| 이미지 정렬 | 왼쪽 정렬 / 가운데 정렬 / 오른쪽 정렬 | `left` / `center` / `right` | 그림 위치의 `horzAlign`을 LEFT/CENTER/RIGHT로 기록한다. |
+| 첫 제목 본문 처리 | 본문 첫 제목 제거 / 본문 첫 제목 유지 | `remove` / `keep` | `applyDocumentTitlePolicy()`에서 자동 제목으로 쓴 첫 heading을 본문에서 제거하거나 유지한다. parser가 이미 title을 선점한 경우에도 같은 정책을 적용한다. |
+| 가로 구분선 | 숨김 / 표시 | `showHorizontalRules=false/true` | 숨김은 `paraPr id=9` 빈 줄, 표시는 `buildHrPara()` 구분선 표. 옵션 자체를 제거하지 않는다. |
+| 페이지 여백 | 위/아래/왼쪽/오른쪽/머리말/꼬리말 mm | `pageMargins` | `marginsMmToHwp()`로 HWPUNIT 변환 후 `hp:pagePr`와 내용 폭 계산에 반영한다. 미니맵은 실제 mm 비율에 맞춰 상하좌우 라벨과 본문 영역을 표시한다. |
+
+검증:
+- `tests/golden.js`의 `validateDetailSettingsUx()`는 세부 설정 컨트롤 존재, 결과 중심 라벨, 구분선 숨김/표시 XML, 여백 미니맵 라벨, 문단 간격/제목/표/링크/이미지/첫 제목 정책의 HWPX 반영을 함께 확인한다.
+- 세부 설정을 추가하거나 `value`를 바꾸면 `state`, localStorage key, reset 기본값, `buildHwpx()` 옵션 객체, changelog, 이 표, golden 검증을 동시에 갱신한다.
+- UI 라벨만 바꾸는 경우에도 사용자가 보는 라벨과 `updateAdvancedSettingsSummary()` 문구가 같은 의미인지 확인한다.
+
 ## Markdown
 
 관련 코드: `parseMd()`, `extractMarkdownTokens()`, `markdownInlineRuns()`, `processMdInlineBlocks()`, `resolveMarkdownAssets()` in `js/parsers.js`; `buildParaRuns()`, `buildImageRun()` in `js/hwpx.js`
