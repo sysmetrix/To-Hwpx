@@ -1139,7 +1139,12 @@ async function validateDetailSettingsUx(page) {
       const sel = document.getElementById('style-policy');
       return !!sel && sel.getBoundingClientRect().width <= 2;
     })(),
+    // 원본 서식 처리는 전제이므로 상위 마스터(.detail-field--master)에 있고, 세부 그리드 밖에 있어야 함
+    styleIsMaster: !!document.querySelector('.detail-field--master select#style-policy'),
+    styleNotInGrid: !document.querySelector('.detail-settings-grid #style-policy'),
   }));
+  assert(segDefault.styleIsMaster && segDefault.styleNotInGrid,
+    'detail settings: 원본 서식 처리가 상위 마스터로 분리되지 않음');
   assert(segDefault.styleBtns === 3, 'detail settings: 원본 서식 처리 세그먼트 버튼 3개가 없음');
   assert(segDefault.activeMatchesSelect, 'detail settings: 세그먼트 활성 버튼이 숨김 select 값과 어긋남');
   assert(segDefault.selectHidden, 'detail settings: 데이터 소스 select가 화면에서 숨겨지지 않음');

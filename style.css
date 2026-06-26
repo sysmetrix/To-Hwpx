@@ -1205,6 +1205,28 @@ a:hover { text-decoration: underline; }
     font-weight: 700;
     letter-spacing: 0.01em;
 }
+/* 원본 서식 처리 = 아래 7개 옵션의 전제이므로 그리드 밖 상위 마스터로 강조 */
+.detail-field--master {
+    display: grid;
+    gap: 6px;
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px dashed var(--c-border);
+}
+.detail-field--master .detail-field-label {
+    color: var(--c-text);
+    font-size: 0.82rem;
+}
+.detail-field--master .detail-field-label small {
+    margin-left: 5px;
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0;
+    color: var(--c-text-muted);
+}
+.detail-field--master .seg-control {
+    max-width: 360px;
+}
 .seg-control--sm .seg-btn {
     padding: 7px 4px;
     font-size: 0.8rem;
@@ -1707,25 +1729,23 @@ a:hover { text-decoration: underline; }
 }
 
 /* 토글 스위치 (체크박스 대체) */
+/* 자동 다운로드 — 보조 옵션이므로 박스 없이 컴팩트한 한 줄로 표기 */
 .toggle-row {
     display: flex;
     align-items: center;
-    gap: 12px;
-    border: 1px solid var(--c-border);
-    border-radius: var(--radius-sm);
-    padding: 11px 12px;
-    margin: 4px 0 12px;
-    background: var(--c-surface-alt);
+    gap: 10px;
+    padding: 6px 2px;
+    margin: 2px 0 8px;
     cursor: pointer;
 }
 .toggle-text { flex: 1; min-width: 0; }
-.toggle-text strong { display: block; font-size: 0.88rem; color: var(--c-text); }
-.toggle-text small { display: block; margin-top: 2px; font-size: 0.76rem; color: var(--c-text-muted); }
+.toggle-text strong { display: block; font-size: 0.8rem; color: var(--c-text); }
+.toggle-text small { display: block; margin-top: 1px; font-size: 0.72rem; color: var(--c-text-muted); }
 .toggle-input { position: absolute; opacity: 0; width: 0; height: 0; }
 .toggle-switch {
     flex-shrink: 0;
-    width: 42px; height: 24px;
-    border-radius: 12px;
+    width: 36px; height: 20px;
+    border-radius: 10px;
     background: var(--c-border);
     position: relative;
     transition: background 0.2s;
@@ -1733,14 +1753,14 @@ a:hover { text-decoration: underline; }
 .toggle-switch::after {
     content: "";
     position: absolute; top: 2px; left: 2px;
-    width: 20px; height: 20px;
+    width: 16px; height: 16px;
     border-radius: 50%;
     background: #fff;
     box-shadow: 0 1px 3px rgba(0,0,0,0.3);
     transition: transform 0.2s;
 }
 .toggle-input:checked ~ .toggle-switch { background: var(--c-primary); }
-.toggle-input:checked ~ .toggle-switch::after { transform: translateX(18px); }
+.toggle-input:checked ~ .toggle-switch::after { transform: translateX(16px); }
 .toggle-input:focus-visible ~ .toggle-switch { outline: 2px solid var(--c-primary); outline-offset: 2px; }
 
 /* 라디오 카드 (상단 제목 블록 비주얼 선택) */
@@ -3435,7 +3455,8 @@ a:hover { text-decoration: underline; }
 .preview-ir table.ir-table th, .preview-ir table.ir-table td {
     border: 1px solid #999; padding: 5px 9px; text-align: left; vertical-align: top;
 }
-.preview-ir table.ir-table th { background: #D9D9D9; font-weight: 700; }
+.preview-ir table.ir-table th { background: #D9D9D9; font-weight: 700; text-align: center; }
+.preview-ir table.ir-table td.ir-cell-num { text-align: right; }
 .preview-ir .preview-empty { color: var(--c-text-muted); text-align: center; padding: 40px; }
 
 .preview-iframe-wrap {
@@ -3859,26 +3880,13 @@ a:hover { text-decoration: underline; }
     line-height: 1.45;
 }
 .admin-feature-toggle {
+    flex-shrink: 0;
     display: inline-flex;
     align-items: center;
-    gap: 7px;
-    min-width: 82px;
-    min-height: 32px;
-    padding: 4px 8px 4px 5px;
-    border: 1px solid var(--c-border-strong);
-    border-radius: 999px;
-    background: var(--c-surface);
-    color: var(--c-text-sub);
-    font-family: var(--font-main);
-    font-size: 0.72rem;
-    font-weight: 800;
+    padding: 4px;
+    border: 0;
+    background: transparent;
     cursor: pointer;
-    transition: border-color var(--trans), background var(--trans), color var(--trans);
-}
-.admin-feature-toggle[aria-pressed="true"] {
-    border-color: var(--c-primary);
-    background: var(--c-primary-light);
-    color: var(--c-primary);
 }
 .admin-feature-toggle-track {
     position: relative;
@@ -3905,10 +3913,6 @@ a:hover { text-decoration: underline; }
 }
 .admin-feature-toggle[aria-pressed="true"] .admin-feature-toggle-thumb {
     transform: translateX(14px);
-}
-.admin-feature-toggle-label {
-    min-width: 26px;
-    text-align: left;
 }
 .admin-feature-toggle:disabled {
     opacity: 0.55;
@@ -4738,7 +4742,8 @@ a:hover { text-decoration: underline; }
     border: 1px solid var(--c-border);
     border-radius: var(--radius-md);
     background: var(--c-surface);
-    overflow: hidden;
+    /* overflow:hidden 금지 — HTML 메뉴 팝오버가 패널 밖으로 펼쳐져도 잘리지 않게 한다.
+       둥근 모서리는 위/아래 자식이 각각 책임진다. */
 }
 .paste-preview-toolbar {
     display: flex;
@@ -4748,6 +4753,7 @@ a:hover { text-decoration: underline; }
     padding: 10px 12px;
     border-bottom: 1px solid var(--c-border);
     background: var(--c-surface-alt);
+    border-radius: var(--radius-md) var(--radius-md) 0 0;
 }
 .paste-preview-toolbar strong {
     display: block;
@@ -4822,6 +4828,7 @@ a:hover { text-decoration: underline; }
     max-height: 260px;
     overflow: auto;
     padding: 13px;
+    border-radius: 0 0 var(--radius-md) var(--radius-md);
 }
 .paste-preview-doc {
     color: var(--c-text);
@@ -4853,10 +4860,19 @@ a:hover { text-decoration: underline; }
 }
 .paste-preview-doc .ir-table th,
 .paste-preview-doc .ir-table td {
-    border: 1px solid var(--c-border);
-    padding: 5px 6px;
+    /* 실제 HWPX 표의 하드코딩 속성(또렷한 테두리·머리행 강조·숫자 우측정렬)을 미리보기에 반영 */
+    border: 1px solid var(--c-border-strong);
+    padding: 5px 7px;
     text-align: left;
     vertical-align: top;
+}
+.paste-preview-doc .ir-table th {
+    text-align: center;
+    font-weight: 700;
+    background: var(--c-surface-alt);
+}
+.paste-preview-doc .ir-table td.ir-cell-num {
+    text-align: right;
 }
 .paste-preview-doc .ir-code {
     overflow: auto;

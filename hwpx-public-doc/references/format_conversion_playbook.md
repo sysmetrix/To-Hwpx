@@ -61,6 +61,9 @@
 목표:
 - 이 옵션들(원본 서식 처리·문단 간격·제목/표/링크·이미지·첫 제목 처리)은 `문서 세부 설정` 접힘 영역 안의 `본문 서식` 하위 블록(`.document-detail-settings`)에 모여 있다. 바깥 접힘 컨테이너 이름과 구분한다.
 - UI는 세그먼트 버튼(`.detail-field .seg-btn[data-seg-for][data-seg-value]`)이고, 값/state/localStorage의 단일 소스는 같은 `id`의 숨김 `<select class="sr-only">`다. 버튼 클릭은 `select.value`를 바꾸고 `change`를 디스패치하며, 활성 표시는 `syncDetailSegButtons()`가 select 값에 맞춘다(초기 로드·리셋 후 호출). 버튼 라벨은 짧게 줄여도 되지만 select의 `option` 텍스트(`큰 제목·굵게` 등)와 `value`는 변환 계약이므로 유지한다.
+- `원본 서식 처리`(style-policy)는 나머지 7개 옵션의 전제이므로 그리드 밖 상위 마스터(`.detail-field--master`)로 분리한다. golden `validateDetailSettingsUx`가 마스터 분리와 `.detail-settings-grid` 밖 위치를 검사한다.
+- 직접 입력 미리보기 표(`.paste-preview-doc .ir-table`)와 진단 미리보기 표는 실제 HWPX 표의 하드코딩 속성(또렷한 테두리, 머리행 가운데+굵게+음영, 숫자 셀 오른쪽 정렬)을 반영한다. 숫자 셀 판별은 `irTableToHtml()`이 `isNumericCell()`로 `.ir-cell-num`을 붙여 처리한다.
+- 직접 입력(`state.inputMode==='paste'`) 변환의 출력 파일명은 가상 파일명이 아니라 제목 옵션이 반영된 `ir.title`(`sanitizeBaseName`) 기반으로 만든다. 파일 업로드는 입력 파일명을 유지한다.
 - UI 라벨은 사용자가 예상하는 결과 중심으로 쓴다. 예를 들어 `prominent`는 "강조"가 아니라 `큰 제목·굵게`, `report`는 "보고서형"이 아니라 `머리행 음영`처럼 실제 출력 변화를 드러낸다.
 - 옵션의 `value`는 저장값/localStorage/HWPX 생성 계약이므로 라벨만 바꿀 때는 `value`를 바꾸지 않는다.
 - 세부 설정을 바꿨는데 HWPX XML이 변하지 않는 회귀를 막기 위해 UI 라벨, `state`, `buildHwpx()` 옵션 전달, XML 검증을 한 묶음으로 본다.

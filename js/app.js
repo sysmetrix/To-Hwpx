@@ -521,6 +521,7 @@ function clearSelectedFile() {
         badge.style.display = 'none';
     }
     updateConverterBeta(null);
+    resetIrPreview();
 
     const dz = document.getElementById('drop-zone');
     if (dz) {
@@ -584,6 +585,19 @@ function updateFormatBadge(ext) {
 
 // 베타 품질 입력 포맷 — 변환 화면 파일별 베타 마커 판별용
 const BETA_EXTS = new Set(['docx', 'html', 'htm', 'xlsx', 'xls', 'csv', 'hwp']);
+
+/** 고급 진단 IR 미리보기를 초기 상태(placeholder + 접힘)로 되돌린다. */
+function resetIrPreview() {
+    const content = document.getElementById('ir-content');
+    if (content) content.textContent = '파일을 업로드하면 중간 표현(IR)이 여기에 표시됩니다.';
+    const preview = document.getElementById('ir-preview');
+    if (preview) preview.hidden = true;
+    const toggle = document.getElementById('ir-toggle');
+    if (toggle) {
+        toggle.textContent = '▶ 고급 진단: IR 미리보기';
+        toggle.setAttribute('aria-expanded', 'false');
+    }
+}
 
 /** 변환 화면 헤더의 베타 마커: 관리자 모드 + 베타 포맷 파일일 때만 노출(일반 사용자엔 항상 숨김).
  *  ext='__batch__'이면 큐에 베타 포맷이 하나라도 있는지로 판별. */
@@ -2006,7 +2020,6 @@ function renderImplementedFeaturePanel() {
                                 <span class="admin-feature-toggle-track" aria-hidden="true">
                                     <span class="admin-feature-toggle-thumb"></span>
                                 </span>
-                                <span class="admin-feature-toggle-label">${enabled ? '사용' : '안함'}</span>
                             </button>
                         </li>
                     `;
@@ -2621,7 +2634,10 @@ async function convertOneFile(file, statusPrefix = '', outputFontName = state.do
     setProgress(98);
     st('다운로드를 준비하는 중...');
     await tick();
-    const fileName = `${file.name.replace(/\.[^.]+$/, '')}.hwpx`;
+    // 직접 입력은 가상 파일명(문서.md 등) 대신 문서 제목 옵션이 반영된 ir.title로 파일명을 만든다.
+    // 파일 업로드는 기존대로 입력 파일명을 유지한다.
+    const pasteTitleBase = state.inputMode === 'paste' ? sanitizeBaseName(ir.title) : '';
+    const fileName = `${pasteTitleBase || file.name.replace(/\.[^.]+$/, '')}.hwpx`;
     setStepState('ship', 'done');
     setProgress(100);
 
@@ -4140,6 +4156,8 @@ function irTableToHtml(block) {
     const rs  = c => (typeof c === 'object' ? (c?.rowSpan || 1) : 1);
     const rows = (block.header && block.header.length ? [{ cells: block.header, hd: true }] : [])
         .concat((block.rows || []).map(r => ({ cells: r, hd: false })));
+    // 실제 HWPX 표와 같은 정렬(머리행 가운데, 숫자 오른쪽, 그 외 왼쪽)을 미리보기에서도 보여준다.
+    const rawText = c => (typeof c === 'object' ? (c?.text ?? '') : String(c ?? ''));
     let h = '<table class="ir-table"><tbody>';
     for (const row of rows) {
         h += '<tr>';
@@ -4147,9 +4165,10 @@ function irTableToHtml(block) {
             if (rs(c) === 0) continue;   // 세로병합 연속 sentinel
             const tag = row.hd ? 'th' : 'td';
             const span = `${cs(c) > 1 ? ` colspan="${cs(c)}"` : ''}${rs(c) > 1 ? ` rowspan="${rs(c)}"` : ''}`;
+            const numClass = (!row.hd && isNumericCell(rawText(c))) ? ' class="ir-cell-num"' : '';
             const b = bg(c);
             const style = b ? ` style="background:#${escHtml(b)}"` : '';
-            h += `<${tag}${span}${style}>${txt(c)}</${tag}>`;
+            h += `<${tag}${span}${numClass}${style}>${txt(c)}</${tag}>`;
         }
         h += '</tr>';
     }
