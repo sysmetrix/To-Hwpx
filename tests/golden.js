@@ -727,8 +727,16 @@ async function validateCommercialUx(page) {
     'pwa: 설치 안내 아이콘이 오프라인 앱 셸 캐시에 없음');
   assert(await page.locator('.help-dot[aria-label="줄 간격 도움말"]').count() === 1
     && await page.locator('.help-dot[aria-label="페이지 여백 도움말"]').count() === 1
+    && await page.locator('.help-dot[aria-label="문서 세부 설정 도움말"]').count() === 1
     && await page.locator('#open-advanced-guide').count() === 1,
     'ux: 세부 설정 도움말 또는 고급 사용 팁 진입점 누락');
+  if (!(await page.locator('.advanced-settings').getAttribute('open'))) {
+    await page.locator('.advanced-settings > summary').click();
+  }
+  await page.locator('.help-dot[aria-label="줄 간격 도움말"]').hover();
+  assert(await page.locator('#help-popover').isVisible()
+    && (await page.locator('#help-popover').textContent()).includes('본문과 목록'),
+    'ux: 물음표 도움말 커스텀 툴팁이 표시되지 않음');
   assert((await page.locator('#workflow-hint').textContent()).includes('3단계'),
     'ux: 변환 완료 후 상황별 흐름 안내가 완료 단계로 바뀌지 않음');
   console.log('PASS UX    keyboard, modal, warning download, PWA scope');
@@ -879,6 +887,60 @@ async function validateDetailSettingsUx(page) {
     'detail settings: 구분선 기본값이 숨김이 아님');
   assert(defaults.marginMap, 'detail settings: 페이지 여백 종이 미니맵 누락');
   assert(defaults.marginInputs === 6, 'detail settings: 페이지 여백 입력 6개가 유지되지 않음');
+  for (const id of ['paragraph-spacing', 'heading-style', 'table-style', 'link-style', 'image-max-width', 'image-align', 'title-body-policy']) {
+    assert(await page.locator(`#${id}`).count() === 1, `detail settings: #${id} 컨트롤 누락`);
+  }
+
+  const detailOutput = await page.evaluate(async () => {
+    const ir = {
+      title: 'detail output',
+      doc_type: 'plain',
+      blocks: [
+        { type: 'heading', level: 1, text: '큰 제목', color: '#2457A6' },
+        { type: 'para', runs: [{ text: '링크', href: 'https://example.com/path' }] },
+        { type: 'table', header: ['구분', '값'], rows: [['A', '10']] },
+        {
+          type: 'image',
+          alt: 'sample',
+          widthHwp: 40000,
+          heightHwp: 20000,
+          binName: 'image1.png',
+          mimeType: 'image/png',
+          data: new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]),
+        },
+      ],
+    };
+    const blob = await buildHwpx(ir, '휴먼명조', 12, null, 'A4', null, 'portrait', 160, {
+      paragraphSpacing: 'relaxed',
+      headingStyle: 'prominent',
+      tableStyle: 'report',
+      linkStyle: 'url',
+      imageMaxWidth: 50,
+      imageAlign: 'right',
+    });
+    const zip = await JSZip.loadAsync(await blob.arrayBuffer());
+    return {
+      header: await zip.file('Contents/header.xml').async('string'),
+      section: await zip.file('Contents/section0.xml').async('string'),
+    };
+  });
+  const bodyPara = (/<hh:paraPr\b[^>]*\bid="0"[\s\S]*?<\/hh:paraPr>/.exec(detailOutput.header) || [])[0] || '';
+  const h1Char = (/<hh:charPr\b[^>]*\bid="1"[^>]*>/.exec(detailOutput.header) || [])[0] || '';
+  const imageWidth = Number(((/<hp:curSz\b[^>]*\bwidth="(\d+)"/.exec(detailOutput.section) || [])[1]) || 0);
+  assert(bodyPara.includes('<hh:next value="1134"'), 'detail settings: 문단 넓게 프리셋이 HWPX paraPr에 반영되지 않음');
+  assert(h1Char.includes('height="2000"'), 'detail settings: 제목 강조 프리셋이 H1 크기에 반영되지 않음');
+  assert(detailOutput.header.includes('faceColor="#EAF2FF"'), 'detail settings: 보고서형 표 머리행 색상이 생성되지 않음');
+  assert(detailOutput.section.includes('링크 (https://example.com/path)'), 'detail settings: 링크 주소 함께 표시가 본문에 반영되지 않음');
+  assert(detailOutput.section.includes('horzAlign="RIGHT"') && imageWidth > 0 && imageWidth < 26000,
+    'detail settings: 이미지 최대 폭/오른쪽 정렬이 그림 XML에 반영되지 않음');
+
+  const keptTitle = await page.evaluate(() => {
+    const ir = { title: '', doc_type: 'plain', blocks: [{ type: 'heading', level: 1, text: '본문 제목' }, { type: 'para', text: '본문' }] };
+    applyDocumentTitlePolicy(ir, new File(['# 본문 제목'], 'sample.md', { type: 'text/markdown' }), '', 'heading', 'keep');
+    return { title: ir.title, firstBlock: ir.blocks[0]?.text, blockCount: ir.blocks.length };
+  });
+  assert(keptTitle.title === '본문 제목' && keptTitle.firstBlock === '본문 제목' && keptTitle.blockCount === 2,
+    'detail settings: 첫 제목 본문 유지 토글 정책이 적용되지 않음');
 
   const hiddenHeader = await page.evaluate(async () => {
     const blob = await buildHwpx(

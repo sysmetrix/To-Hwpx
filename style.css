@@ -1150,6 +1150,32 @@ a:hover { text-decoration: underline; }
 .advanced-margins > label {
     margin-bottom: 8px;
 }
+.document-detail-settings {
+    grid-column: 1 / -1;
+    margin-bottom: 0;
+    padding: 12px;
+    border: 1px solid var(--c-border);
+    border-radius: var(--radius-md);
+    background: var(--c-surface-alt);
+}
+.document-detail-settings > .form-row-label {
+    margin-bottom: 10px;
+}
+.detail-settings-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px 12px;
+}
+.detail-settings-grid label {
+    display: grid;
+    gap: 5px;
+    margin-bottom: 0;
+}
+.detail-settings-grid label span {
+    color: var(--c-text-sub);
+    font-size: 0.78rem;
+    font-weight: 800;
+}
 
 /* 변환기 섹션 파일 드롭 영역 — mini-drop-zone·detected-row 통합 */
 .converter-drop-area {
@@ -1210,7 +1236,7 @@ a:hover { text-decoration: underline; }
     grid-template-columns: minmax(130px, 0.9fr) minmax(0, 1fr);
     gap: 12px;
     align-items: center;
-    padding: 12px;
+    padding: 16px 22px;
     background: var(--c-surface-alt);
     border: 1.5px solid var(--c-border);
     border-radius: var(--radius-md);
@@ -1221,6 +1247,7 @@ a:hover { text-decoration: underline; }
     aspect-ratio: var(--margin-paper-ratio, 210 / 297);
     margin: 0 auto;
     width: min(var(--margin-paper-width, 150px), 100%);
+    overflow: visible;
     --margin-preview-top: 3.4%;
     --margin-preview-right: 9.5%;
     --margin-preview-bottom: 3.4%;
@@ -1265,14 +1292,21 @@ a:hover { text-decoration: underline; }
 .margin-page-label {
     position: absolute;
     color: var(--c-text-muted);
-    font-size: 0.58rem;
+    font-size: 0.56rem;
     font-weight: 800;
     letter-spacing: 0;
+    line-height: 1;
+    white-space: nowrap;
+    background: var(--c-surface);
+    border: 1px solid var(--c-border);
+    border-radius: 999px;
+    padding: 3px 5px;
+    z-index: 2;
 }
-.margin-page-label--top { top: 8px; left: 50%; transform: translateX(-50%); }
-.margin-page-label--bottom { bottom: 8px; left: 50%; transform: translateX(-50%); }
-.margin-page-label--left { top: 50%; left: 7px; transform: translateY(-50%) rotate(-90deg); }
-.margin-page-label--right { top: 50%; right: 5px; transform: translateY(-50%) rotate(90deg); }
+.margin-page-label--top { top: -10px; left: 50%; transform: translate(-50%, -50%); }
+.margin-page-label--bottom { bottom: -10px; left: 50%; transform: translate(-50%, 50%); }
+.margin-page-label--left { top: 50%; left: -14px; transform: translate(-100%, -50%); }
+.margin-page-label--right { top: 50%; right: -14px; transform: translate(100%, -50%); }
 .margin-controls {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1358,6 +1392,23 @@ a:hover { text-decoration: underline; }
 }
 .toggle-text .help-dot {
     margin-left: 2px;
+}
+.help-popover {
+    position: fixed;
+    z-index: 10000;
+    max-width: min(320px, calc(100vw - 24px));
+    padding: 9px 11px;
+    border: 1px solid var(--c-border);
+    border-radius: var(--radius-sm);
+    background: var(--c-text);
+    color: #fff;
+    box-shadow: var(--shadow-md);
+    font-size: 0.78rem;
+    font-weight: 600;
+    line-height: 1.45;
+}
+.help-popover[hidden] {
+    display: none;
 }
 .form-row select,
 .form-row input[type="text"],
@@ -2446,6 +2497,7 @@ a:hover { text-decoration: underline; }
         text-align: left;
     }
     .advanced-settings-grid { grid-template-columns: 1fr; }
+    .detail-settings-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .advanced-settings summary { align-items: flex-start; }
     .adv-summary-note { display: none; }
     .margin-paper-map {
@@ -2523,6 +2575,7 @@ a:hover { text-decoration: underline; }
     .margin-paper-map {
         grid-template-columns: 1fr;
     }
+    .detail-settings-grid { grid-template-columns: 1fr; }
     .margin-paper {
         width: min(156px, 72%);
         min-height: 0;
