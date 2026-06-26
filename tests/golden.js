@@ -538,8 +538,7 @@ async function convertThroughUi(page, { inputPath, format, text, baseName }) {
   await page.goto(inputPath ? baseUrl : `${baseUrl}?lab=1`, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => window.JSZip && window.marked && window.XLSX, null, { timeout: 30000 });
   if (!inputPath) {
-    assert(await page.locator('.input-mode-actions').isVisible(), 'lab: ?lab=1에서 직접 입력 버튼이 보이지 않음');
-    assert(!(await page.locator('#paste-mode').isVisible()), 'lab: 직접 입력칸이 버튼 클릭 전부터 보임');
+    assert(await page.locator('.input-mode-tabs').isVisible(), 'lab: ?lab=1에서 직접 입력 탭이 보이지 않음');
   }
 
   const downloadPromise = page.waitForEvent('download', { timeout: 30000 });
@@ -562,8 +561,8 @@ async function convertThroughUi(page, { inputPath, format, text, baseName }) {
 async function validateDirectInput(page) {
   const baseUrl = `http://127.0.0.1:${PORT}/index.html`;
   await page.goto(`${baseUrl}?lab=0`, { waitUntil: 'domcontentloaded' });
-  assert(!await page.locator('.input-mode-actions').isVisible(),
-    'lab: 일반 사용자에게 직접 입력 버튼이 노출됨');
+  assert(!await page.locator('.input-mode-tabs').isVisible(),
+    'lab: 일반 사용자에게 직접 입력 탭이 노출됨');
   await page.locator('#open-changelog').click();
   await page.locator('.changelog-tab[data-tab="dev"]').click();
   const changelogTabGap = await page.evaluate(() => {
@@ -623,8 +622,8 @@ async function validateDirectInput(page) {
     'lab: 승인 후 실험실 토글 상태가 켜짐으로 표시되지 않음');
   await page.locator('[data-lab-toggle]').click();
   await page.waitForLoadState('domcontentloaded');
-  assert(!await page.locator('.input-mode-actions').isVisible(),
-    'lab: 토글을 끈 뒤 직접 입력 버튼이 남아 있음');
+  assert(!await page.locator('.input-mode-tabs').isVisible(),
+    'lab: 토글을 끈 뒤 직접 입력 탭이 남아 있음');
   await page.locator('#open-changelog').click();
   await page.locator('.changelog-tab[data-tab="dev"]').click();
   assert(await page.locator('[data-lab-toggle]').getAttribute('aria-pressed') === 'false',
@@ -810,9 +809,17 @@ async function validateCommercialUx(page) {
     && await page.locator('#open-advanced-guide').count() === 0,
     'ux: 세부 설정 도움말 또는 고급 사용 팁 중복 진입점 상태가 기준과 다름');
   const titleSourceLabel = await page.locator('[data-title-source="heading"]').textContent();
-  const titlePlaceholder = await page.locator('#doc-title').getAttribute('placeholder');
-  assert(titleSourceLabel.trim() === '문서 첫 문장' && titlePlaceholder.includes('문서 첫 문장'),
-    'ux: 제목 비움 기준 문구가 문서 첫 문장으로 표시되지 않음');
+  assert(titleSourceLabel.trim() === '문서 첫 문장'
+    && await page.locator('[data-title-source="custom"]').textContent() === '직접 입력'
+    && !(await page.locator('.title-input-wrap').isVisible()),
+    'ux: 문서 제목 기본 기준 또는 직접 입력 숨김 상태가 기준과 다름');
+  await page.locator('[data-title-source="custom"]').click();
+  assert(await page.locator('.title-input-wrap').isVisible()
+    && (await page.locator('#doc-title').getAttribute('placeholder')).includes('문서 제목을 입력'),
+    'ux: 문서 제목 직접 입력 선택 시 입력칸이 나타나지 않음');
+  await page.locator('[data-title-source="filename"]').click();
+  assert(!(await page.locator('.title-input-wrap').isVisible()),
+    'ux: 자동 제목 기준으로 돌아갔는데 직접 입력칸이 남아 있음');
   if (!(await page.locator('.advanced-settings').getAttribute('open'))) {
     await page.locator('.advanced-settings > summary').click();
   }

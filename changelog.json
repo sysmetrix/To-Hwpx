@@ -1,6 +1,21 @@
 {
-  "current": "4.6.18",
+  "current": "4.6.19",
   "versions": [
+    {
+      "version": "4.6.19",
+      "date": "2026-06-26",
+      "user": [
+        "문서 제목 기준을 '문서 첫 문장', '파일 이름', '직접 입력' 세 가지로 정리했습니다.",
+        "문서 제목 입력칸은 '직접 입력'을 선택했을 때만 나타나도록 바꿔 자동 제목 기준과 직접 제목 입력을 명확히 구분했습니다.",
+        "실험실의 텍스트 직접 입력 기능은 원래처럼 파일 업로드/직접 입력 탭 구조로 되돌렸습니다."
+      ],
+      "dev": [
+        "[v4.6.19] index.html/js/app.js/style.css: titleSource에 custom 기준 추가, 직접 입력 선택 시에만 #doc-title 표시·적용",
+        "[v4.6.19] index.html/js/app.js/style.css: v4.6.18에서 잘못 변경된 Lab 직접 입력 버튼형 UI를 기존 탭형 UI로 복원",
+        "[v4.6.19] tests/golden.js: 제목 직접 입력 표시/숨김과 Lab 직접 입력 탭 비노출/노출 회귀 테스트 갱신",
+        "[v4.6.19] package.json/package-lock.json/sw.js/index.html/changelog.json: v4.6.19 반영"
+      ]
+    },
     {
       "version": "4.6.18",
       "date": "2026-06-26",
