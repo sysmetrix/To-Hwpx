@@ -1152,6 +1152,12 @@ function renderQualityPanel() {
             <strong>포맷별 변환 품질 평가</strong>
             <p>이 지표는 사용자 파일 원격 수집 통계가 아니라, 현재 파서 구현 범위와 golden/게이트 fixture 기준의 추정 품질입니다. 변환률은 원본 기능이 HWPX IR로 의미 있게 옮겨지는 비율, 성공률은 오류 없이 HWPX 생성·구조 검증을 통과할 가능성을 뜻합니다.</p>
         </section>
+        <section class="quality-cadence">
+            <strong>평가 주기</strong>
+            <span>자동 평가는 릴리스마다 golden/게이트 기준으로 갱신합니다.</span>
+            <span>DOCX·HTML·XLSX처럼 서식 보존이 걸린 항목은 관련 파서나 렌더러를 바꿀 때마다 한컴 수동 확인을 별도로 요청합니다.</span>
+            <span>정기 재평가는 fixture가 늘어난 경우 또는 월 1회 점검 때 수치를 다시 조정합니다.</span>
+        </section>
         <div class="format-quality-grid">${rows}</div>
         <section class="quality-plan">
             <h3>검토 의견과 계획</h3>
@@ -1959,7 +1965,10 @@ function renderImplementedFeaturePanel() {
                                     aria-pressed="${enabled}"
                                     ${adminOn ? '' : 'disabled'}
                                     aria-label="${escHtml(feature.label)} ${enabled ? '끄기' : '켜기'}">
-                                ${enabled ? '사용' : '안함'}
+                                <span class="admin-feature-toggle-track" aria-hidden="true">
+                                    <span class="admin-feature-toggle-thumb"></span>
+                                </span>
+                                <span class="admin-feature-toggle-label">${enabled ? '사용' : '안함'}</span>
                             </button>
                         </li>
                     `;
@@ -2303,7 +2312,7 @@ ${html}
 `;
     const blob = new Blob([doc], { type: 'text/html;charset=utf-8' });
     const url = URL.createObjectURL(blob);
-    triggerDownload(url, `${title}-preview.html`);
+    triggerFileDownload(url, `${title}-preview.html`, 'text/html;charset=utf-8');
     setTimeout(() => URL.revokeObjectURL(url), 60_000);
     showToast('<strong>HTML 다운로드를 시작했습니다</strong>', { timeout: 2500 });
 }
@@ -3072,6 +3081,17 @@ function triggerDownload(url, fileName) {
     a.href = url;
     a.download = normalizeHwpxFileName(fileName);
     a.type = 'application/hwp+zip';
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+}
+
+function triggerFileDownload(url, fileName, mimeType = '') {
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = String(fileName || 'download').trim() || 'download';
+    if (mimeType) a.type = mimeType;
     a.style.display = 'none';
     document.body.appendChild(a);
     a.click();

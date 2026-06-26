@@ -595,6 +595,7 @@ async function validateDirectInput(page) {
   await page.locator('.changelog-tab[data-tab="quality"]').click();
   const qualityText = await page.locator('#changelog-content').textContent();
   assert(qualityText.includes('포맷별 변환 품질 평가')
+    && qualityText.includes('평가 주기')
     && qualityText.includes('버전/일자별 추이')
     && qualityText.includes('HTML 문서')
     && qualityText.includes('CSS'),
@@ -614,6 +615,12 @@ async function validateDirectInput(page) {
   await page.locator('#paste-html-action').click();
   assert(await page.locator('#download-paste-html').isVisible(),
     'direct preview: HTML 다운로드 메뉴가 없음');
+  const htmlDownloadPromise = page.waitForEvent('download');
+  await page.locator('#download-paste-html').click();
+  const htmlDownload = await htmlDownloadPromise;
+  assert(htmlDownload.suggestedFilename().endsWith('.html'),
+    'direct preview: HTML 다운로드 파일명이 .html이 아님');
+  await page.locator('#paste-html-action').click();
   await page.locator('#copy-paste-html').click();
 
   const directSettingsPackage = await convertThroughUi(page, {
@@ -707,6 +714,8 @@ async function validateCommercialUx(page) {
   const heroDropText = await page.locator('#drop-zone .drop-sub').textContent();
   assert(heroDropText.includes('MD · DOCX · HTML · CSV/XLSX · JSON · TXT · HWP · IPYNB'),
     'ux: 첫 화면 드롭존 입력 포맷 순서가 안내 기준과 다름');
+  assert((await page.locator('.hero-beta-badge').textContent()).includes('베타'),
+    'ux: 서비스 첫 화면에 서식 변환 베타 표시가 없음');
   assert((await page.locator('#file-input').getAttribute('accept')).startsWith('.md,.markdown,.docx,.html,.htm,.csv,.xlsx,.xls,.json,.txt,.hwp,.ipynb'),
     'ux: 파일 선택 accept 순서가 드롭존 입력 포맷 순서와 다름');
   const versionButtonText = (await page.locator('#open-changelog').textContent()).trim();

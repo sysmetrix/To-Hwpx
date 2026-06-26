@@ -1,6 +1,22 @@
 {
-  "current": "4.6.24",
+  "current": "4.6.25",
   "versions": [
+    {
+      "version": "4.6.25",
+      "date": "2026-06-26",
+      "user": [
+        "직접 입력 미리보기의 HTML 다운로드가 HWPX가 아니라 .html 파일로 저장되도록 고쳤습니다.",
+        "첫 화면과 지원 현황에서도 DOCX·HTML·CSV/XLSX 서식 변환이 베타임을 더 분명히 표시했습니다.",
+        "포맷 품질 평가에 평가 주기를 추가하고, 관리자 기능 토글을 스위치형 UI로 정리했습니다."
+      ],
+      "dev": [
+        "[v4.6.25] js/app.js: HTML 다운로드가 normalizeHwpxFileName()을 타지 않도록 triggerFileDownload() 분리",
+        "[v4.6.25] index.html/style.css: 첫 화면 베타 배지 추가, 지원 현황 표의 DOCX/HTML/CSV/XLSX 상태를 베타로 통일",
+        "[v4.6.25] js/app.js/style.css: 관리자 구현 기능 토글을 스위치형 UI로 개선하고 포맷 품질 평가 주기 안내 추가",
+        "[v4.6.25] tests/golden.js: HTML 다운로드 파일명 .html, 품질 평가 주기, 첫 화면 베타 표시 회귀 테스트 추가",
+        "[v4.6.25] package.json/package-lock.json/sw.js/index.html/changelog.json: v4.6.25 반영"
+      ]
+    },
     {
       "version": "4.6.24",
       "date": "2026-06-26",

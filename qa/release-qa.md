@@ -476,3 +476,22 @@ Scope: static browser-only conversion flow from file selection to HWPX download.
 - [ ] DOCX·HTML·XLSX 대표 파일을 `원본 우선`과 `앱 설정으로 정리`로 각각 변환해 한컴에서 표/색상/링크/문단 간격 차이를 시각 확인
 - [ ] 파일 선택 후 변환 버튼을 누르기 전 IR 미리보기가 채워지는지 확인
 - [ ] 캐시를 비우고 `📋 v4.6.24` 확인
+
+## 32. v4.6.25 HTML 다운로드와 베타/품질 주기 표시
+
+자동 승인 기준:
+
+- [x] 직접 입력 미리보기의 HTML 다운로드가 `.hwpx`로 정규화되지 않고 `.html` 파일명으로 저장됨
+- [x] 첫 화면에 DOCX·HTML·XLSX 서식 변환 베타 표시가 보임
+- [x] 지원 현황 표에서 DOCX·HTML·CSV·XLSX 상태가 베타로 표시됨
+- [x] 포맷 품질 평가 탭에 평가 주기 안내가 표시됨
+- [x] 관리자 구현 기능 토글이 텍스트 버튼이 아니라 스위치형 UI로 표시됨
+- [x] `npm.cmd run test:golden` PASS
+- [x] `node tests/orientation-e2e.js` PASS
+- [x] `node qa/gate.js qa/fixtures/md_hwpx_test.md` ①~⑧ PASS
+
+수동 확인 기준:
+
+- [ ] 직접 입력 미리보기 HTML 다운로드 파일이 브라우저 다운로드 목록에서 `.html`로 보이는지 확인
+- [ ] `?admin=1` 관리자 모드 탭에서 구현된 기능 토글이 최신 스위치형으로 보이는지 확인
+- [ ] 캐시를 비우고 `📋 v4.6.25` 확인

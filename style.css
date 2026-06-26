@@ -550,6 +550,12 @@ a:hover { text-decoration: underline; }
     color: var(--c-primary);
     transform: translateY(-1px);
 }
+.hero-beta-badge {
+    border-color: var(--c-warnwash-border);
+    background: var(--c-warning-light);
+    color: var(--c-warning);
+    font-weight: 800;
+}
 
 /* 드롭존 — 히어로 영역 내 (화면에서 가장 강한 행동 유도 요소) */
 .drop-zone {
@@ -3813,33 +3819,69 @@ a:hover { text-decoration: underline; }
     line-height: 1.45;
 }
 .admin-feature-toggle {
-    min-width: 56px;
-    min-height: 30px;
-    padding: 0 10px;
-    border: 1px solid var(--c-border);
-    border-radius: var(--radius-sm);
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    min-width: 82px;
+    min-height: 32px;
+    padding: 4px 8px 4px 5px;
+    border: 1px solid var(--c-border-strong);
+    border-radius: 999px;
     background: var(--c-surface);
     color: var(--c-text-sub);
     font-family: var(--font-main);
     font-size: 0.72rem;
     font-weight: 800;
     cursor: pointer;
+    transition: border-color var(--trans), background var(--trans), color var(--trans);
 }
 .admin-feature-toggle[aria-pressed="true"] {
     border-color: var(--c-primary);
     background: var(--c-primary-light);
     color: var(--c-primary);
 }
+.admin-feature-toggle-track {
+    position: relative;
+    display: inline-block;
+    width: 34px;
+    height: 20px;
+    border-radius: 999px;
+    background: var(--c-border-strong);
+    transition: background var(--trans);
+}
+.admin-feature-toggle-thumb {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(20, 21, 26, 0.22);
+    transition: transform var(--trans);
+}
+.admin-feature-toggle[aria-pressed="true"] .admin-feature-toggle-track {
+    background: var(--c-primary);
+}
+.admin-feature-toggle[aria-pressed="true"] .admin-feature-toggle-thumb {
+    transform: translateX(14px);
+}
+.admin-feature-toggle-label {
+    min-width: 26px;
+    text-align: left;
+}
 .admin-feature-toggle:disabled {
     opacity: 0.55;
     cursor: not-allowed;
 }
 .format-quality-intro,
+.quality-cadence,
 .quality-plan,
 .quality-history {
     margin-bottom: 18px;
 }
 .format-quality-intro strong,
+.quality-cadence strong,
 .quality-plan h3,
 .quality-history h3 {
     display: block;
@@ -3848,12 +3890,21 @@ a:hover { text-decoration: underline; }
     font-size: 0.95rem;
 }
 .format-quality-intro p,
+.quality-cadence span,
 .quality-plan li,
 .quality-history-item p {
     margin: 0;
     color: var(--c-text-sub);
     font-size: 0.8rem;
     line-height: 1.55;
+}
+.quality-cadence {
+    display: grid;
+    gap: 6px;
+    padding: 12px 14px;
+    border: 1px solid var(--c-info-border);
+    border-radius: var(--radius-md);
+    background: var(--c-info-bg);
 }
 .quality-plan ol {
     display: grid;
