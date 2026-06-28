@@ -1,6 +1,6 @@
 {
   "name": "to-hwpx",
-  "version": "4.7.11",
+  "version": "4.7.12",
   "private": true,
   "scripts": {
     "test:golden": "node tests/golden.js",
@@ -12,5 +12,9 @@
     "eslint-plugin-no-unsanitized": "^4.1.5",
     "jszip": "^3.10.1",
     "playwright": "^1.56.1"
+  },
+  "dependencies": {
+    "@vercel/analytics": "^2.0.1",
+    "@vercel/speed-insights": "^2.0.0"
   }
 }

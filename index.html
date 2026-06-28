@@ -111,6 +111,16 @@
             crossorigin="anonymous"
             referrerpolicy="no-referrer"
             defer></script>
+
+    <!-- ─── Vercel Analytics & Speed Insights ───────────────────────
+         Web Analytics : 방문자·페이지뷰·국가·디바이스·레퍼러 (쿠키 없음, GDPR 준수)
+         Speed Insights: LCP·CLS·INP Core Web Vitals 실사용자 성능 지표
+         스크립트는 Vercel Edge가 /_vercel/* 경로로 프록시 서빙 → CSP 'self' 범위.
+         로컬/비Vercel 환경에서는 404로 조용히 실패 (defer 블로킹 없음).
+         커스텀 이벤트는 app.js의 track() 함수로 기록된다.
+         ──────────────────────────────────────────────────────────── -->
+    <script defer src="/_vercel/insights/script.js"></script>
+    <script defer src="/_vercel/speed-insights/script.js"></script>
 </head>
 <body>
 
@@ -130,7 +140,7 @@
             <span>｢BWYF｣ AX Challenger 2026</span>
             <!-- [주의] id="open-changelog"는 app.js에서 관리자 모드일 때 업데이트 내역 모달을 여는 연결값 -->
             <button class="util-changelog-btn" id="open-changelog" aria-label="버전 정보" data-admin-enabled="false">
-                📋 v4.7.11
+                📋 v4.7.12
             </button>
         </div>
     </div>

@@ -21,6 +21,16 @@ import { buildHwpx, isNumericCell } from './hwpx.js';
 'use strict';
 
 // ─────────────────────────────────────────────────────────────────────────
+// [Analytics] Vercel Web Analytics 커스텀 이벤트 래퍼
+//   window.va: Vercel Analytics 스크립트가 주입하는 큐 함수
+//   미지원 환경(로컬/비Vercel)에서는 조용히 무시된다.
+//   data 값은 반드시 string — Vercel Analytics 스키마 요건.
+// ─────────────────────────────────────────────────────────────────────────
+function track(name, data) {
+    try { window.va?.('event', { name, data }); } catch (_) {}
+}
+
+// ─────────────────────────────────────────────────────────────────────────
 // [전역 상태]
 //   현재 변환 세션 정보를 저장. 페이지 리로드 시 초기화됨
 //   [주의] 민감한 문서 내용은 state에 장기 저장하지 않음 (privacy)
@@ -2529,6 +2539,8 @@ async function runConversionPipeline() {
         resetPipeline();
 
         const prefix = batch ? `(${i + 1}/${total}) ${item.file.name} · ` : '';
+        const _t0 = Date.now();
+        track('conversion_start', { format: item.ext });
         try {
             const res = await convertOneFile(item.file, prefix, outputFontName);
             item.blob = res.blob;
@@ -2537,11 +2549,21 @@ async function runConversionPipeline() {
             item.url = URL.createObjectURL(res.blob);
             item.status = res.validation.pass ? 'done' : 'warn';
             if (res.validation.pass) okCount++; else warnCount++;
+            const _sz = item.file.size;
+            track('conversion_success', {
+                format: item.ext,
+                valid: String(res.validation.pass),
+                dur_s: String(Math.round((Date.now() - _t0) / 1000)),
+                size: _sz < 100_000 ? 'xs' : _sz < 1_000_000 ? 'sm' : 'lg',
+            });
         } catch (err) {
             item.status = 'error';
             item.error = err;
             errCount++;
             console.error('[To HWPX] 변환 오류:', item.file.name, err);
+            const _stage = err.message.startsWith('파일 파싱') ? 'parse'
+                : err.message.startsWith('HWPX 생성') ? 'build' : 'other';
+            track('conversion_fail', { format: item.ext, stage: _stage });
         }
         if (batch) renderQueueList();
     }

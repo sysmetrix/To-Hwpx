@@ -1,6 +1,16 @@
 {
-  "current": "4.7.11",
+  "current": "4.7.12",
   "versions": [
+    {
+      "version": "4.7.12",
+      "date": "2026-06-28",
+      "user": [],
+      "dev": [
+        "[v4.7.12] Vercel Web Analytics + Speed Insights 연동 — 방문자·페이지뷰·Core Web Vitals 수집 시작 (쿠키 없음, GDPR 준수)",
+        "[v4.7.12] track() 헬퍼 + conversion_start/success/fail 커스텀 이벤트 — 포맷별 변환 현황, 성공률, 소요시간, 파일크기 버킷 추적",
+        "[v4.7.12] index.html: /_vercel/insights/script.js + /_vercel/speed-insights/script.js 스크립트 추가 (defer, 로컬에서 조용히 실패)"
+      ]
+    },
     {
       "version": "4.7.11",
       "date": "2026-06-28",
