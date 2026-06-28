@@ -3932,9 +3932,11 @@ function syncDetailSegButtons() {
     });
 }
 
-// 원본 우선이면 본문 고급 서식 섹션 전체를 숨기고, 혼합/설정 우선이면 보인다.
+// 원본 우선이면 본문 고급 서식 섹션을 숨기고 안내 노트를 보인다. 혼합/설정 우선은 반대.
 function applyStylePolicyUi(policy = state.stylePolicy) {
     const isSource = policy === 'source';
+    const note = document.getElementById('detail-source-note');
+    if (note) note.hidden = !isSource;
     const detailSection = document.querySelector('.document-detail-settings');
     if (detailSection) detailSection.hidden = isSource;
 }
