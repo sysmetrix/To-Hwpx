@@ -1,6 +1,20 @@
 {
-  "current": "4.7.18",
+  "current": "4.8.0",
   "versions": [
+    {
+      "version": "4.8.0",
+      "date": "2026-06-29",
+      "user": [
+        "HWP 포맷 카드(팝업)와 HWP 변환 결과 카드에 한컴 공식 HwpxConverter 다운로드 안내 추가 — HWP 파일을 HWPX로 일괄 변환할 때 서식 보존도가 가장 높음"
+      ],
+      "dev": [
+        "[v4.8.0] HWPX_CONVERTER_DOWNLOAD_URL 상수 추가 (hwpx-public-doc/HwpxConverter-setup-1.0.0.75)",
+        "[v4.8.0] FORMAT_INFO.hwp에 links[] 필드 추가 → openFormatModal에서 fmt-modal-links 섹션으로 렌더링",
+        "[v4.8.0] showResult(): ext==='hwp'일 때 result-hwpx-converter-tip 블록 표시",
+        "[v4.8.0] formatSpecificRecovery hwp 문구에 HwpxConverter 언급 추가",
+        "[v4.8.0] style.css: .result-hwpx-converter-tip, .btn-hwpx-converter, .fmt-modal-links, .fmt-modal-link-btn 스타일 추가"
+      ]
+    },
     {
       "version": "4.7.18",
       "date": "2026-06-28",

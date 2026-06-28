@@ -910,6 +910,10 @@ function initFormatTabs() {
 // ─────────────────────────────────────────────────────────────────────────
 // [포맷 상세 데이터]  카드 팝업에 표시할 포맷별 변환 정보
 // ─────────────────────────────────────────────────────────────────────────
+
+// HWP → HWPX 일괄 변환 공식 도구 (한컴 HwpxConverter). 인스톨러는 hwpx-public-doc에 있음.
+const HWPX_CONVERTER_DOWNLOAD_URL = 'https://github.com/sysmetrix/To-Hwpx/raw/main/hwpx-public-doc/HwpxConverter-setup-1.0.0.75';
+
 const FORMAT_INFO = {
     md: {
         icon: '📝', svgIcon: 'icons/brand/markdown.svg', name: 'Markdown',
@@ -975,6 +979,13 @@ const FORMAT_INFO = {
                 '저장하면 완료됩니다. 이 사이트에 업로드할 필요 없이 바로 사용할 수 있습니다.',
             ],
         },
+        links: [
+            {
+                label: '📦 HwpxConverter 다운로드 (한컴 공식 일괄 변환 도구)',
+                href: HWPX_CONVERTER_DOWNLOAD_URL,
+                desc: 'HWP 파일 여러 개를 HWPX로 한 번에 변환합니다. 한컴오피스 엔진을 사용해 서식 보존도가 가장 높습니다.',
+            },
+        ],
     },
     txt: {
         icon: '📄', name: '일반 텍스트 (TXT)',
@@ -1334,6 +1345,14 @@ function openFormatModal(ext) {
         html += `<div class="fmt-modal-tip"><strong>${info.tip.title}</strong><ol>`;
         info.tip.steps.forEach(s => { html += `<li>${s}</li>`; });
         html += `</ol></div>`;
+    }
+    if (info.links?.length) {
+        html += `<div class="fmt-modal-section fmt-modal-links">`;
+        info.links.forEach(link => {
+            html += `<a class="fmt-modal-link-btn" href="${link.href}" target="_blank" rel="noopener noreferrer">${link.label}</a>`;
+            if (link.desc) html += `<p class="fmt-modal-link-desc">${link.desc}</p>`;
+        });
+        html += `</div>`;
     }
 
     // eslint-disable-next-line no-unsanitized/property -- html built entirely from FORMAT_INFO hardcoded constants, no user input
@@ -2837,6 +2856,13 @@ function showResult({ url, fileName, size, validation }) {
                 <strong>${escHtml(officeCheckTitle)}</strong>
                 <span>${escHtml(officeCheckDetail)}</span>
             </div>
+            ${ext === 'hwp' ? `
+            <div class="result-hwpx-converter-tip">
+                <strong>📦 서식을 더 정확히 보존하려면</strong>
+                <span>한컴 공식 <b>HwpxConverter</b>로 HWP 파일을 HWPX로 먼저 변환한 뒤 이 사이트에 업로드하면 품질이 더 높습니다.</span>
+                <a href="${HWPX_CONVERTER_DOWNLOAD_URL}" target="_blank" rel="noopener noreferrer" class="btn-hwpx-converter">HwpxConverter 다운로드</a>
+            </div>
+            ` : ''}
             <p class="result-note">${escHtml(autoText)}</p>
         </div>
     `;
@@ -3018,7 +3044,7 @@ function showFailureResult(err) {
 function formatSpecificRecovery(ext) {
     const map = {
         docx: 'Word에서 파일을 다시 저장한 뒤 시도하세요. 표·이미지가 복잡하면 DOCX를 단순화하거나 한컴에서 직접 HWPX로 저장해 보세요.',
-        hwp: 'HWP는 베타 입력입니다. 한컴오피스에서 HWPX 또는 DOCX로 다시 저장한 파일을 사용하면 성공 가능성이 높습니다.',
+        hwp: 'HWP는 베타 입력입니다. 한컴 공식 HwpxConverter로 HWPX로 먼저 변환하거나, 한컴오피스에서 HWPX/DOCX로 다시 저장한 파일을 사용하면 성공 가능성이 높습니다.',
         hwpx: '이미 HWPX인 파일은 변환보다 원본 사용을 권장합니다. 복구가 목적이면 한컴에서 열리는지 먼저 확인하세요.',
         json: 'JSON 문법 오류가 없는지 확인하고, 너무 깊은 중첩이나 큰 배열은 나누어 변환해 보세요.',
         ipynb: '노트북 JSON 구조가 깨지지 않았는지 확인하고, 이미지·차트 출력이 많다면 Markdown 또는 DOCX로 내보낸 뒤 변환해 보세요.',
