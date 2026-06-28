@@ -35,6 +35,102 @@ function emptyIR(title = '제목 없음', docType = 'plain') {
     return { title: sanitize(title), doc_type: docType, blocks: [] };
 }
 
+// GFM 각주 처리용 모듈 레벨 Map — parseMd 호출마다 초기화된다.
+const _mdFnMap = new Map();
+
+/**
+ * YAML frontmatter 추출 (---\n...\n--- 블록).
+ * title: 같은 key: value 쌍을 meta 객체로 반환하고, body는 frontmatter 제거 후 본문이다.
+ */
+function parseFrontmatter(text) {
+    const m = /^---[ \t]*\r?\n([\s\S]*?)\r?\n---[ \t]*(?:\r?\n|$)/.exec(text);
+    if (!m) return { meta: {}, body: text };
+    const meta = {};
+    for (const line of m[1].split(/\r?\n/)) {
+        const kv = /^([\w-]+)[ \t]*:[ \t]*(.*)$/.exec(line);
+        if (kv) meta[kv[1].toLowerCase()] = kv[2].trim().replace(/^['"]|['"]$/g, '');
+    }
+    return { meta, body: text.slice(m[0].length) };
+}
+
+/**
+ * GFM 각주 전처리.
+ * [^id]: text 정의를 _mdFnMap에 저장하고 본문에서 제거한다.
+ * [^id] 참조를 U+FFF9 N U+FFFA 마커로 치환해 markdownInlineRuns에서 footnote run으로 복원한다.
+ */
+function preProcessMdFootnotes(text) {
+    _mdFnMap.clear();
+    const defs = {};
+    const body = text.replace(/^\[\^([^\]\n]+)\]:[ \t]+(.+)$/gm, (_, id, def) => {
+        defs[id.trim()] = def.trim();
+        return '';
+    });
+    let counter = 0;
+    return body.replace(/\[\^([^\]\n]+)\]/g, (_, id) => {
+        const fnText = defs[id.trim()];
+        if (fnText === undefined) return `[^${id}]`;
+        const idx = counter++;
+        _mdFnMap.set(idx, fnText);
+        return `￹${idx}￺`;
+    });
+}
+
+/**
+ * 텍스트를 GFM 각주 마커(￹N￺)로 분리해 footnote run과 일반 run을 섞어 반환.
+ * 각주가 없으면 splitInlineEmphasis를 그대로 위임한다.
+ */
+function splitWithFnRefs(text) {
+    if (!_mdFnMap.size || !text.includes('￹')) return splitInlineEmphasis(text);
+    const re = /￹(\d+)￺/g;
+    const parts = [];
+    let last = 0, m;
+    while ((m = re.exec(text)) !== null) {
+        if (m.index > last) parts.push(...splitInlineEmphasis(text.slice(last, m.index)));
+        const fnText = _mdFnMap.get(Number(m[1]));
+        if (fnText != null) parts.push({ text: '', footnote: fnText });
+        last = re.lastIndex;
+    }
+    if (last < text.length) parts.push(...splitInlineEmphasis(text.slice(last)));
+    return parts.length ? parts : splitInlineEmphasis(text);
+}
+
+/** WebP 매직 바이트 판별 (RIFF....WEBP) */
+function isWebP(bytes) {
+    return bytes.length >= 12 &&
+        bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46 &&
+        bytes[8] === 0x57 && bytes[9] === 0x45 && bytes[10] === 0x42 && bytes[11] === 0x50;
+}
+
+/**
+ * Canvas API를 이용해 WebP → PNG 변환.
+ * HWPX는 BMP/PNG/JPEG/GIF만 지원하므로 WebP는 반드시 변환해야 한다.
+ * 반환: { bytes: Uint8Array, width: number, height: number }
+ */
+function convertWebpToPng(bytes) {
+    return new Promise((resolve, reject) => {
+        const blob = new Blob([bytes], { type: 'image/webp' });
+        const url = URL.createObjectURL(blob);
+        const img = new Image();
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.naturalWidth;
+            canvas.height = img.naturalHeight;
+            canvas.getContext('2d').drawImage(img, 0, 0);
+            canvas.toBlob(b => {
+                URL.revokeObjectURL(url);
+                if (!b) { reject(new Error('WebP를 PNG로 변환하지 못했습니다.')); return; }
+                b.arrayBuffer().then(ab => resolve({
+                    bytes: new Uint8Array(ab),
+                    width: img.naturalWidth,
+                    height: img.naturalHeight,
+                })).catch(reject);
+            }, 'image/png');
+        };
+        img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('WebP 이미지를 불러오지 못했습니다.')); };
+        img.src = url;
+    });
+}
+
 
 // ─────────────────────────────────────────────────────────────────────────
 // [1] Markdown 파서
@@ -47,9 +143,13 @@ export function parseMd(text, docType = 'plain') {
         console.warn('[parsers] marked.js 미로드 — TXT 파서로 폴백');
         return parseTxt(text, docType);
     }
+    // YAML frontmatter 추출 → title/meta 분리
+    const { meta: fmMeta, body: fmBody } = parseFrontmatter(text);
+    // GFM 각주 전처리: [^id]: text 정의 추출 + [^id] 참조를 마커로 치환
+    const fnBody = preProcessMdFootnotes(fmBody);
     // 3개 이상 연속 빈 줄 → 빈 단락 HTML 마커로 보존
     // (marked.js는 연속 빈 줄을 하나의 단락 구분으로 처리해서 정보가 손실됨)
-    const preprocessed = text.replace(/\n{3,}/g, '\n\n<p></p>\n\n');
+    const preprocessed = fnBody.replace(/\n{3,}/g, '\n\n<p></p>\n\n');
     if (typeof marked.lexer === 'function') {
         try {
             const tokens = marked.lexer(preprocessed);
@@ -59,6 +159,8 @@ export function parseMd(text, docType = 'plain') {
             if (firstH1Idx !== -1) {
                 ir.title = ir.blocks[firstH1Idx].text;
                 ir.blocks.splice(firstH1Idx, 1);
+            } else if (fmMeta.title) {
+                ir.title = sanitize(fmMeta.title);
             }
             ir.codeAudit = collectCodeAudit(ir.blocks);
             return ir;
@@ -71,7 +173,9 @@ export function parseMd(text, docType = 'plain') {
     // marked.js가 right-flanking delimiter로 인식하지 못해 변환 실패하는 경우 보정
     html = html.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
     html = html.replace(/(?<!\*)\*([^*\n]+)\*(?!\*)/g, '<em>$1</em>');
-    return parseHtml(html, docType);
+    const ir = parseHtml(html, docType);
+    if (fmMeta.title && ir.title === '제목 없음') ir.title = sanitize(fmMeta.title);
+    return ir;
 }
 
 /**
@@ -166,7 +270,7 @@ function markdownInlineRuns(tokens, inherited = {}) {
         }
         const text = plainMdText(token.text || token.raw);
         if (text) {
-            for (const run of splitInlineEmphasis(text)) runs.push({ ...inherited, ...run });
+            for (const run of splitWithFnRefs(text)) runs.push({ ...inherited, ...run });
         }
     }
     return runs;
@@ -1759,17 +1863,26 @@ async function resolveMarkdownAssets(ir, sourceFormat = 'md') {
                 if (loaded.bytes.byteLength > MARKDOWN_IMAGE_MAX_BYTES) {
                     throw new Error('이미지 용량이 8MB를 초과합니다.');
                 }
-                const meta = sniffRasterImage(loaded.bytes, loaded.mimeType);
-                if (totalBytes + loaded.bytes.byteLength > MARKDOWN_IMAGE_TOTAL_MAX_BYTES) {
+                // WebP → PNG 변환 (HWPX는 BMP/PNG/JPEG/GIF만 지원)
+                let imageBytes = loaded.bytes;
+                let imageMeta;
+                if (isWebP(imageBytes)) {
+                    const conv = await convertWebpToPng(imageBytes);
+                    imageBytes = conv.bytes;
+                    imageMeta = { ext: 'png', mimeType: 'image/png', width: conv.width, height: conv.height };
+                } else {
+                    imageMeta = sniffRasterImage(imageBytes, loaded.mimeType);
+                }
+                if (totalBytes + imageBytes.byteLength > MARKDOWN_IMAGE_TOTAL_MAX_BYTES) {
                     throw new Error('문서 이미지 총용량이 20MB를 초과합니다.');
                 }
-                totalBytes += loaded.bytes.byteLength;
-                const size = imageSizeHwp(meta);
+                totalBytes += imageBytes.byteLength;
+                const size = imageSizeHwp(imageMeta);
                 out.push({
                     type: 'image',
-                    binName: `image${imageCounter++}.${meta.ext}`,
-                    mimeType: meta.mimeType,
-                    data: loaded.bytes,
+                    binName: `image${imageCounter++}.${imageMeta.ext}`,
+                    mimeType: imageMeta.mimeType,
+                    data: imageBytes,
                     ...size,
                     alt: block.alt || '',
                     title: block.title || '',

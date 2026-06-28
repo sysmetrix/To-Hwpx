@@ -1,6 +1,21 @@
 {
-  "current": "4.7.14",
+  "current": "4.7.15",
   "versions": [
+    {
+      "version": "4.7.15",
+      "date": "2026-06-28",
+      "user": [
+        "[v4.7.15] Markdown 각주 지원 — [^1] 참조와 [^1]: 내용 정의를 HWPX 각주 컨트롤로 변환",
+        "[v4.7.15] YAML frontmatter 제목 추출 — ---\\ntitle: 문서 제목\\n--- 블록을 문서 제목으로 자동 반영",
+        "[v4.7.15] WebP 이미지 지원 — Canvas API로 WebP → PNG 자동 변환 후 문서 삽입"
+      ],
+      "dev": [
+        "[v4.7.15] parseMd: parseFrontmatter() + preProcessMdFootnotes() 전처리 단계 추가",
+        "[v4.7.15] markdownInlineRuns: splitInlineEmphasis → splitWithFnRefs로 교체 — 각주 마커(U+FFF9·U+FFFA) 런 분리",
+        "[v4.7.15] resolveMarkdownAssets: isWebP() 감지 → convertWebpToPng() canvas 변환 경로 추가",
+        "[v4.7.15] 회귀: gate.js PASS, golden 핵심 파서 항목 전부 PASS"
+      ]
+    },
     {
       "version": "4.7.14",
       "date": "2026-06-28",
