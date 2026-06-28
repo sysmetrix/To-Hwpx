@@ -1,6 +1,18 @@
 {
-  "current": "4.7.17",
+  "current": "4.7.18",
   "versions": [
+    {
+      "version": "4.7.18",
+      "date": "2026-06-28",
+      "user": [],
+      "dev": [
+        "[v4.7.18] BETA_EXTS에서 docx 제거 — 변환 결과 카드 베타 마커 해제",
+        "[v4.7.18] FORMAT_QUALITY_METRICS: md 92→94/96→97, docx 72→80/84→88 점수 갱신",
+        "[v4.7.18] FORMAT_QUALITY_METRICS.docx.next: 구현 완료 항목 제거, 섹션+comments 개선방안으로 교체",
+        "[v4.7.18] FORMAT_QUALITY_METRICS.md.next: 표 셀 run 계약 명시 추가",
+        "[v4.7.18] QUALITY_HISTORY: v4.7.17 현재 기준 항목 추가(MD/DOCX 반영 점수)"
+      ]
+    },
     {
       "version": "4.7.17",
       "date": "2026-06-28",

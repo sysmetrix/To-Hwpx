@@ -611,7 +611,7 @@ function updateFormatBadge(ext) {
 }
 
 // 베타 품질 입력 포맷 — 변환 화면 파일별 베타 마커 판별용
-const BETA_EXTS = new Set(['docx', 'html', 'htm', 'xlsx', 'xls', 'csv', 'hwp']);
+const BETA_EXTS = new Set(['html', 'htm', 'xlsx', 'xls', 'csv', 'hwp']);
 
 /** 고급 진단 IR 미리보기를 초기 상태(placeholder + 접힘)로 되돌린다. */
 function resetIrPreview() {
@@ -1107,9 +1107,9 @@ const FONT_DOWNLOADS = [
 
 const QUALITY_FORMATS = ['md', 'html', 'docx', 'txt', 'csv', 'json', 'ipynb', 'hwp'];
 const FORMAT_QUALITY_METRICS = {
-    md:    { conversion: 92, success: 96, risk: '낮음',     next: '표 셀 run 계약과 상대경로 이미지 묶음 업로드 지원을 추가하면 고급 문서 보존률이 오른다.' },
+    md:    { conversion: 94, success: 97, risk: '낮음',     next: '표 셀 run 계약(표 안 링크·이미지)과 상대경로 이미지 묶음 업로드 지원을 추가하면 고급 문서 보존률이 오른다.' },
     html:  { conversion: 68, success: 88, risk: '중간',     next: 'CSS 중 일부(color/background/text-align)만 안전 allowlist로 승격하고, img/src data URL부터 그림 IR로 연결한다.' },
-    docx:  { conversion: 72, success: 84, risk: '중간',     next: '목록 번호 체계와 섹션/머리말 반복 규칙을 IR로 분리하고, WMF/EMF는 안내 fallback을 고도화한다.' },
+    docx:  { conversion: 80, success: 88, risk: '중간',     next: '섹션·머리말 반복 규칙을 IR로 분리하고, comments.xml 주석을 각주 형태로 변환하면 보존률이 추가로 오른다.' },
     txt:   { conversion: 88, success: 97, risk: '낮음',     next: '표처럼 보이는 탭/공백 열을 선택적으로 표 IR로 승격하는 실험을 관리자 모드에서 검증한다.' },
     csv:   { conversion: 82, success: 94, risk: '낮음',     next: 'XLSX 다중 시트 선택, 셀 병합/색상 일부 보존을 별도 옵션으로 확장한다.' },
     json:  { conversion: 76, success: 90, risk: '중간',     next: '깊은 중첩 요약 규칙과 큰 JSON 스트리밍/샘플링 미리보기를 추가한다.' },
@@ -1119,9 +1119,15 @@ const FORMAT_QUALITY_METRICS = {
 
 const QUALITY_HISTORY = [
     {
+        version: '4.7.17',
+        date: '2026-06-28',
+        summary: '현재 기준. MD GFM 각주·WebP·frontmatter(v4.7.15), DOCX 목록·하이퍼링크·WMF fallback·WebP(v4.7.16) 반영.',
+        scores: { md: 94, html: 68, docx: 80, txt: 88, csv: 82, json: 76, ipynb: 70, hwp: 25 },
+    },
+    {
         version: '4.6.23',
         date: '2026-06-26',
-        summary: '현재 기준. 직접 입력 미리보기 HTML 복사와 관리자 품질 평가를 포함한 구조 검증 중심 품질 기준.',
+        summary: '직접 입력 미리보기 HTML 복사와 관리자 품질 평가를 포함한 구조 검증 중심 품질 기준.',
         scores: { md: 92, html: 68, docx: 72, txt: 88, csv: 82, json: 76, ipynb: 70, hwp: 25 },
     },
     {
