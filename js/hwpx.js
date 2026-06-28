@@ -1102,7 +1102,7 @@ function getColumnWidths(allRows, nCols, tableWidth) {
  * 표(hp:tbl) XML 생성
  * 헤더=가운데, 일반 텍스트=왼쪽, 숫자=오른쪽 정렬로 가독성을 높인다.
  */
-function isNumericCell(value) {
+export function isNumericCell(value) {
     const s = String(value || '').trim();
     if (!s) return false;
     return /^[-+]?[\d,]+(\.\d+)?%?$/.test(s)
@@ -1480,7 +1480,7 @@ function buildSection(ir, marginsHwp, paperKey, landscape = false, customBfMap =
  * @param {string} orientation   용지 방향 "portrait"|"landscape"
  * @param {number} lineSpacingPercent 본문 줄 간격 퍼센트
  */
-async function buildHwpx(ir, fontName = '휴먼명조', fontSize = 12, marginsMm = null, paperSize = 'A4', onProgress = null, orientation = 'portrait', lineSpacingPercent = 160, options = {}) {
+export async function buildHwpx(ir, fontName = '휴먼명조', fontSize = 12, marginsMm = null, paperSize = 'A4', onProgress = null, orientation = 'portrait', lineSpacingPercent = 160, options = {}) {
     if (typeof JSZip === 'undefined') throw new Error('JSZip 미로드: 인터넷 연결을 확인하세요.');
 
     validateCodeAudit(ir);
@@ -1624,7 +1624,7 @@ ${imageBlocks.map(img => `  <odf:file-entry odf:full-path="BinData/${img.binName
 // [검증기]
 // ─────────────────────────────────────────────────────────────────────────
 
-async function validateHwpx(blob, expectedMarginsMm = null) {
+export async function validateHwpx(blob, expectedMarginsMm = null) {
     const issues = [];
     let zip;
     try {
@@ -1738,4 +1738,10 @@ async function validateHwpx(blob, expectedMarginsMm = null) {
     }
 
     return { pass: issues.length === 0, issues };
+}
+
+// golden test의 window 직접 호출 패턴 지원(과도기 — 모듈 완전 전환 후 제거 예정)
+if (typeof window !== 'undefined') {
+    window.validateHwpx = validateHwpx;
+    window.buildHwpx = buildHwpx;
 }

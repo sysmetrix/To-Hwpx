@@ -41,7 +41,7 @@ function emptyIR(title = '제목 없음', docType = 'plain') {
 //     방법: marked.js(CDN)로 MD→HTML 변환 후, HTML 파서 재사용
 //     장점: marked.js가 CommonMark 표준을 처리하므로 별도 MD 파싱 불필요
 // ─────────────────────────────────────────────────────────────────────────
-function parseMd(text, docType = 'plain') {
+export function parseMd(text, docType = 'plain') {
     // marked.js가 index.html CDN으로 로드되지 않았으면 TXT 파서로 폴백
     if (typeof marked === 'undefined') {
         console.warn('[parsers] marked.js 미로드 — TXT 파서로 폴백');
@@ -370,7 +370,7 @@ function collectCodeAudit(blocks) {
 //     방법: DOMParser API로 HTML DOM을 생성하고 요소 순회하며 IR 블록 추출
 //     보안: 파싱 결과를 textContent로만 읽어 XSS 실행 불가
 // ─────────────────────────────────────────────────────────────────────────
-function parseHtml(htmlText, docType = 'plain') {
+export function parseHtml(htmlText, docType = 'plain') {
     const parser = new DOMParser();
     const doc = parser.parseFromString(htmlText, 'text/html');
 
@@ -563,7 +563,7 @@ function extractHtmlTable(tableEl) {
 // [3] 일반 텍스트(TXT) 파서
 //     방법: 빈 줄로 단락 구분, '#' 접두어로 제목 인식
 // ─────────────────────────────────────────────────────────────────────────
-function parseTxt(text, docType = 'plain') {
+export function parseTxt(text, docType = 'plain') {
     const ir = emptyIR('텍스트 문서', docType);
     // 2개 이상 연속 줄바꿈을 단락 구분자로 사용
     const paragraphs = text.split(/\n{2,}/);
@@ -617,7 +617,7 @@ function parseTxt(text, docType = 'plain') {
 //     방법: RFC 4180 표준 CSV 파싱, 첫 행을 헤더로 사용
 //     의존성 없음 — 순수 JS 구현
 // ─────────────────────────────────────────────────────────────────────────
-function parseCsv(text, docType = 'plain') {
+export function parseCsv(text, docType = 'plain') {
     const ir = emptyIR('스프레드시트', docType);
     const delimiter = detectDelimitedTextSeparator(text);
     const rows = csvToRows(text, delimiter);
@@ -747,7 +747,7 @@ function parseXlsx(arrayBuffer, docType = 'plain') {
 // [6] JSON 파서
 //     방법: IR 형식이면 직접 사용; 아니면 key-value 구조를 표/목록으로 변환
 // ─────────────────────────────────────────────────────────────────────────
-function parseJson(text, docType = 'plain') {
+export function parseJson(text, docType = 'plain') {
     let obj;
     try {
         obj = JSON.parse(text);
@@ -1855,7 +1855,7 @@ function getExtension(filename) {
  * [보안] 파일 크기 20MB 제한 적용
  * [수정 시] 지원 포맷 추가 후에는 이 함수 수정 불필요 (PARSERS 맵만 수정)
  */
-async function fileToIR(file, docType = 'plain') {
+export async function fileToIR(file, docType = 'plain') {
     const ext = getExtension(file.name);
     const parser = PARSERS[ext];
 
@@ -1881,4 +1881,10 @@ async function fileToIR(file, docType = 'plain') {
         const buffer = await file.arrayBuffer();
         return parser.async ? await parser.fn(buffer, docType) : parser.fn(buffer, docType);
     }
+}
+
+// golden test의 page.evaluate()에서 전역 접근이 필요한 함수만 노출(과도기 — 추후 제거 예정)
+if (typeof window !== 'undefined') {
+    window.normalizeMarkdownImageSource = normalizeMarkdownImageSource;
+    window.markdownImageFallback = markdownImageFallback;
 }
