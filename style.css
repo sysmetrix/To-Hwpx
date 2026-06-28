@@ -1121,6 +1121,16 @@ a:hover { text-decoration: underline; }
     border-radius: var(--radius-sm);
     background: var(--c-surface);
     cursor: pointer;
+    transition: border-color var(--trans), background var(--trans), box-shadow var(--trans);
+}
+.auto-download-control[data-enabled="true"] {
+    border-color: var(--c-primary);
+    background: var(--c-primary-light);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c-primary) 12%, transparent);
+}
+.auto-download-control[data-enabled="false"] {
+    border-color: var(--c-border);
+    background: var(--c-surface-alt);
 }
 .auto-download-status {
     min-width: 0;
@@ -1131,6 +1141,35 @@ a:hover { text-decoration: underline; }
     line-height: 1;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+.auto-download-state {
+    margin-left: auto;
+    color: var(--c-text-muted);
+    font-size: 0.72rem;
+    font-weight: 800;
+    line-height: 1;
+    white-space: nowrap;
+}
+.auto-download-control[data-enabled="true"] .auto-download-state {
+    color: var(--c-primary);
+}
+.auto-download-control .toggle-switch {
+    width: 36px;
+    height: 20px;
+    border-radius: 10px;
+}
+.auto-download-control .toggle-switch::after {
+    width: 16px;
+    height: 16px;
+}
+.auto-download-control .toggle-input:checked ~ .toggle-switch::after {
+    transform: translateX(16px);
+}
+.auto-download-control:hover {
+    border-color: var(--c-primary);
+}
+.auto-download-control:has(.toggle-input:focus-visible) {
+    box-shadow: 0 0 0 3px rgba(56, 108, 255, 0.18);
 }
 
 .advanced-settings {

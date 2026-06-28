@@ -1125,6 +1125,31 @@ async function validateDetailSettingsUx(page) {
     'detail settings: 자동 다운로드가 용지 방향 오른쪽 같은 행에 배치되지 않음');
   assert(basicControlLayout.heightSpread <= 2,
     'detail settings: 기본 설정 컨트롤 높이가 서로 맞지 않음');
+  const autoDownloadOn = await page.locator('.auto-download-control').evaluate(control => ({
+    enabled: control.dataset.enabled,
+    text: control.textContent.replace(/\s+/g, ' ').trim(),
+    aria: document.querySelector('#auto-download').getAttribute('aria-label'),
+    border: getComputedStyle(control).borderColor,
+    background: getComputedStyle(control).backgroundColor,
+  }));
+  await page.locator('.auto-download-control').click();
+  await page.waitForTimeout(250);
+  const autoDownloadOff = await page.locator('.auto-download-control').evaluate(control => ({
+    enabled: control.dataset.enabled,
+    text: control.textContent.replace(/\s+/g, ' ').trim(),
+    aria: document.querySelector('#auto-download').getAttribute('aria-label'),
+    border: getComputedStyle(control).borderColor,
+    background: getComputedStyle(control).backgroundColor,
+  }));
+  assert(autoDownloadOn.enabled === 'true' && autoDownloadOn.text.includes('✓ 켜짐')
+    && autoDownloadOn.aria.includes('켜짐'),
+    'detail settings: 자동 다운로드 켜짐 상태가 텍스트·접근성 이름으로 식별되지 않음');
+  assert(autoDownloadOff.enabled === 'false' && autoDownloadOff.text.includes('○ 꺼짐')
+    && autoDownloadOff.aria.includes('꺼짐'),
+    'detail settings: 자동 다운로드 꺼짐 상태가 텍스트·접근성 이름으로 식별되지 않음');
+  assert(autoDownloadOn.border !== autoDownloadOff.border || autoDownloadOn.background !== autoDownloadOff.background,
+    'detail settings: 자동 다운로드 켜짐/꺼짐 시각 스타일이 구분되지 않음');
+  await page.locator('.auto-download-control').click();
   const closedSummaryStyle = await page.locator('.advanced-settings > summary').evaluate(el => {
     const style = getComputedStyle(el);
     return { background: style.backgroundColor, color: style.color };

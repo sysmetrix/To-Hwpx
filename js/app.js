@@ -1730,9 +1730,11 @@ function initOptions() {
         } else {
             state.autoDownload = autoDownloadEl.checked;
         }
+        syncAutoDownloadUi();
         autoDownloadEl.addEventListener('change', () => {
             state.autoDownload = autoDownloadEl.checked;
             localStorage.setItem('tohwpx_autoDownload', String(autoDownloadEl.checked));
+            syncAutoDownloadUi();
         });
     }
 
@@ -1791,6 +1793,17 @@ function updateAdvancedSettingsSummary() {
         : state.stylePolicy === 'balanced' ? '원본+앱 혼합'
         : '원본 우선';
     summary.textContent = `현재: ${state.docFont} · ${state.fontSize}pt · 줄 ${state.lineSpacing}% · ${state.paperSize} ${orientationLabel} · ${styleLabel}`;
+}
+
+function syncAutoDownloadUi() {
+    const input = document.getElementById('auto-download');
+    const control = input?.closest('.auto-download-control');
+    const status = document.getElementById('auto-download-state');
+    if (!input || !control || !status) return;
+    const enabled = input.checked;
+    control.dataset.enabled = String(enabled);
+    status.textContent = enabled ? '✓ 켜짐' : '○ 꺼짐';
+    input.setAttribute('aria-label', `변환 후 자동 저장 ${enabled ? '켜짐' : '꺼짐'}`);
 }
 
 
@@ -3959,6 +3972,7 @@ function resetConverterState() {
     if (imageAlign) imageAlign.value = 'center';
     if (titleBodyPolicy) titleBodyPolicy.value = 'remove';
     if (autoDownload) autoDownload.checked = true;
+    syncAutoDownloadUi();
     syncDetailSegButtons();
     applyStylePolicyUi('source');
 

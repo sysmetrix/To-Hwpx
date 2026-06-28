@@ -1,6 +1,20 @@
 {
-  "current": "4.7.1",
+  "current": "4.7.2",
   "versions": [
+    {
+      "version": "4.7.2",
+      "date": "2026-06-28",
+      "user": [
+        "자동 다운로드 버튼에 '✓ 켜짐'과 '○ 꺼짐'을 직접 표시하고, 배경·테두리·스위치 색도 함께 바뀌도록 개선했습니다."
+      ],
+      "dev": [
+        "[v4.7.2] index.html/style.css: 자동 저장 상태 텍스트·아이콘, 확대 스위치, 켜짐/꺼짐 배경·테두리 대비 추가",
+        "[v4.7.2] js/app.js: syncAutoDownloadUi()로 초기 저장값·클릭·설정 초기화 시 data-enabled, 상태 문구, aria-label 동기화",
+        "[v4.7.2] tests/golden.js: 켜짐/꺼짐 텍스트·접근성 이름·시각 스타일 차이 회귀 검증 추가",
+        "[v4.7.2] format_conversion_playbook.md: 자동 다운로드 상태를 색상 외 수단으로도 전달하는 기준 기록",
+        "[v4.7.2] package.json/package-lock.json/sw.js/index.html/changelog.json: v4.7.2 반영"
+      ]
+    },
     {
       "version": "4.7.1",
       "date": "2026-06-28",

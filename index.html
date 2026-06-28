@@ -117,7 +117,7 @@
             <span>｢BWYF｣ AX Challenger 2026</span>
             <!-- [주의] id="open-changelog"는 app.js에서 관리자 모드일 때 업데이트 내역 모달을 여는 연결값 -->
             <button class="util-changelog-btn" id="open-changelog" aria-label="버전 정보" data-admin-enabled="false">
-                📋 v4.7.1
+                📋 v4.7.2
             </button>
         </div>
     </div>
@@ -395,9 +395,10 @@
                             <span class="form-row-label label-with-help">자동 다운로드
                                 <button type="button" class="help-dot" data-help="변환이 끝나면 바로 저장합니다. 꺼도 완료 카드에서 언제든 다시 다운로드할 수 있습니다." aria-label="자동 다운로드 도움말">?</button>
                             </span>
-                            <label class="auto-download-control" for="auto-download">
+                            <label class="auto-download-control" for="auto-download" data-enabled="true">
                                 <input type="checkbox" id="auto-download" class="toggle-input" checked>
-                                <span class="auto-download-status" aria-hidden="true">변환 후 저장</span>
+                                <span class="auto-download-status">자동 저장</span>
+                                <span class="auto-download-state" id="auto-download-state" aria-live="polite">✓ 켜짐</span>
                                 <span class="toggle-switch" aria-hidden="true"></span>
                             </label>
                         </div>
