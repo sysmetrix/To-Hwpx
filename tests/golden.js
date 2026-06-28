@@ -609,6 +609,10 @@ async function validateDirectInput(page) {
     && qualityText.includes('HTML 문서')
     && qualityText.includes('CSS'),
     'admin: 포맷 품질 평가 탭의 핵심 내용이 누락됨');
+  assert(await page.locator('#changelog-content .quality-est-tag').count() > 0
+    && qualityText.includes('내용 보존도')
+    && qualityText.includes('생성 안정성'),
+    'admin: 변환률/성공률 추정 배지 또는 의미 풀이가 누락됨');
   await page.keyboard.press('Escape');
 
   await page.locator('#mode-paste').click();

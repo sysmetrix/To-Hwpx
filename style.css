@@ -4255,6 +4255,19 @@ a:hover { text-decoration: underline; }
     color: var(--c-text);
     font-size: 1rem;
 }
+/* 변환률/성공률이 실측 통계로 오해되지 않게 추정임을 표시 */
+.quality-est-tag {
+    display: inline-block;
+    margin-left: 4px;
+    padding: 1px 6px;
+    border-radius: 999px;
+    background: var(--c-accent-light);
+    color: var(--c-accent);
+    font-size: 0.62rem;
+    font-weight: 800;
+    font-style: normal;
+    vertical-align: middle;
+}
 .quality-meter {
     display: block;
     width: 100%;
