@@ -1,6 +1,17 @@
 {
-  "current": "4.7.16",
+  "current": "4.7.17",
   "versions": [
+    {
+      "version": "4.7.17",
+      "date": "2026-06-28",
+      "user": [
+        "[v4.7.17] Word 문서 베타 배지 제거 — 목록·하이퍼링크·이미지 지원 완료로 일반 입력 형식으로 전환"
+      ],
+      "dev": [
+        "[v4.7.17] FORMAT_INFO.docx badge:'베타' 제거, desc/tech/limits 문구 갱신",
+        "[v4.7.17] index.html DOCX 카드 badge-beta → badge-available('입력 가능')"
+      ]
+    },
     {
       "version": "4.7.16",
       "date": "2026-06-28",
