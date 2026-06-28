@@ -1,6 +1,17 @@
 {
-  "current": "4.7.12",
+  "current": "4.7.13",
   "versions": [
+    {
+      "version": "4.7.13",
+      "date": "2026-06-28",
+      "user": [],
+      "dev": [
+        "[v4.7.13] conversion_start 이벤트에 세부 설정 추가 — font·paper·style·doc_type·heading·table·input 옵션 패턴 추적",
+        "[v4.7.13] PostHog 연동 코드 추가 (index.html 인라인 init) — POSTHOG_KEY 입력 시 퍼널·성공률·옵션 분포 분석 활성화",
+        "[v4.7.13] track(): window.posthog?.capture() 병렬 호출 추가 — Vercel Analytics + PostHog 동시 수집",
+        "[v4.7.13] CSP script-src에 eu.posthog.com + us.posthog.com 추가"
+      ]
+    },
     {
       "version": "4.7.12",
       "date": "2026-06-28",

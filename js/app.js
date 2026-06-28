@@ -28,6 +28,7 @@ import { buildHwpx, isNumericCell } from './hwpx.js';
 // ─────────────────────────────────────────────────────────────────────────
 function track(name, data) {
     try { window.va?.('event', { name, data }); } catch (_) {}
+    try { window.posthog?.capture(name, data); } catch (_) {}
 }
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -2540,7 +2541,16 @@ async function runConversionPipeline() {
 
         const prefix = batch ? `(${i + 1}/${total}) ${item.file.name} · ` : '';
         const _t0 = Date.now();
-        track('conversion_start', { format: item.ext });
+        track('conversion_start', {
+            format:   item.ext,
+            font:     state.docFont,
+            paper:    `${state.paperSize}_${state.orientation}`,
+            style:    state.stylePolicy,
+            doc_type: state.docType,
+            heading:  state.headingStyle,
+            table:    state.tableStyle,
+            input:    state.inputMode,
+        });
         try {
             const res = await convertOneFile(item.file, prefix, outputFontName);
             item.blob = res.blob;
