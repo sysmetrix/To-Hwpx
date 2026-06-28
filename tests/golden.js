@@ -792,8 +792,19 @@ async function validateCommercialUx(page) {
   const onboardingText = await page.locator('#onboarding-guide-modal').textContent();
   assert(onboardingText.includes('대부분의 문서는 아래 순서만 기억하면 됩니다')
     && onboardingText.includes('단축키')
-    && onboardingText.includes('보고서처럼 맞출 때만'),
-    'ux: 도움말 사용법/단축키 탭 문구가 누락됨');
+    && onboardingText.includes('세부 설정'),
+    'ux: 도움말 사용법/세부 설정/단축키 탭 문구가 누락됨');
+
+  // 세부 설정 탭: 패널 노출 + 변환률/성공률 풀이 + 인터랙티브 미리보기 칩 동작
+  await page.locator('.help-tab[data-help-tab="detail"]').click();
+  const detailPanelText = await page.locator('#help-panel-detail').textContent();
+  assert(await page.locator('#help-panel-detail').isVisible()
+    && detailPanelText.includes('내용 보존도')
+    && detailPanelText.includes('생성 안정성'),
+    'ux: 도움말 세부 설정 탭 또는 변환률/성공률 설명이 누락됨');
+  await page.locator('.detail-demo-chips[data-demo-key="heading"] .detail-demo-chip[data-demo-val="prominent"]').click();
+  assert(await page.locator('#detail-demo-doc').getAttribute('data-heading') === 'prominent',
+    'ux: 세부 설정 미리보기 칩이 미리보기 상태를 바꾸지 못함');
   await page.keyboard.press('Escape');
   await helpButton.click();
   await page.locator('#onboarding-open-advanced').click();
