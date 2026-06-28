@@ -1,6 +1,18 @@
 {
-  "current": "4.8.0",
+  "current": "4.8.1",
   "versions": [
+    {
+      "version": "4.8.1",
+      "date": "2026-06-29",
+      "user": [
+        "HwpxConverter 다운로드 링크를 한컴 공식 다운로드 센터로 변경 (이전 GitHub 링크 404 오류 수정)",
+        "페이지 하단 연계 서비스에 '한컴 HWPX 변환기' 링크 추가"
+      ],
+      "dev": [
+        "[v4.8.1] HWPX_CONVERTER_DOWNLOAD_URL → hancom.com/support/downloadCenter/download",
+        "[v4.8.1] index.html 연계 서비스 목록에 한컴 HWPX 변환기 항목 추가"
+      ]
+    },
     {
       "version": "4.8.0",
       "date": "2026-06-29",

@@ -911,8 +911,8 @@ function initFormatTabs() {
 // [포맷 상세 데이터]  카드 팝업에 표시할 포맷별 변환 정보
 // ─────────────────────────────────────────────────────────────────────────
 
-// HWP → HWPX 일괄 변환 공식 도구 (한컴 HwpxConverter). 인스톨러는 hwpx-public-doc에 있음.
-const HWPX_CONVERTER_DOWNLOAD_URL = 'https://github.com/sysmetrix/To-Hwpx/raw/main/hwpx-public-doc/HwpxConverter-setup-1.0.0.75';
+// HWP → HWPX 일괄 변환 공식 도구 (한컴 HwpxConverter)
+const HWPX_CONVERTER_DOWNLOAD_URL = 'https://www.hancom.com/support/downloadCenter/download';
 
 const FORMAT_INFO = {
     md: {
