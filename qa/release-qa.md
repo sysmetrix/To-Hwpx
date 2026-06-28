@@ -473,7 +473,7 @@ Scope: static browser-only conversion flow from file selection to HWPX download.
 수동 확인 기준:
 
 - [ ] `?admin=1`에서 현재 구현된 기능별 토글을 끄고 켰을 때 직접 입력/미리보기/HTML 메뉴 노출이 기대대로 바뀌는지 확인
-- [ ] DOCX·HTML·XLSX 대표 파일을 `원본 우선`과 `앱 설정으로 정리`로 각각 변환해 한컴에서 표/색상/링크/문단 간격 차이를 시각 확인
+- [ ] DOCX·HTML·XLSX 대표 파일을 `원본 우선`과 `설정 우선`(value `app`)으로 각각 변환해 한컴에서 표/색상/링크/문단 간격 차이를 시각 확인
 - [ ] 파일 선택 후 변환 버튼을 누르기 전 IR 미리보기가 채워지는지 확인
 - [ ] 캐시를 비우고 `📋 v4.6.24` 확인
 

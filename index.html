@@ -117,7 +117,7 @@
             <span>｢BWYF｣ AX Challenger 2026</span>
             <!-- [주의] id="open-changelog"는 app.js에서 관리자 모드일 때 업데이트 내역 모달을 여는 연결값 -->
             <button class="util-changelog-btn" id="open-changelog" aria-label="버전 정보" data-admin-enabled="false">
-                📋 v4.7.3
+                📋 v4.7.4
             </button>
         </div>
     </div>
@@ -452,19 +452,19 @@
                                 </div>
                                 <p class="form-hint">문서 맨 위에 머리말 표를 넣습니다. '기본'은 회색 띠, '표지'는 색 밴드이며, 모두 가운데에 제목, 아래에 [팀명/이름](점선)과 작성일(오른쪽)이 들어갑니다. 빈 항목은 변환 후 한글에서 채워주세요.</p>
 
-                                <!-- 본문 서식 처리: 변환 결과의 전반 서식 정책(원본 우선/혼합/앱 정리). 상단 제목 블록 바로 아래.
+                                <!-- 본문 서식 처리: 변환 결과의 전반 서식 정책(원본 우선/혼합/설정 우선). 라벨은 표시용, value는 source/balanced/app 계약 유지. 상단 제목 블록 바로 아래.
                                      detail-field 클래스를 유지해야 app.js 세그먼트 배선(.detail-field .seg-btn[data-seg-for])이 잡힌다. -->
                                 <div class="detail-field detail-field--master style-policy-row">
                                     <span class="detail-field-label">본문 서식 처리 <small>원본 서식을 얼마나 따를지 정하는 기본 전제입니다</small></span>
                                     <div class="seg-control seg-control--sm" role="group" aria-label="본문 서식 처리">
-                                        <button type="button" class="seg-btn is-active" data-seg-for="style-policy" data-seg-value="source" title="원본 우선">원본</button>
-                                        <button type="button" class="seg-btn" data-seg-for="style-policy" data-seg-value="balanced" title="원본+앱 설정 혼합">혼합</button>
-                                        <button type="button" class="seg-btn" data-seg-for="style-policy" data-seg-value="app" title="앱 설정으로 정리">앱 정리</button>
+                                        <button type="button" class="seg-btn is-active" data-seg-for="style-policy" data-seg-value="source" title="원본 서식을 우선 적용">원본 우선</button>
+                                        <button type="button" class="seg-btn" data-seg-for="style-policy" data-seg-value="balanced" title="원본 서식과 아래 설정을 절충">혼합</button>
+                                        <button type="button" class="seg-btn" data-seg-for="style-policy" data-seg-value="app" title="아래 본문 고급 서식 설정을 우선 적용">설정 우선</button>
                                     </div>
                                     <select id="style-policy" name="style-policy" class="sr-only" aria-hidden="true" tabindex="-1">
                                         <option value="source" selected>원본 우선</option>
-                                        <option value="balanced">원본+앱 설정 혼합</option>
-                                        <option value="app">앱 설정으로 정리</option>
+                                        <option value="balanced">혼합</option>
+                                        <option value="app">설정 우선</option>
                                     </select>
                                 </div>
 

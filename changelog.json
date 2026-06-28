@@ -1,6 +1,19 @@
 {
-  "current": "4.7.3",
+  "current": "4.7.4",
   "versions": [
+    {
+      "version": "4.7.4",
+      "date": "2026-06-28",
+      "user": [
+        "본문 서식 처리 버튼 이름을 '원본 / 혼합 / 앱 정리'에서 '원본 우선 / 혼합 / 설정 우선'으로 바꿔, 세 선택지의 의미가 더 일관되게 보이도록 했습니다."
+      ],
+      "dev": [
+        "[v4.7.4] index.html: style-policy 세그먼트·select 라벨을 원본 우선/혼합/설정 우선으로 변경하고 title 안내 문구 보강. value(source/balanced/app) 계약은 유지",
+        "[v4.7.4] js/app.js: 결과 카드 styleLabel을 설정 우선/혼합/원본 우선으로 동기화",
+        "[v4.7.4] format_conversion_playbook.md/qa/release-qa.md: 본문 서식 처리 라벨 표기와 수동 확인 항목 동기화",
+        "[v4.7.4] package.json/package-lock.json/sw.js/index.html/changelog.json: v4.7.4 반영"
+      ]
+    },
     {
       "version": "4.7.3",
       "date": "2026-06-28",

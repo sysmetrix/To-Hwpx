@@ -1789,8 +1789,8 @@ function updateAdvancedSettingsSummary() {
     const summary = document.getElementById('advanced-settings-summary');
     if (!summary) return;
     const orientationLabel = state.orientation === 'landscape' ? '가로' : '세로';
-    const styleLabel = state.stylePolicy === 'app' ? '앱 설정 정리'
-        : state.stylePolicy === 'balanced' ? '원본+앱 혼합'
+    const styleLabel = state.stylePolicy === 'app' ? '설정 우선'
+        : state.stylePolicy === 'balanced' ? '혼합'
         : '원본 우선';
     summary.textContent = `현재: ${state.docFont} · ${state.fontSize}pt · 줄 ${state.lineSpacing}% · ${state.paperSize} ${orientationLabel} · ${styleLabel}`;
 }
