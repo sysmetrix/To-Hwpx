@@ -1,6 +1,15 @@
 {
-  "current": "4.7.13",
+  "current": "4.7.14",
   "versions": [
+    {
+      "version": "4.7.14",
+      "date": "2026-06-28",
+      "user": [],
+      "dev": [
+        "[v4.7.14] PostHog API 키 적용 — phc_qxSMo... (US region, us.i.posthog.com) 연결 완료",
+        "[v4.7.14] CSP script-src에 https://us.i.posthog.com 추가"
+      ]
+    },
     {
       "version": "4.7.13",
       "date": "2026-06-28",

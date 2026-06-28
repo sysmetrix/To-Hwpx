@@ -52,7 +52,7 @@
            connect-src: Markdown 원격 이미지 fetch (임의 https 오리진)
            frame-src  : 정밀 미리보기 rhwp 뷰어(외부 WASM, 선택 기능)
          ──────────────────────────────────────────────────────────── -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdnjs.cloudflare.com https://eu.posthog.com https://us.posthog.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https:; frame-src https://edwardkim.github.io; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdnjs.cloudflare.com https://us.i.posthog.com https://eu.posthog.com https://us.posthog.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https:; frame-src https://edwardkim.github.io; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
 
     <!-- SEO + SNS 공유용 메타 태그 -->
     <title>To HWPX - 한글로</title>
@@ -124,14 +124,13 @@
 
     <!-- ─── PostHog Product Analytics ───────────────────────────────
          퍼널 분석(포맷별 성공률), 세션 경로, 옵션 사용 분포 등 심층 분석.
-         POSTHOG_KEY를 실제 프로젝트 키(phc_...)로 교체하면 활성화된다.
-         키를 비워 두면 조용히 무시되며 다른 기능에 영향 없다.
-         CSP connect-src: https: 범위로 eu.posthog.com 포함됨.
+         CSP script-src: us.i.posthog.com (array.js 로더)
+         CSP connect-src: https: 범위로 us.i.posthog.com 포함됨.
          ──────────────────────────────────────────────────────────── -->
     <script>
     (function() {
-        var POSTHOG_KEY = '';  // ← 여기에 phc_... 키 입력
-        var POSTHOG_HOST = 'https://eu.posthog.com';
+        var POSTHOG_KEY = 'phc_qxSMoqzHzeZXFhi464YVPYEGdrrEpbbTPXv5H7FMdjnZ';
+        var POSTHOG_HOST = 'https://us.i.posthog.com';
         if (!POSTHOG_KEY) return;
         !function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]);t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.async=!0,p.src=s.api_host+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString()+" (stub)"},o="capture identify alias people.set people.set_once set_config register register_once unregister opt_out_capturing has_opted_out_capturing opt_in_capturing reset isFeatureEnabled onFeatureFlags getFeatureFlag getFeatureFlagPayload reloadFeatureFlags group updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures getActiveMatchingSurveys getSurveys".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
         posthog.init(POSTHOG_KEY, {
@@ -162,7 +161,7 @@
             <span>｢BWYF｣ AX Challenger 2026</span>
             <!-- [주의] id="open-changelog"는 app.js에서 관리자 모드일 때 업데이트 내역 모달을 여는 연결값 -->
             <button class="util-changelog-btn" id="open-changelog" aria-label="버전 정보" data-admin-enabled="false">
-                📋 v4.7.13
+                📋 v4.7.14
             </button>
         </div>
     </div>
