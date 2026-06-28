@@ -1099,6 +1099,32 @@ async function validateDetailSettingsUx(page) {
     && shapeSummary.whiteSpace === 'nowrap'
     && shapeSummary.scrollWidth <= shapeSummary.clientWidth + 1,
     'detail settings: 문서 기본 설정 현재값 요약이 한 줄에서 잘림');
+  const basicControlLayout = await page.evaluate(() => {
+    const grid = document.querySelector('.document-shape-grid');
+    const ids = [...grid.querySelectorAll('#font-size, #line-spacing, #paper-size, [data-orient="portrait"], #auto-download')]
+      .map(el => el.id || `orient-${el.dataset.orient}`);
+    const orientation = document.querySelector('[data-orient="portrait"]')?.closest('.form-row')?.getBoundingClientRect();
+    const download = document.querySelector('#auto-download')?.closest('.form-row')?.getBoundingClientRect();
+    const heights = [
+      document.querySelector('#font-size'),
+      document.querySelector('#line-spacing'),
+      document.querySelector('#paper-size'),
+      document.querySelector('[aria-label="용지 방향"]'),
+      document.querySelector('.auto-download-control'),
+    ].map(el => Math.round(el.getBoundingClientRect().height));
+    return {
+      ids,
+      downloadAfterOrientation: !!orientation && !!download && download.left > orientation.left,
+      sameRow: !!orientation && !!download && Math.abs(download.top - orientation.top) <= 1,
+      heightSpread: Math.max(...heights) - Math.min(...heights),
+    };
+  });
+  assert(basicControlLayout.ids.join(',') === 'font-size,line-spacing,paper-size,orient-portrait,auto-download',
+    'detail settings: 기본 설정 순서가 글꼴 크기→줄 간격→용지 크기→용지 방향→자동 다운로드가 아님');
+  assert(basicControlLayout.downloadAfterOrientation && basicControlLayout.sameRow,
+    'detail settings: 자동 다운로드가 용지 방향 오른쪽 같은 행에 배치되지 않음');
+  assert(basicControlLayout.heightSpread <= 2,
+    'detail settings: 기본 설정 컨트롤 높이가 서로 맞지 않음');
   const closedSummaryStyle = await page.locator('.advanced-settings > summary').evaluate(el => {
     const style = getComputedStyle(el);
     return { background: style.backgroundColor, color: style.color };

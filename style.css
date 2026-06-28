@@ -1085,11 +1085,52 @@ a:hover { text-decoration: underline; }
     white-space: nowrap;
 }
 .document-shape-grid {
-    grid-template-columns: minmax(180px, 1.7fr) minmax(86px, 0.72fr) minmax(94px, 0.76fr) minmax(104px, 0.86fr) minmax(128px, 1fr);
-    gap: 10px;
+    grid-template-columns:
+        minmax(178px, 1.65fr)
+        minmax(76px, 0.62fr)
+        minmax(82px, 0.68fr)
+        minmax(92px, 0.76fr)
+        minmax(120px, 1fr)
+        minmax(128px, 1.04fr);
+    gap: 8px;
 }
 .document-shape-grid .form-row {
     margin-bottom: 0;
+}
+.document-shape-grid .form-row > label,
+.document-shape-grid .form-row > .form-row-label {
+    margin-bottom: 5px;
+    font-size: 0.8rem;
+}
+.document-shape-grid select,
+.document-shape-grid .seg-control,
+.auto-download-control {
+    min-height: 38px;
+}
+.document-shape-grid select {
+    padding-top: 7px;
+    padding-bottom: 7px;
+}
+.auto-download-control {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 7px;
+    padding: 7px 9px;
+    border: 1.5px solid var(--c-border);
+    border-radius: var(--radius-sm);
+    background: var(--c-surface);
+    cursor: pointer;
+}
+.auto-download-status {
+    min-width: 0;
+    overflow: hidden;
+    color: var(--c-text-sub);
+    font-size: 0.74rem;
+    font-weight: 600;
+    line-height: 1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .advanced-settings {
@@ -1747,7 +1788,7 @@ a:hover { text-decoration: underline; }
 }
 
 /* 토글 스위치 (체크박스 대체) */
-/* 자동 다운로드 — 보조 옵션이므로 박스·설명 없이 작은 한 줄 + 작은 스위치로 표기 */
+/* 공용 토글 스위치 */
 .toggle-row {
     display: flex;
     align-items: center;
@@ -2597,7 +2638,7 @@ a:hover { text-decoration: underline; }
     .form-group-row { grid-template-columns: 1fr; }
     .options-2col { grid-template-columns: 1fr; }
     .options-grid-4col { grid-template-columns: repeat(2, 1fr); }
-    .document-shape-grid { grid-template-columns: minmax(0, 1.35fr) minmax(0, 0.72fr) minmax(0, 0.72fr); }
+    .document-shape-grid { grid-template-columns: minmax(0, 1.35fr) repeat(2, minmax(0, 0.8fr)); }
     .document-shape-head {
         align-items: stretch;
         flex-direction: column;

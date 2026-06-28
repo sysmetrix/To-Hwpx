@@ -69,6 +69,7 @@
 - `원본 우선`(stylePolicy='source')일 때는 `applyStylePolicyUi()`가 `본문 고급 서식`의 `.detail-settings-grid`를 흐리게(`.detail-grid-dimmed`) 하고 `#detail-source-note`를 띄워, 세부 설정이 원본 서식 있는 파일에서는 원본에 양보됨을 강조한다(조정 자체는 가능).
 - `isAdminMode()`는 부수효과 없는 순수 read여야 한다. 과거 이 함수가 매 호출마다 `setAdminEnabled()`를 불러 `?admin=1` URL에서 기능 플래그가 계속 기본값으로 리셋돼 개별 기능 토글을 끌 수 없었다. URL 파라미터 반영은 `initAdminParam()`에서 1회만 한다. golden `?lab=1` 테스트에 기능 토글 on→off 지속 검증을 둔다.
 - 가로 구분선 토글은 `본문 고급 서식`(이전 '본문 서식') 그리드 끝에 둔다. `본문 고급 서식` 도움말 aria-label도 함께 갱신한다.
+- 자동 다운로드는 문서 기본 설정에서 용지 방향 바로 오른쪽에 둔다. 데스크톱은 `한글 폰트 · 글꼴 크기 · 줄 간격 · 용지 크기 · 용지 방향 · 자동 다운로드` 1행이며, 컨트롤 높이를 맞춘다. 모바일은 터치 폭을 위해 1열로 전환한다.
 - UI 라벨은 사용자가 예상하는 결과 중심으로 쓴다. 예를 들어 `prominent`는 "강조"가 아니라 `큰 제목·굵게`, `report`는 "보고서형"이 아니라 `머리행 음영`처럼 실제 출력 변화를 드러낸다.
 - 옵션의 `value`는 저장값/localStorage/HWPX 생성 계약이므로 라벨만 바꿀 때는 `value`를 바꾸지 않는다.
 - 세부 설정을 바꿨는데 HWPX XML이 변하지 않는 회귀를 막기 위해 UI 라벨, `state`, `buildHwpx()` 옵션 전달, XML 검증을 한 묶음으로 본다.
