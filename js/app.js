@@ -981,9 +981,9 @@ const FORMAT_INFO = {
         },
         links: [
             {
-                label: '📦 HwpxConverter 다운로드 (한컴 공식 일괄 변환 도구)',
+                label: '📦 한컴 다운로드 센터 → HWPX 변환기',
                 href: HWPX_CONVERTER_DOWNLOAD_URL,
-                desc: 'HWP 파일 여러 개를 HWPX로 한 번에 변환합니다. 한컴오피스 엔진을 사용해 서식 보존도가 가장 높습니다.',
+                desc: '페이지 왼쪽 메뉴에서 [추가 기능(Add-in)] 선택 → 목록에서 "HWPX 변환기"를 찾아 다운로드하세요. HWP 파일 여러 개를 한 번에 HWPX로 변환하며, 한컴오피스 엔진을 사용해 서식 보존도가 가장 높습니다.',
             },
         ],
     },
@@ -2859,8 +2859,8 @@ function showResult({ url, fileName, size, validation }) {
             ${ext === 'hwp' ? `
             <div class="result-hwpx-converter-tip">
                 <strong>📦 서식을 더 정확히 보존하려면</strong>
-                <span>한컴 공식 <b>HwpxConverter</b>로 HWP 파일을 HWPX로 먼저 변환한 뒤 이 사이트에 업로드하면 품질이 더 높습니다.</span>
-                <a href="${HWPX_CONVERTER_DOWNLOAD_URL}" target="_blank" rel="noopener noreferrer" class="btn-hwpx-converter">HwpxConverter 다운로드</a>
+                <span>한컴 공식 <b>HWPX 변환기(Add-in)</b>를 사용하면 HWP 파일을 한컴오피스 엔진으로 HWPX로 변환해 서식 보존도가 가장 높습니다.<br>다운로드 센터에서 왼쪽 메뉴 [추가 기능(Add-in)] → "HWPX 변환기"를 선택하세요.</span>
+                <a href="${HWPX_CONVERTER_DOWNLOAD_URL}" target="_blank" rel="noopener noreferrer" class="btn-hwpx-converter">한컴 다운로드 센터 →</a>
             </div>
             ` : ''}
             <p class="result-note">${escHtml(autoText)}</p>
