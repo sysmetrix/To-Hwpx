@@ -3629,6 +3629,7 @@ function initModals() {
             nextTab.focus();
         });
     });
+    initHelpDetailDemo();
 }
 
 function closePreview() {
@@ -3661,7 +3662,7 @@ function maybeShowOnboardingGuide() {
 }
 
 function activateHelpTab(name = 'usage') {
-    const selected = name === 'shortcuts' ? 'shortcuts' : 'usage';
+    const selected = ['usage', 'detail', 'shortcuts'].includes(name) ? name : 'usage';
     document.querySelectorAll('.help-tab').forEach(tab => {
         const active = tab.dataset.helpTab === selected;
         tab.classList.toggle('active', active);
@@ -3671,6 +3672,24 @@ function activateHelpTab(name = 'usage') {
         const active = panel.id === `help-panel-${selected}`;
         panel.classList.toggle('active', active);
         panel.hidden = !active;
+    });
+}
+
+// 도움말 '세부 설정' 탭의 인터랙티브 미리보기: 칩 클릭 → 미리보기 doc의 data-* 속성만 바꾸고
+// 실제 시각 변화는 CSS가 담당한다(실 HWPX 렌더러가 아닌 효과 데모).
+function initHelpDetailDemo() {
+    const demo = document.getElementById('detail-demo');
+    const doc = document.getElementById('detail-demo-doc');
+    if (!demo || !doc) return;
+    demo.querySelectorAll('.detail-demo-chips').forEach(group => {
+        const key = group.dataset.demoKey;
+        group.addEventListener('click', (e) => {
+            const chip = e.target.closest('.detail-demo-chip');
+            if (!chip) return;
+            group.querySelectorAll('.detail-demo-chip').forEach(c => c.classList.remove('is-active'));
+            chip.classList.add('is-active');
+            if (key) doc.dataset[key] = chip.dataset.demoVal;
+        });
     });
 }
 

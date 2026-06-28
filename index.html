@@ -117,7 +117,7 @@
             <span>｢BWYF｣ AX Challenger 2026</span>
             <!-- [주의] id="open-changelog"는 app.js에서 관리자 모드일 때 업데이트 내역 모달을 여는 연결값 -->
             <button class="util-changelog-btn" id="open-changelog" aria-label="버전 정보" data-admin-enabled="false">
-                📋 v4.7.4
+                📋 v4.7.5
             </button>
         </div>
     </div>
@@ -1360,6 +1360,7 @@
         <div class="modal-body">
             <div class="help-tabs" role="tablist" aria-label="도움말 항목">
                 <button type="button" class="help-tab active" data-help-tab="usage" role="tab" aria-selected="true" aria-controls="help-panel-usage">사용법</button>
+                <button type="button" class="help-tab" data-help-tab="detail" role="tab" aria-selected="false" aria-controls="help-panel-detail">세부 설정</button>
                 <button type="button" class="help-tab" data-help-tab="shortcuts" role="tab" aria-selected="false" aria-controls="help-panel-shortcuts">단축키</button>
             </div>
             <div class="help-panel active" id="help-panel-usage" role="tabpanel">
@@ -1380,11 +1381,83 @@
                         <span>HWPX를 한컴에서 열어 최종 확인합니다.</span>
                     </li>
                 </ol>
-                <p class="onboarding-footnote">보고서처럼 맞출 때만 문서 세부 설정과 고급 사용 팁을 열어보세요.</p>
+                <p class="onboarding-footnote">보고서처럼 맞추고 싶다면 위 <b>세부 설정</b> 탭에서 옵션이 결과를 어떻게 바꾸는지 미리 볼 수 있습니다.</p>
                 <div class="onboarding-actions">
                     <button type="button" class="btn-secondary" id="onboarding-open-advanced">고급 사용 팁</button>
                     <button type="button" class="btn-primary-lite" id="onboarding-done">이해했어요</button>
                 </div>
+            </div>
+            <!-- 세부 설정 탭: 고급 사용자용 옵션 설명 + 칩으로 즉시 바뀌는 인터랙티브 미리보기.
+                 미리보기는 실제 HWPX 렌더러가 아니라 옵션 효과를 직관적으로 보여주는 CSS 목업이다. -->
+            <div class="help-panel" id="help-panel-detail" role="tabpanel" hidden>
+                <p class="onboarding-lead">
+                    보고서처럼 다듬을 때 쓰는 <b>본문 고급 서식</b> 옵션입니다. 아래 칩을 눌러 결과 미리보기가 어떻게 바뀌는지 확인하세요.
+                </p>
+
+                <div class="detail-demo" id="detail-demo">
+                    <div class="detail-demo-controls">
+                        <div class="detail-demo-group">
+                            <span class="detail-demo-key">제목 스타일</span>
+                            <div class="detail-demo-chips" data-demo-key="heading">
+                                <button type="button" class="detail-demo-chip is-active" data-demo-val="standard">기본</button>
+                                <button type="button" class="detail-demo-chip" data-demo-val="prominent">큰·굵게</button>
+                                <button type="button" class="detail-demo-chip" data-demo-val="compact">작게</button>
+                            </div>
+                        </div>
+                        <div class="detail-demo-group">
+                            <span class="detail-demo-key">표 스타일</span>
+                            <div class="detail-demo-chips" data-demo-key="table">
+                                <button type="button" class="detail-demo-chip is-active" data-demo-val="standard">기본</button>
+                                <button type="button" class="detail-demo-chip" data-demo-val="plain">단순</button>
+                                <button type="button" class="detail-demo-chip" data-demo-val="report">머리행 음영</button>
+                            </div>
+                        </div>
+                        <div class="detail-demo-group">
+                            <span class="detail-demo-key">링크 표시</span>
+                            <div class="detail-demo-chips" data-demo-key="link">
+                                <button type="button" class="detail-demo-chip is-active" data-demo-val="blue">파랑+밑줄</button>
+                                <button type="button" class="detail-demo-chip" data-demo-val="plain">검정 본문</button>
+                                <button type="button" class="detail-demo-chip" data-demo-val="url">텍스트+주소</button>
+                            </div>
+                        </div>
+                        <div class="detail-demo-group">
+                            <span class="detail-demo-key">문단 간격</span>
+                            <div class="detail-demo-chips" data-demo-key="spacing">
+                                <button type="button" class="detail-demo-chip" data-demo-val="compact">작게</button>
+                                <button type="button" class="detail-demo-chip is-active" data-demo-val="normal">기본</button>
+                                <button type="button" class="detail-demo-chip" data-demo-val="relaxed">크게</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="detail-demo-stage" aria-live="polite">
+                        <div class="detail-demo-doc" id="detail-demo-doc"
+                             data-heading="standard" data-table="standard" data-link="blue" data-spacing="normal">
+                            <p class="ddoc-h">분기 보고서</p>
+                            <p class="ddoc-p">이번 분기 핵심 지표를 요약합니다. 근거는 <a class="ddoc-link">참고 자료</a>를 확인하세요.</p>
+                            <table class="ddoc-table">
+                                <tr class="ddoc-tr-head"><td>항목</td><td>값</td></tr>
+                                <tr><td>매출</td><td>120</td></tr>
+                                <tr><td>비용</td><td>80</td></tr>
+                            </table>
+                            <p class="ddoc-p">다음 분기 계획은 별도 문서로 공유합니다.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <dl class="detail-explainer">
+                    <div><dt>본문 서식 처리</dt><dd><b>원본 우선</b>은 원본(DOCX·HTML·XLSX)의 서식을 먼저 따르고, <b>설정 우선</b>은 아래 옵션을 강하게 적용합니다. <b>혼합</b>은 그 절충입니다. MD·TXT·CSV·JSON처럼 원본 서식이 없는 입력은 항상 아래 설정대로 만들어집니다.</dd></div>
+                    <div><dt>문단 앞/뒤 간격</dt><dd>문단 사이 여백을 좁게/기본/넓게로 조정합니다. 줄글이 많은 문서는 기본 또는 크게가 읽기 편합니다.</dd></div>
+                    <div><dt>제목 스타일</dt><dd>제목 크기·굵기를 조절합니다. 보고서는 <b>큰·굵게</b>, 메모는 <b>작게</b>가 어울립니다.</dd></div>
+                    <div><dt>표 스타일</dt><dd><b>기본</b>은 전체 테두리, <b>단순</b>은 옅은 테두리, <b>머리행 음영</b>은 첫 행에 회색 배경을 넣습니다.</dd></div>
+                    <div><dt>링크 표시</dt><dd><b>파랑+밑줄</b>은 일반 하이퍼링크, <b>검정 본문</b>은 본문색 링크, <b>텍스트+주소</b>는 표시 글자 뒤에 실제 주소를 함께 적습니다(인쇄용).</dd></div>
+                    <div><dt>이미지 최대 폭 / 정렬</dt><dd>이미지를 본문의 50%·75%·100%까지로 제한하고 왼쪽·가운데·오른쪽으로 배치합니다. 원본에 정렬 정보가 있으면 그쪽이 우선합니다.</dd></div>
+                    <div><dt>첫 제목 본문 처리</dt><dd>상단 제목 블록으로 올라간 첫 제목을 본문에서 <b>제거</b>할지 <b>유지</b>할지 정합니다.</dd></div>
+                    <div><dt>가로 구분선</dt><dd>Markdown의 <code>---</code> 같은 구분선을 실제 선으로 <b>표시</b>할지, 빈 줄로 <b>숨김</b> 처리할지 정합니다.</dd></div>
+                </dl>
+
+                <p class="detail-explainer-note">
+                    <strong>품질 표기 읽는 법</strong> — 업데이트 내역의 <b>변환률</b>은 원본 내용·서식이 얼마나 옮겨졌는지(내용 보존도), <b>성공률</b>은 오류 없이 한글에서 열리는 파일이 나오는지(생성 안정성)를 뜻하는 추정치입니다. 둘은 다른 축이라, 성공률이 높아도 변환률은 낮을 수 있습니다.
+                </p>
             </div>
             <div class="help-panel" id="help-panel-shortcuts" role="tabpanel" hidden>
                 <dl class="shortcut-list">

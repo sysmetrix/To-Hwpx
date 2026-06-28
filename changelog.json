@@ -1,6 +1,21 @@
 {
-  "current": "4.7.4",
+  "current": "4.7.5",
   "versions": [
+    {
+      "version": "4.7.5",
+      "date": "2026-06-28",
+      "user": [
+        "도움말에 '세부 설정' 탭을 추가했습니다. 제목·표·링크·문단 간격 같은 본문 고급 서식 옵션을 칩으로 눌러보면 결과 미리보기가 즉시 바뀌어, 각 옵션이 무엇을 바꾸는지 한눈에 볼 수 있습니다.",
+        "이 탭에서 업데이트 내역의 '변환률(내용 보존도)'과 '성공률(생성 안정성)'이 서로 다른 뜻이라는 것도 함께 설명합니다."
+      ],
+      "dev": [
+        "[v4.7.5] index.html: 도움말 모달에 세부 설정 탭(#help-panel-detail) 추가 — 옵션 설명 dl + 칩으로 data-* 토글되는 CSS 목업 미리보기, 사용법 탭 footnote 갱신",
+        "[v4.7.5] js/app.js: activateHelpTab에 detail 허용, initHelpDetailDemo()로 칩 클릭 시 미리보기 doc data-* 갱신 배선",
+        "[v4.7.5] style.css: .detail-demo/.detail-demo-doc/.detail-explainer 스타일과 옵션별 data-* 효과 규칙 추가",
+        "[v4.7.5] tests/golden.js: 세부 설정 탭 노출·변환률/성공률 풀이·미리보기 칩 상태 변경 회귀 검증 추가, footnote 문구 갱신",
+        "[v4.7.5] package.json/package-lock.json/sw.js/index.html/changelog.json: v4.7.5 반영"
+      ]
+    },
     {
       "version": "4.7.4",
       "date": "2026-06-28",
