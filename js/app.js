@@ -107,6 +107,11 @@ document.addEventListener('DOMContentLoaded', () => {
     applyBetaBadgeVisibility(); // 베타 배지는 관리자 모드에서만 노출(일반 사용자엔 숨김)
 });
 
+// 서비스워커 등록 — 캐시‑퍼스트 오프라인 지원 및 재방문 속도 개선
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+}
+
 function initHelpDots() {
     let tip = document.getElementById('help-popover');
     if (!tip) {

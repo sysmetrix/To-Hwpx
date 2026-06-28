@@ -128,7 +128,7 @@
             <span>｢BWYF｣ AX Challenger 2026</span>
             <!-- [주의] id="open-changelog"는 app.js에서 관리자 모드일 때 업데이트 내역 모달을 여는 연결값 -->
             <button class="util-changelog-btn" id="open-changelog" aria-label="버전 정보" data-admin-enabled="false">
-                📋 v4.7.7
+                📋 v4.7.8
             </button>
         </div>
     </div>
@@ -1159,9 +1159,11 @@
                     </div>
                 </div>
                 <!-- rhwp studio — 외부 WASM 뷰어 (선택, 접속 불가 시 위 기본 미리보기 사용) -->
+                <!-- allow-same-origin 제거: allow-scripts+allow-same-origin 조합은 sandbox 탈출 가능 (브라우저 경고). -->
+                <!-- rhwp가 null-origin에서 localStorage 없이 동작하므로 WASM 재로드가 느릴 수 있음. -->
                 <iframe id="rhwp-iframe"
                         title="HWPX 정밀 미리보기 뷰어"
-                        sandbox="allow-scripts allow-same-origin"
+                        sandbox="allow-scripts"
                         data-src="https://edwardkim.github.io/rhwp/">
                 </iframe>
             </div>
