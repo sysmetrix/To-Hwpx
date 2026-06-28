@@ -46,11 +46,13 @@
            script-src : 앱 JS(self) + JSZip/marked/SheetJS(cdnjs)
            style-src  : 'unsafe-inline'은 인라인 style 속성과 미리보기 렌더가
                         주입하는 검증된 인라인 스타일(색상 정규식 통과분) 때문
-           img-src    : 포맷 브랜드 아이콘(api.iconify.design, https) + 원격 MD 이미지
+           img-src    : 'self' data: — 브랜드 아이콘은 icons/brand/에 self-host.
+                        원격 MD 이미지는 fetch()→data: URL 변환 후 HWPX에만 임베드;
+                        IR 미리보기는 텍스트 플레이스홀더로 표시 → https: 불필요.
            connect-src: Markdown 원격 이미지 fetch (임의 https 오리진)
            frame-src  : 정밀 미리보기 rhwp 뷰어(외부 WASM, 선택 기능)
          ──────────────────────────────────────────────────────────── -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https:; frame-src https://edwardkim.github.io; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https:; frame-src https://edwardkim.github.io; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
 
     <!-- SEO + SNS 공유용 메타 태그 -->
     <title>To HWPX - 한글로</title>
@@ -128,7 +130,7 @@
             <span>｢BWYF｣ AX Challenger 2026</span>
             <!-- [주의] id="open-changelog"는 app.js에서 관리자 모드일 때 업데이트 내역 모달을 여는 연결값 -->
             <button class="util-changelog-btn" id="open-changelog" aria-label="버전 정보" data-admin-enabled="false">
-                📋 v4.7.8
+                📋 v4.7.9
             </button>
         </div>
     </div>
@@ -803,7 +805,7 @@
 
                 <!-- Markdown -->
                 <div class="format-card" data-ext="md" role="button" tabindex="0">
-                    <div class="card-icon"><img src="https://api.iconify.design/simple-icons/markdown.svg?color=%234a4a4a" alt="" class="format-brand-icon" loading="lazy" aria-hidden="true"></div>
+                    <div class="card-icon"><img src="icons/brand/markdown.svg" alt="" class="format-brand-icon" loading="lazy" aria-hidden="true"></div>
                     <div class="card-ext">MD</div>
                     <div class="card-name">Markdown</div>
                     <div class="card-quality">★★★</div>
@@ -812,7 +814,7 @@
 
                 <!-- DOCX (Word) — HTML보다 앞에 배치 -->
                 <div class="format-card" data-ext="docx" role="button" tabindex="0">
-                    <div class="card-icon"><img src="https://api.iconify.design/simple-icons/microsoftword.svg?color=%232b579a" alt="" class="format-brand-icon" loading="lazy" aria-hidden="true"></div>
+                    <div class="card-icon"><img src="icons/brand/microsoftword.svg" alt="" class="format-brand-icon" loading="lazy" aria-hidden="true"></div>
                     <div class="card-ext">DOCX</div>
                     <div class="card-name">Word 문서</div>
                     <div class="card-quality">★★☆</div>
@@ -821,7 +823,7 @@
 
                 <!-- HTML -->
                 <div class="format-card" data-ext="html" role="button" tabindex="0">
-                    <div class="card-icon"><img src="https://api.iconify.design/simple-icons/html5.svg?color=%23e34f26" alt="" class="format-brand-icon" loading="lazy" aria-hidden="true"></div>
+                    <div class="card-icon"><img src="icons/brand/html5.svg" alt="" class="format-brand-icon" loading="lazy" aria-hidden="true"></div>
                     <div class="card-ext">HTML</div>
                     <div class="card-name">HTML 문서</div>
                     <div class="card-quality">★★☆</div>
@@ -830,7 +832,7 @@
 
                 <!-- CSV / XLSX -->
                 <div class="format-card" data-ext="csv" role="button" tabindex="0">
-                    <div class="card-icon"><img src="https://api.iconify.design/simple-icons/microsoftexcel.svg?color=%23217346" alt="" class="format-brand-icon" loading="lazy" aria-hidden="true"></div>
+                    <div class="card-icon"><img src="icons/brand/microsoftexcel.svg" alt="" class="format-brand-icon" loading="lazy" aria-hidden="true"></div>
                     <div class="card-ext">CSV / XLSX</div>
                     <div class="card-name">스프레드시트</div>
                     <div class="card-quality">★★☆</div>
@@ -877,7 +879,7 @@
 
                     <!-- IPYNB -->
                     <div class="format-card" data-ext="ipynb" role="button" tabindex="0">
-                        <div class="card-icon"><img src="https://api.iconify.design/simple-icons/jupyter.svg?color=%23f37626" alt="" class="format-brand-icon" loading="lazy" aria-hidden="true"></div>
+                        <div class="card-icon"><img src="icons/brand/jupyter.svg" alt="" class="format-brand-icon" loading="lazy" aria-hidden="true"></div>
                         <div class="card-ext">IPYNB</div>
                         <div class="card-name">Jupyter Notebook</div>
                         <div class="card-quality">★★☆</div>
@@ -886,7 +888,7 @@
 
                     <!-- PDF (Coming Soon) -->
                     <div class="format-card coming-soon" data-ext="pdf" aria-disabled="true">
-                        <div class="card-icon"><img src="https://api.iconify.design/simple-icons/adobeacrobatreader.svg?color=%23e2231a" alt="" class="format-brand-icon" loading="lazy" aria-hidden="true"></div>
+                        <div class="card-icon"><img src="icons/brand/adobeacrobatreader.svg" alt="" class="format-brand-icon" loading="lazy" aria-hidden="true"></div>
                         <div class="card-ext">PDF</div>
                         <div class="card-name">PDF 문서</div>
                         <div class="card-quality">★★☆</div>
@@ -895,7 +897,7 @@
 
                     <!-- PPTX (Coming Soon) -->
                     <div class="format-card coming-soon" data-ext="pptx" aria-disabled="true">
-                        <div class="card-icon"><img src="https://api.iconify.design/simple-icons/microsoftpowerpoint.svg?color=%23b7472a" alt="" class="format-brand-icon" loading="lazy" aria-hidden="true"></div>
+                        <div class="card-icon"><img src="icons/brand/microsoftpowerpoint.svg" alt="" class="format-brand-icon" loading="lazy" aria-hidden="true"></div>
                         <div class="card-ext">PPTX</div>
                         <div class="card-name">PowerPoint</div>
                         <div class="card-quality">★☆☆</div>

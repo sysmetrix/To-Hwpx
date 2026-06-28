@@ -1,6 +1,20 @@
 {
-  "current": "4.7.8",
+  "current": "4.7.9",
   "versions": [
+    {
+      "version": "4.7.9",
+      "date": "2026-06-28",
+      "user": [
+        "포맷 카드 아이콘(Markdown·Word·HTML·Excel·Jupyter·PDF·PowerPoint)을 외부 서버 대신 앱에 직접 내장했습니다. 로딩이 더 빠르고, 파일 선택 전에도 아이콘이 즉시 표시됩니다."
+      ],
+      "dev": [
+        "[v4.7.9] icons/brand/: simple-icons 7개(markdown·microsoftword·html5·microsoftexcel·jupyter·adobeacrobatreader·microsoftpowerpoint) self-host — iconify API 제3자 요청 제거(A2 완료)",
+        "[v4.7.9] index.html: 7개 <img src> iconify API URL → icons/brand/*.svg 로컬 경로 교체",
+        "[v4.7.9] index.html CSP: img-src 'self' data: https: → 'self' data: — 아이콘 self-host 및 IR 미리보기가 텍스트 플레이스홀더 사용 확인으로 https: 제거(D2 완료)",
+        "[v4.7.9] sw.js: APP_SHELL에 brand 아이콘 7개 추가(캐시 선점재)",
+        "[v4.7.9] package.json/package-lock.json/sw.js/index.html/changelog.json: v4.7.9 반영"
+      ]
+    },
     {
       "version": "4.7.8",
       "date": "2026-06-28",

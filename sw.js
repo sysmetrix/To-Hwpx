@@ -10,7 +10,7 @@
 
 'use strict';
 
-const CACHE_VERSION = 'to-hwpx-v4.7.8';
+const CACHE_VERSION = 'to-hwpx-v4.7.9';
 
 // 설치 시 미리 캐시할 파일 목록 (앱 셸)
 // [주의] 절대경로(/)가 아닌 상대경로(./)를 사용해야 함.
@@ -28,6 +28,13 @@ const APP_SHELL = [
     './icons/app-icon.svg',
     './icons/chrome-install.svg',
     './icons/edge-install.svg',
+    './icons/brand/markdown.svg',
+    './icons/brand/microsoftword.svg',
+    './icons/brand/html5.svg',
+    './icons/brand/microsoftexcel.svg',
+    './icons/brand/jupyter.svg',
+    './icons/brand/adobeacrobatreader.svg',
+    './icons/brand/microsoftpowerpoint.svg',
     './changelog.json',
     // CDN 라이브러리 (SRI 검증 통과한 것들)
     'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js',
