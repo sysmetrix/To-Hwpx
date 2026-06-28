@@ -1,6 +1,24 @@
 {
-  "current": "4.7.15",
+  "current": "4.7.16",
   "versions": [
+    {
+      "version": "4.7.16",
+      "date": "2026-06-28",
+      "user": [
+        "[v4.7.16] DOCX 번호·글머리 목록 변환 — Word numbering.xml을 읽어 순서/비순서 목록으로 복원",
+        "[v4.7.16] DOCX 하이퍼링크 보존 — document.xml.rels 연결로 클릭 가능한 링크 유지",
+        "[v4.7.16] DOCX WMF/EMF 이미지 안내 — alt 텍스트가 있는 벡터 이미지는 설명 문구로 보존",
+        "[v4.7.16] DOCX WebP 이미지 지원 — Canvas API로 PNG 변환 후 삽입"
+      ],
+      "dev": [
+        "[v4.7.16] parseDocxNumbering(): numbering.xml abstractNum/num → numMap+abstractMap",
+        "[v4.7.16] extractDocxInlineRuns(): w:r + w:hyperlink(URL) + 컨테이너 재귀 처리",
+        "[v4.7.16] extractDocxParagraph: w:numPr 감지 → _list_item, groupDocxListItems 후처리",
+        "[v4.7.16] extractDocxImage: docPr@descr alt 추출, WMF/EMF→para fallback, WebP→PNG",
+        "[v4.7.16] FORMAT_INFO.docx quality ★★☆→★★★, features/limits/summary 갱신",
+        "[v4.7.16] 회귀: gate.js DOCX/MD ALL PASS, golden 전 항목 PASS"
+      ]
+    },
     {
       "version": "4.7.15",
       "date": "2026-06-28",

@@ -942,17 +942,19 @@ const FORMAT_INFO = {
     },
     docx: {
         icon: '📘', svgIcon: 'icons/brand/microsoftword.svg', name: 'Word 문서 (DOCX)',
-        quality: '★★☆', available: true, badge: '베타',
+        quality: '★★★', available: true, badge: '베타',
         desc: 'Word 문서를 본문 구조 중심으로 재구성합니다. 서식 있는 원본은 원본 우선을 기본으로 존중하지만, 원본 편집 화면을 그대로 복제하는 용도는 아닙니다.',
-        tech: 'JSZip으로 압축 해제 → word/document.xml 본문·표 추출 → IR → HWPX',
+        tech: 'JSZip → word/document.xml + numbering.xml + rels → IR → HWPX',
         features: [
             '문서 순서 기준으로 제목 후보, 문단, 기본 표를 추출',
             '굵게/기울임/밑줄/취소선/글자색, 가운데·오른쪽 정렬 일부 보존',
             '표의 가로·세로 병합, 셀 배경색, 셀 글자색 일부 보존',
-            'PNG/JPG/GIF/BMP 본문 이미지, 각주, 첫 머리글/바닥글 텍스트 일부 추출',
-            '일반적으로 DOCX는 작성 도구별 세부 XML 차이가 있어 확인 작업이 필요',
+            'PNG/JPG/GIF/BMP/WebP 본문 이미지, 각주, 첫 머리글/바닥글 텍스트 일부 추출',
+            '번호·글머리 목록(numbering.xml) → 순서/비순서 목록으로 변환',
+            '클릭 가능한 하이퍼링크(http/https/mailto) 보존',
+            'WMF/EMF 벡터 이미지 — 설명 텍스트(alt)가 있으면 안내 문구로 보존',
         ],
-        limits: ['원본 Word 페이지 배치·섹션·스타일 테마는 단순화', 'WMF/EMF 벡터 이미지 미지원', '주석·변경 추적·복잡한 개체와 일부 목록 번호는 손실 가능'],
+        limits: ['원본 Word 페이지 배치·섹션·스타일 테마는 단순화', 'WMF/EMF 실제 그림은 HWPX 미지원', '주석·변경 추적·복잡한 개체는 손실 가능'],
     },
     hwp: {
         icon: '🇰🇷', name: '한글 문서 (HWP)',
@@ -3103,8 +3105,8 @@ function getConversionSummaryForExt(ext) {
             lossy: 'CSS 레이아웃, 이미지, SVG, 스크립트, 외부 리소스',
         },
         docx: {
-            preserved: '본문, 제목 후보, 기본 표, 일부 인라인 서식·색상·이미지, 원본 우선 서식 정책',
-            lossy: 'Word 레이아웃, 스타일 테마, 주석, 변경 추적, 복잡한 개체',
+            preserved: '본문, 제목, 번호·글머리 목록, 기본 표, 하이퍼링크, 인라인 서식·색상·이미지, 각주, 원본 우선 서식 정책',
+            lossy: 'Word 페이지 배치·테마, WMF/EMF 실제 그림, 주석, 변경 추적, 복잡한 개체',
         },
         txt: {
             preserved: '원문 텍스트, 줄바꿈, 빈 줄 기준 문단',

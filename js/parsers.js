@@ -994,6 +994,133 @@ function parseIpynb(text, docType = 'plain') {
 //     [주의] ArrayBuffer를 받는 비동기 함수 (async)
 // ─────────────────────────────────────────────────────────────────────────
 const DOCX_NS = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
+const DOCX_NS_R = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+
+/**
+ * word/numbering.xml 파싱 → numId·abstractNumId 매핑 + 레벨별 순서/글머리 정보.
+ * 반환: { numMap: {numId→absId}, abstractMap: {absId→{lvls:{ilvl→{ordered,start}}}} }
+ */
+async function parseDocxNumbering(zip) {
+    const numMap = {};
+    const abstractMap = {};
+    const numFile = zip.file('word/numbering.xml');
+    if (!numFile) return { numMap, abstractMap };
+    try {
+        const xml = await numFile.async('string');
+        const doc = new DOMParser().parseFromString(xml, 'application/xml');
+        for (const abs of doc.getElementsByTagNameNS(DOCX_NS, 'abstractNum')) {
+            const absId = abs.getAttributeNS(DOCX_NS, 'abstractNumId')
+                       || abs.getAttribute('w:abstractNumId') || '';
+            if (!absId) continue;
+            const lvls = {};
+            for (const lvl of abs.getElementsByTagNameNS(DOCX_NS, 'lvl')) {
+                const ilvl = parseInt(
+                    lvl.getAttributeNS(DOCX_NS, 'ilvl') || lvl.getAttribute('w:ilvl') || '0', 10);
+                const numFmtEl = lvl.getElementsByTagNameNS(DOCX_NS, 'numFmt')[0];
+                const fmt = numFmtEl
+                    ? (numFmtEl.getAttributeNS(DOCX_NS, 'val') || numFmtEl.getAttribute('w:val') || 'bullet')
+                    : 'bullet';
+                const startEl = lvl.getElementsByTagNameNS(DOCX_NS, 'start')[0];
+                const start = startEl
+                    ? (parseInt(startEl.getAttributeNS(DOCX_NS, 'val') || startEl.getAttribute('w:val') || '1', 10) || 1)
+                    : 1;
+                lvls[ilvl] = { ordered: !['bullet', 'none', 'chicago'].includes(fmt), start };
+            }
+            abstractMap[absId] = { lvls };
+        }
+        for (const num of doc.getElementsByTagNameNS(DOCX_NS, 'num')) {
+            const numId = num.getAttributeNS(DOCX_NS, 'numId')
+                       || num.getAttribute('w:numId') || '';
+            const absRefEl = num.getElementsByTagNameNS(DOCX_NS, 'abstractNumId')[0];
+            const absId = absRefEl
+                ? (absRefEl.getAttributeNS(DOCX_NS, 'val') || absRefEl.getAttribute('w:val') || '')
+                : '';
+            if (numId && absId) numMap[numId] = absId;
+        }
+    } catch (_) {}
+    return { numMap, abstractMap };
+}
+
+/**
+ * parseDocx 내부 전용: 연속된 _list_item 블록을 list 블록으로 묶는 후처리.
+ * 순서 목록의 마커 번호를 레벨별로 독립 추적한다.
+ */
+function groupDocxListItems(blocks) {
+    const result = [];
+    let i = 0;
+    while (i < blocks.length) {
+        if (blocks[i]?.type !== '_list_item') { result.push(blocks[i++]); continue; }
+        const items = [];
+        const orderCounters = {};
+        while (i < blocks.length && blocks[i]?.type === '_list_item') {
+            const b = blocks[i++];
+            const lvl = Math.max(0, Math.min(b.level || 0, 2));
+            if (b.ordered) {
+                orderCounters[lvl] = (orderCounters[lvl] || 0) + 1;
+                for (const k of Object.keys(orderCounters))
+                    if (Number(k) > lvl) delete orderCounters[k];
+            } else {
+                delete orderCounters[lvl];
+            }
+            items.push({
+                text: b.text || '',
+                runs: b.runs || [],
+                level: lvl,
+                ordered: b.ordered || false,
+                marker: b.ordered ? orderCounters[lvl] : null,
+                task: false, checked: false, codeBlocks: [],
+            });
+        }
+        result.push({ type: 'list', items });
+    }
+    return result;
+}
+
+/**
+ * w:p 단락에서 인라인 런 배열 추출.
+ * w:r, w:hyperlink(URL 포함), ins/del/sdt 컨테이너를 재귀 순회해
+ * 공통 run 계약({text,bold,italic,underline,strike,color,href?})으로 반환한다.
+ */
+function extractDocxInlineRuns(pNode, relsMap = {}, footnotesMap = {}) {
+    const runs = [];
+    function walk(node, href) {
+        for (const child of node.childNodes) {
+            if (child.nodeType !== 1) continue;
+            const local = child.localName;
+            if (local === 'pPr' || local === 'rPr') continue;
+            if (local === 'r') {
+                const fnRef = child.getElementsByTagNameNS(DOCX_NS, 'footnoteReference')[0];
+                if (fnRef) {
+                    const fnId = fnRef.getAttributeNS(DOCX_NS, 'id') || fnRef.getAttribute('w:id') || '';
+                    if (fnId && footnotesMap[fnId]) runs.push({ text: '', footnote: footnotesMap[fnId] });
+                }
+                const text = sanitize(Array.from(child.getElementsByTagNameNS(DOCX_NS, 't'))
+                    .map(t => t.textContent).join(''));
+                if (!text) continue;
+                const run = {
+                    text,
+                    bold:      docxRunToggle(child, 'b'),
+                    italic:    docxRunToggle(child, 'i'),
+                    underline: docxRunToggle(child, 'u'),
+                    strike:    docxRunToggle(child, 'strike') || docxRunToggle(child, 'dstrike'),
+                    color:     docxRunColor(child),
+                };
+                if (href) run.href = href;
+                runs.push(run);
+            } else if (local === 'hyperlink') {
+                const rId = child.getAttributeNS(DOCX_NS_R, 'id') || child.getAttribute('r:id') || '';
+                const rawHref = (rId && relsMap[rId]?.target)
+                    || child.getAttributeNS(DOCX_NS, 'url') || child.getAttribute('w:url') || '';
+                const safeHref = /^https?:|^mailto:/i.test(rawHref) ? rawHref : '';
+                walk(child, safeHref || href);
+            } else {
+                walk(child, href);
+            }
+        }
+    }
+    walk(pNode, '');
+    return runs;
+}
 
 /**
  * w:p 단락에서 이미지 블록 추출
@@ -1006,16 +1133,21 @@ const DOCX_NS = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
  */
 async function extractDocxImage(pNode, relsMap, zip, counter) {
     const allEls = pNode.getElementsByTagName('*');
-    let extentEl = null, blipEl = null;
+    let extentEl = null, blipEl = null, altText = '';
     for (const el of allEls) {
         if (el.localName === 'extent' && !extentEl) extentEl = el;
         if (el.localName === 'blip'   && !blipEl)   blipEl   = el;
+        // docPr @descr / @title / @name → alt text (WMF/EMF fallback용 포함)
+        if (el.localName === 'docPr' && !altText) {
+            altText = sanitize(
+                el.getAttribute('descr') || el.getAttribute('title') || el.getAttribute('name') || ''
+            ).trim();
+        }
     }
     if (!blipEl) return null;
 
-    const NS_R = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
     const rId = blipEl.getAttribute('r:embed')
-             || blipEl.getAttributeNS(NS_R, 'embed')
+             || blipEl.getAttributeNS(DOCX_NS_R, 'embed')
              || blipEl.getAttribute('embed')
              || '';
     if (!rId || !relsMap[rId]) return null;
@@ -1023,31 +1155,53 @@ async function extractDocxImage(pNode, relsMap, zip, counter) {
     const target = relsMap[rId].target; // e.g. "media/image1.png"
     const ext    = target.split('.').pop().toLowerCase();
 
-    // WMF/EMF 벡터 이미지는 HWPX 삽입 미지원 → 건너뜀
-    if (ext === 'wmf' || ext === 'emf') return null;
+    // WMF/EMF 벡터 이미지 — HWPX 삽입 미지원. alt 텍스트가 있으면 안내 문단 반환.
+    if (ext === 'wmf' || ext === 'emf') {
+        return altText
+            ? { type: 'para', text: `[벡터 이미지: ${altText}]` }
+            : null;
+    }
 
     const mimeTypes = {
         jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png',
         gif: 'image/gif',  bmp: 'image/bmp',   tiff: 'image/tiff',
+        webp: 'image/webp',
     };
     const mimeType = mimeTypes[ext] || 'image/jpeg';
 
     const imgFile = zip.file('word/' + target);
     if (!imgFile) return null;
-    const imgData = await imgFile.async('uint8array');
+    let imgData = await imgFile.async('uint8array');
 
     // EMU → HWPX 단위: 1 inch = 914400 EMU = 7200 HWP units → divide EMU by 127
     const cx = parseInt(extentEl ? (extentEl.getAttribute('cx') || '0') : '0', 10);
     const cy = parseInt(extentEl ? (extentEl.getAttribute('cy') || '0') : '0', 10);
+    let widthHwp  = Math.round(cx / 127);
+    let heightHwp = Math.round(cy / 127);
+
+    // WebP → PNG 변환 (HWPX는 PNG/JPEG/GIF/BMP만 지원)
+    let finalExt = ext, finalMime = mimeType;
+    if (ext === 'webp') {
+        try {
+            const conv = await convertWebpToPng(imgData);
+            imgData = conv.bytes;
+            finalExt = 'png'; finalMime = 'image/png';
+            // EMU 크기가 없으면 canvas 크기 사용
+            if (!widthHwp || !heightHwp) {
+                const sz = imageSizeHwp({ width: conv.width, height: conv.height });
+                widthHwp = sz.widthHwp; heightHwp = sz.heightHwp;
+            }
+        } catch (_) { return altText ? { type: 'para', text: `[이미지: ${altText}]` } : null; }
+    }
 
     return {
         type:      'image',
-        binName:   `image${counter}.${ext}`,
-        mimeType,
+        binName:   `image${counter}.${finalExt}`,
+        mimeType:  finalMime,
         data:      imgData,
-        widthHwp:  Math.round(cx / 127),
-        heightHwp: Math.round(cy / 127),
-        alt:       '',
+        widthHwp,
+        heightHwp,
+        alt:       altText,
     };
 }
 
@@ -1122,6 +1276,9 @@ async function parseDocx(arrayBuffer, docType = 'plain') {
         } catch (_) {}
     }
 
+    // word/numbering.xml 로드 → numId·abstractNumId → 레벨별 순서/글머리 정보
+    const numberingInfo = await parseDocxNumbering(zip);
+
     // word/footnotes.xml 로드 → 각주 ID → 텍스트 맵
     const footnotesMap = {};
     const fnFile = zip.file('word/footnotes.xml');
@@ -1180,26 +1337,33 @@ async function parseDocx(arrayBuffer, docType = 'plain') {
             const hasDrawing = Array.from(node.getElementsByTagName('*'))
                 .some(el => el.localName === 'drawing');
             if (hasDrawing) {
-                const imgBlock = await extractDocxImage(node, relsMap, zip, imageCounter);
-                if (imgBlock) {
-                    // 이미지가 든 단락의 정렬(가운데/오른쪽/왼쪽)을 이미지 블록에 보존한다.
-                    // 원본 우선이어도 한컴에서 같은 위치로 보이도록 buildImageRun이 이 값을 우선 적용.
-                    const imgAlign = docxParagraphAlign(node);
-                    if (imgAlign === 'center' || imgAlign === 'right' || imgAlign === 'left') {
-                        imgBlock.align = imgAlign;
+                const imgOrFallback = await extractDocxImage(node, relsMap, zip, imageCounter);
+                if (imgOrFallback) {
+                    if (imgOrFallback.type === 'image') {
+                        // 이미지가 든 단락의 정렬(가운데/오른쪽/왼쪽)을 이미지 블록에 보존한다.
+                        const imgAlign = docxParagraphAlign(node);
+                        if (imgAlign === 'center' || imgAlign === 'right' || imgAlign === 'left') {
+                            imgOrFallback.align = imgAlign;
+                        }
+                        ir.blocks.push(imgOrFallback);
+                        imageCounter++;
+                    } else {
+                        // WMF/EMF alt-text fallback 또는 기타 비이미지 블록
+                        ir.blocks.push(imgOrFallback);
                     }
-                    ir.blocks.push(imgBlock);
-                    imageCounter++;
                     continue;
                 }
             }
-            const block = extractDocxParagraph(node, stylesMap, footnotesMap);
+            const block = extractDocxParagraph(node, stylesMap, footnotesMap, relsMap, numberingInfo);
             if (block) ir.blocks.push(block);
         } else if (localName === 'tbl') {
             const block = extractDocxTable(node);
             if (block) ir.blocks.push(block);
         }
     }
+
+    // 연속된 _list_item 블록 → list 블록으로 묶기
+    ir.blocks = groupDocxListItems(ir.blocks);
 
     // Word '제목(Title)' 스타일 단락만 문서 제목으로 승격하고 본문에서 제거.
     // (섹션 제목인 '제목 1'/Heading 1 등은 본문에 그대로 둔다 — 잘못된 제목 방지)
@@ -1248,8 +1412,8 @@ function docxRunColor(r) {
     return normalizeHexColor(v.startsWith('#') ? v : '#' + v);
 }
 
-/** w:p 단락 노드 → IR 블록 (텍스트 추출 + 스타일 판별 + 각주 지원) */
-function extractDocxParagraph(pNode, stylesMap = {}, footnotesMap = {}) {
+/** w:p 단락 노드 → IR 블록 (텍스트 추출 + 스타일 판별 + 각주 + 목록 + 하이퍼링크) */
+function extractDocxParagraph(pNode, stylesMap = {}, footnotesMap = {}, relsMap = {}, numberingInfo = null) {
     const pStyles = pNode.getElementsByTagNameNS(DOCX_NS, 'pStyle');
     let styleId = '';
     if (pStyles.length) {
@@ -1262,32 +1426,33 @@ function extractDocxParagraph(pNode, stylesMap = {}, footnotesMap = {}) {
     // 단락 정렬 (w:pPr/w:jc)
     const align = docxParagraphAlign(pNode);
 
-    // w:r 단위로 텍스트를 읽어 bold/italic 같은 인라인 서식을 일부 보존
-    // w:r 내 w:footnoteReference도 감지하여 각주 삽입
-    const runEls = Array.from(pNode.getElementsByTagNameNS(DOCX_NS, 'r'));
-    const inlineRuns = [];
-    for (const r of runEls) {
-        // 각주 참조 확인
-        const fnRef = r.getElementsByTagNameNS(DOCX_NS, 'footnoteReference')[0];
-        if (fnRef) {
-            const fnId = fnRef.getAttributeNS(DOCX_NS, 'id') || fnRef.getAttribute('w:id') || '';
-            if (fnId && footnotesMap[fnId]) {
-                inlineRuns.push({ text: '', footnote: footnotesMap[fnId] });
+    // 번호 매기기(w:numPr) 확인 → _list_item 블록 반환 (groupDocxListItems에서 list로 묶임)
+    if (pPrEl && numberingInfo) {
+        const numPrEl = pPrEl.getElementsByTagNameNS(DOCX_NS, 'numPr')[0];
+        if (numPrEl) {
+            const numIdEl = numPrEl.getElementsByTagNameNS(DOCX_NS, 'numId')[0];
+            const ilvlEl  = numPrEl.getElementsByTagNameNS(DOCX_NS, 'ilvl')[0];
+            const numId = numIdEl
+                ? (numIdEl.getAttributeNS(DOCX_NS, 'val') || numIdEl.getAttribute('w:val') || '')
+                : '';
+            const ilvl = parseInt(ilvlEl
+                ? (ilvlEl.getAttributeNS(DOCX_NS, 'val') || ilvlEl.getAttribute('w:val') || '0')
+                : '0', 10);
+            // numId=0은 번호 매기기 해제 마커 — 일반 단락으로 처리
+            if (numId && numId !== '0') {
+                const absId   = numberingInfo.numMap[numId];
+                const lvlDef  = absId ? numberingInfo.abstractMap[absId]?.lvls?.[ilvl] : null;
+                const ordered = lvlDef ? lvlDef.ordered : false;
+                const inlineRuns = extractDocxInlineRuns(pNode, relsMap, footnotesMap);
+                const text = sanitize(inlineRuns.filter(r => r.text).map(r => r.text).join('').trim());
+                if (!text && !inlineRuns.some(r => r.footnote)) return null;
+                return { type: '_list_item', text, runs: inlineRuns, level: Math.min(ilvl, 2), ordered };
             }
         }
-        const text = sanitize(Array.from(r.getElementsByTagNameNS(DOCX_NS, 't'))
-            .map(t => t.textContent || '')
-            .join(''));
-        if (!text) continue;
-        inlineRuns.push({
-            text,
-            bold:      docxRunToggle(r, 'b'),
-            italic:    docxRunToggle(r, 'i'),
-            underline: docxRunToggle(r, 'u'),
-            strike:    docxRunToggle(r, 'strike') || docxRunToggle(r, 'dstrike'),
-            color:     docxRunColor(r),
-        });
     }
+
+    // 인라인 런 추출 — w:r, w:hyperlink, 변경 추적 컨테이너를 통합 처리
+    const inlineRuns = extractDocxInlineRuns(pNode, relsMap, footnotesMap);
     const text = sanitize(inlineRuns.filter(r => r.text).map(r => r.text).join('').trim());
     // 각주만 있고 텍스트가 없는 경우도 각주 런이 있으면 null 반환 안 함
     const hasFootnotes = inlineRuns.some(r => r.footnote);
