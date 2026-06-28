@@ -1874,14 +1874,7 @@ const PASTE_MIME = {
 };
 let pastePreviewTimer = null;
 
-/**
- * 관리자 모드 활성 여부.
- * - URL에 ?admin=1 → localStorage 'tohwpx_admin'='1' 저장 후 활성
- * - URL에 ?admin=0 → 관리자 모드와 권한 해제
- * - 기존 호환용 ?lab=1/0도 같은 관리자 상태로 처리한다.
- * - 파라미터가 없으면 저장값을 따른다.
- * 공개 정적 사이트이므로 보안 기능이 아니라 일반 사용자 동선에서 숨기는 용도다.
- */
+/** 관리자 모드 활성 여부. URL 파라미터 또는 localStorage 저장값으로 결정. */
 const ADMIN_STATE_KEY = 'tohwpx_admin';
 const ADMIN_ACCESS_KEY = 'tohwpx_admin_access';
 const LEGACY_LAB_STATE_KEY = 'tohwpx_lab';
@@ -3762,7 +3755,7 @@ function closePrivacyGuide() {
 }
 
 function showShortcuts() {
-    activateHelpTab('shortcuts');
+    activateHelpTab('usage');
     openModal(document.getElementById('onboarding-guide-modal'));
 }
 
@@ -3939,13 +3932,11 @@ function syncDetailSegButtons() {
     });
 }
 
-// 원본 우선이면 세부 그리드를 흐리게 하고 안내 노트를 띄운다(조정은 가능하되 전제임을 강조).
+// 원본 우선이면 본문 고급 서식 섹션 전체를 숨기고, 혼합/설정 우선이면 보인다.
 function applyStylePolicyUi(policy = state.stylePolicy) {
     const isSource = policy === 'source';
-    const note = document.getElementById('detail-source-note');
-    if (note) note.hidden = !isSource;
-    const grid = document.querySelector('.detail-settings-grid');
-    if (grid) grid.classList.toggle('detail-grid-dimmed', isSource);
+    const detailSection = document.querySelector('.document-detail-settings');
+    if (detailSection) detailSection.hidden = isSource;
 }
 
 function resetConverterState() {

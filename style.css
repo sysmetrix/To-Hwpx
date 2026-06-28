@@ -1136,9 +1136,8 @@ a:hover { text-decoration: underline; }
     padding-bottom: 7px;
 }
 .auto-download-control {
-    display: flex;
+    display: flex !important;
     align-items: center;
-    justify-content: space-between;
     gap: 7px;
     padding: 7px 9px;
     border: 1.5px solid var(--c-border);
@@ -1146,6 +1145,7 @@ a:hover { text-decoration: underline; }
     background: var(--c-surface);
     cursor: pointer;
     transition: border-color var(--trans), background var(--trans), box-shadow var(--trans);
+    width: fit-content;
 }
 .auto-download-control[data-enabled="true"] {
     border-color: var(--c-primary);

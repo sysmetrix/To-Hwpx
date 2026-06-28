@@ -116,7 +116,7 @@
 
 <!-- 스킵 링크: 키보드/스크린리더 사용자가 헤더 내비를 건너뛰고 바로 본문
      (파일 선택 드롭존)으로 이동. 평소 화면 밖에 숨었다가 Tab 포커스 시 나타난다. -->
-<a href="#drop-zone" class="skip-link">본문(파일 선택)으로 바로가기</a>
+<a href="#converter-drop-area" class="skip-link">본문(파일 선택)으로 바로가기</a>
 
 <!-- ════════════════════════════════════════════════════════════════
      [헤더] — 유틸리티 바(상단) + 메인 네비게이션(하단) 2단 구조
@@ -130,7 +130,7 @@
             <span>｢BWYF｣ AX Challenger 2026</span>
             <!-- [주의] id="open-changelog"는 app.js에서 관리자 모드일 때 업데이트 내역 모달을 여는 연결값 -->
             <button class="util-changelog-btn" id="open-changelog" aria-label="버전 정보" data-admin-enabled="false">
-                📋 v4.7.10
+                📋 v4.7.11
             </button>
         </div>
     </div>
@@ -1470,9 +1470,6 @@
                     <div><dt>가로 구분선</dt><dd>Markdown의 <code>---</code> 같은 구분선을 실제 선으로 <b>표시</b>할지, 빈 줄로 <b>숨김</b> 처리할지 정합니다.</dd></div>
                 </dl>
 
-                <p class="detail-explainer-note">
-                    <strong>품질 표기 읽는 법</strong> — 업데이트 내역의 <b>변환률</b>은 원본 내용·서식이 얼마나 옮겨졌는지(내용 보존도), <b>성공률</b>은 오류 없이 한글에서 열리는 파일이 나오는지(생성 안정성)를 뜻하는 추정치입니다. 둘은 다른 축이라, 성공률이 높아도 변환률은 낮을 수 있습니다.
-                </p>
             </div>
             <div class="help-panel" id="help-panel-shortcuts" role="tabpanel" hidden>
                 <dl class="shortcut-list">
@@ -1481,7 +1478,7 @@
                     <div><dt>Esc</dt><dd>열린 안내창 닫기, 없으면 초기화</dd></div>
                     <div><dt>Ctrl/⌘ + D</dt><dd>브라우저 즐겨찾기</dd></div>
                     <div><dt>Shift + D</dt><dd>다크/라이트 테마 전환</dd></div>
-                    <div><dt>Shift + / (?)</dt><dd>도움말의 단축키 탭 열기</dd></div>
+                    <div><dt>Shift + / (?)</dt><dd>도움말 열기</dd></div>
                 </dl>
             </div>
         </div>
