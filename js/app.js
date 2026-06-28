@@ -199,6 +199,7 @@ function renderPipelineSteps() {
     const container = document.getElementById('pipeline-steps');
     if (!container) return;
 
+    // eslint-disable-next-line no-unsanitized/property -- PIPELINE_STEPS is a hardcoded constant; all fields are static strings
     container.innerHTML = PIPELINE_STEPS.map((step, i) => `
         <div class="pipeline-step step-pending" id="step-${step.id}">
             <div class="step-bubble">
@@ -410,6 +411,7 @@ function onQueueChanged({ scroll = false } = {}) {
 function updateDropZoneMulti(n) {
     const dz = document.getElementById('drop-zone');
     if (dz) {
+        // eslint-disable-next-line no-unsanitized/property -- n is a numeric count, no user string interpolated
         dz.innerHTML = `
             <div class="file-selected-info">
                 <span class="file-emoji">📚</span>
@@ -435,6 +437,7 @@ function updateDropZoneMulti(n) {
     // 여러 포맷이 섞일 수 있으므로 포맷 힌트는 일반 배치 안내로
     const hint = document.getElementById('format-hint');
     if (hint) {
+        // eslint-disable-next-line no-unsanitized/property -- n is a numeric count, no user string interpolated
         hint.innerHTML = `
             <div class="format-hint-head">
                 <strong>${n}개 파일 배치 변환</strong>
@@ -461,6 +464,7 @@ function renderQueueList() {
     }
     box.hidden = false;
     const canEdit = !state.isConverting;
+    // eslint-disable-next-line no-unsanitized/property -- escHtml() applied to all user strings (file.name); queue.length and canEdit are not user strings
     box.innerHTML = `
         <div class="file-queue-head">
             <strong>선택한 파일 ${state.queue.length}개</strong>
@@ -505,6 +509,7 @@ function setCustomTitleEnabled(enabled) {
     }
     const help = document.querySelector('.title-help');
     if (help) {
+        // eslint-disable-next-line no-unsanitized/property -- static conditional string, no user input
         help.innerHTML = enabled
             ? '직접 입력한 제목은 단일 파일 변환에만 적용됩니다.'
             : '여러 파일은 <b>제목 기준 규칙</b>으로 파일마다 제목을 자동 생성합니다.';
@@ -563,6 +568,7 @@ function clearSelectedFile() {
 function updateDropZoneUI(file, ext) {
     const dz = document.getElementById('drop-zone');
     if (dz) {
+        // eslint-disable-next-line no-unsanitized/property -- escHtml(file.name) applied; getFormatIcon returns a static emoji; formatBytes returns a number string
         dz.innerHTML = `
             <div class="file-selected-info">
                 <span class="file-emoji">${getFormatIcon(ext)}</span>
@@ -658,6 +664,7 @@ function updateFormatExpectation(ext, waiting = false) {
     const info = getFormatInfoForExt(ext) || { name: ext.toUpperCase(), quality: '★☆☆' };
     const summary = getConversionSummaryForExt(ext);
     const prefix = waiting ? `.${ext.toUpperCase()} 파일을 업로드하세요` : `${info.name} 감지`;
+    // eslint-disable-next-line no-unsanitized/property -- all user strings wrapped in escHtml()
     hint.innerHTML = `
         <div class="format-hint-head">
             <strong>${escHtml(prefix)}</strong>
@@ -1278,7 +1285,7 @@ function openFormatModal(ext) {
 
     const titleEl = document.getElementById('fmt-modal-title');
     if (info.svgIcon) {
-        titleEl.innerHTML = `<img src="${info.svgIcon}" class="fmt-modal-brand-icon" aria-hidden="true"> ${escHtml(info.name)}`;
+        titleEl.innerHTML = `<img src="${escHtml(info.svgIcon)}" class="fmt-modal-brand-icon" aria-hidden="true"> ${escHtml(info.name)}`;
     } else {
         titleEl.textContent = `${info.icon} ${info.name}`;
     }
@@ -1310,6 +1317,7 @@ function openFormatModal(ext) {
         html += `</ol></div>`;
     }
 
+    // eslint-disable-next-line no-unsanitized/property -- html built entirely from FORMAT_INFO hardcoded constants, no user input
     document.getElementById('fmt-modal-body').innerHTML = html;
 
     openModal(modal);
@@ -1473,6 +1481,7 @@ async function renderFontGuide() {
     const el = document.getElementById('font-guide-list');
     if (!el) return;
 
+    // eslint-disable-next-line no-unsanitized/property -- FONT_DOWNLOADS is a hardcoded constant; download links are from static paths
     el.innerHTML = FONT_DOWNLOADS.map((font, index) => `
         <section class="font-guide-item">
             <div>
@@ -1865,14 +1874,7 @@ const PASTE_MIME = {
 };
 let pastePreviewTimer = null;
 
-/**
- * 관리자 모드 활성 여부.
- * - URL에 ?admin=1 → localStorage 'tohwpx_admin'='1' 저장 후 활성
- * - URL에 ?admin=0 → 관리자 모드와 권한 해제
- * - 기존 호환용 ?lab=1/0도 같은 관리자 상태로 처리한다.
- * - 파라미터가 없으면 저장값을 따른다.
- * 공개 정적 사이트이므로 보안 기능이 아니라 일반 사용자 동선에서 숨기는 용도다.
- */
+/** 관리자 모드 활성 여부. URL 파라미터 또는 localStorage 저장값으로 결정. */
 const ADMIN_STATE_KEY = 'tohwpx_admin';
 const ADMIN_ACCESS_KEY = 'tohwpx_admin_access';
 const LEGACY_LAB_STATE_KEY = 'tohwpx_lab';
@@ -2295,6 +2297,7 @@ function renderPastePreview() {
     try {
         const ext = document.getElementById('paste-format')?.value || 'md';
         const ir = getPastePreviewIr(text, ext);
+        // eslint-disable-next-line no-unsanitized/property -- escHtml(ir.title) and irBlocksToHtml() apply escHtml() to all user content
         output.innerHTML = `
             <div class="paste-preview-doc">
                 ${ir.title && ir.title.trim() ? `<h4>${escHtml(ir.title.trim())}</h4>` : ''}
@@ -2735,6 +2738,7 @@ function showResult({ url, fileName, size, validation }) {
 
     // [보안] URL은 blob: 스킴만 가능 (직접 생성했으므로 안전)
     //         escHtml()로 fileName을 이스케이프하여 XSS 방지
+    // eslint-disable-next-line no-unsanitized/property -- cardClass is a static string; all user strings (fileName, inputLabel, etc.) wrapped in escHtml()
     area.innerHTML = `
         <div class="result-card${cardClass}">
             <div class="result-topline">
@@ -2854,6 +2858,7 @@ function showBatchResults({ okCount, warnCount, errCount, total }) {
         `;
     }).join('');
 
+    // eslint-disable-next-line no-unsanitized/property -- cardClass is a static string; all user strings in rows built with escHtml()
     area.innerHTML = `
         <div class="result-card${cardClass}">
             <div class="batch-result-head">
@@ -3750,7 +3755,7 @@ function closePrivacyGuide() {
 }
 
 function showShortcuts() {
-    activateHelpTab('shortcuts');
+    activateHelpTab('usage');
     openModal(document.getElementById('onboarding-guide-modal'));
 }
 
@@ -3816,6 +3821,7 @@ function showToast(html, { timeout = 4000 } = {}) {
     const toast = document.createElement('div');
     toast.id        = 'app-toast';
     toast.className = 'app-toast';
+    // eslint-disable-next-line no-unsanitized/property -- callers pass static strings or escHtml()-wrapped values; see showToast call sites
     toast.innerHTML = `${html}<button class="app-toast-close" aria-label="닫기">✕</button>`;
     document.body.appendChild(toast);
 
@@ -3926,13 +3932,11 @@ function syncDetailSegButtons() {
     });
 }
 
-// 원본 우선이면 세부 그리드를 흐리게 하고 안내 노트를 띄운다(조정은 가능하되 전제임을 강조).
+// 원본 우선이면 본문 고급 서식 섹션 전체를 숨기고, 혼합/설정 우선이면 보인다.
 function applyStylePolicyUi(policy = state.stylePolicy) {
     const isSource = policy === 'source';
-    const note = document.getElementById('detail-source-note');
-    if (note) note.hidden = !isSource;
-    const grid = document.querySelector('.detail-settings-grid');
-    if (grid) grid.classList.toggle('detail-grid-dimmed', isSource);
+    const detailSection = document.querySelector('.document-detail-settings');
+    if (detailSection) detailSection.hidden = isSource;
 }
 
 function resetConverterState() {
@@ -4150,6 +4154,7 @@ async function renderBuiltInPreview(blob, sourceError, loading, countEl) {
 
     loading.classList.add('preview-loading--fallback');
     loading.style.display = 'flex';
+    // eslint-disable-next-line no-unsanitized/property -- static template with no user-controlled interpolations
     loading.innerHTML = `
         <div class="fallback-preview">
             <div class="fallback-preview-head">
@@ -4341,6 +4346,7 @@ function openPreview(blob) {
     if (wrap) wrap.hidden = true;          // 정밀(rhwp) 영역은 기본 숨김
     if (irBox) {
         irBox.hidden = false;
+        // eslint-disable-next-line no-unsanitized/property -- escHtml(state.ir.title) and irBlocksToHtml() apply escHtml() to all user content
         irBox.innerHTML = state.ir
             ? `<div class="ir-page">${state.ir.title && state.ir.title.trim()
                 ? `<h1 class="ir-title">${escHtml(state.ir.title.trim())}</h1>` : ''}${irBlocksToHtml(state.ir.blocks)}</div>`
@@ -4435,11 +4441,13 @@ function renderChangelogContent(tab) {
     if (!el || !_changelogData) return;
 
     if (tab === 'admin') {
+        // eslint-disable-next-line no-unsanitized/property -- renderAdminPanel() returns static HTML with escHtml() for all dynamic values
         el.innerHTML = renderAdminPanel();
         bindLabControl();
         return;
     }
     if (tab === 'quality') {
+        // eslint-disable-next-line no-unsanitized/property -- renderQualityPanel() returns static HTML with escHtml() for all dynamic values
         el.innerHTML = renderQualityPanel();
         return;
     }
@@ -4455,6 +4463,7 @@ function renderChangelogContent(tab) {
         group.versions.push(version);
     }
 
+    // eslint-disable-next-line no-unsanitized/property -- escHtml(group.date) applied; sub-renderers use escHtml() for changelog text
     el.innerHTML = groups.map(group => `
         <section class="changelog-date-group">
             <div class="changelog-date-heading">${escHtml(group.date)}</div>
