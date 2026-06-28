@@ -1146,12 +1146,12 @@ function renderQualityPanel() {
                 </div>
                 <div class="quality-score-grid">
                     <div>
-                        <span>변환률</span>
+                        <span>변환률 <i class="quality-est-tag" title="실측이 아닌 추정치">추정</i></span>
                         <b>${metric.conversion}%</b>
                         ${renderQualityBar(metric.conversion)}
                     </div>
                     <div>
-                        <span>성공률</span>
+                        <span>성공률 <i class="quality-est-tag" title="실측이 아닌 추정치">추정</i></span>
                         <b>${metric.success}%</b>
                         ${renderQualityBar(metric.success)}
                     </div>
@@ -1189,8 +1189,8 @@ function renderQualityPanel() {
 
     return `
         <section class="format-quality-intro">
-            <strong>포맷별 변환 품질 평가</strong>
-            <p>이 지표는 사용자 파일 원격 수집 통계가 아니라, 현재 파서 구현 범위와 golden/게이트 fixture 기준의 추정 품질입니다. 변환률은 원본 기능이 HWPX IR로 의미 있게 옮겨지는 비율, 성공률은 오류 없이 HWPX 생성·구조 검증을 통과할 가능성을 뜻합니다.</p>
+            <strong>포맷별 변환 품질 평가 <span class="quality-est-tag">추정치</span></strong>
+            <p>이 지표는 사용자 파일 원격 수집 통계가 아니라, 현재 파서 구현 범위와 golden/게이트 fixture 기준의 추정 품질입니다. <b>변환률</b>은 원본 내용·서식이 얼마나 옮겨졌는지(내용 보존도), <b>성공률</b>은 오류 없이 한글에서 열리는 파일이 나오는지(생성 안정성)를 뜻합니다. 둘은 다른 축이라 성공률이 높아도 변환률은 낮을 수 있습니다.</p>
         </section>
         <section class="quality-cadence">
             <strong>평가 주기</strong>

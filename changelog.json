@@ -1,6 +1,20 @@
 {
-  "current": "4.7.5",
+  "current": "4.7.6",
   "versions": [
+    {
+      "version": "4.7.6",
+      "date": "2026-06-28",
+      "user": [
+        "포맷 품질 평가의 변환률·성공률 숫자에 '추정' 배지를 붙이고, 변환률=내용 보존도·성공률=생성 안정성으로 뜻을 더 분명히 풀어 썼습니다. (실측 통계가 아니라 추정치임을 헷갈리지 않게)"
+      ],
+      "dev": [
+        "[v4.7.6] js/app.js: renderQualityPanel 변환률/성공률 라벨과 intro 제목에 .quality-est-tag 배지, intro 문구를 내용 보존도/생성 안정성으로 보강",
+        "[v4.7.6] style.css: .quality-est-tag(추정 배지) 스타일 추가",
+        "[v4.7.6] tests/golden.js: 품질 평가 탭에 추정 배지·의미 풀이 회귀 검증 추가",
+        "[v4.7.6] format_conversion_playbook.md: 변환률/성공률 추정 표기와 도움말 문구 일치 기준 보강",
+        "[v4.7.6] package.json/package-lock.json/sw.js/index.html/changelog.json: v4.7.6 반영"
+      ]
+    },
     {
       "version": "4.7.5",
       "date": "2026-06-28",
