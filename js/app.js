@@ -11,6 +11,13 @@
  *   파이프라인 단계 추가 → PIPELINE_STEPS 배열에 항목 추가 + index.html 스텝 요소 추가
  * ===================================================================*/
 
+// [B1 ES 모듈 Phase 1] parsers.js / hwpx.js 공개 API import
+// CDN 전역(JSZip/marked/XLSX)은 classic <script>로 로드된 window 전역을 그대로 사용
+import { fileToIR, parseMd, parseHtml, parseTxt, parseCsv, parseJson } from './parsers.js';
+import { buildHwpx, isNumericCell } from './hwpx.js';
+// validateHwpx는 golden test의 window 재할당 패턴 지원을 위해 window에서 접근
+// (hwpx.js가 window.validateHwpx = validateHwpx 로 노출하며, 테스트가 재할당 가능)
+
 'use strict';
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -80,7 +87,9 @@ const QUICK_GUIDE_HIDDEN_KEY = 'tohwpx_quick_guide_hidden';
 // 새로고침(F5) 시 브라우저의 스크롤 복원을 끄고 항상 맨 위에서 시작
 if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
 
-document.addEventListener('DOMContentLoaded', () => {
+// [B1] 모듈은 항상 defer 실행 → DOMContentLoaded가 이미 발화했을 수 있음.
+// 안전 패턴: readyState 확인 후 직접 실행하거나 이벤트 대기.
+function initApp() {
     window.scrollTo(0, 0);      // 새로고침 시 첫 화면(맨 위)으로
     initAdminParam();           // ?admin/?lab을 1회 반영 (isAdminMode는 순수 read)
     renderPipelineSteps();      // 파이프라인 단계 DOM 렌더링
@@ -105,13 +114,8 @@ document.addEventListener('DOMContentLoaded', () => {
     maybeShowOnboardingGuide(); // 첫 방문 1회 기본 사용 안내
     initAdminModeUi();          // 관리자 모드에서만 버전 내역 클릭 허용
     applyBetaBadgeVisibility(); // 베타 배지는 관리자 모드에서만 노출(일반 사용자엔 숨김)
-});
-
-// 서비스워커 등록 — 캐시‑퍼스트 오프라인 지원 및 재방문 속도 개선
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+    window.__appReady = true;   // 모듈 초기화 완료 — 테스트·디버그용 신호
 }
-
 function initHelpDots() {
     let tip = document.getElementById('help-popover');
     if (!tip) {
@@ -890,7 +894,7 @@ function initFormatTabs() {
 // ─────────────────────────────────────────────────────────────────────────
 const FORMAT_INFO = {
     md: {
-        icon: '📝', name: 'Markdown',
+        icon: '📝', svgIcon: 'icons/brand/markdown.svg', name: 'Markdown',
         quality: '★★★', available: true,
         desc: '문서 구조가 텍스트로 명확히 드러나는 형식이라 현재 서비스에서 가장 안정적인 입력 포맷입니다.',
         tech: 'marked.js 토큰 분석 → 자체 보정 → IR(중간 표현) → HWPX',
@@ -905,7 +909,7 @@ const FORMAT_INFO = {
         limits: ['상대경로·CORS 차단 이미지는 대체 문구와 원본 링크로 보존', '표 안 링크는 표시 텍스트 중심', '복잡한 인라인 HTML과 사용자 정의 스타일은 제외 가능', '페이지 단위 레이아웃은 새 HWPX 기본 흐름으로 재구성'],
     },
     html: {
-        icon: '🌐', name: 'HTML 문서',
+        icon: '🌐', svgIcon: 'icons/brand/html5.svg', name: 'HTML 문서',
         quality: '★★☆', available: true, badge: '베타',
         desc: 'HTML 소스의 문서 구조를 옮기며, 웹 화면에서 복사한 일반 텍스트도 문단으로 보존합니다.',
         tech: 'DOMParser API → DOM 트리 순회 → IR → HWPX',
@@ -918,7 +922,7 @@ const FORMAT_INFO = {
         limits: ['웹 화면의 시각 배치와 CSS 레이아웃은 복제하지 않음', '이미지·SVG 미지원', 'script·style·nav·footer 등 비본문 요소 무시'],
     },
     docx: {
-        icon: '📘', name: 'Word 문서 (DOCX)',
+        icon: '📘', svgIcon: 'icons/brand/microsoftword.svg', name: 'Word 문서 (DOCX)',
         quality: '★★☆', available: true, badge: '베타',
         desc: 'Word 문서를 본문 구조 중심으로 재구성합니다. 서식 있는 원본은 원본 우선을 기본으로 존중하지만, 원본 편집 화면을 그대로 복제하는 용도는 아닙니다.',
         tech: 'JSZip으로 압축 해제 → word/document.xml 본문·표 추출 → IR → HWPX',
@@ -966,7 +970,7 @@ const FORMAT_INFO = {
         limits: ['제목·표·굵게 같은 서식 정보 없음', '표처럼 보이는 텍스트도 일반 문단으로 처리될 수 있음'],
     },
     csv: {
-        icon: '📊', name: 'CSV / XLSX 스프레드시트',
+        icon: '📊', svgIcon: 'icons/brand/microsoftexcel.svg', name: 'CSV / XLSX 스프레드시트',
         quality: '★★☆', available: true, badge: '베타',
         desc: '표 데이터의 행과 열을 HWPX 표로 옮기는 데 초점을 둔 입력 포맷입니다.',
         tech: 'CSV: RFC 4180 파서 / XLSX: SheetJS 라이브러리 → 표 IR → HWPX',
@@ -992,7 +996,7 @@ const FORMAT_INFO = {
         limits: ['보고서형 편집 레이아웃을 자동 설계하지 않음', '깊은 중첩은 길게 펼쳐질 수 있음', '매우 큰 JSON(10MB+)은 처리 시간 증가'],
     },
     ipynb: {
-        icon: '🔬', name: 'Jupyter Notebook (IPYNB)',
+        icon: '🔬', svgIcon: 'icons/brand/jupyter.svg', name: 'Jupyter Notebook (IPYNB)',
         quality: '★★☆', available: true,
         desc: '노트북의 설명, 코드, 텍스트 출력을 문서로 정리하는 용도에 맞춘 입력 포맷입니다.',
         tech: 'JSON 파싱 → cell_type별 처리(markdown/code/output) → IR → HWPX',
@@ -1005,7 +1009,7 @@ const FORMAT_INFO = {
         limits: ['이미지 출력 셀(PNG/JPEG), 차트, 위젯 출력 미지원', 'LaTeX 수식과 실행 상태·메타데이터 미보존'],
     },
     pdf: {
-        icon: '📕', name: 'PDF 문서',
+        icon: '📕', svgIcon: 'icons/brand/adobeacrobatreader.svg', name: 'PDF 문서',
         quality: '★★☆', available: false, badge: '예정',
         desc: '레이아웃 고정 문서 형식입니다. 클라이언트 단독 처리가 어렵습니다.',
         tech: '백엔드 PDF 파싱 서비스 연동 예정',
@@ -1013,7 +1017,7 @@ const FORMAT_INFO = {
         limits: ['레이아웃 복원 불가', '이미지·표 추출 제한', '스캔 PDF 미지원'],
     },
     pptx: {
-        icon: '📑', name: 'PowerPoint (PPTX)',
+        icon: '📑', svgIcon: 'icons/brand/microsoftpowerpoint.svg', name: 'PowerPoint (PPTX)',
         quality: '★☆☆', available: false, badge: '예정',
         desc: 'Microsoft PowerPoint 슬라이드 파일입니다.',
         tech: 'OOXML 파싱 → 슬라이드 텍스트 추출 예정',
@@ -1272,7 +1276,12 @@ function openFormatModal(ext) {
     const modal = document.getElementById('format-modal');
     if (!modal) return;
 
-    document.getElementById('fmt-modal-title').textContent = `${info.icon} ${info.name}`;
+    const titleEl = document.getElementById('fmt-modal-title');
+    if (info.svgIcon) {
+        titleEl.innerHTML = `<img src="${info.svgIcon}" class="fmt-modal-brand-icon" aria-hidden="true"> ${escHtml(info.name)}`;
+    } else {
+        titleEl.textContent = `${info.icon} ${info.name}`;
+    }
 
     const badgeClass = info.available ? (info.badge ? 'badge-beta' : 'badge-available') : 'badge-soon';
     const badgeLabel = info.badge || '지원됨';
@@ -2643,7 +2652,7 @@ async function convertOneFile(file, statusPrefix = '', outputFontName = state.do
 
     let validation;
     try {
-        validation = await validateHwpx(hwpxBlob, state.pageMargins);
+        validation = await window.validateHwpx(hwpxBlob, state.pageMargins);
     } catch (e) {
         validation = { pass: false, issues: ['검증 실행 오류: ' + e.message] };
     }
@@ -4493,4 +4502,25 @@ function renderVersionedChangelog(versions, tab) {
             </ul>
         </div>
     `).join('');
+}
+
+// golden test에서 page.evaluate()로 호출하는 app.js 내부 함수/상수 노출
+if (typeof window !== 'undefined') {
+    window.applyPreviewPaper = applyPreviewPaper;
+    window.applyDocumentTitlePolicy = applyDocumentTitlePolicy;
+    window.resolveOutputFontName = resolveOutputFontName;
+    window.FONT_DOWNLOADS = FONT_DOWNLOADS;
+}
+
+// [B1] 모든 const/let 선언 이후에 실행 — 모듈 TDZ(FORMAT_INFO 등) 회피
+// 클래식 스크립트는 DOMContentLoaded 이후 실행됐으나, 모듈은 선언 전 호출 시 TDZ 오류
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initApp);
+} else {
+    initApp();
+}
+
+// 서비스워커 등록 — 캐시‑퍼스트 오프라인 지원 및 재방문 속도 개선
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
 }

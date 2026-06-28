@@ -1,6 +1,21 @@
 {
-  "current": "4.7.9",
+  "current": "4.7.10",
   "versions": [
+    {
+      "version": "4.7.10",
+      "date": "2026-06-28",
+      "user": [
+        "포맷 팝업(카드 클릭 시 열리는 상세 창) 제목에도 포맷 아이콘이 표시됩니다. 카드와 팝업 아이콘이 일치합니다."
+      ],
+      "dev": [
+        "[v4.7.10] A3: sw.js APP_SHELL에서 changelog.json 제거 — 170KB 항목이 매 설치마다 선점재됐으나 온디맨드 fetch로 충분",
+        "[v4.7.10] B(ES 모듈 Phase 1): parsers.js/hwpx.js export 키워드 추가, app.js import 블록 + type=module — 빌드 없는 정적 앱의 명시적 의존성 선언",
+        "[v4.7.10] FORMAT_INFO TDZ 수정: 모듈은 선언 전 함수 호출 시 TDZ 오류 — initApp() 호출 블록을 파일 끝으로 이동",
+        "[v4.7.10] golden test window 노출: isNumericCell/buildHwpx/applyPreviewPaper/applyDocumentTitlePolicy/resolveOutputFontName/FONT_DOWNLOADS",
+        "[v4.7.10] FORMAT_INFO.svgIcon + openFormatModal() innerHTML: 포맷 팝업 제목에 SVG 아이콘 표시",
+        "[v4.7.10] style.css: .fmt-modal-brand-icon 22×22px vertical-align 추가"
+      ]
+    },
     {
       "version": "4.7.9",
       "date": "2026-06-28",

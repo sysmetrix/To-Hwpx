@@ -130,7 +130,7 @@
             <span>｢BWYF｣ AX Challenger 2026</span>
             <!-- [주의] id="open-changelog"는 app.js에서 관리자 모드일 때 업데이트 내역 모달을 여는 연결값 -->
             <button class="util-changelog-btn" id="open-changelog" aria-label="버전 정보" data-admin-enabled="false">
-                📋 v4.7.9
+                📋 v4.7.10
             </button>
         </div>
     </div>
@@ -1568,14 +1568,12 @@
     </div>
 </div>
 
-<!-- ─── JS 로드 (defer 스크립트보다 뒤에 위치) ─────────────────────
-     실행 순서: parsers.js → hwpx.js → app.js
-     parsers.js와 hwpx.js의 함수가 app.js에서 사용되므로 순서 중요
-     [주의] 이 순서를 바꾸면 앱이 실행되지 않을 수 있음
+<!-- ─── JS 로드 ──────────────────────────────────────────────────────
+     [B1 ES 모듈] app.js가 type="module"로 parsers.js / hwpx.js를 import.
+     CDN 전역(JSZip/marked/XLSX)은 위 classic <script>로 로드되며,
+     모듈은 always-defer이라 CDN 실행 완료 후 모듈이 시작됨 → 순서 안전.
      ─────────────────────────────────────────────────────────────── -->
-<script src="js/parsers.js"></script>
-<script src="js/hwpx.js"></script>
-<script src="js/app.js"></script>
+<script type="module" src="js/app.js"></script>
 
 </body>
 </html>

@@ -464,7 +464,7 @@ async function runCase(page, testCase) {
   assert(fs.existsSync(inputPath), `${testCase.name}: fixture 없음 ${inputPath}`);
 
   await page.goto(`http://127.0.0.1:${PORT}/index.html`, { waitUntil: 'domcontentloaded' });
-  await page.waitForFunction(() => window.JSZip && window.marked && window.XLSX, null, { timeout: 30000 });
+  await page.waitForFunction(() => window.JSZip && window.marked && window.XLSX && window.__appReady, null, { timeout: 30000 });
   if (testCase.previewPaper) {
     await page.locator('#paper-size').evaluate((el, value) => {
       el.value = value;
@@ -545,7 +545,7 @@ async function runCase(page, testCase) {
 async function convertThroughUi(page, { inputPath, format, text, baseName, setup, returnPackage = false }) {
   const baseUrl = `http://127.0.0.1:${PORT}/index.html`;
   await page.goto(inputPath ? baseUrl : `${baseUrl}?admin=1`, { waitUntil: 'domcontentloaded' });
-  await page.waitForFunction(() => window.JSZip && window.marked && window.XLSX, null, { timeout: 30000 });
+  await page.waitForFunction(() => window.JSZip && window.marked && window.XLSX && window.__appReady, null, { timeout: 30000 });
   if (!inputPath) {
     assert(await page.locator('.input-mode-tabs').isVisible(), 'admin: ?admin=1에서 직접 입력 탭이 보이지 않음');
   }
@@ -578,12 +578,14 @@ async function convertThroughUi(page, { inputPath, format, text, baseName, setup
 async function validateDirectInput(page) {
   const baseUrl = `http://127.0.0.1:${PORT}/index.html`;
   await page.goto(`${baseUrl}?admin=0`, { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => window.__appReady, null, { timeout: 30000 });
   assert(!await page.locator('.input-mode-tabs').isVisible(),
     'admin: 일반 사용자에게 직접 입력 탭이 노출됨');
   await page.locator('#open-changelog').click();
   assert(!(await page.locator('#changelog-modal').isVisible()),
     'admin: 일반 모드에서 버전 클릭으로 업데이트 내역이 열림');
   await page.goto(`${baseUrl}?admin=1`, { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => window.__appReady, null, { timeout: 30000 });
   await page.locator('#open-changelog').click();
   assert(await page.locator('#changelog-modal').isVisible(),
     'admin: 관리자 모드에서 버전 클릭으로 업데이트 내역이 열리지 않음');
@@ -701,6 +703,7 @@ async function validateDirectInput(page) {
     'direct HTML: 태그 없는 일반 텍스트가 누락됨');
 
   await page.goto(`${baseUrl}?lab=1`, { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => window.__appReady, null, { timeout: 30000 });
   assert(await page.locator('.input-mode-tabs').isVisible(),
     'admin: 호환용 ?lab=1에서 직접 입력 탭이 보이지 않음');
   await page.locator('#open-changelog').click();
@@ -773,7 +776,7 @@ async function validateXssHardening(page) {
 
   // (3) 미리보기 렌더(innerHTML 경로) — 실제 XSS 표면. 실행/요소 생성이 0이어야 한다.
   await page.goto(`${baseUrl}?admin=1`, { waitUntil: 'domcontentloaded' });
-  await page.waitForFunction(() => window.JSZip && window.marked && window.XLSX, null, { timeout: 30000 });
+  await page.waitForFunction(() => window.JSZip && window.marked && window.XLSX && window.__appReady, null, { timeout: 30000 });
   await page.locator('#mode-paste').click();
   await page.locator('.paste-format-btn[data-paste-format="md"]').click();
   await page.locator('#paste-input').fill(mdPayload);
@@ -801,7 +804,7 @@ async function validateXssHardening(page) {
 async function validateCommercialUx(page) {
   const baseUrl = `http://127.0.0.1:${PORT}/index.html`;
   await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
-  await page.waitForFunction(() => window.JSZip && window.marked && window.XLSX, null, { timeout: 30000 });
+  await page.waitForFunction(() => window.JSZip && window.marked && window.XLSX && window.__appReady, null, { timeout: 30000 });
 
   const heroDropText = await page.locator('#drop-zone .drop-sub').textContent();
   assert(heroDropText.includes('MD · DOCX · HTML · CSV/XLSX · JSON · TXT · HWP · IPYNB'),
@@ -817,7 +820,7 @@ async function validateCommercialUx(page) {
   assert(guestBeta.count > 0 && guestBeta.allHidden && guestBeta.converterBetaHidden,
     'ux: 일반 사용자에게 베타 배지가 노출됨(관리자 전용이어야 함)');
   await page.goto(`${baseUrl}?admin=1`, { waitUntil: 'domcontentloaded' });
-  await page.waitForFunction(() => window.JSZip && window.marked && window.XLSX, null, { timeout: 30000 });
+  await page.waitForFunction(() => window.JSZip && window.marked && window.XLSX && window.__appReady, null, { timeout: 30000 });
   const adminBeta = await page.evaluate(() => {
     const all = [...document.querySelectorAll('.badge-beta')];
     return { count: all.length, allShown: all.every(el => !el.hidden),
@@ -826,7 +829,7 @@ async function validateCommercialUx(page) {
   assert(adminBeta.count > 0 && adminBeta.allShown && adminBeta.rootClass,
     'ux: 관리자 모드에서 베타 배지가 표시되지 않음');
   await page.goto(`${baseUrl}?admin=0`, { waitUntil: 'domcontentloaded' });
-  await page.waitForFunction(() => window.JSZip && window.marked && window.XLSX, null, { timeout: 30000 });
+  await page.waitForFunction(() => window.JSZip && window.marked && window.XLSX && window.__appReady, null, { timeout: 30000 });
   assert((await page.locator('#file-input').getAttribute('accept')).startsWith('.md,.markdown,.docx,.html,.htm,.csv,.xlsx,.xls,.json,.txt,.hwp,.ipynb'),
     'ux: 파일 선택 accept 순서가 드롭존 입력 포맷 순서와 다름');
   const versionButtonText = (await page.locator('#open-changelog').textContent()).trim();
@@ -1052,7 +1055,7 @@ async function validateRejectedInputs(page) {
 
   for (const testCase of cases) {
     await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
-    await page.waitForFunction(() => window.JSZip && window.marked && window.XLSX, null, { timeout: 30000 });
+    await page.waitForFunction(() => window.JSZip && window.marked && window.XLSX && window.__appReady, null, { timeout: 30000 });
     let downloaded = false;
     const onDownload = () => { downloaded = true; };
     page.on('download', onDownload);
@@ -1078,7 +1081,7 @@ async function validatePaperMatrix(page) {
   };
   const previewWidths = {};
   await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
-  await page.waitForFunction(() => window.JSZip && window.marked && window.XLSX, null, { timeout: 30000 });
+  await page.waitForFunction(() => window.JSZip && window.marked && window.XLSX && window.__appReady, null, { timeout: 30000 });
   await page.locator('.advanced-settings > summary').click();
 
   for (const [paper, [rawWidth, rawHeight]] of Object.entries(papers)) {
@@ -1138,7 +1141,7 @@ async function validatePaperMatrix(page) {
 async function validateLineSpacingOption(page) {
   const baseUrl = `http://127.0.0.1:${PORT}/index.html`;
   await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
-  await page.waitForFunction(() => window.JSZip && window.marked && window.XLSX, null, { timeout: 30000 });
+  await page.waitForFunction(() => window.JSZip && window.marked && window.XLSX && window.__appReady, null, { timeout: 30000 });
   await page.locator('.advanced-settings > summary').click();
   const defaultValue = await page.locator('#line-spacing').inputValue();
   assert(defaultValue === '160', 'line spacing: UI 기본값 160%가 아님');
@@ -1169,7 +1172,7 @@ async function validateLineSpacingOption(page) {
 async function validateDetailSettingsUx(page) {
   const baseUrl = `http://127.0.0.1:${PORT}/index.html`;
   await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
-  await page.waitForFunction(() => window.JSZip && window.marked && window.XLSX, null, { timeout: 30000 });
+  await page.waitForFunction(() => window.JSZip && window.marked && window.XLSX && window.__appReady, null, { timeout: 30000 });
   const shapeSummary = await page.locator('#advanced-settings-summary').evaluate(el => ({
     text: el.textContent.trim(),
     scrollWidth: el.scrollWidth,
@@ -1421,7 +1424,7 @@ async function validateDetailSettingsUx(page) {
 async function validatePretendardCompatibility(page) {
   const baseUrl = `http://127.0.0.1:${PORT}/index.html`;
   await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
-  await page.waitForFunction(() => window.JSZip && window.marked && window.XLSX, null, { timeout: 30000 });
+  await page.waitForFunction(() => window.JSZip && window.marked && window.XLSX && window.__appReady, null, { timeout: 30000 });
 
   const options = await page.locator('#doc-font option').evaluateAll(nodes =>
     nodes.map(node => ({ value: node.value, text: node.textContent.trim() })));
@@ -1516,6 +1519,7 @@ async function validatePretendardCompatibility(page) {
     // localStorage 접근 오류는 테스트 인프라 아티팩트(addInitScript가 sandboxed iframe에서 실행)이므로 무시.
     // "Access is denied"(IE), "sandboxed ... lacks the 'allow-same-origin' flag"(Chromium) 두 패턴 모두 처리.
     if (/localStorage/i.test(message)) return;
+    console.error('[PAGE ERROR]', message);
     pageErrors.push(message);
   });
 

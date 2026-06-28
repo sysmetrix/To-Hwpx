@@ -4582,6 +4582,12 @@ a:hover { text-decoration: underline; }
 /* ─────────────────────────────────────────────────────────────────
    [포맷 상세 모달]  카드 팝업 내 변환 정보 표시
    ───────────────────────────────────────────────────────────────── */
+.fmt-modal-brand-icon {
+    width: 22px;
+    height: 22px;
+    vertical-align: middle;
+    margin-right: 2px;
+}
 .fmt-modal-quality {
     display: flex;
     align-items: center;
