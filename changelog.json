@@ -1,6 +1,21 @@
 {
-  "current": "4.7.0",
+  "current": "4.7.1",
   "versions": [
+    {
+      "version": "4.7.1",
+      "date": "2026-06-28",
+      "user": [
+        "자동 다운로드를 문서 기본 설정의 용지 방향 오른쪽으로 옮겼습니다.",
+        "글꼴 크기·줄 간격·용지 크기·용지 방향·자동 다운로드의 폭과 높이를 한 줄에서 더 균형 있게 맞췄습니다."
+      ],
+      "dev": [
+        "[v4.7.1] index.html: 자동 다운로드를 document-shape-grid의 용지 방향 다음 항목으로 이동하고 세부 설정 요약 문구에서 제거",
+        "[v4.7.1] style.css: 기본 설정 6열 비율, 38px 컨트롤 높이, 컴팩트 자동 다운로드 컨트롤과 모바일 1열 반응형 정리",
+        "[v4.7.1] tests/golden.js: 기본 설정 DOM 순서, 자동 다운로드 같은 행·오른쪽 배치, 컨트롤 높이 편차 검증 추가",
+        "[v4.7.1] format_conversion_playbook.md: 기본 설정 배치와 반응형 규칙 기록",
+        "[v4.7.1] package.json/package-lock.json/sw.js/index.html/changelog.json: v4.7.1 반영"
+      ]
+    },
     {
       "version": "4.7.0",
       "date": "2026-06-28",
