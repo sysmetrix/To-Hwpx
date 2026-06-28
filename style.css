@@ -1132,18 +1132,7 @@ a:hover { text-decoration: underline; }
     border-color: var(--c-border);
     background: var(--c-surface-alt);
 }
-.auto-download-status {
-    min-width: 0;
-    overflow: hidden;
-    color: var(--c-text-sub);
-    font-size: 0.74rem;
-    font-weight: 600;
-    line-height: 1;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
 .auto-download-state {
-    margin-left: auto;
     color: var(--c-text-muted);
     font-size: 0.72rem;
     font-weight: 800;
