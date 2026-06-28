@@ -1,6 +1,24 @@
 {
-  "current": "4.7.10",
+  "current": "4.7.11",
   "versions": [
+    {
+      "version": "4.7.11",
+      "date": "2026-06-28",
+      "user": [
+        "Shift+? 단축키를 누르면 단축키 목록 대신 도움말 사용법 탭이 바로 열립니다.",
+        "원본 우선 서식 정책 선택 시 본문 고급 서식 옵션이 숨겨집니다. 혼합 또는 설정 우선을 선택해야 나타납니다.",
+        "자동 다운로드 토글이 PC 화면에서 버튼 크기에 맞게 줄어듭니다.",
+        "키보드 Tab→Enter로 파일 선택 영역으로 바로 이동할 수 있습니다."
+      ],
+      "dev": [
+        "[v4.7.11] skip-link href: #drop-zone → #converter-drop-area — 히어로 drop-zone은 이미 뷰포트 상단이라 jump 효과 없음, 실제 컨버터 drop area로 변경",
+        "[v4.7.11] showShortcuts(): activateHelpTab('shortcuts') → activateHelpTab('usage') — Shift+? 도움말 사용법 탭 열기",
+        "[v4.7.11] applyStylePolicyUi(): detail-grid-dimmed → .document-detail-settings hidden 토글 — 원본 우선 시 본문 고급 서식 완전 숨김",
+        "[v4.7.11] .auto-download-control: display flex !important + width fit-content — PC에서 토글이 셀 전체 폭 차지하던 문제 수정",
+        "[v4.7.11] 도움말 세부 설정 탭 품질 표기 읽는 법 단락 제거",
+        "[v4.7.11] app.js 관리자 모드 JSDoc: ?admin=1 명시 제거"
+      ]
+    },
     {
       "version": "4.7.10",
       "date": "2026-06-28",
