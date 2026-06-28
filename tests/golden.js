@@ -1142,7 +1142,7 @@ async function validateDetailSettingsUx(page) {
     background: getComputedStyle(control).backgroundColor,
   }));
   assert(autoDownloadOn.enabled === 'true' && autoDownloadOn.text.includes('✓ 켜짐')
-    && autoDownloadOn.aria.includes('켜짐'),
+    && autoDownloadOn.aria.includes('켜짐') && !autoDownloadOn.text.includes('자동 저장'),
     'detail settings: 자동 다운로드 켜짐 상태가 텍스트·접근성 이름으로 식별되지 않음');
   assert(autoDownloadOff.enabled === 'false' && autoDownloadOff.text.includes('○ 꺼짐')
     && autoDownloadOff.aria.includes('꺼짐'),
