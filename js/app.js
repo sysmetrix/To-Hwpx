@@ -921,8 +921,9 @@ const FORMAT_INFO = {
             '구두점에 붙은 **굵게**·따옴표·앰퍼샌드(&)·부등호(<,>)도 정확히 처리',
             'GitHub Flavored Markdown 표와 머리행, 순서/비순서 목록, 태스크리스트(☑/□) 지원',
             '코드블록(검정 배경·흰 글자), 인라인 코드, 인용구(왼쪽 선·옅은 배경) 지원',
-            'PNG/JPEG/GIF/BMP data URL과 CORS가 허용된 원격 이미지를 HWPX 그림으로 삽입',
-            '일반적으로 Markdown은 시각 디자인보다 내용 구조 보존에 강함',
+            'PNG/JPEG/GIF/BMP/WebP data URL과 CORS가 허용된 원격 이미지를 HWPX 그림으로 삽입',
+            'GFM 각주([^id] 참조 + [^id]: 정의) → HWPX 각주 컨트롤 변환',
+            'YAML frontmatter title: 필드를 문서 제목으로 자동 반영',
         ],
         limits: ['상대경로·CORS 차단 이미지는 대체 문구와 원본 링크로 보존', '표 안 링크는 표시 텍스트 중심', '복잡한 인라인 HTML과 사용자 정의 스타일은 제외 가능', '페이지 단위 레이아웃은 새 HWPX 기본 흐름으로 재구성'],
     },
@@ -3086,11 +3087,11 @@ function getInputFormatLabel(ext) {
 function getConversionSummaryForExt(ext) {
     const summaries = {
         md: {
-            preserved: '제목, 문단, 목록, 표, 코드블록, 클릭 가능한 본문 링크, 삽입 가능한 Markdown 이미지',
+            preserved: '제목, 문단, 목록, 표, 코드블록, 클릭 가능한 본문 링크, PNG/JPEG/GIF/BMP/WebP 이미지, GFM 각주, YAML frontmatter 제목',
             lossy: '상대경로·접근 차단 이미지의 실제 그림, 표 안 링크 기능, 복잡한 HTML, 사용자 정의 스타일, 페이지 배치',
         },
         markdown: {
-            preserved: '제목, 문단, 목록, 표, 코드블록, 클릭 가능한 본문 링크, 삽입 가능한 Markdown 이미지',
+            preserved: '제목, 문단, 목록, 표, 코드블록, 클릭 가능한 본문 링크, PNG/JPEG/GIF/BMP/WebP 이미지, GFM 각주, YAML frontmatter 제목',
             lossy: '상대경로·접근 차단 이미지의 실제 그림, 표 안 링크 기능, 복잡한 HTML, 사용자 정의 스타일, 페이지 배치',
         },
         html: {
