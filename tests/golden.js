@@ -1513,7 +1513,9 @@ async function validatePretendardCompatibility(page) {
   const pageErrors = [];
   page.on('pageerror', err => {
     const message = err.message || '';
-    if (/localStorage.*Access is denied/i.test(message)) return;
+    // localStorage 접근 오류는 테스트 인프라 아티팩트(addInitScript가 sandboxed iframe에서 실행)이므로 무시.
+    // "Access is denied"(IE), "sandboxed ... lacks the 'allow-same-origin' flag"(Chromium) 두 패턴 모두 처리.
+    if (/localStorage/i.test(message)) return;
     pageErrors.push(message);
   });
 

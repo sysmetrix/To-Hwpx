@@ -1,6 +1,18 @@
 {
-  "current": "4.7.7",
+  "current": "4.7.8",
   "versions": [
+    {
+      "version": "4.7.8",
+      "date": "2026-06-28",
+      "user": [
+        "재방문 시 앱이 더 빠르게 뜹니다. 서비스워커가 이제 정상 작동해 이전에 받은 파일을 캐시에서 바로 불러옵니다."
+      ],
+      "dev": [
+        "[v4.7.8] js/app.js: navigator.serviceWorker.register('sw.js') 등록 추가 — sw.js가 존재했지만 등록 호출이 없어 캐시-퍼스트가 실제로 작동하지 않던 버그 수정",
+        "[v4.7.8] index.html: rhwp iframe sandbox에서 allow-same-origin 제거 — allow-scripts+allow-same-origin 조합은 sandbox 탈출 허용(브라우저 보안 경고). null-origin으로 실행되므로 WASM 재로드가 매번 발생할 수 있음(D1 완료)",
+        "[v4.7.8] package.json/package-lock.json/sw.js/index.html/changelog.json: v4.7.8 반영"
+      ]
+    },
     {
       "version": "4.7.7",
       "date": "2026-06-28",

@@ -72,7 +72,10 @@ function childCount(xml, container, child) {
     });
     const page = await ctx.newPage();
     const errs = [];
-    page.on('pageerror', e => errs.push(e.message));
+    page.on('pageerror', e => {
+        if (/localStorage/i.test(e.message)) return; // addInitScript가 sandboxed iframe에서 실행되는 테스트 아티팩트
+        errs.push(e.message);
+    });
 
     await page.goto(`http://127.0.0.1:${PORT}/index.html`, { waitUntil: 'networkidle' });
     const dlP = page.waitForEvent('download', { timeout: 20000 });
