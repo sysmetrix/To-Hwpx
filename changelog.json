@@ -1,6 +1,23 @@
 {
-  "current": "4.7.6",
+  "current": "4.7.7",
   "versions": [
+    {
+      "version": "4.7.7",
+      "date": "2026-06-28",
+      "user": [
+        "키보드만으로 쓰는 분을 위해 'Tab' 키를 누르면 나타나는 '본문(파일 선택)으로 바로가기' 링크를 추가했습니다.",
+        "흐릿하던 보조 안내 글자의 명암을 밝은·어두운 테마 모두에서 높여 더 또렷하게 보이도록 했습니다.",
+        "외부 스크립트가 임의로 실행되지 못하도록 막는 보안 정책(CSP)을 적용해 한층 더 안전해졌습니다."
+      ],
+      "dev": [
+        "[v4.7.7] index.html: Content-Security-Policy meta 추가(script-src 'self'+cdnjs로 XSS 실행 통로 차단, style/img/font/connect/frame 오리진 명시), 인라인 테마 스크립트 분리, 스킵 링크 추가",
+        "[v4.7.7] js/theme-init.js: FOUC 방지 테마 선적용 스크립트를 외부 파일로 분리(신규) — 인라인 해시 brittleness 없이 CSP script-src 'self'로 허용",
+        "[v4.7.7] style.css: .skip-link 스타일 추가, --c-text-muted 대비 상향(라이트 #9a9ea6→#686c75, 다크 #777c86→#8a8f99; 모든 표면에서 WCAG AA ≥4.5:1, 백지 미리보기 오버라이드 2곳 동기화)",
+        "[v4.7.7] sw.js: 앱셸에 js/theme-init.js 추가(CACHE_VERSION 범프로 신규 자산·CSP 반영)",
+        "[v4.7.7] tests/golden.js: XSS 하드닝 회귀(validateXssHardening) 추가 — HWPX 생성 이스케이프, javascript: URL allowlist, 미리보기 innerHTML 스크립트/이벤트핸들러 실행 차단을 parse→HWPX·parse→미리보기 두 경로로 검증",
+        "[v4.7.7] package.json/package-lock.json/sw.js/index.html/changelog.json: v4.7.7 반영"
+      ]
+    },
     {
       "version": "4.7.6",
       "date": "2026-06-28",

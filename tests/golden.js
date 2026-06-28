@@ -730,6 +730,74 @@ async function validateDirectInput(page) {
   console.log('PASS DIRECT TSV + plain HTML + admin-gated input UI');
 }
 
+// XSS 하드닝 회귀: 이스케이프(escHtml/xmlEsc)와 URL allowlist(normalizeSafeHyperlink/
+// 미리보기 href 검사)는 "사람이 지키는" 불변식이라 한 곳만 빠져도 뚫린다. parse→HWPX
+// 생성, parse→미리보기(innerHTML) 두 경로에 공격 페이로드를 흘려 실행/유입을 모두 차단.
+async function validateXssHardening(page) {
+  const baseUrl = `http://127.0.0.1:${PORT}/index.html`;
+
+  // 스크립트 주입 + onerror 이벤트 핸들러 + javascript: 링크.
+  // '안전마커'와 정상 링크는 "정상 입력은 이스케이프 후 보존"을 확인하는 기준점.
+  const mdPayload = [
+    '# 제목 <img src=x onerror="window.__xssFired=1">',
+    '',
+    '본문 <script>window.__xssFired=1</script> 안전마커',
+    '',
+    '[악성 링크](javascript:window.__xssFired=1)',
+    '',
+    '[정상 링크](https://example.com/safe)',
+  ].join('\n');
+
+  // (1) HWPX 생성 경로 — 위험 URL은 제거되고 마크업은 이스케이프되어야 한다.
+  const mdSection = await convertThroughUi(page, { format: 'md', text: mdPayload, baseName: 'xss-md' });
+  assert(!/javascript:/i.test(mdSection), 'xss: section0.xml에 javascript: URL이 남음');
+  // 위험 마크업은 이스케이프되어 본문 텍스트로만 남아야 한다(원시 <tag> 형태 금지).
+  // HWPX엔 HTML 엔진이 없어 &lt;img onerror=...&gt; 같은 이스케이프 텍스트는 무해하다.
+  // 따라서 "원시 태그가 들어갔는가"만 검사한다(이벤트 핸들러 실행은 미리보기 경로에서 검증).
+  assert(!/<(?:script|img|iframe|svg)\b/i.test(mdSection),
+    'xss: section0.xml에 이스케이프되지 않은 원시 HTML 태그가 남음');
+  assert(mdSection.includes('안전마커'), 'xss: 정상 본문(안전마커)이 보존되지 않음');
+  assert(mdSection.includes('https://example.com/safe'), 'xss: 정상 링크가 보존되지 않음');
+  assert((mdSection.match(/type="HYPERLINK"/g) || []).length === 1,
+    'xss: 위험 링크가 걸러지지 않았거나 정상 링크가 누락됨(HYPERLINK는 정확히 1개)');
+
+  // (2) HTML 입력 경로(DOMParser → textContent)도 동일하게 안전해야 한다.
+  const htmlSection = await convertThroughUi(page, {
+    format: 'html',
+    text: '<p>안전마커 <a href="javascript:window.__xssFired=1">악성</a></p><script>window.__xssFired=1</script>',
+    baseName: 'xss-html',
+  });
+  assert(!/javascript:/i.test(htmlSection) && !htmlSection.includes('<script'),
+    'xss: HTML 입력에서 javascript: URL 또는 <script가 section0.xml에 유입됨');
+  assert(htmlSection.includes('안전마커'), 'xss: HTML 입력의 정상 본문이 보존되지 않음');
+
+  // (3) 미리보기 렌더(innerHTML 경로) — 실제 XSS 표면. 실행/요소 생성이 0이어야 한다.
+  await page.goto(`${baseUrl}?admin=1`, { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => window.JSZip && window.marked && window.XLSX, null, { timeout: 30000 });
+  await page.locator('#mode-paste').click();
+  await page.locator('.paste-format-btn[data-paste-format="md"]').click();
+  await page.locator('#paste-input').fill(mdPayload);
+  await page.waitForFunction(() => document.querySelector('#paste-preview-status')?.textContent.includes('해석 완료'));
+  await page.waitForTimeout(250);   // <img onerror>가 비동기로 실행될 틈을 준 뒤 확인
+  const probe = await page.evaluate(() => ({
+    fired: !!window.__xssFired,
+    scripts: document.querySelectorAll('#paste-preview-output script').length,
+    onerror: [...document.querySelectorAll('#paste-preview-output *')]
+      .filter(el => el.getAttribute && el.getAttribute('onerror')).length,
+    jsHrefs: [...document.querySelectorAll('#paste-preview-output a')]
+      .filter(a => (a.getAttribute('href') || '').trim().toLowerCase().startsWith('javascript:')).length,
+    imgs: document.querySelectorAll('#paste-preview-output img').length,
+  }));
+  assert(probe.fired === false, 'xss: 미리보기에서 주입 스크립트가 실행됨(window.__xssFired)');
+  assert(probe.scripts === 0, 'xss: 미리보기에 <script> 요소가 생성됨');
+  assert(probe.onerror === 0, 'xss: 미리보기에 onerror 이벤트 핸들러 요소가 생성됨');
+  assert(probe.jsHrefs === 0, 'xss: 미리보기에 javascript: 링크가 생성됨');
+  assert(probe.imgs === 0, 'xss: 미리보기가 주입 이미지를 실제 <img>로 렌더함(플레이스홀더여야 함)');
+
+  await page.goto(`${baseUrl}?admin=0`, { waitUntil: 'domcontentloaded' });
+  console.log('PASS XSS hardening (HWPX 이스케이프 + URL allowlist + 미리보기 innerHTML)');
+}
+
 async function validateCommercialUx(page) {
   const baseUrl = `http://127.0.0.1:${PORT}/index.html`;
   await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
@@ -1454,6 +1522,7 @@ async function validatePretendardCompatibility(page) {
       await runCase(page, testCase);
     }
     await validateDirectInput(page);
+    await validateXssHardening(page);
     await validateCommercialUx(page);
     await validateRejectedInputs(page);
     await validatePaperMatrix(page);
