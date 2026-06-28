@@ -46,7 +46,7 @@ const state = {
     imageMaxWidth: 100,                // 이미지 최대 폭(%)
     imageAlign: 'center',              // 이미지 정렬 (기본 가운데; 원본에 정렬이 있으면 원본 우선)
     titleBodyPolicy: 'remove',         // 문서 첫 제목 본문 유지/제거
-    stylePolicy: 'source',             // 원본 서식 처리: source|balanced|app
+    stylePolicy: 'balanced',           // 원본 서식 처리: source|balanced|app
     pageMargins:  { top: 10, bottom: 10, left: 20, right: 20, header: 10, footer: 10 },  // 단위: mm
     autoDownload: true,                // 변환 완료 시 자동 다운로드
     isConverting: false,               // 변환 중 중복 실행 방지 플래그
@@ -3127,7 +3127,7 @@ function hasSourceFormatting(ext) {
 
 function effectiveBuildOptionsForFile(file) {
     const ext = getFileExtension(file?.name || '');
-    const policy = state.stylePolicy || 'source';
+    const policy = state.stylePolicy || 'balanced';
     if (policy === 'app' || !hasSourceFormatting(ext)) {
         return {
             showHorizontalRules: state.showHorizontalRules,
@@ -3976,7 +3976,7 @@ function resetConverterState() {
     state.imageMaxWidth = 100;
     state.imageAlign = 'center';
     state.titleBodyPolicy = 'remove';
-    state.stylePolicy = 'source';
+    state.stylePolicy = 'balanced';
     state.pageMargins = { top: 10, bottom: 10, left: 20, right: 20, header: 10, footer: 10 };
     state.autoDownload = true;
 
@@ -4011,7 +4011,7 @@ function resetConverterState() {
     if (paperSize) paperSize.value = 'A4';
     if (lineSpacing) lineSpacing.value = '160';
     if (paragraphSpacing) paragraphSpacing.value = 'normal';
-    if (stylePolicy) stylePolicy.value = 'source';
+    if (stylePolicy) stylePolicy.value = 'balanced';
     if (headingStyle) headingStyle.value = 'standard';
     if (tableStyle) tableStyle.value = 'standard';
     if (linkStyle) linkStyle.value = 'blue';
