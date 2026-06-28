@@ -3932,13 +3932,21 @@ function syncDetailSegButtons() {
     });
 }
 
-// 원본 우선이면 본문 고급 서식 섹션을 숨기고 안내 노트를 보인다. 혼합/설정 우선은 반대.
+// 정책별 안내 노트 표시 + 원본 우선일 때만 본문 고급 서식 섹션 숨김.
 function applyStylePolicyUi(policy = state.stylePolicy) {
-    const isSource = policy === 'source';
     const note = document.getElementById('detail-source-note');
-    if (note) note.hidden = !isSource;
+    if (note) {
+        note.hidden = false;
+        const NOTES = {
+            source:   '<strong>원본 우선</strong> — 원본 서식이 있는 파일(DOCX·HTML·XLSX)은 아래 세부 설정 대신 <b>원본 서식</b>을 따릅니다. 그 외 입력(MD·TXT·CSV·JSON)에는 아래 설정이 그대로 적용됩니다.',
+            balanced: '<strong>혼합</strong> — 문단 간격·링크·이미지는 아래 설정을 따르고, 제목과 표 스타일은 원본 서식을 유지합니다. MD·TXT·CSV·JSON은 아래 설정을 그대로 적용합니다.',
+            app:      '<strong>설정 우선</strong> — 아래 세부 설정이 원본 서식보다 강하게 적용됩니다. DOCX·HTML·XLSX도 아래 설정대로 변환됩니다.',
+        };
+        // eslint-disable-next-line no-unsanitized/property -- static trusted strings, no user input
+        note.innerHTML = NOTES[policy] ?? NOTES.source;
+    }
     const detailSection = document.querySelector('.document-detail-settings');
-    if (detailSection) detailSection.hidden = isSource;
+    if (detailSection) detailSection.hidden = policy === 'source';
 }
 
 function resetConverterState() {
