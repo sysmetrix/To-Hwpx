@@ -28,6 +28,8 @@ const CASES = [
       '특수문자',
       '목록 항목 하나',
       '표 값 한글',
+      '표 안의 굵은 글씨',
+      '표 안 코드',
       'console.log',
       'Quoted Alpha line',
       'bold quote',
@@ -338,6 +340,13 @@ async function validateHwpxPackage(page, zip, testCase) {
       `${testCase.name}: 인라인 코드 런에 코드 글자 모양이 적용되지 않음`);
     assert(sectionXml.includes('<hp:t xml:space="preserve">단독 코드 문단</hp:t>'),
       `${testCase.name}: 단독 코드 문단의 기존 코드 블록 표현이 유지되지 않음`);
+    const markdownTable = [...sectionXml.matchAll(/<hp:tbl\b[\s\S]*?<\/hp:tbl>/g)]
+      .map(match => match[0])
+      .find(table => table.includes('표 안의 굵은 글씨') && table.includes('표 안 코드'));
+    assert(markdownTable && /charPrIDRef="7"><hp:t>표 안의 굵은 글씨<\/hp:t>/.test(markdownTable),
+      `${testCase.name}: Markdown 표 셀의 굵게 서식이 보존되지 않음`);
+    assert(markdownTable && /charPrIDRef="6"><hp:t>표 안 코드<\/hp:t>/.test(markdownTable),
+      `${testCase.name}: Markdown 표 셀의 인라인 코드 서식이 보존되지 않음`);
   }
 
   const pagePr = (/<hp:pagePr\b[^>]*>/.exec(sectionXml) || [])[0] || '';

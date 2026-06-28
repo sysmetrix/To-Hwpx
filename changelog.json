@@ -1,6 +1,20 @@
 {
-  "current": "4.6.31",
+  "current": "4.7.0",
   "versions": [
+    {
+      "version": "4.7.0",
+      "date": "2026-06-28",
+      "user": [
+        "Markdown 표 셀 안의 **굵게**와 인라인 코드 서식이 HWPX에서도 유지됩니다."
+      ],
+      "dev": [
+        "[v4.7.0] js/parsers.js: Markdown 표 셀에 인라인 서식이 있을 때만 {text,runs} IR로 승격하고 평문 셀은 기존 문자열 계약 유지",
+        "[v4.7.0] js/hwpx.js: 표 셀 runs를 buildParaRuns()로 출력하고 머리행·글자색·동적 charPr 상속 처리, 표 내부 링크는 비활성 상태 유지",
+        "[v4.7.0] tests/fixtures/sample.md, tests/golden.js: Markdown 표 셀 굵게·인라인 코드 HWPX charPr 회귀 검증 추가",
+        "[v4.7.0] AGENTS.md, format_conversion_playbook.md: Markdown 셀 run 계약과 검증 기준 갱신",
+        "[v4.7.0] package.json/package-lock.json/sw.js/index.html/changelog.json: v4.7.0 반영"
+      ]
+    },
     {
       "version": "4.6.31",
       "date": "2026-06-26",

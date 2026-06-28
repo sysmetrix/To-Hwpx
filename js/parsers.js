@@ -172,6 +172,31 @@ function markdownInlineRuns(tokens, inherited = {}) {
     return runs;
 }
 
+/**
+ * Markdown 표 셀 → 문자열 또는 서식 있는 공통 셀 객체.
+ * 평문 셀은 기존 문자열 IR을 유지하고, bold/italic/code/strike가 있을 때만
+ * { text, runs }로 승격한다. 표 내부 링크·이미지는 아직 표시 텍스트만 보존한다.
+ */
+function markdownTableCell(cell) {
+    const source = cell?.tokens || cell?.text || cell || '';
+    const text = sanitize(plainMdText(source).trim());
+    const runs = markdownInlineRuns(Array.isArray(source) ? source : [{ type: 'text', text: source }])
+        .map(({ text: runText, bold, italic, code, underline, strike, color }) => ({
+            text: sanitize(runText ?? ''),
+            ...(bold ? { bold: true } : {}),
+            ...(italic ? { italic: true } : {}),
+            ...(code ? { code: true } : {}),
+            ...(underline ? { underline: true } : {}),
+            ...(strike ? { strike: true } : {}),
+            ...(color ? { color } : {}),
+        }))
+        .filter(run => run.text);
+    const hasFormatting = runs.some(run =>
+        run.bold || run.italic || run.code || run.underline || run.strike || run.color
+    );
+    return hasFormatting ? { text, runs } : text;
+}
+
 function markdownImageSource(token) {
     return {
         type: 'image-source',
@@ -296,9 +321,9 @@ function extractMarkdownTokens(tokens, blocks) {
             extractMarkdownTokens(token.tokens || [], quoteBlocks);
             blocks.push({ type: 'quote', blocks: quoteBlocks });
         } else if (token.type === 'table') {
-            const header = (token.header || []).map(cell => sanitize(plainMdText(cell.tokens || cell.text || cell).trim()));
+            const header = (token.header || []).map(markdownTableCell);
             const rows = (token.rows || []).map(row =>
-                row.map(cell => sanitize(plainMdText(cell.tokens || cell.text || cell).trim()))
+                row.map(markdownTableCell)
             );
             blocks.push({ type: 'table', header, rows });
         } else if (token.type === 'html') {
@@ -1501,7 +1526,13 @@ async function parseHwp(buffer, docType = 'plain') {
 
 function sanitizeIrCell(cell) {
     if (cell && typeof cell === 'object' && !Array.isArray(cell)) {
-        return { ...cell, text: sanitize(cell.text ?? '') };
+        return {
+            ...cell,
+            text: sanitize(cell.text ?? ''),
+            runs: Array.isArray(cell.runs)
+                ? cell.runs.map(run => ({ ...run, text: sanitize(run?.text ?? '') }))
+                : undefined,
+        };
     }
     return sanitize(cell ?? '');
 }

@@ -47,7 +47,7 @@
 - 최종 `image` 블록은 `{type:'image',binName,mimeType,data,widthHwp,heightHwp,alt,title,sourceFormat}`이며 `data` 확보와 MIME/크기 검증을 끝낸 뒤 Renderer로 넘긴다. 미해결 `image-source`는 Renderer에 넘기지 않는다.
 - Markdown은 `parseMd()`를 동기로 유지하고, 비동기 data URL/원격 이미지 처리는 `fileToIR()` 뒤 `resolveMarkdownAssets()`에서만 한다. IPYNB Markdown 셀도 `parseMd()`를 재사용하므로 함께 회귀 검사한다.
 - 공용 Renderer를 변경하면 전체 golden을 실행한다. Markdown Parser/Resolver만 변경해도 MD와 IPYNB를 함께 검사하고, 그림 패키징을 변경하면 DOCX 그림 게이트까지 반드시 실행한다.
-- 목록 항목은 `{text,runs,...}`를 함께 보존해 링크와 인라인 서식을 출력한다. 표 셀은 아직 문자열 중심 IR이므로 표 내부 링크나 이미지를 지원하려면 공용 cell run 계약을 먼저 설계하고 별도 릴리스로 진행한다.
+- 목록 항목은 `{text,runs,...}`를 함께 보존해 링크와 인라인 서식을 출력한다. Markdown 표 셀은 평문 문자열 또는 인라인 서식이 있는 `{text,runs}`를 사용한다. 표 내부 링크나 이미지를 지원하려면 공용 cell run 계약을 먼저 설계하고 별도 릴리스로 진행한다.
 
 ### 기본 미리보기 불변식
 

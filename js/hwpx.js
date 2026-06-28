@@ -1041,6 +1041,7 @@ function headingIds(level) {
  * 최소 열 너비 3000 HWPUNIT(≈10.6mm) 보장, 최대 40자로 상한
  */
 function cellText(cell)    { return typeof cell === 'object' ? (cell?.text ?? '') : String(cell ?? ''); }
+function cellRuns(cell)    { return typeof cell === 'object' && Array.isArray(cell?.runs) ? cell.runs : null; }
 function cellBg(cell)     { return typeof cell === 'object' ? (cell?.bg  || null) : null; }
 function cellColor(cell)   { return typeof cell === 'object' ? (cell?.color || null) : null; }
 function cellColSpan(cell) { return typeof cell === 'object' ? (cell?.colSpan || 1) : 1; }
@@ -1133,7 +1134,10 @@ function buildTable(header, rows, contentWidthHwp = 48000, customBfMap = new Map
     // 단일 셀(hp:tc) XML 생성 — 실제 셀과 격자 보충용 더미 셀이 공유
     // 자식 순서: subList → cellAddr → cellSpan → cellSz → cellMargin
     // (rhwp serializer/hwpx/table.rs 기준 OWPML 공식 순서)
-    const renderCell = (r, c, cs, rs, val, bg, isHd, color) => {
+    const renderCell = (r, c, cs, rs, cell, isHd) => {
+        const val = cellText(cell);
+        const bg = cellBg(cell);
+        const color = cellColor(cell);
         const styledHeader = isHd && tableStyle !== 'plain';
         const effectiveBg = (!bg && isHd && tableStyle === 'report') ? 'EAF2FF' : bg;
         let cId      = styledHeader ? '5' : '0';                               // 표머리=5(bold), 일반=0
@@ -1156,10 +1160,21 @@ function buildTable(header, rows, contentWidthHwp = 48000, customBfMap = new Map
             else                      bfId = styledHeader ? '3' : '2';
         }
         const cellWidth = colWidths.slice(c, c + cs).reduce((a, b) => a + b, 0);
+        const inlineRuns = cellRuns(cell);
+        const cellPara = inlineRuns
+            ? buildParaRuns(inlineRuns.map(run => ({
+                ...run,
+                ...(styledHeader ? { bold: true } : {}),
+                ...(color && !run.color ? { color } : {}),
+                // 표 내부 링크는 공용 cell run 계약을 별도로 정할 때까지 활성화하지 않는다.
+                href: undefined,
+                title: undefined,
+            })), paraId, customCharMap, options)
+            : buildPara(val, cId, paraId);
         return `<hp:tc name="" header="${isHd ? '1' : '0'}" hasMargin="1" protect="0" editable="0" dirty="0" borderFillIDRef="${bfId}">` +
             `<hp:subList id="" textDirection="HORIZONTAL" lineWrap="BREAK" vertAlign="CENTER" ` +
                 `linkListIDRef="0" linkListNextIDRef="0" textWidth="0" textHeight="0" hasTextRef="0" hasNumRef="0">` +
-            buildPara(val, cId, paraId) +
+            cellPara +
             `</hp:subList>` +
             `<hp:cellAddr colAddr="${c}" rowAddr="${r}"/>` +
             `<hp:cellSpan colSpan="${cs}" rowSpan="${rs}"/>` +
@@ -1192,14 +1207,14 @@ function buildTable(header, rows, contentWidthHwp = 48000, customBfMap = new Map
             for (let rr = r; rr < r + rs; rr++)
                 for (let cc = c; cc < c + cs; cc++) occupied[rr][cc] = true;
 
-            rowCells.push({ c, xml: renderCell(r, c, cs, rs, cellText(cell), cellBg(cell), isHd, cellColor(cell)) });
+            rowCells.push({ c, xml: renderCell(r, c, cs, rs, cell, isHd) });
         }
 
         // 남은 빈 열을 1×1 더미 셀로 채워 격자를 완성한다.
         for (let c = 0; c < nCols; c++) {
             if (occupied[r][c]) continue;
             occupied[r][c] = true;
-            rowCells.push({ c, xml: renderCell(r, c, 1, 1, '', null, isHd, null) });
+            rowCells.push({ c, xml: renderCell(r, c, 1, 1, '', isHd) });
         }
 
         // <hp:tr>은 속성 없음 (rhwp 기준); header 마킹은 <hp:tc>에만 적용
@@ -1536,8 +1551,16 @@ async function buildHwpx(ir, fontName = '휴먼명조', fontSize = 12, marginsMm
                 if (cid != null) block._cId = String(cid);
             } else if (block.type === 'table') {
                 // 표 셀 글자색(예: 흰 글자 머리행)도 동적 charPr 대상 — 머리행은 bold
-                (block.header || []).forEach(c => { const col = cellColor(c); if (col) addExtChar({ color: col, bold: true }); });
-                (block.rows || []).forEach(row => (row || []).forEach(c => { const col = cellColor(c); if (col) addExtChar({ color: col, bold: false }); }));
+                (block.header || []).forEach(c => {
+                    const col = cellColor(c);
+                    if (col) addExtChar({ color: col, bold: true });
+                    for (const run of (cellRuns(c) || [])) if (run.text) addExtChar({ ...run, bold: true, color: run.color || col });
+                });
+                (block.rows || []).forEach(row => (row || []).forEach(c => {
+                    const col = cellColor(c);
+                    if (col) addExtChar({ color: col, bold: false });
+                    for (const run of (cellRuns(c) || [])) if (run.text) addExtChar({ ...run, color: run.color || col });
+                }));
             } else if (block.type === 'quote') {
                 scanCharProps(block.blocks || []);
             } else if (block.type === 'list') {
