@@ -1,6 +1,20 @@
 {
-  "current": "4.8.4",
+  "current": "4.8.5",
   "versions": [
+    {
+      "version": "4.8.5",
+      "date": "2026-06-29",
+      "user": [
+        "직접 입력 안내 개선 — AI 채팅(ChatGPT·Claude 등) 답변을 MD로 붙여넣으면 제목·목록·표가 그대로 변환됨을 안내",
+        "형식 버튼 선택 시 입력창에 형식별 안내 문구 표시 (MD: AI 답변 붙여넣기, HTML: 소스 코드 전용 등)"
+      ],
+      "dev": [
+        "[v4.8.5] ADMIN_FEATURES에서 direct_input 항목 제거 (탭은 v4.8.3에 이미 공개됨, 토글 무의미)",
+        "[v4.8.5] updatePasteFormatHelp: MD 안내를 AI 채팅 중심으로 개선, textarea placeholder 형식별 동적 변경",
+        "[v4.8.5] paste-beta-notice 첫 문단을 AI 채팅 팁으로 교체, 베타·HTML 경고는 두 번째 문단으로 통합",
+        "[v4.8.5] golden.js direct_input 토글 검증 제거"
+      ]
+    },
     {
       "version": "4.8.4",
       "date": "2026-06-29",

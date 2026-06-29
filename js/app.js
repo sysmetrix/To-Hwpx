@@ -1910,13 +1910,6 @@ const LEGACY_LAB_STATE_KEY = 'tohwpx_lab';
 const LEGACY_LAB_ACCESS_KEY = 'tohwpx_lab_access';
 const ADMIN_FEATURES = [
     {
-        id: 'direct_input',
-        label: '직접 입력',
-        status: '베타',
-        desc: 'MD·HTML·TXT·CSV·JSON을 붙여넣어 기존 변환 파이프라인으로 HWPX를 만듭니다.',
-        defaultOn: true,
-    },
-    {
         id: 'paste_preview',
         label: '직접 입력 미리보기',
         status: '실험',
@@ -2208,17 +2201,26 @@ function applyAdminFeatureVisibility() {
     if (htmlMenu) htmlMenu.hidden = !htmlOn;
 }
 
+const PASTE_FORMAT_HELP = {
+    md:   'ChatGPT·Claude 등 AI 채팅 답변을 그대로 붙여넣으면 제목·목록·표·강조가 모두 살아납니다.',
+    html: 'HTML 소스 코드를 붙여넣으세요. 웹 화면에서 복사한 일반 텍스트는 MD·TXT를 사용하세요.',
+    txt:  '입력한 텍스트와 빈 줄 기준 문단을 그대로 변환합니다.',
+    csv:  '쉼표 CSV와 Excel·Google Sheets에서 복사한 탭 구분 표를 자동 인식합니다.',
+    json: '유효한 JSON 또는 To HWPX IR 구조를 입력하세요.',
+};
+const PASTE_FORMAT_PLACEHOLDER = {
+    md:   'ChatGPT·Claude 등 AI 답변을 그대로 붙여넣거나, # 제목 / - 목록 / **굵게** 형식으로 입력하세요.',
+    html: '<h1>제목</h1><p>본문</p> 형식의 HTML 소스 코드를 붙여넣으세요.',
+    txt:  '여기에 텍스트를 붙여넣으세요. 빈 줄이 문단 구분이 됩니다.',
+    csv:  '쉼표(,) CSV 또는 Excel·Google Sheets에서 복사한 표를 붙여넣으세요.',
+    json: '유효한 JSON 데이터를 붙여넣으세요.',
+};
+
 function updatePasteFormatHelp(ext) {
     const help = document.getElementById('paste-format-help');
-    if (!help) return;
-    const messages = {
-        md: 'Markdown 문법의 제목·목록·표·강조·코드·인용구를 인식합니다.',
-        html: 'HTML 소스를 붙여넣으세요. 웹 화면에서 복사한 일반 텍스트도 문단으로 보존됩니다.',
-        txt: '입력한 텍스트와 빈 줄 기준 문단을 그대로 변환합니다.',
-        csv: '쉼표 CSV와 Excel·Google Sheets에서 복사한 탭 구분 표를 자동 인식합니다.',
-        json: '유효한 JSON 또는 To HWPX IR 구조를 입력하세요.',
-    };
-    help.textContent = messages[ext] || '';
+    if (help) help.textContent = PASTE_FORMAT_HELP[ext] || '';
+    const ta = document.getElementById('paste-input');
+    if (ta) ta.placeholder = PASTE_FORMAT_PLACEHOLDER[ext] || '여기에 내용을 붙여넣으세요.';
 }
 
 function applyPasteFormatUi(ext) {

@@ -600,9 +600,8 @@ async function validateDirectInput(page) {
   assert(changelogTabGap === 0, 'ux: 업데이트 내역 탭 라인이 모달 제목 영역과 떨어져 있음');
   assert(await page.locator('[data-lab-toggle]').getAttribute('aria-pressed') === 'true',
     'admin: 관리자 모드 토글 상태가 켜짐으로 표시되지 않음');
-  assert((await page.locator('.changelog-implemented-panel').textContent()).includes('현재 구현된 기능')
-    && await page.locator('[data-admin-feature="direct_input"]').count() === 1,
-    'admin: 현재 구현된 기능 목록 또는 직접 입력 토글이 누락됨');
+  assert((await page.locator('.changelog-implemented-panel').textContent()).includes('현재 구현된 기능'),
+    'admin: 현재 구현된 기능 목록이 누락됨');
   assert((await page.locator('.changelog-experiment-panel').textContent()).includes('원본 서식 우선 모드 고도화'),
     'admin: 추천 실험 기능 안내가 상태판 기준으로 표시되지 않음');
   await page.locator('.changelog-tab[data-tab="quality"]').click();
