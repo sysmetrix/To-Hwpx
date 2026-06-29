@@ -1,6 +1,34 @@
 {
-  "current": "4.8.2",
+  "current": "4.8.4",
   "versions": [
+    {
+      "version": "4.8.4",
+      "date": "2026-06-29",
+      "user": [
+        "하단 '연계 서비스' → '관련 서비스'로 명칭 변경",
+        "'파일 선택 및 기본 옵션' 옆 베타 뱃지 제거"
+      ],
+      "dev": [
+        "[v4.8.4] 직접 입력 공개에 따른 문서·규칙 일관성 정비 — AGENTS.md, format_conversion_playbook.md, qa/release-qa.md 업데이트",
+        "[v4.8.4] tests/golden.js: convertThroughUi paste 모드 ?admin=1 제거, validateDirectInput 탭 노출 검증 일반 모드 기준으로 전환",
+        "[v4.8.4] updateConverterBeta() noop 처리, #converter-beta 요소 제거",
+        "[v4.8.4] 메모리 lab-flag-direct-input 베타 공개 상태로 갱신"
+      ]
+    },
+    {
+      "version": "4.8.3",
+      "date": "2026-06-29",
+      "user": [
+        "직접 입력 탭을 일반 사용자에게 공개 (베타) — 텍스트·MD·HTML·CSV·JSON을 붙여넣어 바로 HWPX로 변환",
+        "직접 입력 탭에 베타 뱃지와 변환 품질 안내 표시",
+        "HTML 버튼 설명 추가 — HTML 소스 코드 붙여넣기용임을 안내 (웹 화면 복사본은 MD·TXT 권장)"
+      ],
+      "dev": [
+        "[v4.8.3] initInputMode()·applyAdminFeatureVisibility()에서 admin 게이트 제거, 직접 입력 탭 전체 공개",
+        "[v4.8.3] mode-paste 버튼에 .svc-beta-badge 추가, paste-mode 상단에 .paste-beta-notice 안내 패널 삽입",
+        "[v4.8.3] .input-mode-tab에 inline-flex 정렬 추가, .paste-beta-notice CSS 추가"
+      ]
+    },
     {
       "version": "4.8.2",
       "date": "2026-06-29",

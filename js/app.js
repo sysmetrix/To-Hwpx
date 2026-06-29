@@ -626,16 +626,7 @@ function resetIrPreview() {
     }
 }
 
-/** 변환 화면 헤더의 베타 마커: 관리자 모드 + 베타 포맷 파일일 때만 노출(일반 사용자엔 항상 숨김).
- *  ext='__batch__'이면 큐에 베타 포맷이 하나라도 있는지로 판별. */
-function updateConverterBeta(ext) {
-    const el = document.getElementById('converter-beta');
-    if (!el) return;
-    const beta = ext === '__batch__'
-        ? state.queue.some(q => BETA_EXTS.has(String(q.ext || '').toLowerCase()))
-        : BETA_EXTS.has(String(ext || '').toLowerCase());
-    el.hidden = !(isAdminMode() && beta);
-}
+function updateConverterBeta() {}
 
 /** 정적 베타 배지(.badge-beta)는 관리자 모드에서만 노출. 마스터 토글은 reload하므로 init에서 1회 반영하면 충분. */
 function applyBetaBadgeVisibility() {
@@ -2162,14 +2153,6 @@ function bindLabControl() {
 }
 
 function initInputMode() {
-    if (!isAdminMode() || !isAdminFeatureEnabled('direct_input')) {
-        document.querySelector('.input-mode-tabs')?.setAttribute('hidden', '');
-        document.getElementById('paste-mode')?.setAttribute('hidden', '');
-        const upload = document.getElementById('upload-mode');
-        if (upload) upload.hidden = false;
-        state.inputMode = 'upload';
-        return;
-    }
     document.querySelector('.input-mode-tabs')?.removeAttribute('hidden');
 
     document.getElementById('mode-upload')?.addEventListener('click', () => setInputMode('upload'));
@@ -2216,13 +2199,7 @@ function initInputMode() {
 }
 
 function applyAdminFeatureVisibility() {
-    const directInputOn = isAdminMode() && isAdminFeatureEnabled('direct_input');
-    const tabs = document.querySelector('.input-mode-tabs');
-    const pastePanel = document.getElementById('paste-mode');
-    if (tabs) tabs.hidden = !directInputOn;
-    if (!directInputOn && pastePanel) pastePanel.hidden = true;
-
-    const previewOn = directInputOn && isAdminFeatureEnabled('paste_preview');
+    const previewOn = isAdminMode() && isAdminFeatureEnabled('paste_preview');
     const previewPanel = document.querySelector('.paste-preview-panel');
     if (previewPanel) previewPanel.hidden = !previewOn;
 

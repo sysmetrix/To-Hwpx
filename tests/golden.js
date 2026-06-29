@@ -544,10 +544,10 @@ async function runCase(page, testCase) {
 
 async function convertThroughUi(page, { inputPath, format, text, baseName, setup, returnPackage = false }) {
   const baseUrl = `http://127.0.0.1:${PORT}/index.html`;
-  await page.goto(inputPath ? baseUrl : `${baseUrl}?admin=1`, { waitUntil: 'domcontentloaded' });
+  await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => window.JSZip && window.marked && window.XLSX && window.__appReady, null, { timeout: 30000 });
   if (!inputPath) {
-    assert(await page.locator('.input-mode-tabs').isVisible(), 'admin: ?admin=1에서 직접 입력 탭이 보이지 않음');
+    assert(await page.locator('.input-mode-tabs').isVisible(), 'direct: 일반 모드에서 직접 입력 탭이 보이지 않음');
   }
 
   const downloadPromise = page.waitForEvent('download', { timeout: 30000 });
@@ -579,8 +579,10 @@ async function validateDirectInput(page) {
   const baseUrl = `http://127.0.0.1:${PORT}/index.html`;
   await page.goto(`${baseUrl}?admin=0`, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => window.__appReady, null, { timeout: 30000 });
-  assert(!await page.locator('.input-mode-tabs').isVisible(),
-    'admin: 일반 사용자에게 직접 입력 탭이 노출됨');
+  assert(await page.locator('.input-mode-tabs').isVisible(),
+    'direct: 일반 사용자에게 직접 입력 탭이 보이지 않음 (v4.8.3 베타 공개)');
+  assert(!await page.locator('.paste-preview-panel:not([hidden])').count(),
+    'direct: 일반 모드에서 미리보기 패널이 노출됨 (관리자 전용)');
   await page.locator('#open-changelog').click();
   assert(!(await page.locator('#changelog-modal').isVisible()),
     'admin: 일반 모드에서 버전 클릭으로 업데이트 내역이 열림');
