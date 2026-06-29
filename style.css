@@ -5177,6 +5177,17 @@ a:hover { text-decoration: underline; }
     border-color: var(--c-primary);
     color: var(--c-primary);
 }
+.paste-copy-btn--primary {
+    border-color: var(--c-primary);
+    background: var(--c-primary);
+    color: #fff;
+}
+.paste-copy-btn--primary:hover {
+    background: var(--c-primary-dark, var(--c-primary));
+    border-color: var(--c-primary-dark, var(--c-primary));
+    color: #fff;
+    opacity: 0.88;
+}
 .paste-preview-output {
     max-height: 260px;
     overflow: auto;

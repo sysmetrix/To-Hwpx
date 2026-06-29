@@ -1,6 +1,20 @@
 {
-  "current": "4.8.5",
+  "current": "4.8.6",
   "versions": [
+    {
+      "version": "4.8.6",
+      "date": "2026-06-29",
+      "user": [
+        "직접 입력 미리보기 패널을 일반 사용자에게 공개 — 붙여넣은 내용이 변환 전 어떻게 해석되는지 바로 확인 가능",
+        "'미리보기 복사' 버튼 강조 표시 — 변환 없이 미리보기 내용을 바로 복사해 다른 문서에 붙여넣기 가능",
+        "빠른 시작 안내에 미리보기 복사 활용법 추가"
+      ],
+      "dev": [
+        "[v4.8.6] applyAdminFeatureVisibility: paste_preview 게이트 제거, html_actions만 admin 유지",
+        "[v4.8.6] #copy-paste-preview에 paste-copy-btn--primary 클래스 + title 추가",
+        "[v4.8.6] .paste-copy-btn--primary CSS 추가"
+      ]
+    },
     {
       "version": "4.8.5",
       "date": "2026-06-29",

@@ -2192,11 +2192,10 @@ function initInputMode() {
 }
 
 function applyAdminFeatureVisibility() {
-    const previewOn = isAdminMode() && isAdminFeatureEnabled('paste_preview');
     const previewPanel = document.querySelector('.paste-preview-panel');
-    if (previewPanel) previewPanel.hidden = !previewOn;
+    if (previewPanel) previewPanel.hidden = false;
 
-    const htmlOn = previewOn && isAdminFeatureEnabled('html_actions');
+    const htmlOn = isAdminMode() && isAdminFeatureEnabled('html_actions');
     const htmlMenu = document.querySelector('.paste-html-menu');
     if (htmlMenu) htmlMenu.hidden = !htmlOn;
 }
