@@ -52,7 +52,7 @@
            connect-src: Markdown 원격 이미지 fetch (임의 https 오리진)
            frame-src  : 정밀 미리보기 rhwp 뷰어(외부 WASM, 선택 기능)
          ──────────────────────────────────────────────────────────── -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdnjs.cloudflare.com https://us.i.posthog.com https://eu.posthog.com https://us.posthog.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https:; frame-src https://edwardkim.github.io; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdnjs.cloudflare.com https://us.i.posthog.com https://eu.posthog.com https://us.posthog.com; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https:; frame-src https://edwardkim.github.io; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
 
     <!-- SEO + SNS 공유용 메타 태그 -->
     <title>To HWPX - 한글로</title>
@@ -161,7 +161,7 @@
             <span>｢BWYF｣ AX Challenger 2026</span>
             <!-- [주의] id="open-changelog"는 app.js에서 관리자 모드일 때 업데이트 내역 모달을 여는 연결값 -->
             <button class="util-changelog-btn" id="open-changelog" aria-label="버전 정보" data-admin-enabled="false">
-                📋 v4.8.8
+                📋 v4.9.0
             </button>
         </div>
     </div>
@@ -334,7 +334,7 @@
                         </div>
                     </section>
                     <div class="form-row paste-name-row">
-                        <label for="paste-name">문서명 <small style="font-weight:400;color:var(--c-text-muted)">(선택)</small></label>
+                        <label for="paste-name">문서명 <small class="label-optional">(선택)</small></label>
                         <div class="paste-name-wrap">
                             <input type="text" id="paste-name" name="paste-name" placeholder="문서" maxlength="200">
                             <span class="paste-ext">.hwpx</span>
@@ -845,7 +845,7 @@
              비개발자는 카드 안의 표시 문구(card-ext/card-name/card-quality/badge)만 바꾸는 것이 안전합니다.
              ─────────────────────────────────────────────────────── -->
         <div class="format-panel" id="panel-basic" role="tabpanel">
-            <p class="section-sub" style="margin:16px 0 24px">카드를 선택하면 포맷별 보존 범위와 제한사항을 확인할 수 있습니다</p>
+            <p class="section-sub">카드를 선택하면 포맷별 보존 범위와 제한사항을 확인할 수 있습니다</p>
             <div class="format-grid">
 
                 <!-- Markdown -->
@@ -919,7 +919,7 @@
                  나머지는 향후 백엔드 연동 예정
                  ─────────────────────────────────────────────────────── -->
             <div class="format-panel" id="panel-ext" role="tabpanel">
-                <p class="section-sub" style="margin:16px 0 24px">현재 입력 가능한 IPYNB와, 변환 품질 검증 후 열 예정인 포맷을 함께 보여드립니다</p>
+                <p class="section-sub">현재 입력 가능한 IPYNB와, 변환 품질 검증 후 열 예정인 포맷을 함께 보여드립니다</p>
                 <div class="format-grid">
 
                     <!-- IPYNB -->
@@ -973,7 +973,7 @@
         <!-- ── 동작 원리 패널 ────────────────────────────────────── -->
             <div class="format-panel" id="panel-how" role="tabpanel">
             <span id="how-it-works" aria-hidden="true"></span>
-            <p class="section-sub" style="margin:16px 0 32px">PC와 모바일 브라우저 안에서 7단계로 완전히 처리됩니다</p>
+            <p class="section-sub section-sub--wide">PC와 모바일 브라우저 안에서 7단계로 완전히 처리됩니다</p>
             <div class="steps-grid">
 
                 <div class="how-step">
@@ -1012,7 +1012,7 @@
         <!-- ── 지원 현황 패널 ────────────────────────────────────── -->
             <div class="format-panel" id="panel-support" role="tabpanel">
             <span id="support" aria-hidden="true"></span>
-            <p class="section-sub" style="margin:16px 0 24px">입력 포맷별 현재 변환 상태입니다. ★★★: 구조 보존 양호 / ★★☆: 기본 구조 변환 / ★☆☆: 내용 추출 중심</p>
+            <p class="section-sub">입력 포맷별 현재 변환 상태입니다. ★★★: 구조 보존 양호 / ★★☆: 기본 구조 변환 / ★☆☆: 내용 추출 중심</p>
             <div class="support-table-wrap">
                 <table class="support-table">
                     <thead>
@@ -1588,7 +1588,7 @@
             </div>
             <!-- JS에서 changelog.json 로드 후 렌더링 -->
             <div class="changelog-content" id="changelog-content">
-                <p style="color:var(--c-text-muted);text-align:center;padding:20px">로드 중...</p>
+                <p class="changelog-loading">로드 중...</p>
             </div>
         </div>
     </div>

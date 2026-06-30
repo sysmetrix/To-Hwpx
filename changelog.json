@@ -1,6 +1,18 @@
 {
-  "current": "4.8.8",
+  "current": "4.9.0",
   "versions": [
+    {
+      "version": "4.9.0",
+      "date": "2026-06-30",
+      "dev": [
+        "[v4.9.0] 보안 강화: Markdown href IR 레벨 스킴 필터(defense-in-depth) 추가 — javascript: 등 위험 스킴 차단",
+        "[v4.9.0] 외부 이미지 fetch 시 투명성 토스트 표시 — 원격 서버 IP 노출 안내",
+        "[v4.9.0] CSP style-src에서 'unsafe-inline' 제거 — inline style= 속성을 모두 CSS 클래스 또는 DOM API(applyIrStyles)로 전환",
+        "[v4.9.0] irRunsToHtml/irListToHtml/irTableToHtml/renderQualityBar: data-ir-* 속성 기반으로 변경, applyIrStyles()가 DOM API로 적용",
+        "[v4.9.0] 표 셀 배경색 hex 유효성 검증 추가(3/6자리 hex만 허용)",
+        "[v4.9.0] rhwp 오류·changelog 로딩 메시지 inline style 제거 → CSS 클래스로 전환"
+      ]
+    },
     {
       "version": "4.8.8",
       "date": "2026-06-29",

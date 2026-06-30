@@ -1164,7 +1164,7 @@ function metricClass(value) {
 
 function renderQualityBar(value) {
     const n = Math.max(0, Math.min(100, Number(value) || 0));
-    return `<span class="quality-meter ${metricClass(n)}"><span style="width:${n}%"></span></span>`;
+    return `<span class="quality-meter ${metricClass(n)}"><span data-ir-width="${n}"></span></span>`;
 }
 
 function renderQualityPanel() {
@@ -1516,7 +1516,7 @@ async function renderFontGuide() {
             <div>
                 <h3>${escHtml(font.name)}</h3>
                 <p>${formatFontDescription(font.desc)}</p>
-                <p class="font-guide-sample" style="font-family:'${escHtml(font.family || font.name)}', var(--font-main)">문서를 한글(HWPX)로 변환합니다 123</p>
+                <p class="font-guide-sample" data-font-family="${escHtml(font.family || font.name)}">문서를 한글(HWPX)로 변환합니다 123</p>
             </div>
             <div class="font-guide-actions" data-font-index="${index}">
                 <span class="font-guide-local-missing">확인 중...</span>
@@ -1524,6 +1524,7 @@ async function renderFontGuide() {
             </div>
         </section>
     `).join('');
+    applyIrStyles(el);
 
     // queryLocalFonts() 한 번만 호출 — 현재 사용자 설치 폰트 포함, 권한 허용 시
     let localFontsList = null;
@@ -2602,6 +2603,14 @@ async function runConversionPipeline() {
             setProgressPanelState(item.validation.pass ? 'success' : 'warning');
             setStatusText('완료!');
             showResult({ url: item.url, fileName: item.fileName, size: item.blob.size, validation: item.validation });
+            // 외부 서버에 이미지 요청이 발생한 경우 투명성 안내
+            const extImgCount = state.ir?.externalImageCount || 0;
+            if (extImgCount > 0) {
+                showToast(
+                    `🌐 외부 이미지 ${escHtml(String(extImgCount))}개를 원격 서버에서 불러왔습니다. 해당 서버에 접속자 IP가 노출되었습니다.`,
+                    { timeout: 7000 }
+                );
+            }
             if (state.autoDownload && item.validation.pass) {
                 triggerDownload(item.url, item.fileName);
                 setStatusText('완료! 다운로드를 시작했습니다.');
@@ -4251,7 +4260,8 @@ function irRunsToHtml(runs) {
         if (r.strike) deco.push('line-through');
         const css = (r.color && /^#[0-9A-Fa-f]{6}$/.test(r.color) ? `color:${r.color};` : '')
                   + (deco.length ? `text-decoration:${deco.join(' ')};` : '');
-        t = css ? `<span style="${css}">${t}</span>` : t;
+        // style= 속성 대신 data 속성 사용 → applyIrStyles()가 DOM API로 적용(CSP unsafe-inline 불필요)
+        t = css ? `<span data-ir-run-style="${escHtml(css)}">${t}</span>` : t;
         let href = '';
         try {
             const url = new URL(String(r.href || ''));
@@ -4275,7 +4285,7 @@ function irListToHtml(block) {
         else if (ordered) marker = `${it.marker != null ? it.marker : (++auto)}.`;
         else marker = '•';
         const content = Array.isArray(it.runs) && it.runs.length ? irRunsToHtml(it.runs) : cell(it);
-        h += `<div class="ir-li" style="padding-left:${level * 1.4 + 1}em">${marker} ${content}</div>`;
+        h += `<div class="ir-li" data-ir-indent="${level}">${marker} ${content}</div>`;
         for (const cb of (it.codeBlocks || [])) h += `<pre class="ir-code"><code>${escHtml(cb.text || '')}</code></pre>`;
     }
     return h + '</div>';
@@ -4300,12 +4310,44 @@ function irTableToHtml(block) {
             const span = `${cs(c) > 1 ? ` colspan="${cs(c)}"` : ''}${rs(c) > 1 ? ` rowspan="${rs(c)}"` : ''}`;
             const numClass = (!row.hd && isNumericCell(rawText(c))) ? ' class="ir-cell-num"' : '';
             const b = bg(c);
-            const style = b ? ` style="background:#${escHtml(b)}"` : '';
-            h += `<${tag}${span}${numClass}${style}>${txt(c)}</${tag}>`;
+            // bg는 "#RRGGBB" または "#RGB" 형식만 허용 — data 속성으로 전달해 applyIrStyles()가 DOM API 적용
+            const validBg = b && /^[0-9A-Fa-f]{3}([0-9A-Fa-f]{3})?$/.test(String(b)) ? String(b) : null;
+            const bgAttr = validBg ? ` data-ir-bg="${validBg}"` : '';
+            h += `<${tag}${span}${numClass}${bgAttr}>${txt(c)}</${tag}>`;
         }
         h += '</tr>';
     }
     return h + '</tbody></table>';
+}
+
+/**
+ * innerHTML 삽입 후 data-ir-* 속성을 DOM API로 스타일에 반영한다.
+ * style= 속성 대신 DOM API를 사용하므로 CSP style-src 'unsafe-inline' 불필요.
+ */
+function applyIrStyles(root) {
+    if (!root) return;
+    root.querySelectorAll('[data-ir-run-style]').forEach(el => {
+        el.style.cssText = el.getAttribute('data-ir-run-style');
+        el.removeAttribute('data-ir-run-style');
+    });
+    root.querySelectorAll('[data-ir-indent]').forEach(el => {
+        const level = Math.max(0, Math.min(4, parseInt(el.dataset.irIndent, 10) || 0));
+        el.style.paddingLeft = `${level * 1.4 + 1}em`;
+        el.removeAttribute('data-ir-indent');
+    });
+    root.querySelectorAll('[data-ir-bg]').forEach(el => {
+        el.style.backgroundColor = `#${el.dataset.irBg}`;
+        el.removeAttribute('data-ir-bg');
+    });
+    root.querySelectorAll('[data-ir-width]').forEach(el => {
+        const w = Math.max(0, Math.min(100, Number(el.dataset.irWidth) || 0));
+        el.style.width = `${w}%`;
+        el.removeAttribute('data-ir-width');
+    });
+    root.querySelectorAll('[data-font-family]').forEach(el => {
+        el.style.fontFamily = `'${el.dataset.fontFamily}', var(--font-main)`;
+        el.removeAttribute('data-font-family');
+    });
 }
 
 /** IR blocks → HTML (재귀: 인용 중첩 지원) */
@@ -4405,6 +4447,7 @@ function openPreview(blob) {
             ? `<div class="ir-page">${state.ir.title && state.ir.title.trim()
                 ? `<h1 class="ir-title">${escHtml(state.ir.title.trim())}</h1>` : ''}${irBlocksToHtml(state.ir.blocks)}</div>`
             : '<p class="preview-empty">미리보기할 내용이 없습니다. 먼저 파일을 변환해 주세요.</p>';
+        applyIrStyles(irBox);
         const pageCount = paginatePreview(irBox);
         if (countEl && pageCount > 1) {
             countEl.textContent = `${state.paperSize || 'A4'} · ${state.orientation === 'landscape' ? '가로' : '세로'} · ${pageCount}쪽`;
@@ -4431,7 +4474,7 @@ async function loadRhwpPrecise() {
     loading.classList.remove('preview-loading--fallback');
     loading.style.display = 'flex';
     loading.innerHTML = `
-        <div style="text-align:center">
+        <div class="preview-loading-center">
             <div class="loading-spinner"></div>
             <p>rhwp 뷰어를 불러오는 중...</p>
             <p class="preview-loading-sub">최초 실행 시 WebAssembly 로드로 10~20초 소요될 수 있습니다</p>
@@ -4448,11 +4491,11 @@ async function loadRhwpPrecise() {
     } catch (err) {
         console.error('[rhwp]', err);
         loading.innerHTML = `
-            <div style="text-align:center;padding:24px">
-                <p style="font-size:1.8rem;margin-bottom:10px">⚠</p>
-                <p style="font-weight:600;color:var(--c-error)">정밀 미리보기를 불러오지 못했습니다</p>
-                <p style="font-size:0.8rem;color:var(--c-text-muted);margin-top:6px">${escHtml(err.message || '')}</p>
-                <p style="font-size:0.78rem;color:var(--c-text-muted);margin-top:4px">
+            <div class="preview-loading-center rhwp-error">
+                <p class="rhwp-error-icon">⚠</p>
+                <p class="rhwp-error-title">정밀 미리보기를 불러오지 못했습니다</p>
+                <p class="rhwp-error-detail">${escHtml(err.message || '')}</p>
+                <p class="rhwp-error-hint">
                     기본 미리보기를 사용하거나, 다운로드 후 한컴오피스에서 확인하세요.
                 </p>
             </div>`;
@@ -4481,7 +4524,7 @@ async function showChangelog() {
             _changelogData = await res.json();
         } catch (e) {
             document.getElementById('changelog-content').innerHTML =
-                '<p style="color:var(--c-error);text-align:center;padding:24px">업데이트 내역을 불러오지 못했습니다.</p>';
+                '<p class="changelog-load-error">업데이트 내역을 불러오지 못했습니다.</p>';
             return;
         }
     }
@@ -4503,6 +4546,7 @@ function renderChangelogContent(tab) {
     if (tab === 'quality') {
         // eslint-disable-next-line no-unsanitized/property -- renderQualityPanel() returns static HTML with escHtml() for all dynamic values
         el.innerHTML = renderQualityPanel();
+        applyIrStyles(el);
         return;
     }
 

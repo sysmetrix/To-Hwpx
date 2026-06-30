@@ -258,7 +258,9 @@ function markdownInlineRuns(tokens, inherited = {}) {
             continue;
         }
         if (token.type === 'link') {
-            const href = sanitize(decodeMdEntities(token.href || ''));
+            const rawHref = sanitize(decodeMdEntities(token.href || ''));
+            // IR 레벨에서 위험 스킴 차단(defense-in-depth) — hwpx.js와 preview도 각자 검증함
+            const href = /^(https?:|mailto:|#)/i.test(rawHref) ? rawHref : '';
             const title = sanitize(decodeMdEntities(token.title || ''));
             const next = { ...inherited, href, title };
             runs.push(...markdownInlineRuns(token.tokens || [{ type: 'text', text: token.text || href }], next));
@@ -2005,6 +2007,7 @@ async function fetchMarkdownImage(src) {
 async function resolveMarkdownAssets(ir, sourceFormat = 'md') {
     let imageCounter = 1;
     let totalBytes = 0;
+    let externalFetchCount = 0;  // 외부 서버 접속 건수 — 투명성 안내용
     const warnings = [];
 
     async function resolveBlocks(blocks) {
@@ -2022,8 +2025,10 @@ async function resolveMarkdownAssets(ir, sourceFormat = 'md') {
                 const src = normalizeMarkdownImageSource(block.src);
                 let loaded;
                 if (/^data:/i.test(src)) loaded = decodeDataImageUrl(src);
-                else if (/^https?:/i.test(src)) loaded = await fetchMarkdownImage(src);
-                else throw new Error('상대경로 이미지는 이미지 파일을 함께 선택하는 방식이 아직 필요합니다.');
+                else if (/^https?:/i.test(src)) {
+                    externalFetchCount++;  // fetch 시도 전 카운트 — 실패해도 서버 접속은 발생
+                    loaded = await fetchMarkdownImage(src);
+                } else throw new Error('상대경로 이미지는 이미지 파일을 함께 선택하는 방식이 아직 필요합니다.');
 
                 if (loaded.bytes.byteLength > MARKDOWN_IMAGE_MAX_BYTES) {
                     throw new Error('이미지 용량이 8MB를 초과합니다.');
@@ -2064,6 +2069,7 @@ async function resolveMarkdownAssets(ir, sourceFormat = 'md') {
 
     ir.blocks = await resolveBlocks(ir.blocks || []);
     if (warnings.length) ir.assetWarnings = warnings;
+    if (externalFetchCount > 0) ir.externalImageCount = externalFetchCount;
     return ir;
 }
 

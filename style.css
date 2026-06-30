@@ -852,10 +852,12 @@ a:hover { text-decoration: underline; }
 .section-sub {
     text-align: center;
     color: var(--c-text-sub);
-    margin-bottom: 36px;
+    margin: 16px 0 24px;
     font-size: 0.96rem;
     word-break: keep-all;
 }
+.section-sub--wide { margin-bottom: 32px; }
+.label-optional { font-weight: 400; color: var(--c-text-muted); }
 
 /* 탭 버튼 (기본 서비스 / 확장 서비스) */
 .format-tabs {
@@ -3836,6 +3838,16 @@ a:hover { text-decoration: underline; }
     color: var(--c-text-muted);
     margin-top: 6px;
 }
+.preview-loading-center {
+    text-align: center;
+}
+.rhwp-error { padding: 24px; }
+.rhwp-error-icon { font-size: 1.8rem; margin-bottom: 10px; }
+.rhwp-error-title { font-weight: 600; color: var(--c-error); }
+.rhwp-error-detail { font-size: 0.8rem; color: var(--c-text-muted); margin-top: 6px; }
+.rhwp-error-hint { font-size: 0.78rem; color: var(--c-text-muted); margin-top: 4px; }
+.changelog-load-error { color: var(--c-error); text-align: center; padding: 24px; }
+.changelog-loading { color: var(--c-text-muted); text-align: center; padding: 20px; }
 .btn-precise-preview {
     padding: 5px 12px;
     background: none;
