@@ -66,6 +66,7 @@ const state = {
     downloadTimer: null                // Blob URL 해제 타이머
 };
 let modalReturnFocus = null;
+let _initialDropZoneHTML = null;
 
 // ─────────────────────────────────────────────────────────────────────────
 // [7단계 파이프라인 정의]
@@ -263,6 +264,9 @@ function initDropZone() {
     const fileInput = document.getElementById('file-input');
     if (!dropZone || !fileInput) return;
 
+    // 초기 드롭존 HTML 저장 — clearSelectedFile()에서 재생성 없이 복원
+    _initialDropZoneHTML = dropZone.innerHTML;
+
     // 클릭 → 숨겨진 <input type="file"> 트리거
     dropZone.addEventListener('click', (e) => {
         // 드롭존 내부의 버튼(다른 파일 선택)을 클릭한 경우 제외
@@ -276,6 +280,14 @@ function initDropZone() {
             handleFileList(e.target.files);
             // 같은 파일을 다시 선택할 수 있도록 value 초기화
             e.target.value = '';
+        }
+    });
+
+    // 키보드 접근성: role="button" 드롭존에서 Enter/Space → 파일 선택 트리거
+    dropZone.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            fileInput.click();
         }
     });
 
@@ -562,19 +574,8 @@ function clearSelectedFile() {
     resetIrPreview();
 
     const dz = document.getElementById('drop-zone');
-    if (dz) {
-        dz.innerHTML = `
-            <div class="drop-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
-            <div class="drop-fmt-icons" aria-hidden="true">
-                <img src="icons/brand/markdown.svg" alt="MD">
-                <img src="icons/brand/microsoftword.svg" alt="DOCX">
-                <img src="icons/brand/html5.svg" alt="HTML">
-                <img src="icons/brand/microsoftexcel.svg" alt="XLSX">
-                <img src="icons/brand/jupyter.svg" alt="IPYNB">
-            </div>
-            <div class="drop-title">여러 파일을 드래그하거나 클릭하세요</div>
-            <div class="drop-sub">MD · HTML · DOCX · CSV · XLSX · JSON · TXT · IPYNB · HWP</div>
-        `;
+    if (dz && _initialDropZoneHTML) {
+        dz.innerHTML = _initialDropZoneHTML;
     }
 
     const cda = document.getElementById('converter-drop-area');

@@ -1,6 +1,17 @@
 {
-  "current": "4.9.19",
+  "current": "4.9.20",
   "versions": [
+    {
+      "version": "4.9.20",
+      "date": "2026-06-30",
+      "user": [],
+      "dev": [
+        "[v4.9.20] app.js: 드롭존 초기 HTML을 _initialDropZoneHTML에 저장하여 clearSelectedFile() 하드코딩 제거 (DRY)",
+        "[v4.9.20] app.js: 드롭존 keydown 핸들러 추가 — Enter/Space로 파일 선택 가능 (접근성)",
+        "[v4.9.20] index.html: canonical 링크, og:locale 메타 태그 추가 (SEO/SNS)",
+        "[v4.9.20] index.html: data-admin-enabled 미사용 속성 제거"
+      ]
+    },
     {
       "version": "4.9.19",
       "date": "2026-06-30",
