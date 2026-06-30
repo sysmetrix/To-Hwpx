@@ -1,6 +1,23 @@
 {
-  "current": "4.9.14",
+  "current": "4.9.15",
   "versions": [
+    {
+      "version": "4.9.15",
+      "date": "2026-06-30",
+      "user": [
+        "드롭존 테두리가 점선에서 실선으로 바뀌고, 호버 시 파란 외곽 글로우 효과가 생겼습니다.",
+        "변환하기 버튼이 pill(둥근 캡슐) 형태로 바뀌었습니다.",
+        "상단 헤더 버튼들도 pill 형태로 통일됐습니다.",
+        "메인 제목 폰트가 더 굵고 임팩트 있게 바뀌었습니다."
+      ],
+      "dev": [
+        "[v4.9.15] style.css: .drop-zone — dashed→solid, border-radius 20px, 호버 glow ring 효과",
+        "[v4.9.15] style.css: .drop-fmt-icons img — opacity 0.45→0.6, size 20→22px",
+        "[v4.9.15] style.css: .btn-convert — border-radius 50px (pill), shadow 강화",
+        "[v4.9.15] style.css: .nav-shortcut-btn/.nav-reset-btn — border-radius 50px",
+        "[v4.9.15] style.css: .hero h1 — font-weight 800→900, letter-spacing -0.04em, size 약간 확대"
+      ]
+    },
     {
       "version": "4.9.14",
       "date": "2026-06-30",
