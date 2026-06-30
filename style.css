@@ -3136,11 +3136,23 @@ a:hover { text-decoration: underline; }
     .hero-sub br { display: none; }
     .hero-badges span,
     .hero-badges button {
-        flex: 1 1 130px;
+        flex: 1 1 calc(50% - 4px);
+        min-width: 0;
         justify-content: center;
         text-align: center;
+        padding: 8px 6px;
+        gap: 6px;
     }
-    .hero-badges .trust-btn-sub { display: none; }
+    .hero-badges .trust-btn-icon,
+    .hero-badges .trust-btn-icon svg { width: 16px; height: 16px; }
+    .hero-badges .trust-btn-label {
+        font-size: 0.74rem;
+        white-space: normal;
+    }
+    .hero-badges .trust-btn-sub {
+        font-size: 0.64rem;
+        white-space: normal;
+    }
     .quick-guide {
         align-items: stretch;
         flex-direction: column;
