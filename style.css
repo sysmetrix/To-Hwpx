@@ -3138,18 +3138,18 @@ a:hover { text-decoration: underline; }
     .hero-badges button {
         flex: 1 1 calc(50% - 4px);
         min-width: 0;
+        flex-direction: column;
         justify-content: center;
         text-align: center;
-        padding: 6px 8px;
-        gap: 5px;
+        padding: 8px 4px;
+        gap: 4px;
     }
     .hero-badges .trust-btn-icon,
-    .hero-badges .trust-btn-icon svg { width: 14px; height: 14px; }
+    .hero-badges .trust-btn-icon svg { width: 16px; height: 16px; }
     .hero-badges .trust-btn-label {
-        font-size: 0.7rem;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+        font-size: 0.68rem;
+        white-space: normal;
+        line-height: 1.15;
     }
     .hero-badges .trust-btn-sub { display: none; }
     .quick-guide {
