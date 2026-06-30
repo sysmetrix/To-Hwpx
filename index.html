@@ -171,7 +171,7 @@
             <span>｢BWYF｣ AX Challenger 2026</span>
             <!-- [주의] id="open-changelog"는 app.js에서 관리자 모드일 때 업데이트 내역 모달을 여는 연결값 -->
             <button class="util-changelog-btn" id="open-changelog" aria-label="버전 정보" data-admin-enabled="false">
-                📋 v4.9.9
+                📋 v4.9.10
             </button>
         </div>
     </div>
@@ -441,10 +441,7 @@
                                     <option value="Noto Sans KR">Noto Sans KR</option>
                                     <option value="Pretendard GOV Variable">Pretendard GOV Variable</option>
                                 </select>
-                                <button type="button" id="open-font-guide" class="font-guide-btn"
-                                        aria-label="폰트 설치 안내 열기" title="폰트 설치 안내">
-                                    안내
-                                </button>
+                                <button type="button" id="open-font-guide" class="font-guide-btn" aria-label="글꼴 안내 열기" title="글꼴 안내">글꼴 안내</button>
                             </div>
                         </div>
                         <div class="form-row">
@@ -720,7 +717,7 @@
                                     </div>
                                     <div class="detail-field">
                                         <span class="detail-field-label label-with-help">가로 구분선
-                                            <button type="button" class="help-dot" data-help="MD의 --- · HTML의 &lt;hr&gt; 구분선 처리 방식입니다. 숨김은 선 없이 빈 줄로 처리합니다." aria-label="가로 구분선 도움말">?</button>
+                                            <button type="button" class="help-dot" data-help="MD의 --- · HTML의 &lt;hr&gt; 구분선 표시 여부를 설정합니다." aria-label="가로 구분선 도움말">?</button>
                                         </span>
                                         <div class="seg-control seg-control--sm" role="group" aria-label="가로 구분선 표시 여부">
                                             <button type="button" class="seg-btn is-active" data-hr-display="hide">숨김</button>
@@ -1485,7 +1482,8 @@
                  미리보기는 실제 HWPX 렌더러가 아니라 옵션 효과를 직관적으로 보여주는 CSS 목업이다. -->
             <div class="help-panel" id="help-panel-detail" role="tabpanel" hidden>
                 <p class="onboarding-lead">
-                    보고서처럼 다듬을 때 쓰는 <b>본문 고급 서식</b> 옵션입니다. 아래 칩을 눌러 결과 미리보기가 어떻게 바뀌는지 확인하세요.
+                    보고서처럼 다듬을 때 쓰는 <b>본문 고급 서식</b> 옵션입니다.<br>
+                    아래 칩을 눌러 결과 미리보기가 어떻게 바뀌는지 확인하세요.
                 </p>
 
                 <div class="detail-demo" id="detail-demo">
@@ -1546,7 +1544,7 @@
                     <div><dt>링크 표시</dt><dd><b>파랑+밑줄</b>은 일반 하이퍼링크, <b>검정 본문</b>은 본문색 링크, <b>텍스트+주소</b>는 표시 글자 뒤에 실제 주소를 함께 적습니다(인쇄용).</dd></div>
                     <div><dt>이미지 최대 폭 / 정렬</dt><dd>이미지를 본문의 50%·75%·100%까지로 제한하고 왼쪽·가운데·오른쪽으로 배치합니다. 원본에 정렬 정보가 있으면 그쪽이 우선합니다.</dd></div>
                     <div><dt>첫 제목 본문 처리</dt><dd>상단 제목 블록으로 올라간 첫 제목을 본문에서 <b>제거</b>할지 <b>유지</b>할지 정합니다.</dd></div>
-                    <div><dt>가로 구분선</dt><dd>Markdown의 <code>---</code> 같은 구분선을 실제 선으로 <b>표시</b>할지, 빈 줄로 <b>숨김</b> 처리할지 정합니다.</dd></div>
+                    <div><dt>가로 구분선</dt><dd>MD의 --- · HTML의 &lt;hr&gt; 구분선 표시 여부를 설정합니다.</dd></div>
                 </dl>
 
             </div>
