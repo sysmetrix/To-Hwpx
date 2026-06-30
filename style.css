@@ -32,14 +32,14 @@
        비개발자는 이 영역의 색상/숫자 값만 바꾸는 것이 가장 안전합니다. */
 
     /* 주 색상 (단일 신뢰 블루 — 화면 전체의 유일한 포인트 컬러) */
-    --c-primary:        #2563eb;
-    --c-primary-dark:   #1b4fd1;
-    --c-primary-light:  #e9f0fc;
+    --c-primary:        #2252e4;
+    --c-primary-dark:   #1640c8;
+    --c-primary-light:  #e9effc;
 
     /* 액센트 — 퍼플 은퇴, 포인트는 블루 하나로 통일.
        (변수명은 JS/레거시 호환을 위해 유지하되 값은 블루 계열로 매핑) */
-    --c-accent:         #2563eb;
-    --c-accent-light:   #e9f0fc;
+    --c-accent:         #2252e4;
+    --c-accent-light:   #e9effc;
 
     /* 배경 계층 (따뜻한 오프화이트) */
     --c-bg:             #faf9f6;    /* 페이지 배경 — 따뜻한 오프화이트 */
@@ -514,6 +514,8 @@ a:hover { text-decoration: underline; }
    ───────────────────────────────────────────────────────────────── */
 .hero {
     background: var(--c-bg);
+    background-image: radial-gradient(circle, color-mix(in srgb, var(--c-primary) 9%, transparent) 1px, transparent 1px);
+    background-size: 24px 24px;
     color: var(--c-text);
     padding: clamp(56px, 9vw, 104px) 0 clamp(40px, 6vw, 72px);
     text-align: center;
@@ -2089,53 +2091,108 @@ a:hover { text-decoration: underline; }
     flex-shrink: 0;
 }
 
-/* 포맷 힌트 메시지 */
+/* 포맷 힌트 카드 */
 #format-hint {
     display: none;
-    font-size: 0.85rem;
-    color: var(--c-text-sub);
-    background: var(--c-accent-light);
-    padding: 9px 12px;
-    border-radius: var(--radius-sm);
     margin-bottom: 18px;
-    min-height: 59px;
 }
-/* 파일 선택 전 안내(빈칸 방지) — 박스 높이에 맞춰 가운데 정렬 */
 .format-hint-empty {
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 41px;
+    min-height: 52px;
     color: var(--c-text-muted);
+    font-size: 0.84rem;
     text-align: center;
+    background: var(--c-surface);
+    border: 1px solid var(--c-border);
+    border-radius: var(--radius-md);
+    padding: 10px 14px;
 }
-.format-hint-head {
+.format-hint-card {
+    background: var(--c-surface);
+    border: 1px solid var(--c-border);
+    border-radius: var(--radius-md);
+    padding: 12px 14px;
+}
+.format-hint-row {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+}
+.format-hint-icon-wrap {
+    width: 38px;
+    height: 38px;
+    flex-shrink: 0;
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    margin-bottom: 4px;
+    justify-content: center;
+    background: var(--c-surface-alt);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--c-border);
 }
-.format-hint-head strong { color: var(--c-text); }
-.format-hint-head span {
-    flex-shrink: 0;
-    color: var(--c-accent);
-    font-size: 0.76rem;
+.format-hint-fmt-icon {
+    width: 22px;
+    height: 22px;
+    object-fit: contain;
+}
+.format-hint-fmt-badge {
+    font-size: 0.68rem;
+    font-weight: 800;
+    color: var(--c-primary);
+    letter-spacing: 0.03em;
+}
+.format-hint-right { flex: 1; min-width: 0; }
+.format-hint-name-row {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin-bottom: 7px;
+    flex-wrap: wrap;
+}
+.format-hint-name {
+    font-size: 0.88rem;
+    color: var(--c-text);
     font-weight: 700;
 }
-.format-hint-body {
-    display: grid;
-    gap: 3px;
-    font-size: 0.78rem;
-    line-height: 1.45;
+.fh-quality-badge {
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.69rem;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 100px;
+    letter-spacing: 0.02em;
 }
-.format-hint-body b {
-    color: var(--c-text);
-    margin-right: 4px;
+.fh-quality--high { background: #dcfce7; color: #15803d; }
+.fh-quality--mid  { background: #fef9c3; color: #a16207; }
+.fh-quality--low  { background: #fee2e2; color: #991b1b; }
+.format-hint-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
 }
-.format-hint-settings {
-    color: var(--c-primary);
+.fhc {
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.7rem;
+    padding: 2px 7px;
+    border-radius: 100px;
+    line-height: 1.5;
 }
+.fhc--ok   { background: #dcfce7; color: #15803d; }
+.fhc--warn { background: #fef3c7; color: #92400e; }
+.format-hint-setting-note {
+    font-size: 0.75rem;
+    color: var(--c-text-muted);
+    margin-top: 6px;
+    padding-left: 2px;
+}
+[data-theme="dark"] .fh-quality--high { background: rgba(21,128,61,0.18);  color: #4ade80; }
+[data-theme="dark"] .fh-quality--mid  { background: rgba(161,98,7,0.18);   color: #fde047; }
+[data-theme="dark"] .fh-quality--low  { background: rgba(153,27,27,0.18);  color: #fca5a5; }
+[data-theme="dark"] .fhc--ok   { background: rgba(21,128,61,0.15);  color: #86efac; }
+[data-theme="dark"] .fhc--warn { background: rgba(161,98,7,0.15);   color: #fde047; }
 
 /* IR 미리보기 토글 */
 .ir-toggle-btn {
@@ -2172,7 +2229,7 @@ a:hover { text-decoration: underline; }
 /* 변환 시작 버튼 */
 .btn-convert {
     width: 100%;
-    padding: 14px;
+    padding: 15px 20px;
     background: var(--c-primary);
     color: #fff;
     border: none;
@@ -2181,17 +2238,30 @@ a:hover { text-decoration: underline; }
     font-size: 1.05rem;
     font-weight: 700;
     cursor: pointer;
-    transition: background var(--trans), transform var(--trans), opacity var(--trans);
+    transition: background var(--trans), transform var(--trans), opacity var(--trans), box-shadow var(--trans);
     margin-top: 8px;
+    box-shadow: 0 2px 10px color-mix(in srgb, var(--c-primary) 38%, transparent);
 }
 .btn-convert:hover:not(:disabled) {
     background: var(--c-primary-dark);
-    transform: translateY(-1px);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 20px color-mix(in srgb, var(--c-primary) 48%, transparent);
+}
+.btn-convert:active:not(:disabled) {
+    transform: translateY(0);
+    box-shadow: 0 1px 5px color-mix(in srgb, var(--c-primary) 22%, transparent);
 }
 .btn-convert:disabled {
     opacity: 0.45;
     cursor: not-allowed;
     transform: none;
+    box-shadow: none;
+}
+.btn-convert-inner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
 }
 
 /* 오른쪽: 진행 패널 */
@@ -3676,9 +3746,15 @@ a:hover { text-decoration: underline; }
     padding: 8px 10px;
     border-radius: var(--radius-sm);
     background: var(--c-surface-alt);
+    border: 1px solid transparent;
     color: var(--c-text) !important;
     font-size: 1rem !important;
     font-weight: 600;
+    transition: border-color 0.2s;
+}
+.font-sample-live {
+    border-color: color-mix(in srgb, var(--c-primary) 30%, transparent);
+    background: color-mix(in srgb, var(--c-primary) 5%, var(--c-surface-alt));
 }
 .font-guide-actions {
     display: flex;

@@ -665,19 +665,55 @@ function updateFormatExpectation(ext, waiting = false) {
     const hint = document.getElementById('format-hint');
     if (!hint || !ext) return;
     const info = getFormatInfoForExt(ext) || { name: ext.toUpperCase(), quality: '★☆☆' };
-    const summary = getConversionSummaryForExt(ext);
-    const prefix = waiting ? `.${ext.toUpperCase()} 파일을 업로드하세요` : `${info.name} 감지`;
+
+    // 포맷별 칩 데이터 (짧은 레이블)
+    const FORMAT_CHIPS = {
+        md:       { ok: ['제목·문단·목록', '표·코드·링크', '이미지·각주'],  warn: ['접근 차단 이미지', '복잡한 HTML'] },
+        markdown: { ok: ['제목·문단·목록', '표·코드·링크', '이미지·각주'],  warn: ['접근 차단 이미지', '복잡한 HTML'] },
+        html:     { ok: ['제목·문단·목록', '병합 표·인라인 서식'],           warn: ['CSS 레이아웃', '이미지·SVG'] },
+        htm:      { ok: ['제목·문단·목록', '표·strong/em'],                  warn: ['CSS 레이아웃', '이미지·SVG'] },
+        docx:     { ok: ['제목·목록·표·링크', '이미지·각주·인라인 서식'],    warn: ['WMF/EMF 그림', 'Word 페이지 배치'] },
+        txt:      { ok: ['전체 텍스트', '문단·줄바꿈'],                       warn: ['제목·표·서식 없음'] },
+        text:     { ok: ['전체 텍스트', '문단·줄바꿈'],                       warn: ['제목·표·서식 없음'] },
+        csv:      { ok: ['표 행/열·머리글'],                                  warn: ['수식·색상·차트·이미지'] },
+        xlsx:     { ok: ['첫 번째 시트 표·머리글'],                           warn: ['여러 시트·수식·차트·이미지'] },
+        xls:      { ok: ['첫 번째 시트 표·머리글'],                           warn: ['여러 시트·수식·차트·이미지'] },
+        json:     { ok: ['객체·배열·키-값 표'],                               warn: ['레이아웃·타입 의미·들여쓰기'] },
+        ipynb:    { ok: ['마크다운 셀', '코드 셀·텍스트 출력'],               warn: ['이미지·차트 출력', '수식·위젯'] },
+        hwp:      { ok: [],                                                    warn: ['HWP5 바이너리 제한', '이미지·개체'] },
+        hwpx:     { ok: ['원본 HWPX 직접 사용 권장'],                         warn: ['재변환 시 서식 손실'] },
+    };
+    const chipData = FORMAT_CHIPS[ext] || { ok: ['텍스트 중심'], warn: ['복잡한 서식·이미지'] };
+
+    // 품질 배지
+    const starCount = (String(info.quality || '').match(/★/g) || []).length;
+    const qualityLabel = starCount >= 3 ? '보존도 높음' : starCount === 2 ? '보존도 보통' : '텍스트 중심 변환';
+    const qualityClass = starCount >= 3 ? 'fh-quality--high' : starCount === 2 ? 'fh-quality--mid' : 'fh-quality--low';
+
+    // 아이콘 (SVG 파일 또는 텍스트 배지)
+    const iconHtml = info.svgIcon
+        ? `<img src="${escHtml(info.svgIcon)}" class="format-hint-fmt-icon" alt="" loading="lazy">`
+        : `<span class="format-hint-fmt-badge">${escHtml((ext || 'FILE').toUpperCase().slice(0, 4))}</span>`;
+
+    const formatName = waiting ? `.${ext.toUpperCase()} 파일을 업로드하세요` : `${info.name} 감지`;
+    const okChips = chipData.ok.map(t => `<span class="fhc fhc--ok">${escHtml(t)}</span>`).join('');
+    const warnChips = chipData.warn.map(t => `<span class="fhc fhc--warn">${escHtml(t)}</span>`).join('');
+
     // eslint-disable-next-line no-unsanitized/property -- all user strings wrapped in escHtml()
     hint.innerHTML = `
-        <div class="format-hint-head">
-            <strong>${escHtml(prefix)}</strong>
-            <span>${escHtml(qualityText(info.quality))}</span>
+        <div class="format-hint-card">
+            <div class="format-hint-row">
+                <div class="format-hint-icon-wrap">${iconHtml}</div>
+                <div class="format-hint-right">
+                    <div class="format-hint-name-row">
+                        <strong class="format-hint-name">${escHtml(formatName)}</strong>
+                        <span class="fh-quality-badge ${escHtml(qualityClass)}">${escHtml(qualityLabel)}</span>
+                    </div>
+                    <div class="format-hint-chips">${okChips}${warnChips}</div>
+                </div>
+            </div>
         </div>
-        <div class="format-hint-body">
-            <span><b>보존</b> ${escHtml(summary.preserved)}</span>
-            <span><b>확인</b> ${escHtml(summary.lossy)}</span>
-            ${waiting ? '' : '<span class="format-hint-settings"><b>기본 설정</b> 글꼴, 용지, 방향은 아래 기본 설정에서 바로 바꿀 수 있습니다</span>'}
-        </div>
+        ${waiting ? '' : '<p class="format-hint-setting-note">기본 설정: 글꼴, 용지, 방향은 아래에서 변경할 수 있습니다.</p>'}
     `;
     hint.style.display = 'block';
 }
@@ -1534,6 +1570,12 @@ async function renderFontGuide() {
     `).join('');
     applyIrStyles(el);
 
+    // 각 예시글에 폰트 패밀리 즉시 적용 — 설치된 폰트는 바로 실제 글꼴로 렌더링
+    el.querySelectorAll('[data-font-family]').forEach(sample => {
+        const family = sample.dataset.fontFamily;
+        if (family) sample.style.fontFamily = `'${family}', 'Malgun Gothic', sans-serif`;
+    });
+
     // queryLocalFonts() 한 번만 호출 — 현재 사용자 설치 폰트 포함, 권한 허용 시
     let localFontsList = null;
     if ('queryLocalFonts' in window) {
@@ -1550,6 +1592,7 @@ async function renderFontGuide() {
         const official = `<a class="font-official-link" href="${escHtml(font.official)}" target="_blank" rel="noopener">공식 사이트</a>`;
         if (isInstalled) {
             box.innerHTML = `<span class="font-installed-badge">설치됨 ✓</span>${official}`;
+            box.closest('section')?.querySelector('.font-guide-sample')?.classList.add('font-sample-live');
         } else if (localPath) {
             box.innerHTML = `<a href="${escHtml(localPath)}" download>TTF 다운로드</a>${official}`;
         } else {
@@ -2499,15 +2542,19 @@ function updateConvertButton(enabled) {
     if (!btn) return;
     btn.disabled = !enabled;
     const n = state.queue.length;
+    let label;
     if (state.inputMode === 'paste') {
-        btn.textContent = !enabled
+        label = !enabled
             ? (state.isConverting ? '변환 중…' : '내용을 입력하세요')
             : '이 설정으로 HWPX 만들기';
     } else {
-        btn.textContent = !enabled
+        label = !enabled
             ? (state.isConverting ? '변환 중…' : '파일을 먼저 선택하세요')
             : (n > 1 ? `이 설정으로 ${n}개 HWPX 만들기` : '이 설정으로 HWPX 만들기');
     }
+    const textEl = btn.querySelector('.btn-convert-text');
+    if (textEl) textEl.textContent = label;
+    else btn.textContent = label;
 }
 
 

@@ -1,6 +1,27 @@
 {
-  "current": "4.9.5",
+  "current": "4.9.6",
   "versions": [
+    {
+      "version": "4.9.6",
+      "date": "2026-06-30",
+      "user": [
+        "폰트 설치 안내에서 예시글이 실제 설치된 글꼴로 표시됩니다.",
+        "파일 선택 후 포맷 감지 영역이 아이콘·보존도 배지·항목 칩 형태로 보기 쉽게 바뀌었습니다.",
+        "변환 버튼 디자인이 더 뚜렷하게 강조됩니다."
+      ],
+      "dev": [
+        "[v4.9.6] style.css: --c-primary #2563eb→#2252e4 (더 선명한 인디고-블루), primary-dark/accent 동기화",
+        "[v4.9.6] style.css: .hero — CSS dot-grid (radial-gradient 1px / 24px 24px)",
+        "[v4.9.6] style.css: #format-hint 완전 교체 → .format-hint-card/.format-hint-row/.fhc/.fh-quality-badge 카드 구조",
+        "[v4.9.6] js/app.js: updateFormatExpectation() — FORMAT_CHIPS 인라인, 아이콘·품질배지·ok/warn 칩 구조",
+        "[v4.9.6] style.css: .btn-convert — color-mix shadow, hover transform -2px, .btn-convert-inner flex",
+        "[v4.9.6] index.html: convert-btn — 다운로드 SVG + .btn-convert-text span 내부 구조",
+        "[v4.9.6] js/app.js: updateConvertButton() — .btn-convert-text textContent 업데이트",
+        "[v4.9.6] js/app.js: renderFontGuide() — innerHTML 후 data-font-family로 style.fontFamily 즉시 적용",
+        "[v4.9.6] js/app.js: renderFontGuide() — isInstalled 확인 후 .font-sample-live 클래스 추가",
+        "[v4.9.6] style.css: .font-guide-sample — border 추가, .font-sample-live 파란 테두리+배경 tint"
+      ]
+    },
     {
       "version": "4.9.5",
       "date": "2026-06-30",
