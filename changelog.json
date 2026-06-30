@@ -1,6 +1,14 @@
 {
-  "current": "4.9.18",
+  "current": "4.9.19",
   "versions": [
+    {
+      "version": "4.9.19",
+      "date": "2026-06-30",
+      "user": [],
+      "dev": [
+        "[v4.9.19] index.html: details.advanced-settings에서 open 속성 제거 — 기본 닫힘 상태 복구로 golden CI download timeout 해결"
+      ]
+    },
     {
       "version": "4.9.18",
       "date": "2026-06-30",

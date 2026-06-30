@@ -573,7 +573,7 @@ function clearSelectedFile() {
                 <img src="icons/brand/jupyter.svg" alt="IPYNB">
             </div>
             <div class="drop-title">여러 파일을 드래그하거나 클릭하세요</div>
-            <div class="drop-sub">MD · DOCX · HTML · CSV · XLSX · JSON · TXT · IPYNB · HWP</div>
+            <div class="drop-sub">MD · HTML · DOCX · CSV · XLSX · JSON · TXT · IPYNB · HWP</div>
         `;
     }
 
