@@ -1,6 +1,19 @@
 {
-  "current": "4.9.12",
+  "current": "4.9.13",
   "versions": [
+    {
+      "version": "4.9.13",
+      "date": "2026-06-30",
+      "user": [
+        "첫 화면 제목의 'TO HWPX' 텍스트에 블루-인디고 그라디언트 효과가 적용됐습니다.",
+        "상단 제목 블록 선택 시 표시되는 안내 문구가 더 자연스럽게 줄바꿈됩니다."
+      ],
+      "dev": [
+        "[v4.9.13] index.html: .hero h1 내 TO HWPX → <span class=\"hero-title-accent\"> 래핑",
+        "[v4.9.13] style.css: .hero-title-accent — linear-gradient + -webkit-background-clip:text",
+        "[v4.9.13] style.css: .form-hint 규칙 통합(중복 제거) + word-break:keep-all + overflow-wrap:break-word"
+      ]
+    },
     {
       "version": "4.9.12",
       "date": "2026-06-30",
