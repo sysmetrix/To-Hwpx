@@ -1,6 +1,14 @@
 {
-  "current": "4.9.16",
+  "current": "4.9.17",
   "versions": [
+    {
+      "version": "4.9.17",
+      "date": "2026-06-30",
+      "user": [],
+      "dev": [
+        "[v4.9.17] app.js: renderExperimentPanel — '원본 서식 우선 모드 고도화' 항목 추가 (golden 테스트 누락 항목 복원)"
+      ]
+    },
     {
       "version": "4.9.16",
       "date": "2026-06-30",

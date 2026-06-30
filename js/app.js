@@ -2167,6 +2167,7 @@ function renderExperimentPanel() {
                 <span>아직 기본 기능으로 공개하지 않은 후보</span>
             </div>
             <ul>
+                <li><b>원본 서식 우선 모드 고도화 <em>후보</em></b><span>DOCX·HTML 입력 시 원본 레이아웃을 최대한 보존하는 고충실도 변환 모드를 별도로 제공합니다.</span></li>
                 <li><b>상세 구조 진단 <em>후보</em></b><span>HWPX 패키지, XML, IDRef, 링크 필드, 그림 참조 문제를 관리자용으로 더 자세히 확인합니다.</span></li>
                 <li><b>결과 카드 문구 실험 <em>후보</em></b><span>성공·경고·실패 안내 문구를 비교해 사용자가 다음 행동을 더 빨리 고르게 합니다.</span></li>
                 <li><b>정식 공개 게이트 <em>후보</em></b><span>베타 기능이 사용자 화면에 노출되기 전 한컴 시각 확인과 golden 기준을 함께 통과시키는 체크를 추가합니다.</span></li>
