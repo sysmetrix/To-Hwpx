@@ -125,6 +125,7 @@ function initApp() {
     maybeShowOnboardingGuide(); // 첫 방문 1회 기본 사용 안내
     initAdminModeUi();          // 관리자 모드에서만 버전 내역 클릭 허용
     applyBetaBadgeVisibility(); // 베타 배지는 관리자 모드에서만 노출(일반 사용자엔 숨김)
+    initQualityPanel();         // 포맷 변환 품질 탭 패널 렌더링
     window.__appReady = true;   // 모듈 초기화 완료 — 테스트·디버그용 신호
 }
 function initHelpDots() {
@@ -804,12 +805,11 @@ let selectedIrAnalysisTimer = null;
 
 function scheduleSelectedFileIrAnalysis() {
     window.clearTimeout(selectedIrAnalysisTimer);
-    if (!isAdminFeatureEnabled('ir_preanalysis')) return;
     selectedIrAnalysisTimer = window.setTimeout(analyzeSelectedFileIr, 180);
 }
 
 async function analyzeSelectedFileIr() {
-    if (!isAdminFeatureEnabled('ir_preanalysis') || state.isConverting || state.inputMode !== 'upload' || state.queue.length !== 1) return null;
+    if (state.isConverting || state.inputMode !== 'upload' || state.queue.length !== 1) return null;
     const item = state.queue[0];
     if (!item?.file) return null;
     const signature = irPolicySignature(item.file);
@@ -1165,6 +1165,14 @@ function metricClass(value) {
 function renderQualityBar(value) {
     const n = Math.max(0, Math.min(100, Number(value) || 0));
     return `<span class="quality-meter ${metricClass(n)}"><span data-ir-width="${n}"></span></span>`;
+}
+
+function initQualityPanel() {
+    const panel = document.getElementById('panel-quality');
+    if (!panel) return;
+    // eslint-disable-next-line no-unsanitized/property -- renderQualityPanel() uses escHtml() for all dynamic values
+    panel.innerHTML = renderQualityPanel();
+    applyIrStyles(panel);
 }
 
 function renderQualityPanel() {
@@ -1924,20 +1932,8 @@ const ADMIN_FEATURES = [
         desc: '직접 입력 미리보기 HTML을 복사하거나 .html 파일로 내려받습니다.',
         defaultOn: true,
     },
-    {
-        id: 'ir_preanalysis',
-        label: '파일 선택 즉시 IR 분석',
-        status: '실험',
-        desc: '변환 버튼을 누르기 전에 단일 파일의 IR 구조를 미리 계산해 보여줍니다.',
-        defaultOn: true,
-    },
-    {
-        id: 'format_quality',
-        label: '포맷 품질 평가',
-        status: '관리자',
-        desc: '포맷별 보존/손실 안내와 품질 탭을 관리자 검토용으로 확인합니다.',
-        defaultOn: true,
-    },
+    // ir_preanalysis → v4.9.5부터 정식 공개, ADMIN_FEATURES에서 제거
+    // format_quality → v4.9.5부터 정식 공개, ADMIN_FEATURES에서 제거
 ];
 
 function parseModeFlag(value) {
@@ -2106,7 +2102,6 @@ function renderExperimentPanel() {
                 <span>아직 기본 기능으로 공개하지 않은 후보</span>
             </div>
             <ul>
-                <li><b>원본 서식 우선 모드 고도화 <em>설계 중</em></b><span>DOCX·HTML·XLSX의 원본 서식 IR 계약을 넓혀 앱 설정과 충돌하지 않게 분리합니다.</span></li>
                 <li><b>상세 구조 진단 <em>후보</em></b><span>HWPX 패키지, XML, IDRef, 링크 필드, 그림 참조 문제를 관리자용으로 더 자세히 확인합니다.</span></li>
                 <li><b>결과 카드 문구 실험 <em>후보</em></b><span>성공·경고·실패 안내 문구를 비교해 사용자가 다음 행동을 더 빨리 고르게 합니다.</span></li>
                 <li><b>정식 공개 게이트 <em>후보</em></b><span>베타 기능이 사용자 화면에 노출되기 전 한컴 시각 확인과 golden 기준을 함께 통과시키는 체크를 추가합니다.</span></li>
@@ -3204,14 +3199,15 @@ function effectiveBuildOptionsForFile(file) {
             imageAlign: state.imageAlign,
         };
     }
+    // 원본 우선(source): IR에 이미 포함된 단락 정렬·글자색·이미지 위치를 그대로 쓴다.
+    // imageAlign 미지정 → hwpx.js 기본값(center) 사용, imgBlock.align이 있으면 그게 우선.
     return {
         showHorizontalRules: state.showHorizontalRules,
-        paragraphSpacing: 'normal',
+        paragraphSpacing: 'compact',
         headingStyle: 'standard',
         tableStyle: 'standard',
         linkStyle: 'blue',
         imageMaxWidth: 100,
-        imageAlign: 'left',
     };
 }
 
@@ -3994,7 +3990,7 @@ function applyStylePolicyUi(policy = state.stylePolicy) {
     if (note) {
         note.hidden = false;
         const NOTES = {
-            source:   '<strong>원본 우선</strong> — 원본 서식이 있는 파일(DOCX·HTML·XLSX)은 아래 세부 설정 대신 <b>원본 서식</b>을 따릅니다. 그 외 입력(MD·TXT·CSV·JSON)에는 아래 설정이 그대로 적용됩니다.',
+            source:   '<strong>원본 우선</strong> — DOCX·HTML·XLSX의 단락 정렬, 글자 색상·강조(굵게·기울임·밑줄), 이미지 위치, 표 셀 배경이 원본 그대로 반영됩니다. 세부 설정은 MD·TXT·CSV·JSON에만 적용됩니다.',
             balanced: '<strong>혼합</strong> — 문단 간격·링크·이미지는 아래 설정을 따르고, 제목과 표 스타일은 원본 서식을 유지합니다. MD·TXT·CSV·JSON은 아래 설정을 그대로 적용합니다.',
             app:      '<strong>설정 우선</strong> — 아래 세부 설정이 원본 서식보다 강하게 적용됩니다. DOCX·HTML·XLSX도 아래 설정대로 변환됩니다.',
         };

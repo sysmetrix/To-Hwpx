@@ -123,7 +123,7 @@ function normalizeImageOptions(options = {}) {
     const pct = parseInt(options.imageMaxWidth, 10);
     return {
         maxWidth: [50, 75, 100].includes(pct) ? pct : 100,
-        align: ['left', 'center', 'right'].includes(options.imageAlign) ? options.imageAlign : 'left',
+        align: ['left', 'center', 'right'].includes(options.imageAlign) ? options.imageAlign : 'center',
     };
 }
 
