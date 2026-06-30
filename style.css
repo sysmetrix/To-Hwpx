@@ -3138,9 +3138,9 @@ a:hover { text-decoration: underline; }
     .hero-badges button {
         flex: 1 1 130px;
         justify-content: center;
-        white-space: normal;
         text-align: center;
     }
+    .hero-badges .trust-btn-sub { display: none; }
     .quick-guide {
         align-items: stretch;
         flex-direction: column;

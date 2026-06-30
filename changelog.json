@@ -1,6 +1,14 @@
 {
-  "current": "4.9.20",
+  "current": "4.10.0",
   "versions": [
+    {
+      "version": "4.10.0",
+      "date": "2026-07-01",
+      "user": [],
+      "dev": [
+        "[v4.10.0] style.css: 모바일(480px) trust-btn 서브텍스트 nowrap이 flex min-content를 초과하여 버튼이 전체 너비로 늘어나는 버그 수정 — .trust-btn-sub { display: none } 적용"
+      ]
+    },
     {
       "version": "4.9.20",
       "date": "2026-06-30",
