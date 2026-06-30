@@ -171,7 +171,7 @@
             <span>｢BWYF｣ AX Challenger 2026</span>
             <!-- [주의] id="open-changelog"는 app.js에서 관리자 모드일 때 업데이트 내역 모달을 여는 연결값 -->
             <button class="util-changelog-btn" id="open-changelog" aria-label="버전 정보" data-admin-enabled="false">
-                📋 v4.9.2
+                📋 v4.9.3
             </button>
         </div>
     </div>
@@ -194,19 +194,21 @@
                 <ul class="main-nav">
                     <li>
                         <button class="nav-shortcut-btn" id="open-help" aria-label="도움말 열기" title="도움말 보기 (Shift + /)">
-                            💡 도움말
+                            <span class="nav-btn-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><circle cx="12" cy="17" r=".5" fill="currentColor"/></svg></span>
+                            도움말
                         </button>
                     </li>
                     <li>
-                        <!-- [주의] id="theme-toggle"은 app.js initTheme가 제어. 아이콘/라벨은 JS가 갱신 -->
+                        <!-- [주의] id="theme-toggle"은 app.js initTheme가 제어. icon.innerHTML을 JS가 SVG로 갱신 -->
                         <button class="nav-shortcut-btn" id="theme-toggle" aria-pressed="false"
                                 aria-label="다크 모드 켜기" title="테마 전환 (Shift + D)">
-                            <span id="theme-toggle-icon" aria-hidden="true">🌙</span> <span id="theme-toggle-label">다크</span>
+                            <span id="theme-toggle-icon" class="nav-btn-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></span><span id="theme-toggle-label">다크</span>
                         </button>
                     </li>
                     <li>
                         <button class="nav-reset-btn" id="reset-btn" aria-label="선택 파일과 변환 옵션 초기화" title="초기화 (Esc)">
-                            ↺ 초기화
+                            <span class="nav-btn-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.66"/></svg></span>
+                            초기화
                         </button>
                     </li>
                 </ul>
@@ -235,17 +237,41 @@
         <!-- 파일 드롭존 (app.js의 initDropZone에서 이벤트 연결) -->
         <div id="drop-zone" class="drop-zone" role="button" tabindex="0"
              aria-label="파일을 드래그하거나 클릭하여 선택">
-            <div class="drop-icon">📂</div>
+            <div class="drop-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
             <div class="drop-title">파일을 여기에 드래그하거나 클릭하세요</div>
             <div class="drop-sub">입력: MD · HTML · DOCX · CSV · XLSX · JSON · TXT · IPYNB · HWP (여러 개 가능)<br>출력: HWPX</div>
         </div>
         <!-- 보조 안내 버튼 — 첫 행동(파일 선택)을 방해하지 않도록 드롭존 아래에 배치 -->
+        <!-- [주의] 아래 버튼 id는 app.js 모달 열기 기능과 연결됨. id 유지 -->
         <div class="hero-badges" aria-label="지원 실행 환경">
-            <!-- [주의] 아래 버튼 id는 app.js 모달 열기 기능과 연결됨. 글자만 수정 -->
-            <button type="button" id="open-pc-guide">PC 브라우저 지원</button>
-            <button type="button" id="open-mobile-guide">모바일 브라우저 지원</button>
-            <button type="button" id="open-install-guide">앱처럼 설치 가능</button>
-            <button type="button" id="open-privacy-guide">안전한 로컬 처리</button>
+            <button type="button" id="open-pc-guide" class="trust-btn" aria-label="PC 브라우저 지원 상세 보기">
+                <span class="trust-btn-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></span>
+                <span class="trust-btn-content">
+                    <span class="trust-btn-label">PC 브라우저 지원</span>
+                    <span class="trust-btn-sub">Chrome · Edge · Safari ›</span>
+                </span>
+            </button>
+            <button type="button" id="open-mobile-guide" class="trust-btn" aria-label="모바일 브라우저 지원 상세 보기">
+                <span class="trust-btn-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><circle cx="12" cy="18" r=".5" fill="currentColor"/></svg></span>
+                <span class="trust-btn-content">
+                    <span class="trust-btn-label">모바일 브라우저</span>
+                    <span class="trust-btn-sub">iOS · Android ›</span>
+                </span>
+            </button>
+            <button type="button" id="open-install-guide" class="trust-btn" aria-label="앱처럼 설치 안내 보기">
+                <span class="trust-btn-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></span>
+                <span class="trust-btn-content">
+                    <span class="trust-btn-label">앱처럼 설치 가능</span>
+                    <span class="trust-btn-sub">홈 화면에 추가 ›</span>
+                </span>
+            </button>
+            <button type="button" id="open-privacy-guide" class="trust-btn" aria-label="로컬 처리 안전성 상세 보기">
+                <span class="trust-btn-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span>
+                <span class="trust-btn-content">
+                    <span class="trust-btn-label">안전한 로컬 처리</span>
+                    <span class="trust-btn-sub">서버 전송 없음 ›</span>
+                </span>
+            </button>
         </div>
 
         <!-- 숨겨진 파일 인풋 (드롭존 클릭 시 트리거됨) -->
@@ -796,11 +822,11 @@
                 </div>
                 <div class="value-demo-footer">
                     <span class="value-demo-time">
-                        <span class="vd-time-before">⏱ 수동 서식 재작업</span>
+                        <span class="vd-time-before"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> 수동 서식 재작업</span>
                         <span class="vd-time-arrow">→</span>
-                        <span class="vd-time-after">⚡ 10초</span>
+                        <span class="vd-time-after"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> 10초</span>
                     </span>
-                    <span class="value-demo-privacy">🔒 파일은 브라우저 밖으로 나가지 않습니다</span>
+                    <span class="value-demo-privacy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> 파일은 브라우저 밖으로 나가지 않습니다</span>
                 </div>
             </div>
         </div>
@@ -896,7 +922,7 @@
 
                 <!-- JSON -->
                 <div class="format-card" data-ext="json" role="button" tabindex="0">
-                    <div class="card-icon">{ }</div>
+                    <div class="card-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></div>
                     <div class="card-ext">JSON</div>
                     <div class="card-name">JSON 데이터</div>
                     <div class="card-quality">★★☆</div>
@@ -905,7 +931,7 @@
 
                 <!-- TXT -->
                 <div class="format-card" data-ext="txt" role="button" tabindex="0">
-                    <div class="card-icon">📄</div>
+                    <div class="card-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div>
                     <div class="card-ext">TXT</div>
                     <div class="card-name">일반 텍스트</div>
                     <div class="card-quality">★★★</div>
@@ -961,7 +987,7 @@
 
                     <!-- ODT/RTF (Coming Soon) -->
                     <div class="format-card coming-soon" data-ext="odt" aria-disabled="true">
-                        <div class="card-icon">📃</div>
+                        <div class="card-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
                         <div class="card-ext">ODT / RTF</div>
                         <div class="card-name">오픈 문서</div>
                         <div class="card-quality">★★☆</div>
@@ -970,7 +996,7 @@
 
                     <!-- EPUB (Coming Soon) -->
                     <div class="format-card coming-soon" data-ext="epub" aria-disabled="true">
-                        <div class="card-icon">📚</div>
+                        <div class="card-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></div>
                         <div class="card-ext">EPUB</div>
                         <div class="card-name">전자책</div>
                         <div class="card-quality">★★☆</div>
@@ -987,31 +1013,31 @@
             <div class="steps-grid">
 
                 <div class="how-step">
-                    <div class="how-step-icon" aria-hidden="true">📥</div>
+                    <div class="how-step-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
                     <h4>1. 파일 선택</h4>
                     <p>드래그앤드롭 또는 클릭으로 변환할 파일을 선택합니다.</p>
                 </div>
 
                 <div class="how-step">
-                    <div class="how-step-icon" aria-hidden="true">🔄</div>
+                    <div class="how-step-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></div>
                     <h4>2. 포맷 파싱</h4>
                     <p>확장자를 자동으로 감지하고 포맷별 파서로 IR(중간 표현)으로 변환합니다.</p>
                 </div>
 
                 <div class="how-step">
-                    <div class="how-step-icon" aria-hidden="true">⚙️</div>
+                    <div class="how-step-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
                     <h4>3. HWPX 생성</h4>
                     <p>IR → section0.xml → JSZip 패키징으로 HWPX 파일을 생성합니다.</p>
                 </div>
 
                 <div class="how-step">
-                    <div class="how-step-icon" aria-hidden="true">✅</div>
+                    <div class="how-step-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
                     <h4>4. 구조 검증</h4>
                     <p>ZIP_STORED 규칙, 네임스페이스, 참조 무결성 등 4개 영역을 자동 검증합니다.</p>
                 </div>
 
                 <div class="how-step">
-                    <div class="how-step-icon" aria-hidden="true">📦</div>
+                    <div class="how-step-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg></div>
                     <h4>5. 다운로드</h4>
                     <p>검증을 통과한 .hwpx 파일을 즉시 다운로드합니다.</p>
                 </div>

@@ -335,7 +335,7 @@ a:hover { text-decoration: underline; }
 /* 연계 서비스 링크 (헤더 내 외부 링크 배지 스타일) */
 .nav-related-link {
     border: 1.5px solid var(--c-border) !important;
-    border-radius: 20px !important;
+    border-radius: var(--radius-sm) !important;
     padding: 4px 12px !important;
     font-size: 13px;
     font-weight: 600;
@@ -384,7 +384,7 @@ a:hover { text-decoration: underline; }
 .nav-shortcut-btn,
 .nav-reset-btn {
     border: 1.5px solid var(--c-border);
-    border-radius: 20px;
+    border-radius: var(--radius-sm);
     padding: 4px 12px;
     font-size: 13px;
     font-weight: 600;
@@ -403,6 +403,20 @@ a:hover { text-decoration: underline; }
     background: var(--c-primary-light);
     color: var(--c-primary);
     border-color: var(--c-primary);
+}
+/* 헤더 버튼 내 SVG 라인 아이콘 */
+.nav-btn-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 15px;
+    height: 15px;
+    flex-shrink: 0;
+    vertical-align: middle;
+}
+.nav-btn-icon svg {
+    width: 15px;
+    height: 15px;
 }
 
 /* 공용 토스트 알림 */
@@ -548,32 +562,61 @@ a:hover { text-decoration: underline; }
     flex-wrap: wrap;
     margin: 18px auto 0;
 }
-.hero-badges span,
-.hero-badges button {
+/* Trust Bar 버튼 — 히어로 영역 지원 환경 안내 (icon + label + sub) */
+.trust-btn {
     display: inline-flex;
     align-items: center;
-    min-height: 32px;
-    padding: 6px 13px;
+    gap: 10px;
+    padding: 10px 14px 10px 12px;
     border: 1px solid var(--c-border);
-    border-radius: 100px;
+    border-radius: var(--radius-md);
     background: var(--c-surface);
     color: var(--c-text-sub);
-    font-size: 0.82rem;
+    font-family: var(--font-main);
+    cursor: pointer;
+    text-align: left;
+    transition: border-color var(--trans), background var(--trans), box-shadow var(--trans), transform var(--trans);
+}
+.trust-btn:hover {
+    border-color: var(--c-primary);
+    background: var(--c-primary-light);
+    box-shadow: var(--shadow-sm);
+    transform: translateY(-2px);
+}
+.trust-btn-icon {
+    color: var(--c-primary);
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.trust-btn-icon svg {
+    width: 20px;
+    height: 20px;
+}
+.trust-btn-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.trust-btn-label {
+    font-size: 0.84rem;
     font-weight: 600;
     line-height: 1.2;
+    color: var(--c-text);
     white-space: nowrap;
-    font-family: var(--font-main);
 }
-.hero-badges button {
-    cursor: pointer;
-    transition: background var(--trans), border-color var(--trans), color var(--trans), transform var(--trans);
+.trust-btn-sub {
+    font-size: 0.72rem;
+    color: var(--c-text-muted);
+    white-space: nowrap;
+    font-weight: 400;
+    line-height: 1.2;
 }
-.hero-badges button:hover {
-    background: var(--c-primary-light);
-    border-color: var(--c-primary);
-    color: var(--c-primary);
-    transform: translateY(-1px);
-}
+.trust-btn:hover .trust-btn-label { color: var(--c-primary); }
+.trust-btn:hover .trust-btn-sub   { color: color-mix(in srgb, var(--c-primary) 65%, var(--c-text-muted)); }
 /* 변환(서비스) 화면 헤더의 베타 식별자 — 관리자 모드 + 베타 포맷 파일일 때만 노출(#converter-beta) */
 .options-panel-title {
     display: flex;
@@ -615,7 +658,19 @@ a:hover { text-decoration: underline; }
     box-shadow: var(--shadow-md);
     transform: scale(1.01);
 }
-.drop-zone .drop-icon    { font-size: 2.6rem; margin-bottom: 12px; }
+.drop-zone .drop-icon {
+    width: 52px;
+    height: 52px;
+    margin: 0 auto 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--c-primary);
+    opacity: 0.7;
+}
+.drop-zone .drop-icon svg { width: 52px; height: 52px; }
+.drop-zone:hover .drop-icon,
+.drop-zone.drag-over .drop-icon { opacity: 1; }
 .drop-zone .drop-title   { font-size: 1.15rem; font-weight: 700; margin-bottom: 6px; color: var(--c-text); }
 .drop-zone .drop-sub {
     display: inline-block;
@@ -655,7 +710,7 @@ a:hover { text-decoration: underline; }
 .quick-guide-actions button {
     padding: 6px 9px;
     border: 1px solid var(--c-border);
-    border-radius: 999px;
+    border-radius: var(--radius-sm);
     background: var(--c-surface);
     color: var(--c-primary);
     font-family: var(--font-main);
@@ -723,7 +778,8 @@ a:hover { text-decoration: underline; }
    ───────────────────────────────────────────────────────────────── */
 .value-section {
     padding: clamp(44px, 6vw, 72px) 0;
-    background: var(--c-surface);
+    background: var(--c-bg);
+    border-top: 1px solid var(--c-border);
 }
 .value-layout {
     display: grid;
@@ -823,13 +879,19 @@ a:hover { text-decoration: underline; }
     border-top: 1px solid var(--c-border);
 }
 .value-demo-time { font-size: 0.74rem; }
-.vd-time-before { color: var(--c-text-muted); }
+.vd-time-before { color: var(--c-text-muted); display: inline-flex; align-items: center; gap: 3px; }
+.vd-time-before svg { width: 12px; height: 12px; flex-shrink: 0; }
 .vd-time-arrow  { color: var(--c-text-muted); margin: 0 4px; }
-.vd-time-after  { color: var(--c-primary); font-weight: 700; }
+.vd-time-after  { color: var(--c-primary); font-weight: 700; display: inline-flex; align-items: center; gap: 3px; }
+.vd-time-after svg { width: 12px; height: 12px; flex-shrink: 0; }
 .value-demo-privacy {
     font-size: 0.72rem;
     color: var(--c-text-muted);
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
 }
+.value-demo-privacy svg { width: 12px; height: 12px; flex-shrink: 0; }
 
 
 /* ─────────────────────────────────────────────────────────────────
@@ -837,7 +899,8 @@ a:hover { text-decoration: underline; }
    ───────────────────────────────────────────────────────────────── */
 .formats-section {
     padding: clamp(8px, 1.6vw, 16px) 0 clamp(32px, 4vw, 52px);
-    background: var(--c-surface);
+    background: var(--c-bg);
+    border-top: 1px solid var(--c-border);
 }
 
 .section-title {
@@ -988,6 +1051,13 @@ a:hover { text-decoration: underline; }
     flex: 0 0 40px;
     line-height: 1;
 }
+/* format-card 인라인 SVG (이모지 대체) */
+.card-icon svg {
+    width: 32px;
+    height: 32px;
+    color: var(--c-text-sub);
+}
+
 /* 브랜드 SVG 아이콘 (Simple Icons CDN) */
 .format-brand-icon {
     width: 36px;
@@ -2617,11 +2687,12 @@ a:hover { text-decoration: underline; }
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.8rem;
+    color: var(--c-primary);
     margin: 0 auto 14px;
     border: 3px solid var(--c-surface);
     box-shadow: var(--shadow-sm);
 }
+.how-step-icon svg { width: 30px; height: 30px; }
 .how-step h4 {
     font-size: 0.95rem;
     font-weight: 700;

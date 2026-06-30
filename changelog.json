@@ -1,6 +1,29 @@
 {
-  "current": "4.9.2",
+  "current": "4.9.3",
   "versions": [
+    {
+      "version": "4.9.3",
+      "date": "2026-06-30",
+      "user": [
+        "히어로 영역 버튼·드롭존 아이콘·단계 설명 아이콘을 SVG로 통일해 시각적 일관성을 높였습니다.",
+        "PC·모바일·설치·로컬처리 안내 버튼 디자인을 전면 개선했습니다.",
+        "서비스 가치 섹션과 포맷 카드 섹션의 배경색을 통일하고 구분선을 정리했습니다."
+      ],
+      "dev": [
+        "[v4.9.3] style.css: .trust-btn 신규 카드형 버튼 시스템 — 아이콘·레이블·보조문구 구조",
+        "[v4.9.3] style.css: .nav-btn-icon, .drop-icon, .how-step-icon SVG 전용 크기 규칙 추가",
+        "[v4.9.3] style.css: .nav-shortcut-btn/.nav-reset-btn/.nav-related-link/.quick-guide-actions border-radius → var(--radius-sm) 통일",
+        "[v4.9.3] style.css: .value-section/.formats-section background var(--c-surface)→var(--c-bg), border-top 추가",
+        "[v4.9.3] style.css: .vd-time-before/.vd-time-after/.value-demo-privacy inline-flex SVG 정렬",
+        "[v4.9.3] index.html: hero 4개 badge → .trust-btn(Lucide SVG + 라벨 + 보조문구) 구조로 교체",
+        "[v4.9.3] index.html: nav 도움말·테마·초기화 이모지 → Lucide SVG",
+        "[v4.9.3] index.html: drop-zone 업로드 이모지 → upload SVG",
+        "[v4.9.3] index.html: how-section 5단계 이모지 → Lucide SVG",
+        "[v4.9.3] index.html: format card JSON·TXT·ODT·EPUB 이모지 → SVG",
+        "[v4.9.3] index.html: value-demo ⏱⚡🔒 이모지 → clock/zap/lock SVG",
+        "[v4.9.3] js/app.js: updateThemeToggleUI textContent 이모지 → innerHTML SVG"
+      ]
+    },
     {
       "version": "4.9.2",
       "date": "2026-06-30",
