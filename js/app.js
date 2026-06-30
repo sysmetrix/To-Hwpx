@@ -2194,7 +2194,8 @@ function initInputMode() {
 
 function applyAdminFeatureVisibility() {
     const previewPanel = document.querySelector('.paste-preview-panel');
-    if (previewPanel) previewPanel.hidden = false;
+    const previewOn = isAdminMode() && isAdminFeatureEnabled('paste_preview');
+    if (previewPanel) previewPanel.hidden = !previewOn;
 
     const htmlOn = isAdminMode() && isAdminFeatureEnabled('html_actions');
     const htmlMenu = document.querySelector('.paste-html-menu');
@@ -3808,7 +3809,7 @@ function closePrivacyGuide() {
 }
 
 function showShortcuts() {
-    activateHelpTab('usage');
+    activateHelpTab('shortcuts');
     openModal(document.getElementById('onboarding-guide-modal'));
 }
 

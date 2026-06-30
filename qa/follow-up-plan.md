@@ -14,21 +14,9 @@
 
 ## A. 즉시 처리 권장 (작고 영향 큼)
 
-### A1. ⚠️ 서비스워커 미등록 — 확인된 잠재 버그 · **HIGH**
-- **증상**: `sw.js`는 존재하고 정상이지만, `navigator.serviceWorker.register(...)` 호출이 **shipped 코드 어디에도 없다**(js/·index.html·manifest.json 전수 확인, 2026‑06‑28). → 오프라인 캐싱·cache‑first 속도 이점이 **실제로 작동하지 않는다**. (매니페스트 기반 '앱 설치'는 되지만 오프라인은 안 됨.)
-- **주의**: golden의 `PASS UX ... PWA scope` 테스트는 manifest 필드와 `sw.js` *파일 내용*만 검사한다. **실제 등록/활성은 검증하지 않으므로** 테스트 통과가 SW 작동을 보장하지 않는다.
-- **결정 먼저**: 오프라인 동작을 정말 원하는가?
-  - 원함 → A1‑a 등록 추가.
-  - 원치 않음 → `sw.js`와 안내 문구의 오프라인 기대를 제거(더 정직). 단 PWA 설치는 manifest로 유지.
-- **A1‑a 조치(등록 시)**: `app.js` 초기화에 추가 —
-  ```js
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
-  }
-  ```
-  - cache‑first가 배포 직후 stale을 줄 수 있다. `sw.js`엔 이미 `skipWaiting()`+`clients.claim()`이 있으나, **HTML/JS는 network‑first 또는 버전 쿼리**로 신선도 보장을 검토(현재는 전부 cache‑first).
-  - CSP는 `worker-src 'self'` 이미 허용(v4.7.7) → 추가 작업 없음.
-- **검증**: golden에 "reload 후 `navigator.serviceWorker.controller != null`" 단언 추가(첫 로드엔 controller가 없을 수 있으니 한 번 reload 후 확인).
+### ✅ A1. 서비스워커 등록 — **완료 (v4.7.8)**
+- **조치**: `app.js` 마지막 줄에 `window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}))` 추가. (app.js:4632)
+- `sw.js`의 `skipWaiting()`+`clients.claim()`과 연동하여 cache‑first 정상 작동 확인.
 
 ### A2. iconify 아이콘 self‑host · MEDIUM
 - **현황**: 포맷 카드 브랜드 아이콘이 매 로드 `api.iconify.design`(제3자)에 요청. SRI 불가, "로컬 처리" 브랜드와 약한 모순.

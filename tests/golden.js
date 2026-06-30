@@ -712,20 +712,22 @@ async function validateDirectInput(page) {
   assert(await page.locator('[data-lab-toggle]').getAttribute('aria-pressed') === 'true',
     'admin: 호환용 ?lab=1 후 관리자 토글 상태가 켜짐으로 표시되지 않음');
   // 개별 기능 토글이 실제로 켜고 꺼지는지 — isAdminMode 부수효과로 즉시 리셋되던 회귀 방지
-  const featBtn = page.locator('.admin-feature-toggle[data-admin-feature="direct_input"]');
+  // direct_input은 v4.8.3 공개 이후 ADMIN_FEATURES에서 제거됨 → paste_preview로 검사
+  const featBtn = page.locator('.admin-feature-toggle[data-admin-feature="paste_preview"]');
   const featBefore = await featBtn.getAttribute('aria-pressed');
   await featBtn.click();
   await page.waitForTimeout(150);
   const featAfter = await featBtn.getAttribute('aria-pressed');
-  const featLs = await page.evaluate(() => localStorage.getItem('tohwpx_feature_direct_input'));
+  const featLs = await page.evaluate(() => localStorage.getItem('tohwpx_feature_paste_preview'));
   assert(featBefore === 'true' && featAfter === 'false' && featLs === '0',
     'admin: 기능 토글 클릭이 반영되지 않음(isAdminMode 부수효과로 리셋되는 회귀)');
   await featBtn.click();   // 원복
   await page.waitForTimeout(100);
   await page.locator('[data-lab-toggle]').click();
   await page.waitForLoadState('domcontentloaded');
-  assert(!await page.locator('.input-mode-tabs').isVisible(),
-    'admin: 토글을 끈 뒤 직접 입력 탭이 남아 있음');
+  // 직접 입력 탭은 v4.8.3부터 일반 공개 — 관리자 모드 해제 후에도 항상 노출
+  assert(await page.locator('.input-mode-tabs').isVisible(),
+    'admin: 토글을 끈 뒤 직접 입력 탭이 사라짐 (일반 사용자에게 항상 노출돼야 함)');
   await page.locator('#open-changelog').click();
   assert(!(await page.locator('#changelog-modal').isVisible()),
     'admin: 토글을 끈 뒤 일반 모드에서 업데이트 내역이 열림');
@@ -808,7 +810,7 @@ async function validateCommercialUx(page) {
   await page.waitForFunction(() => window.JSZip && window.marked && window.XLSX && window.__appReady, null, { timeout: 30000 });
 
   const heroDropText = await page.locator('#drop-zone .drop-sub').textContent();
-  assert(heroDropText.includes('MD · DOCX · HTML · CSV/XLSX · JSON · TXT · HWP · IPYNB'),
+  assert(heroDropText.includes('MD · HTML · DOCX · CSV · XLSX · JSON · TXT · IPYNB · HWP'),
     'ux: 첫 화면 드롭존 입력 포맷 순서가 안내 기준과 다름');
   // 베타 배지는 관리자 전용 — 일반 사용자 화면엔 generic 배지 제거 + 모든 .badge-beta가 hidden
   assert(await page.locator('.hero-beta-badge').count() === 0,
@@ -875,9 +877,9 @@ async function validateCommercialUx(page) {
   await page.locator('.help-tab[data-help-tab="detail"]').click();
   const detailPanelText = await page.locator('#help-panel-detail').textContent();
   assert(await page.locator('#help-panel-detail').isVisible()
-    && detailPanelText.includes('내용 보존도')
-    && detailPanelText.includes('생성 안정성'),
-    'ux: 도움말 세부 설정 탭 또는 변환률/성공률 설명이 누락됨');
+    && detailPanelText.includes('본문 고급 서식')
+    && detailPanelText.includes('제목 스타일'),
+    'ux: 도움말 세부 설정 탭 또는 인터랙티브 미리보기 내용이 누락됨');
   await page.locator('.detail-demo-chips[data-demo-key="heading"] .detail-demo-chip[data-demo-val="prominent"]').click();
   assert(await page.locator('#detail-demo-doc').getAttribute('data-heading') === 'prominent',
     'ux: 세부 설정 미리보기 칩이 미리보기 상태를 바꾸지 못함');

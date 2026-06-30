@@ -1,6 +1,24 @@
 {
-  "current": "4.9.0",
+  "current": "4.9.1",
   "versions": [
+    {
+      "version": "4.9.1",
+      "date": "2026-06-30",
+      "user": [
+        "URL 공유 시 Slack·KakaoTalk 등 SNS 미리보기 카드가 표시됩니다.",
+        "모바일에서 직접 입력 형식 버튼 터치 영역이 넓어져 조작이 편해집니다."
+      ],
+      "dev": [
+        "[v4.9.1] index.html: og:url, og:image, twitter:card/title/description 메타 태그 추가",
+        "[v4.9.1] index.html: 드롭존 입력 포맷 표기를 AGENTS.md 표준 순서(MD·HTML·DOCX·CSV·XLSX·JSON·TXT·IPYNB·HWP)로 통일",
+        "[v4.9.1] style.css: .paste-format-btn min-height 36px → 44px (Apple HIG 모바일 터치 타겟)",
+        "[v4.9.1] .github/workflows/pages.yml: ESLint 정적 분석 단계 추가 (innerHTML 규율 자동 감시)",
+        "[v4.9.1] app.js: applyAdminFeatureVisibility() — .paste-preview-panel을 일반 모드에서 hidden 처리 (admin 전용 불변식 준수 버그 수정)",
+        "[v4.9.1] app.js: showShortcuts() — 'usage' 탭 대신 'shortcuts' 탭으로 열도록 수정",
+        "[v4.9.1] tests/golden.js: direct_input → paste_preview 토글 회귀 검사, 드롭존 순서, 세부설정 탭 내용, Shift+/ 단축키 테스트 갱신",
+        "[v4.9.1] qa/follow-up-plan.md: A1(SW 등록) 완료 상태로 갱신"
+      ]
+    },
     {
       "version": "4.9.0",
       "date": "2026-06-30",

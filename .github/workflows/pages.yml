@@ -53,6 +53,9 @@ jobs:
           npm ci
           npx playwright install --with-deps chromium
 
+      - name: ESLint 정적 분석
+        run: npm run lint
+
       - name: Golden 회귀 검사
         run: npm run test:golden
 
