@@ -1291,12 +1291,12 @@ a:hover { text-decoration: underline; }
 }
 .document-shape-grid {
     grid-template-columns:
-        minmax(178px, 1.65fr)
-        minmax(76px, 0.62fr)
-        minmax(82px, 0.68fr)
-        minmax(92px, 0.76fr)
-        minmax(120px, 1fr)
-        minmax(128px, 1.04fr);
+        minmax(170px, 1.65fr)
+        minmax(72px, 0.58fr)
+        minmax(78px, 0.62fr)
+        minmax(86px, 0.7fr)
+        minmax(106px, 0.86fr)
+        auto;
     gap: 8px;
 }
 .document-shape-grid .form-row {

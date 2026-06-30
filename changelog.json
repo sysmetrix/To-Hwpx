@@ -1,6 +1,20 @@
 {
-  "current": "4.9.10",
+  "current": "4.9.11",
   "versions": [
+    {
+      "version": "4.9.11",
+      "date": "2026-06-30",
+      "user": [
+        "가로 구분선 옵션에서 물음표(?) 버튼이 제거되었습니다. 설명은 첫 제목 본문 처리와 같은 방식으로 표시됩니다.",
+        "앱 설치 안내와 개인정보 안내 문구의 줄바꿈이 자연스럽게 정렬되었습니다.",
+        "기본 설정 행의 오른쪽 여백이 개선되었습니다."
+      ],
+      "dev": [
+        "[v4.9.11] index.html: 가로 구분선 help-dot 제거, label-with-help → detail-hint 패턴",
+        "[v4.9.11] index.html: trust-modal-note 두 곳에 <br> 추가 (앱 설치·Markdown 이미지 안내)",
+        "[v4.9.11] style.css: .document-shape-grid 마지막 열 minmax(128px,1.04fr) → auto"
+      ]
+    },
     {
       "version": "4.9.10",
       "date": "2026-06-30",
