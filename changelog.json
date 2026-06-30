@@ -1,6 +1,18 @@
 {
-  "current": "4.9.1",
+  "current": "4.9.2",
   "versions": [
+    {
+      "version": "4.9.2",
+      "date": "2026-06-30",
+      "user": [
+        "Slack·KakaoTalk·Twitter 등 SNS에 URL 공유 시 큰 이미지 미리보기 카드가 표시됩니다."
+      ],
+      "dev": [
+        "[v4.9.2] icons/og-image.png 1200×630 소셜 카드 이미지 추가 (qa/gen-og-image.js로 생성)",
+        "[v4.9.2] index.html: og:image → og-image.png(PNG)로 교체, og:image:type/width/height 추가",
+        "[v4.9.2] index.html: twitter:card summary → summary_large_image, twitter:image 추가"
+      ]
+    },
     {
       "version": "4.9.1",
       "date": "2026-06-30",
