@@ -171,7 +171,7 @@
             <span>｢BWYF｣ AX Challenger 2026</span>
             <!-- [주의] id="open-changelog"는 app.js에서 관리자 모드일 때 업데이트 내역 모달을 여는 연결값 -->
             <button class="util-changelog-btn" id="open-changelog" aria-label="버전 정보" data-admin-enabled="false">
-                📋 v4.9.7
+                📋 v4.9.8
             </button>
         </div>
     </div>
@@ -242,7 +242,6 @@
                 <img src="icons/brand/markdown.svg" alt="MD">
                 <img src="icons/brand/microsoftword.svg" alt="DOCX">
                 <img src="icons/brand/html5.svg" alt="HTML">
-                <img src="icons/brand/microsoftexcel.svg" alt="XLSX/CSV">
                 <img src="icons/brand/jupyter.svg" alt="IPYNB">
             </div>
             <div class="drop-title">파일을 여기에 드래그하거나 클릭하세요</div>
@@ -279,24 +278,6 @@
                     <span class="trust-btn-sub">서버 전송 없음 ›</span>
                 </span>
             </button>
-        </div>
-
-        <!-- 서비스 지표 — 수치 강조 -->
-        <div class="hero-stats" aria-label="서비스 현황">
-            <div class="hero-stat">
-                <strong class="stat-num">10종</strong>
-                <span class="stat-label">입력 포맷 지원</span>
-            </div>
-            <div class="hero-stat-sep" aria-hidden="true"></div>
-            <div class="hero-stat">
-                <strong class="stat-num">100%</strong>
-                <span class="stat-label">브라우저 전용 처리</span>
-            </div>
-            <div class="hero-stat-sep" aria-hidden="true"></div>
-            <div class="hero-stat">
-                <strong class="stat-num">0</strong>
-                <span class="stat-label">서버 전송</span>
-            </div>
         </div>
 
         <!-- 숨겨진 파일 인풋 (드롭존 클릭 시 트리거됨) -->
@@ -338,7 +319,6 @@
                                 <img src="icons/brand/markdown.svg" alt="MD">
                                 <img src="icons/brand/microsoftword.svg" alt="DOCX">
                                 <img src="icons/brand/html5.svg" alt="HTML">
-                                <img src="icons/brand/microsoftexcel.svg" alt="XLSX">
                                 <img src="icons/brand/jupyter.svg" alt="IPYNB">
                             </div>
                         </div>
@@ -531,7 +511,7 @@
                                 <div class="form-row">
                                     <span class="form-row-label label-with-help">
                                         <span>상단 제목 블록</span>
-                                        <button type="button" class="help-dot" data-help="문서 첫 페이지 맨 위에 보고서형 제목 표를 넣습니다. 일반 메모 변환에는 '없음'이 가장 깔끔합니다." aria-label="상단 제목 블록 도움말">?</button>
+                                        <button type="button" class="help-dot" data-help="첫 페이지 상단에 제목·날짜·담당자 표를 삽입합니다. 일반 메모·초안엔 '없음'이 깔끔합니다." aria-label="상단 제목 블록 도움말">?</button>
                                     </span>
                                     <div class="card-radio-group" role="radiogroup" aria-label="상단 제목 블록">
                                         <label class="card-radio">
@@ -564,7 +544,7 @@
                                         </label>
                                     </div>
                                 </div>
-                                <p class="form-hint">문서 맨 위에 머리말 표를 넣습니다. '기본'은 회색 띠, '표지'는 색 밴드이며, 모두 가운데에 제목, 아래에 [팀명/이름](점선)과 작성일(오른쪽)이 들어갑니다. 빈 항목은 변환 후 한글에서 채워주세요.</p>
+                                <p class="form-hint"><span class="form-hint-icon" aria-hidden="true">💡</span> 선택 시 첫 페이지에 <strong>제목·날짜·담당자 표</strong>가 자동 생성됩니다. 빈칸은 변환 후 한글에서 직접 입력하세요.</p>
 
                                 <!-- 본문 서식 처리: 변환 결과의 전반 서식 정책(원본 우선/혼합/설정 우선). 라벨은 표시용, value는 source/balanced/app 계약 유지. 상단 제목 블록 바로 아래.
                                      detail-field 클래스를 유지해야 app.js 세그먼트 배선(.detail-field .seg-btn[data-seg-for])이 잡힌다. -->
@@ -583,7 +563,7 @@
                                 </div>
                                 <!-- 원본 우선일 때 세부 옵션 적용 범위 안내. app.js가 정책에 따라 표시/숨김 -->
                                 <p class="detail-source-note" id="detail-source-note" hidden>
-                                    <strong>원본 우선</strong> — 원본 서식이 있는 파일(DOCX·HTML·XLSX)은 아래 세부 설정 대신 <b>원본 서식</b>을 따릅니다. 그 외 입력(MD·TXT·CSV·JSON)에는 아래 설정이 그대로 적용됩니다.
+                                    <span class="detail-source-badge">원본 우선</span> DOCX·HTML·XLSX는 원본 서식 그대로 적용. MD·TXT·CSV·JSON은 아래 세부 설정이 작동합니다.
                                 </p>
 
                             </div>
@@ -593,7 +573,7 @@
                             <div class="form-row advanced-margins">
                                 <label class="label-with-help">
                                     <span>페이지 여백 (mm)</span>
-                                    <button type="button" class="help-dot" data-help="숫자를 바꾸면 종이 미니맵이 즉시 반응합니다. 실제 HWPX 여백값도 같은 mm 기준으로 생성됩니다." aria-label="페이지 여백 도움말">?</button>
+                                    <button type="button" class="help-dot" data-help="숫자를 바꾸면 옆 미니맵이 즉시 반응합니다. HWPX 출력에도 같은 mm값이 적용됩니다." aria-label="페이지 여백 도움말">?</button>
                                 </label>
                                 <div class="margin-paper-map" aria-label="페이지 여백 설정">
                                     <div class="margin-paper">
@@ -644,11 +624,11 @@
                             <div class="form-row document-detail-settings">
                                 <span class="form-row-label label-with-help">
                                     <span>본문 고급 서식</span>
-                                    <button type="button" class="help-dot" data-help="문단 간격, 제목, 표, 링크, 이미지, 첫 제목 처리, 가로 구분선처럼 변환 결과의 본문 서식을 세부 조정합니다. DOCX·HTML·XLSX처럼 원본 서식이 있는 파일은 원본 우선을 기본으로 둡니다." aria-label="본문 고급 서식 도움말">?</button>
+                                    <button type="button" class="help-dot" data-help="문단 간격·제목·표·링크·이미지 등을 항목별로 세부 조정합니다. DOCX·HTML·XLSX는 '원본 우선'이 기본값입니다." aria-label="본문 고급 서식 도움말">?</button>
                                 </span>
                                 <div class="detail-settings-grid">
                                     <div class="detail-field">
-                                        <span class="detail-field-label">문단 앞/뒤 간격</span>
+                                        <span class="detail-field-label">문단 앞/뒤 간격<span class="detail-hint">보고서 → 크게 · 메모 → 작게</span></span>
                                         <div class="seg-control seg-control--sm" role="group" aria-label="문단 앞/뒤 간격">
                                             <button type="button" class="seg-btn" data-seg-for="paragraph-spacing" data-seg-value="compact" title="간격 작게">작게</button>
                                             <button type="button" class="seg-btn is-active" data-seg-for="paragraph-spacing" data-seg-value="normal" title="기본 간격">기본</button>
@@ -661,7 +641,7 @@
                                         </select>
                                     </div>
                                     <div class="detail-field">
-                                        <span class="detail-field-label">제목 스타일</span>
+                                        <span class="detail-field-label">제목 스타일<span class="detail-hint">큰·굵게 = 발표·제안서용</span></span>
                                         <div class="seg-control seg-control--sm" role="group" aria-label="제목 스타일">
                                             <button type="button" class="seg-btn" data-seg-for="heading-style" data-seg-value="compact" title="작은 제목">작게</button>
                                             <button type="button" class="seg-btn is-active" data-seg-for="heading-style" data-seg-value="standard" title="기본 제목">기본</button>
@@ -674,7 +654,7 @@
                                         </select>
                                     </div>
                                     <div class="detail-field">
-                                        <span class="detail-field-label">표 스타일</span>
+                                        <span class="detail-field-label">표 스타일<span class="detail-hint">음영 = 머리행 강조</span></span>
                                         <div class="seg-control seg-control--sm" role="group" aria-label="표 스타일">
                                             <button type="button" class="seg-btn is-active" data-seg-for="table-style" data-seg-value="standard" title="기본 테두리">기본</button>
                                             <button type="button" class="seg-btn" data-seg-for="table-style" data-seg-value="plain" title="단순 테두리">단순</button>
@@ -687,7 +667,7 @@
                                         </select>
                                     </div>
                                     <div class="detail-field">
-                                        <span class="detail-field-label">링크 표시</span>
+                                        <span class="detail-field-label">링크 표시<span class="detail-hint">주소 = URL 병기</span></span>
                                         <div class="seg-control seg-control--sm" role="group" aria-label="링크 표시">
                                             <button type="button" class="seg-btn is-active" data-seg-for="link-style" data-seg-value="blue" title="파란색+밑줄">파랑</button>
                                             <button type="button" class="seg-btn" data-seg-for="link-style" data-seg-value="plain" title="검정 본문">검정</button>
@@ -726,7 +706,7 @@
                                         </select>
                                     </div>
                                     <div class="detail-field">
-                                        <span class="detail-field-label">첫 제목 본문 처리</span>
+                                        <span class="detail-field-label">첫 제목 본문 처리<span class="detail-hint">제거 = 중복 제목 방지</span></span>
                                         <div class="seg-control seg-control--sm" role="group" aria-label="첫 제목 본문 처리">
                                             <button type="button" class="seg-btn is-active" data-seg-for="title-body-policy" data-seg-value="remove" title="본문 첫 제목 제거">제거</button>
                                             <button type="button" class="seg-btn" data-seg-for="title-body-policy" data-seg-value="keep" title="본문 첫 제목 유지">유지</button>
@@ -738,7 +718,7 @@
                                     </div>
                                     <div class="detail-field">
                                         <span class="detail-field-label label-with-help">가로 구분선
-                                            <button type="button" class="help-dot" data-help="Markdown의 --- 같은 구분선을 선으로 표시할지 정합니다. 숨김은 선을 만들지 않고 빈 줄로 처리합니다." aria-label="가로 구분선 도움말">?</button>
+                                            <button type="button" class="help-dot" data-help="MD의 --- · HTML의 &lt;hr&gt; 구분선 처리 방식입니다. 숨김은 선 없이 빈 줄로 처리합니다." aria-label="가로 구분선 도움말">?</button>
                                         </span>
                                         <div class="seg-control seg-control--sm" role="group" aria-label="가로 구분선 표시 여부">
                                             <button type="button" class="seg-btn is-active" data-hr-display="hide">숨김</button>
@@ -837,22 +817,22 @@
             </div>
             <div class="value-demo anim-target" aria-label="변환 전후 비교" style="--anim-delay:0.12s">
                 <div class="value-demo-before">
-                    <span class="value-demo-label">AI 채팅 작업물</span>
-                    <pre class="value-demo-md"><span class="vd-h"># 2분기 실적 요약</span>
+                    <span class="value-demo-label">AI 채팅 / Markdown 작업물</span>
+                    <pre class="value-demo-md"><span class="vd-h"># 청소년 문화 활동 지원 사업</span>
 
-<span class="vd-li">-</span> 성과 전년 대비 <span class="vd-em">+12%</span>
-<span class="vd-li">-</span> <span class="vd-bold">**주요 과제**</span> 3건 도출
-<span class="vd-li">-</span> 다음 분기 계획 수립</pre>
+<span class="vd-li">-</span> 대상: <span class="vd-bold">**만 13~18세**</span> 청소년 150명
+<span class="vd-li">-</span> 기간: <span class="vd-em">2025년 3~12월</span>
+<span class="vd-li">-</span> 예산: 3,500만 원</pre>
                 </div>
                 <div class="value-demo-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg></div>
                 <div class="value-demo-after">
-                    <span class="value-demo-label">HWPX 미리보기</span>
+                    <span class="value-demo-label">HWPX 변환 결과</span>
                     <div class="value-demo-doc">
-                        <p class="vd-doc-h1">2분기 실적 요약</p>
+                        <p class="vd-doc-h1">청소년 문화 활동 지원 사업</p>
                         <ul class="vd-doc-list">
-                            <li>성과 전년 대비 +12%</li>
-                            <li><strong>주요 과제</strong> 3건 도출</li>
-                            <li>다음 분기 계획 수립</li>
+                            <li>대상: <strong>만 13~18세</strong> 청소년 150명</li>
+                            <li>기간: 2025년 3~12월</li>
+                            <li>예산: 3,500만 원</li>
                         </ul>
                     </div>
                 </div>
