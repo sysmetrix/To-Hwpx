@@ -764,6 +764,7 @@ a:hover { text-decoration: underline; }
     justify-content: center;
 }
 .file-emoji     { font-size: 2.2rem; }
+.file-fmt-icon  { width: 44px; height: 44px; object-fit: contain; flex-shrink: 0; }
 .file-meta      { text-align: left; }
 .file-name      { display: block; font-size: 1rem; font-weight: 700; color: var(--c-text); }
 .file-size      { font-size: 0.82rem; color: var(--c-text-sub); }
@@ -2400,69 +2401,52 @@ a:hover { text-decoration: underline; }
     background: var(--c-surface);
     border: 1px solid var(--c-border);
     border-radius: var(--radius-lg);
-    padding: 28px;
+    padding: 24px;
+    animation: panel-appear 0.28s ease;
 }
-.progress-panel h3 {
-    font-size: 0.82rem;
-    font-weight: 700;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--c-text-sub);
+@keyframes panel-appear {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* 상태 표시 헤더 */
+.progress-empty {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
     margin-bottom: 18px;
-    padding-bottom: 12px;
+    padding-bottom: 16px;
     border-bottom: 1px solid var(--c-border);
 }
-.progress-empty {
-    display: grid;
-    gap: 4px;
-    padding: 14px 16px;
-    border-radius: var(--radius-md);
-    background: var(--c-surface-alt);
-    border: 1px solid var(--c-border);
-    margin-bottom: 14px;
-}
 .progress-empty strong {
-    font-size: 0.92rem;
+    font-size: 1rem;
+    font-weight: 700;
     color: var(--c-text);
+    line-height: 1.3;
 }
 .progress-empty span {
     font-size: 0.8rem;
     color: var(--c-text-muted);
+    line-height: 1.4;
 }
-.progress-panel.is-empty .progress-details,
-.progress-panel.is-empty #pipeline-steps,
-.progress-panel.is-empty #result-area,
-.progress-panel.is-empty #dl-indicator {
-    display: none !important;
-}
-.progress-panel.is-converting .progress-empty {
-    background: var(--c-primary-light);
-    border-color: var(--c-primary);
-}
-.progress-panel.is-success .progress-empty {
-    background: var(--c-success-light);
-    border-color: var(--c-success);
-}
-.progress-panel.is-warning .progress-empty {
-    background: var(--c-warning-light);
-    border-color: var(--c-warning);
-}
-.progress-panel.is-error .progress-empty {
-    background: var(--c-error-light);
-    border-color: var(--c-error);
-}
+
+/* 상태별 strong 색상 */
+.progress-panel.is-converting .progress-empty strong { color: var(--c-primary); }
+.progress-panel.is-success    .progress-empty strong { color: var(--c-success); }
+.progress-panel.is-warning    .progress-empty strong { color: var(--c-warning); }
+.progress-panel.is-error      .progress-empty strong { color: var(--c-error); }
 
 /* 진행률 바 */
 .progress-wrap {
     background: var(--c-surface-alt);
     border-radius: 100px;
-    height: 10px;
-    margin-bottom: 6px;
+    height: 6px;
+    margin-bottom: 5px;
     overflow: hidden;
 }
 #progress-bar {
     height: 100%;
-    background: linear-gradient(90deg, var(--c-primary), var(--c-accent));
+    background: linear-gradient(90deg, var(--c-primary), color-mix(in srgb, var(--c-primary) 60%, #818cf8));
     border-radius: 100px;
     width: 0%;
     transition: width 0.4s ease;
@@ -2470,81 +2454,115 @@ a:hover { text-decoration: underline; }
 .progress-meta {
     display: flex;
     justify-content: space-between;
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     font-weight: 600;
-    color: var(--c-text-sub);
-    margin-bottom: 24px;
+    color: var(--c-text-muted);
+    margin-bottom: 0;
 }
 
-/* 파이프라인 단계 목록 — 가로 1행 (풀 너비 활용) */
+/* 파이프라인 단계 — 가로 타임라인 (dot + 연결선) */
 #pipeline-steps {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 8px;
-    margin: 14px 0;
+    display: flex;
+    align-items: flex-start;
+    margin: 14px 0 4px;
 }
 
 .pipeline-step {
+    flex: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: flex-start;
-    gap: 6px;
-    padding: 12px 6px;
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--c-border);
-    font-size: 0.78rem;
-    transition: border-color var(--trans), background var(--trans), color var(--trans);
-    text-align: center;
+    position: relative;
+    gap: 5px;
+    transition: color var(--trans);
 }
 
-.step-label {
-    font-size: 0.72rem;
-    font-weight: 700;
-    line-height: 1.3;
-    color: var(--c-text-sub);
-    word-break: keep-all;
+/* 연결선: 현재 dot 중심 → 다음 dot 중심 */
+.pipeline-step:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    top: 7px; /* dot 반지름 */
+    left: 50%;
+    width: 100%;
+    height: 2px;
+    background: var(--c-border);
+    z-index: 0;
+    transition: background var(--trans);
 }
 
-/* 단계 번호/아이콘 버블 */
-.step-bubble {
-    width: 30px;
-    height: 30px;
+/* dot */
+.step-dot {
+    width: 14px;
+    height: 14px;
     border-radius: 50%;
+    background: var(--c-surface);
     border: 2px solid var(--c-border);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.78rem;
-    font-weight: 700;
+    position: relative;
+    z-index: 1;
     flex-shrink: 0;
     transition: all var(--trans);
 }
-.step-icon-done { display: none; }
 
-/* 상태별 스타일 */
-.step-pending  .step-bubble { color: var(--c-text-muted); }
-.step-active   { border-color: var(--c-primary); background: var(--c-primary-light); }
-.step-active   .step-bubble {
+.step-label {
+    font-size: 0.6rem;
+    font-weight: 500;
+    line-height: 1.25;
+    color: var(--c-text-muted);
+    word-break: keep-all;
+    text-align: center;
+}
+
+/* pending: 기본값 */
+/* active */
+.step-active .step-dot {
     border-color: var(--c-primary);
     background: var(--c-primary);
-    color: #fff;
     animation: pulse 1.2s ease-in-out infinite;
 }
-.step-done     { border-color: var(--c-success); background: var(--c-success-light); }
-.step-done     .step-bubble {
+.step-active .step-label { color: var(--c-primary); font-weight: 700; }
+
+/* done */
+.step-done .step-dot {
     border-color: var(--c-success);
     background: var(--c-success);
-    color: #fff;
 }
-.step-done .step-num   { display: none; }
-.step-done .step-icon-done { display: block; }
-.step-error    { border-color: var(--c-error); background: var(--c-error-light); }
-.step-error    .step-bubble { border-color: var(--c-error); background: var(--c-error); color: #fff; }
+.step-done .step-dot::after {
+    content: '✓';
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 8px;
+    font-weight: 800;
+    line-height: 1;
+}
+.step-done .step-label { color: var(--c-success); }
+.step-done:not(:last-child)::after { background: var(--c-success); }
+
+/* error */
+.step-error .step-dot {
+    border-color: var(--c-error);
+    background: var(--c-error);
+}
+.step-error .step-dot::after {
+    content: '×';
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 9px;
+    font-weight: 800;
+    line-height: 1;
+}
+.step-error .step-label { color: var(--c-error); }
 
 @keyframes pulse {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(37,99,235,0.4); }
-    50%       { box-shadow: 0 0 0 6px rgba(37,99,235,0); }
+    0%, 100% { box-shadow: 0 0 0 0 rgba(34,82,228,0.4); }
+    50%       { box-shadow: 0 0 0 5px rgba(34,82,228,0); }
 }
 
 /* 결과 카드 */
@@ -3075,7 +3093,6 @@ a:hover { text-decoration: underline; }
         grid-template-columns: minmax(140px, 0.55fr) minmax(0, 1fr);
     }
     .title-format-row { grid-template-columns: 1fr; gap: 0; }
-    #pipeline-steps { grid-template-columns: repeat(4, 1fr); }
     .result-topline { align-items: stretch; flex-direction: column; }
     .result-actions { justify-content: stretch; }
     .btn-download-primary { justify-content: center; width: 100%; }
@@ -3157,7 +3174,6 @@ a:hover { text-decoration: underline; }
         grid-template-columns: repeat(2, 64px);
         justify-content: center;
     }
-    #pipeline-steps { grid-template-columns: repeat(2, 1fr); }
     .steps-grid  { grid-template-columns: 1fr; }
     .margin-grid { grid-template-columns: 1fr 1fr; }
     .result-actions {
@@ -5152,7 +5168,8 @@ a:hover { text-decoration: underline; }
 }
 .file-queue-item + .file-queue-item { border-top: 1px solid var(--c-border); }
 .file-queue-item.is-converting { background: var(--c-primary-light); }
-.fq-icon { flex-shrink: 0; font-size: 1.05rem; line-height: 1; }
+.fq-icon     { flex-shrink: 0; font-size: 1.05rem; line-height: 1; }
+.fq-fmt-icon { width: 20px; height: 20px; object-fit: contain; flex-shrink: 0; }
 .fq-name {
     flex: 1;
     min-width: 0;

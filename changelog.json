@@ -1,6 +1,29 @@
 {
-  "current": "4.9.8",
+  "current": "4.9.9",
   "versions": [
+    {
+      "version": "4.9.9",
+      "date": "2026-06-30",
+      "user": [
+        "파일을 선택하면 드롭존에 해당 포맷의 브랜드 아이콘이 표시됩니다 (Excel 포함).",
+        "드롭존 정적 아이콘에 Excel(XLSX/CSV)이 복원되었습니다.",
+        "변환 진행 현황이 깔끔한 점-선 타임라인으로 바뀌었습니다.",
+        "진행 패널은 변환 버튼을 누를 때만 나타납니다.",
+        "도움말 세부 설정 스타일 미리보기가 청소년 문화 활동 지원 사업 계획서 예시로 바뀌었습니다.",
+        "변환 예시 기간이 2026년으로 업데이트되었습니다."
+      ],
+      "dev": [
+        "[v4.9.9] app.js: getFormatIconHtml() 추가 — updateDropZoneUI·renderQueueList에서 이모지 → SVG img",
+        "[v4.9.9] app.js: renderPipelineSteps() → step-dot 기반 (step-bubble 제거)",
+        "[v4.9.9] app.js: setProgressPanelState() — 'ready' 상태도 panel.hidden = true",
+        "[v4.9.9] style.css: #pipeline-steps — grid→flex, dot+연결선 타임라인으로 교체",
+        "[v4.9.9] style.css: .progress-panel — padding·animation 조정, h3 제거",
+        "[v4.9.9] style.css: .file-fmt-icon 44px, .fq-fmt-icon 20px 신규",
+        "[v4.9.9] index.html: drop-fmt-icons·cda-fmt-icons에 microsoftexcel.svg 복원",
+        "[v4.9.9] index.html: detail-demo-doc 청소년 사업 계획서 테마로 교체",
+        "[v4.9.9] index.html: value-demo 기간 2025→2026년"
+      ]
+    },
     {
       "version": "4.9.8",
       "date": "2026-06-30",

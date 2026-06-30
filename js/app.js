@@ -226,13 +226,10 @@ function renderPipelineSteps() {
     if (!container) return;
 
     // eslint-disable-next-line no-unsanitized/property -- PIPELINE_STEPS is a hardcoded constant; all fields are static strings
-    container.innerHTML = PIPELINE_STEPS.map((step, i) => `
+    container.innerHTML = PIPELINE_STEPS.map((step) => `
         <div class="pipeline-step step-pending" id="step-${step.id}">
-            <div class="step-bubble">
-                <span class="step-num">${i + 1}</span>
-                <span class="step-icon-done">✓</span>
-            </div>
-            <div class="step-label">${step.icon} ${step.label}</div>
+            <div class="step-dot"></div>
+            <div class="step-label">${step.label}</div>
         </div>
     `).join('');
 }
@@ -499,7 +496,7 @@ function renderQueueList() {
         <ul class="file-queue-list">
             ${state.queue.map(item => `
                 <li class="file-queue-item is-${item.status}" data-id="${item.id}">
-                    <span class="fq-icon">${getFormatIcon(item.ext)}</span>
+                    ${getFormatIconHtml(item.ext, 'fq-fmt-icon')}
                     <span class="fq-name" title="${escHtml(item.file.name)}">${escHtml(item.file.name)}</span>
                     <span class="fq-size">${formatBytes(item.file.size)}</span>
                     <span class="fq-status">${queueStatusLabel(item)}</span>
@@ -594,10 +591,10 @@ function clearSelectedFile() {
 function updateDropZoneUI(file, ext) {
     const dz = document.getElementById('drop-zone');
     if (dz) {
-        // eslint-disable-next-line no-unsanitized/property -- escHtml(file.name) applied; getFormatIcon returns a static emoji; formatBytes returns a number string
+        // eslint-disable-next-line no-unsanitized/property -- escHtml applied; getFormatIconHtml uses escHtml internally; formatBytes returns a number string
         dz.innerHTML = `
             <div class="file-selected-info">
-                <span class="file-emoji">${getFormatIcon(ext)}</span>
+                ${getFormatIconHtml(ext, 'file-fmt-icon')}
                 <div class="file-meta">
                     <strong class="file-name">${escHtml(file.name)}</strong>
                     <span class="file-size">${formatBytes(file.size)}</span>
@@ -3433,7 +3430,7 @@ function setProgressPanelState(stateName) {
     const empty = document.getElementById('progress-empty');
     if (!panel) return;
 
-    panel.hidden = stateName === 'empty';
+    panel.hidden = stateName === 'empty' || stateName === 'ready';
     panel.classList.remove('is-empty', 'is-ready', 'is-converting', 'is-success', 'is-warning', 'is-error');
     panel.classList.add(`is-${stateName}`);
 
@@ -3580,8 +3577,7 @@ function escHtml(s) {
 }
 
 /**
- * 파일 확장자에 해당하는 이모지 아이콘 반환
- * [수정 시] 새 포맷 추가 시 여기에도 항목 추가
+ * 파일 확장자에 해당하는 이모지 아이콘 반환 (fallback용)
  */
 function getFormatIcon(ext) {
     const map = {
@@ -3599,6 +3595,16 @@ function getFormatIcon(ext) {
         epub: '📚',
     };
     return map[ext.toLowerCase()] || '📄';
+}
+
+/** SVG 브랜드 아이콘 img 태그 반환 — svgIcon 없으면 이모지 span fallback */
+function getFormatIconHtml(ext, cls) {
+    const info = getFormatInfoForExt(ext);
+    const clsAttr = cls ? ` class="${escHtml(cls)}"` : '';
+    if (info?.svgIcon) {
+        return `<img src="${escHtml(info.svgIcon)}"${clsAttr} alt="${escHtml(ext.toUpperCase())}" aria-hidden="true">`;
+    }
+    return `<span${clsAttr} aria-hidden="true">${getFormatIcon(ext)}</span>`;
 }
 
 
