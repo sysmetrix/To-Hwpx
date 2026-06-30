@@ -1,6 +1,15 @@
 {
-  "current": "4.9.17",
+  "current": "4.9.18",
   "versions": [
+    {
+      "version": "4.9.18",
+      "date": "2026-06-30",
+      "user": [],
+      "dev": [
+        "[v4.9.18] index.html: changelog 모달에 '포맷 품질' 탭(data-tab=quality) 추가 — admin-only-tab, 기본 hidden",
+        "[v4.9.18] app.js: initAdminModeUi() — .admin-only-tab hidden 토글 추가 (golden CI 복구)"
+      ]
+    },
     {
       "version": "4.9.17",
       "date": "2026-06-30",

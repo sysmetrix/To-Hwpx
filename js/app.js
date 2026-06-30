@@ -3975,6 +3975,7 @@ function initAdminModeUi() {
     btn.dataset.adminEnabled = String(admin);
     btn.title = admin ? '업데이트 내역 보기' : '관리자 전용 기능입니다';
     btn.setAttribute('aria-label', admin ? '업데이트 내역 보기' : '버전 정보');
+    document.querySelectorAll('.admin-only-tab').forEach(t => { t.hidden = !admin; });
 }
 
 

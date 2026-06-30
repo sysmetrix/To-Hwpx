@@ -171,7 +171,7 @@
             <span>｢BWYF｣ AX Challenger 2026</span>
             <!-- [주의] id="open-changelog"는 app.js에서 관리자 모드일 때 업데이트 내역 모달을 여는 연결값 -->
             <button class="util-changelog-btn" id="open-changelog" aria-label="버전 정보" data-admin-enabled="false">
-                📋 v4.9.17
+                📋 v4.9.18
             </button>
         </div>
     </div>
@@ -1636,6 +1636,8 @@
                         role="tab" aria-selected="false">개발자 변경사항</button>
                 <button class="changelog-tab" data-tab="admin"
                         role="tab" aria-selected="false">관리자 모드</button>
+                <button class="changelog-tab admin-only-tab" data-tab="quality"
+                        role="tab" aria-selected="false" hidden>포맷 품질</button>
             </div>
             <!-- JS에서 changelog.json 로드 후 렌더링 -->
             <div class="changelog-content" id="changelog-content">
