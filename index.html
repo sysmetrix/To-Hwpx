@@ -171,7 +171,7 @@
             <span>｢BWYF｣ AX Challenger 2026</span>
             <!-- [주의] id="open-changelog"는 app.js에서 관리자 모드일 때 업데이트 내역 모달을 여는 연결값 -->
             <button class="util-changelog-btn" id="open-changelog" aria-label="버전 정보" data-admin-enabled="false">
-                📋 v4.9.11
+                📋 v4.9.12
             </button>
         </div>
     </div>
@@ -1570,26 +1570,50 @@
             <button class="modal-close" id="close-advanced-guide" aria-label="고급 사용 팁 닫기">✕</button>
         </div>
         <div class="modal-body">
-            <div class="advanced-guide-grid">
-                <section>
-                    <h3>문서 모양</h3>
-                    <p>줄 간격, 제목 블록, 구분선, 여백은 HWPX 생성값에 직접 반영됩니다. 보고서 제출 전에는 한컴에서 실제 렌더링을 확인하세요.</p>
-                </section>
-                <section>
-                    <h3>폰트</h3>
-                    <p>HWPX에는 폰트 파일이 들어가지 않고 이름만 기록됩니다. 다른 PC에서 같은 모양을 원하면 같은 폰트를 설치해야 합니다.</p>
-                </section>
-                <section>
-                    <h3>보존 한계</h3>
-                    <p>DOCX나 HTML의 복잡한 원본 레이아웃을 그대로 복제하는 도구가 아니라, 내용을 한글 문서 구조로 정리하는 변환기입니다.</p>
-                </section>
-                <section>
-                    <h3>추천 순서</h3>
-                    <p>먼저 기본값으로 변환한 뒤, 필요할 때만 여백과 제목 블록을 조정하는 흐름이 가장 빠르고 안정적입니다.</p>
-                </section>
-            </div>
-            <div class="advanced-guide-note">
-                앞으로 추가하기 좋은 세부 설정은 문단 앞/뒤 간격, 제목 스타일 프리셋, 표 스타일, 링크 표시 방식, 이미지 최대 폭/정렬입니다.
+            <div class="adv-tip-grid">
+
+                <div class="adv-tip-card">
+                    <div class="adv-tip-head">
+                        <span class="adv-tip-icon adv-tip-icon--blue" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                        </span>
+                        <strong class="adv-tip-title">문서 모양</strong>
+                    </div>
+                    <p class="adv-tip-body">줄 간격·제목 블록·여백이 HWPX에 직접 반영됩니다.</p>
+                    <span class="adv-tip-warn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>반드시 한컴에서 눈으로 확인</span>
+                </div>
+
+                <div class="adv-tip-card">
+                    <div class="adv-tip-head">
+                        <span class="adv-tip-icon adv-tip-icon--purple" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
+                        </span>
+                        <strong class="adv-tip-title">폰트</strong>
+                    </div>
+                    <p class="adv-tip-body">폰트 파일은 포함되지 않고 이름만 기록됩니다.</p>
+                    <span class="adv-tip-warn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>다른 PC에도 같은 폰트 설치 필요</span>
+                </div>
+
+                <div class="adv-tip-card">
+                    <div class="adv-tip-head">
+                        <span class="adv-tip-icon adv-tip-icon--orange" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                        </span>
+                        <strong class="adv-tip-title">보존 한계</strong>
+                    </div>
+                    <p class="adv-tip-body">레이아웃 복제가 아닌 내용 구조 변환기입니다. 복잡한 원본 레이아웃은 재현되지 않습니다.</p>
+                </div>
+
+                <div class="adv-tip-card">
+                    <div class="adv-tip-head">
+                        <span class="adv-tip-icon adv-tip-icon--green" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                        </span>
+                        <strong class="adv-tip-title">추천 순서</strong>
+                    </div>
+                    <p class="adv-tip-body">기본값으로 먼저 변환 → 필요할 때만 여백·제목 블록을 조정하세요.</p>
+                </div>
+
             </div>
         </div>
     </div>

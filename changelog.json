@@ -1,6 +1,20 @@
 {
-  "current": "4.9.11",
+  "current": "4.9.12",
   "versions": [
+    {
+      "version": "4.9.12",
+      "date": "2026-06-30",
+      "user": [
+        "상단 다크/라이트 버튼의 아이콘과 텍스트 사이 간격이 넓어졌습니다.",
+        "고급 사용 팁이 텍스트 목록에서 아이콘 카드 형식으로 바뀌었습니다."
+      ],
+      "dev": [
+        "[v4.9.12] style.css: .nav-btn-icon에 margin-right:5px 추가",
+        "[v4.9.12] index.html: advanced-guide-modal — advanced-guide-grid → adv-tip-grid 카드 4장",
+        "[v4.9.12] style.css: .adv-tip-grid/.adv-tip-card/.adv-tip-icon 컬러 뱃지 신규",
+        "[v4.9.12] style.css: 다크 모드 adv-tip-icon 배경색 오버라이드"
+      ]
+    },
     {
       "version": "4.9.11",
       "date": "2026-06-30",
