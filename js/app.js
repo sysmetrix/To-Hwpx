@@ -100,6 +100,19 @@ if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
 
 // [B1] 모듈은 항상 defer 실행 → DOMContentLoaded가 이미 발화했을 수 있음.
 // 안전 패턴: readyState 확인 후 직접 실행하거나 이벤트 대기.
+function initScrollAnimations() {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('anim-visible');
+                observer.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.08, rootMargin: '0px 0px -32px 0px' });
+    document.querySelectorAll('.anim-target').forEach(el => observer.observe(el));
+}
+
 function initApp() {
     window.scrollTo(0, 0);      // 새로고침 시 첫 화면(맨 위)으로
     initAdminParam();           // ?admin/?lab을 1회 반영 (isAdminMode는 순수 read)
@@ -126,6 +139,7 @@ function initApp() {
     initAdminModeUi();          // 관리자 모드에서만 버전 내역 클릭 허용
     applyBetaBadgeVisibility(); // 베타 배지는 관리자 모드에서만 노출(일반 사용자엔 숨김)
     initQualityPanel();         // 포맷 변환 품질 탭 패널 렌더링
+    initScrollAnimations();     // 스크롤 페이드-인 (IntersectionObserver)
     window.__appReady = true;   // 모듈 초기화 완료 — 테스트·디버그용 신호
 }
 function initHelpDots() {
@@ -696,8 +710,12 @@ function updateFormatExpectation(ext, waiting = false) {
         : `<span class="format-hint-fmt-badge">${escHtml((ext || 'FILE').toUpperCase().slice(0, 4))}</span>`;
 
     const formatName = waiting ? `.${ext.toUpperCase()} 파일을 업로드하세요` : `${info.name} 감지`;
-    const okChips = chipData.ok.map(t => `<span class="fhc fhc--ok">${escHtml(t)}</span>`).join('');
-    const warnChips = chipData.warn.map(t => `<span class="fhc fhc--warn">${escHtml(t)}</span>`).join('');
+    const okChips = chipData.ok.length > 0
+        ? `<div class="fhc-row">${chipData.ok.map(t => `<span class="fhc fhc--ok">${escHtml(t)}</span>`).join('')}</div>`
+        : '';
+    const warnChips = chipData.warn.length > 0
+        ? `<div class="fhc-row">${chipData.warn.map(t => `<span class="fhc fhc--warn">${escHtml(t)}</span>`).join('')}</div>`
+        : '';
 
     // eslint-disable-next-line no-unsanitized/property -- all user strings wrapped in escHtml()
     hint.innerHTML = `

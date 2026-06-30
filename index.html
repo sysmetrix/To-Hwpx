@@ -171,7 +171,7 @@
             <span>｢BWYF｣ AX Challenger 2026</span>
             <!-- [주의] id="open-changelog"는 app.js에서 관리자 모드일 때 업데이트 내역 모달을 여는 연결값 -->
             <button class="util-changelog-btn" id="open-changelog" aria-label="버전 정보" data-admin-enabled="false">
-                📋 v4.9.6
+                📋 v4.9.7
             </button>
         </div>
     </div>
@@ -238,6 +238,13 @@
         <div id="drop-zone" class="drop-zone" role="button" tabindex="0"
              aria-label="파일을 드래그하거나 클릭하여 선택">
             <div class="drop-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
+            <div class="drop-fmt-icons" aria-hidden="true">
+                <img src="icons/brand/markdown.svg" alt="MD">
+                <img src="icons/brand/microsoftword.svg" alt="DOCX">
+                <img src="icons/brand/html5.svg" alt="HTML">
+                <img src="icons/brand/microsoftexcel.svg" alt="XLSX/CSV">
+                <img src="icons/brand/jupyter.svg" alt="IPYNB">
+            </div>
             <div class="drop-title">파일을 여기에 드래그하거나 클릭하세요</div>
             <div class="drop-sub">입력: MD · HTML · DOCX · CSV · XLSX · JSON · TXT · IPYNB · HWP (여러 개 가능)<br>출력: HWPX</div>
         </div>
@@ -274,6 +281,24 @@
             </button>
         </div>
 
+        <!-- 서비스 지표 — 수치 강조 -->
+        <div class="hero-stats" aria-label="서비스 현황">
+            <div class="hero-stat">
+                <strong class="stat-num">10종</strong>
+                <span class="stat-label">입력 포맷 지원</span>
+            </div>
+            <div class="hero-stat-sep" aria-hidden="true"></div>
+            <div class="hero-stat">
+                <strong class="stat-num">100%</strong>
+                <span class="stat-label">브라우저 전용 처리</span>
+            </div>
+            <div class="hero-stat-sep" aria-hidden="true"></div>
+            <div class="hero-stat">
+                <strong class="stat-num">0</strong>
+                <span class="stat-label">서버 전송</span>
+            </div>
+        </div>
+
         <!-- 숨겨진 파일 인풋 (드롭존 클릭 시 트리거됨) -->
         <!-- [포맷 추가 시] accept에 새 확장자를 추가해야 파일 선택창에서 보입니다. -->
         <!-- multiple: 여러 파일을 한 번에 선택해 배치 변환 -->
@@ -307,7 +332,16 @@
                     <!-- 파일 드롭 영역 — 클릭하거나 드래그해서 바로 업로드 -->
                     <div id="converter-drop-area" class="converter-drop-area" role="button" tabindex="0"
                          aria-label="파일을 드래그하거나 클릭하여 선택 (여러 개 가능)">
-                        <span class="cda-icon">📂</span>
+                        <div class="cda-icon-wrap" aria-hidden="true">
+                            <svg class="cda-upload-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                            <div class="cda-fmt-icons">
+                                <img src="icons/brand/markdown.svg" alt="MD">
+                                <img src="icons/brand/microsoftword.svg" alt="DOCX">
+                                <img src="icons/brand/html5.svg" alt="HTML">
+                                <img src="icons/brand/microsoftexcel.svg" alt="XLSX">
+                                <img src="icons/brand/jupyter.svg" alt="IPYNB">
+                            </div>
+                        </div>
                         <div class="cda-body">
                             <span id="cda-label">파일을 드래그하거나 클릭하여 선택 (여러 개 가능)</span>
                             <span id="detected-format" aria-live="polite"></span>
@@ -485,11 +519,10 @@
                     </div>
                 </section>
 
-                <details class="advanced-settings">
+                <details class="advanced-settings" open>
                     <summary>
                         <span class="adv-summary-text">문서 세부 설정 <small>상단 제목 블록 · 구분선 · 여백 · 진단</small></span>
-                        <span class="adv-summary-note">더 보기</span>
-                        <span class="adv-chevron" aria-hidden="true">▾</span>
+                        <span class="adv-summary-chevron" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
                     </summary>
                     <div class="advanced-settings-body">
                         <div class="advanced-settings-grid">
@@ -791,7 +824,7 @@
 <section class="value-section" aria-labelledby="value-title">
     <div class="container">
         <div class="value-layout">
-            <div class="value-copy">
+            <div class="value-copy anim-target">
                 <span class="value-kicker">왜 To HWPX인가</span>
                 <h2 id="value-title">AI 시대의 작업물을 한글 행정 문서로 연결합니다</h2>
                 <p>
@@ -802,7 +835,7 @@
                     연결해 반복 복사·붙여넣기와 오래 걸리는 서식 재작업을 줄입니다.
                 </p>
             </div>
-            <div class="value-demo" aria-label="변환 전후 비교">
+            <div class="value-demo anim-target" aria-label="변환 전후 비교" style="--anim-delay:0.12s">
                 <div class="value-demo-before">
                     <span class="value-demo-label">AI 채팅 작업물</span>
                     <pre class="value-demo-md"><span class="vd-h"># 2분기 실적 요약</span>
@@ -811,7 +844,7 @@
 <span class="vd-li">-</span> <span class="vd-bold">**주요 과제**</span> 3건 도출
 <span class="vd-li">-</span> 다음 분기 계획 수립</pre>
                 </div>
-                <div class="value-demo-arrow" aria-hidden="true">↓</div>
+                <div class="value-demo-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg></div>
                 <div class="value-demo-after">
                     <span class="value-demo-label">HWPX 미리보기</span>
                     <div class="value-demo-doc">
@@ -841,7 +874,7 @@
      ════════════════════════════════════════════════════════════════ -->
 <section class="formats-section" id="formats" aria-label="입력 포맷">
     <div class="container">
-        <div class="service-info">
+        <div class="service-info anim-target">
             <div class="service-info-bar">
                 <span class="service-info-label">더 알아보기</span>
                 <div class="format-tabs service-tabs" id="format-more-tabs" role="tablist" aria-label="포맷 안내">

@@ -563,7 +563,50 @@ a:hover { text-decoration: underline; }
     gap: 8px;
     flex-wrap: wrap;
     margin: 18px auto 0;
+    margin-bottom: 20px;
 }
+/* 히어로 스탯 블록 */
+.hero-stats {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0 auto 0;
+    padding: 16px 28px;
+    background: var(--c-surface);
+    border: 1px solid var(--c-border);
+    border-radius: var(--radius-lg);
+    max-width: 480px;
+    box-shadow: var(--shadow-sm);
+}
+.hero-stat {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    padding: 0 12px;
+}
+.stat-num {
+    font-size: 1.65rem;
+    font-weight: 800;
+    color: var(--c-primary);
+    line-height: 1;
+    letter-spacing: -0.03em;
+}
+.stat-label {
+    font-size: 0.73rem;
+    color: var(--c-text-muted);
+    text-align: center;
+    word-break: keep-all;
+    line-height: 1.35;
+}
+.hero-stat-sep {
+    width: 1px;
+    height: 34px;
+    background: var(--c-border);
+    flex-shrink: 0;
+}
+
 /* Trust Bar 버튼 — 히어로 영역 지원 환경 안내 (icon + label + sub) */
 .trust-btn {
     display: inline-flex;
@@ -663,16 +706,45 @@ a:hover { text-decoration: underline; }
 .drop-zone .drop-icon {
     width: 52px;
     height: 52px;
-    margin: 0 auto 14px;
+    margin: 0 auto 10px;
     display: flex;
     align-items: center;
     justify-content: center;
     color: var(--c-primary);
     opacity: 0.7;
 }
-.drop-zone .drop-icon svg { width: 52px; height: 52px; }
+.drop-zone .drop-icon svg {
+    width: 52px;
+    height: 52px;
+    animation: drop-float 3s ease-in-out infinite;
+}
+@keyframes drop-float {
+    0%, 100% { transform: translateY(0); }
+    50%       { transform: translateY(-5px); }
+}
 .drop-zone:hover .drop-icon,
 .drop-zone.drag-over .drop-icon { opacity: 1; }
+.drop-fmt-icons {
+    display: flex;
+    gap: 9px;
+    justify-content: center;
+    align-items: center;
+    margin: 0 auto 14px;
+}
+.drop-fmt-icons img {
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+    opacity: 0.45;
+    transition: opacity var(--trans), transform var(--trans);
+}
+.drop-zone:hover .drop-fmt-icons img,
+.drop-zone.drag-over .drop-fmt-icons img { opacity: 0.85; }
+.drop-zone:hover .drop-fmt-icons img:nth-child(1) { transition-delay: 0ms; }
+.drop-zone:hover .drop-fmt-icons img:nth-child(2) { transition-delay: 40ms; }
+.drop-zone:hover .drop-fmt-icons img:nth-child(3) { transition-delay: 80ms; }
+.drop-zone:hover .drop-fmt-icons img:nth-child(4) { transition-delay: 120ms; }
+.drop-zone:hover .drop-fmt-icons img:nth-child(5) { transition-delay: 160ms; }
 .drop-zone .drop-title   { font-size: 1.15rem; font-weight: 700; margin-bottom: 6px; color: var(--c-text); }
 .drop-zone .drop-sub {
     display: inline-block;
@@ -846,13 +918,31 @@ a:hover { text-decoration: underline; }
 .vd-em { color: #85e89d; }
 .vd-bold { color: #e1e4e8; }
 .value-demo-arrow {
-    padding: 5px 0;
+    padding: 6px 0;
     text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     font-size: 1rem;
     color: var(--c-primary);
     background: var(--c-surface-alt);
     border-top: 1px solid var(--c-border);
     border-bottom: 1px solid var(--c-border);
+}
+.value-demo-arrow svg {
+    width: 20px;
+    height: 20px;
+    animation: arrow-bounce 2s ease-in-out infinite;
+}
+@keyframes arrow-bounce {
+    0%, 100% { transform: translateY(0); }
+    50%       { transform: translateY(4px); }
+}
+.value-demo-after {
+    transition: background 0.3s ease;
+}
+.value-demo:hover .value-demo-after {
+    background: color-mix(in srgb, var(--c-primary-light) 60%, var(--c-surface));
 }
 .vd-doc-h1 {
     margin: 0 0 8px;
@@ -1353,7 +1443,9 @@ a:hover { text-decoration: underline; }
 .adv-summary-text {
     color: var(--c-text);
     min-width: 0;
+    font-weight: 600;
 }
+/* 구형 .adv-summary-note 호환 유지 */
 .adv-summary-note {
     margin-left: auto;
     padding: 4px 8px;
@@ -1378,8 +1470,22 @@ a:hover { text-decoration: underline; }
     font-size: 0.78rem;
 }
 .advanced-settings[open] .adv-chevron { transform: rotate(180deg); }
+.adv-summary-chevron {
+    margin-left: auto;
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--c-primary);
+    flex-shrink: 0;
+    transition: transform 0.25s ease;
+}
+.adv-summary-chevron svg { width: 16px; height: 16px; }
+.advanced-settings[open] .adv-summary-chevron { transform: rotate(180deg); }
 .advanced-settings summary:hover { background: color-mix(in srgb, var(--c-primary-light) 42%, var(--c-surface-alt)); }
 .advanced-settings summary:hover .adv-chevron { background: var(--c-primary); color: #fff; }
+.advanced-settings summary:hover .adv-summary-chevron { color: var(--c-primary-dark); }
 .advanced-settings summary:hover .adv-summary-note { background: var(--c-surface); }
 .advanced-settings-body {
     padding: 14px;
@@ -1518,6 +1624,35 @@ a:hover { text-decoration: underline; }
     background: var(--c-success-light);
 }
 .cda-icon { font-size: 1.1rem; flex-shrink: 0; }
+.cda-icon-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+}
+.cda-upload-svg {
+    width: 18px;
+    height: 18px;
+    color: var(--c-primary);
+    opacity: 0.75;
+}
+.converter-drop-area:hover .cda-upload-svg,
+.converter-drop-area.drag-over .cda-upload-svg { opacity: 1; }
+.cda-fmt-icons {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+}
+.cda-fmt-icons img {
+    width: 13px;
+    height: 13px;
+    object-fit: contain;
+    opacity: 0.5;
+    transition: opacity var(--trans);
+}
+.converter-drop-area:hover .cda-fmt-icons img,
+.converter-drop-area.drag-over .cda-fmt-icons img { opacity: 0.85; }
 .cda-body { flex: 1; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 #cda-label {
     font-size: 0.85rem;
@@ -2168,6 +2303,11 @@ a:hover { text-decoration: underline; }
 .fh-quality--mid  { background: #fef9c3; color: #a16207; }
 .fh-quality--low  { background: #fee2e2; color: #991b1b; }
 .format-hint-chips {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+.fhc-row {
     display: flex;
     flex-wrap: wrap;
     gap: 4px;
@@ -2972,7 +3112,7 @@ a:hover { text-decoration: underline; }
     .site-logo { font-size: 1.15rem; min-width: 0; }
     .hero      { padding: 48px 0 40px; }
     .hero-sub br { display: none; }
-    .hero-badges { margin-bottom: 22px; }
+    .hero-badges { margin-bottom: 16px; }
     .hero-badges span,
     .hero-badges button {
         flex: 1 1 130px;
@@ -2980,6 +3120,10 @@ a:hover { text-decoration: underline; }
         white-space: normal;
         text-align: center;
     }
+    .hero-stats { padding: 12px 16px; max-width: none; }
+    .hero-stat  { padding: 0 8px; }
+    .stat-num   { font-size: 1.35rem; }
+    .stat-label { font-size: 0.68rem; }
     .quick-guide {
         align-items: stretch;
         flex-direction: column;
@@ -4938,6 +5082,21 @@ a:hover { text-decoration: underline; }
 }
 
 /* 모션 최소화 사용자 — 장식용 반복 애니메이션·부드러운 스크롤 비활성 */
+/* ─────────────────────────────────────────────────────────────────
+   [스크롤 페이드-인]  IntersectionObserver가 .anim-visible을 토글
+   ───────────────────────────────────────────────────────────────── */
+.anim-target {
+    opacity: 0;
+    transform: translateY(22px);
+    transition:
+        opacity  0.6s ease calc(var(--anim-delay, 0s)),
+        transform 0.6s ease calc(var(--anim-delay, 0s));
+}
+.anim-target.anim-visible {
+    opacity: 1;
+    transform: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
     html { scroll-behavior: auto; }
     .step-active .step-bubble { animation: none; }
@@ -4945,6 +5104,9 @@ a:hover { text-decoration: underline; }
     .drop-zone:hover,
     .drop-zone.drag-over,
     .format-card:hover:not(.coming-soon) { transform: none; }
+    .anim-target { opacity: 1; transform: none; transition: none; }
+    .drop-zone .drop-icon svg { animation: none; }
+    .value-demo-arrow svg { animation: none; }
 }
 
 
