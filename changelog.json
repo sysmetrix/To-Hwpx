@@ -1,6 +1,18 @@
 {
-  "current": "4.9.3",
+  "current": "4.9.4",
   "versions": [
+    {
+      "version": "4.9.4",
+      "date": "2026-06-30",
+      "user": [
+        "PC·모바일·설치·로컬처리 안내 팝업을 아이콘 + 핵심 정보만 남긴 간결한 구성으로 개선했습니다."
+      ],
+      "dev": [
+        "[v4.9.4] index.html: 4개 trust 모달 본문 전면 교체 — trust-modal-icon·trust-modal-lead·trust-fact-row·trust-modal-note 구조로 통일",
+        "[v4.9.4] index.html: 설치 모달 3단계→2단계 압축, install-guide-lead→trust-modal-lead 교체",
+        "[v4.9.4] style.css: device-frame·phone-frame·support-guide-visual·support-guide-list 제거, trust-modal-* 신규 추가"
+      ]
+    },
     {
       "version": "4.9.3",
       "date": "2026-06-30",

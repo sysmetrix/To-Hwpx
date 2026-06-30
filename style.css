@@ -3370,91 +3370,59 @@ a:hover { text-decoration: underline; }
     padding: 20px 24px;
 }
 
-.install-guide-lead {
-    margin-bottom: 16px;
-    color: var(--c-text);
-    font-weight: 700;
-    line-height: 1.6;
-}
-.support-guide-visual {
+/* ─── trust 모달 공통 (PC·모바일·설치·로컬처리) ─── */
+.trust-modal-icon {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 14px;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: var(--c-primary-light);
+    color: var(--c-primary);
+    margin: 0 auto 14px;
+}
+.trust-modal-icon svg { width: 28px; height: 28px; }
+.trust-modal-lead {
+    text-align: center;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--c-text);
     margin-bottom: 18px;
+    line-height: 1.5;
 }
-.support-guide-visual--mobile {
-    gap: 12px;
+.trust-fact-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
 }
-.device-frame {
-    width: 100%;
-    max-width: 420px;
+.trust-fact {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 8px;
     border: 1px solid var(--c-border);
     border-radius: var(--radius-md);
     background: var(--c-surface-alt);
-    padding: 14px;
-}
-.device-screen {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    min-height: 88px;
-    border-radius: var(--radius-sm);
-    background: var(--c-surface);
-    border: 1px solid var(--c-border);
-    color: var(--c-primary);
-    font-weight: 800;
     text-align: center;
-}
-.phone-frame {
-    width: 112px;
-    height: 168px;
-    border: 2px solid var(--c-text);
-    border-radius: 18px;
-    background: var(--c-surface);
-    padding: 12px 8px 10px;
-    box-shadow: var(--shadow-sm);
-}
-.phone-notch {
-    width: 34px;
-    height: 5px;
-    border-radius: 999px;
-    background: var(--c-border);
-    margin: 0 auto 12px;
-}
-.phone-screen {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 126px;
-    border-radius: var(--radius-sm);
-    background: var(--c-primary-light);
-    color: var(--c-primary);
     font-size: 0.82rem;
-    font-weight: 800;
-    text-align: center;
-    line-height: 1.35;
-}
-.support-plus {
-    color: var(--c-text-muted);
-    font-size: 1.3rem;
-    font-weight: 800;
-}
-.support-guide-lead {
-    margin-bottom: 14px;
-    color: var(--c-text);
-    font-weight: 700;
-    line-height: 1.55;
-}
-.support-guide-list {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    padding-left: 18px;
+    font-weight: 600;
     color: var(--c-text-sub);
-    font-size: 0.92rem;
+    line-height: 1.3;
 }
+.trust-fact svg { width: 20px; height: 20px; color: var(--c-primary); flex-shrink: 0; }
+.trust-modal-note {
+    font-size: 0.8rem;
+    color: var(--c-text-muted);
+    line-height: 1.6;
+    padding: 10px 12px;
+    background: var(--c-surface-alt);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--c-border);
+}
+.trust-modal-note strong { color: var(--c-text-sub); }
 .install-guide-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -4669,15 +4637,7 @@ a:hover { text-decoration: underline; }
     .onboarding-actions { flex-direction: column-reverse; }
     .btn-primary-lite,
     .btn-secondary { width: 100%; }
-    .device-screen {
-        flex-direction: column;
-        gap: 6px;
-    }
-    .phone-frame {
-        width: 98px;
-        height: 152px;
-    }
-    .phone-screen { height: 112px; }
+    .trust-fact-row { flex-direction: column; }
     .install-browser-card { padding: 14px; }
     .font-guide-item { grid-template-columns: 1fr; }
     .font-guide-actions { justify-content: flex-start; }
