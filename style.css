@@ -389,8 +389,8 @@ a:hover { text-decoration: underline; }
 .nav-shortcut-btn,
 .nav-reset-btn {
     border: 1.5px solid var(--c-border);
-    border-radius: 50px;
-    padding: 4px 14px;
+    border-radius: 8px;
+    padding: 4px 12px;
     font-size: 13px;
     font-weight: 600;
     color: var(--c-text-sub);

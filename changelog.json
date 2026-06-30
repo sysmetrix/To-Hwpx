@@ -1,6 +1,16 @@
 {
-  "current": "4.9.15",
+  "current": "4.9.16",
   "versions": [
+    {
+      "version": "4.9.16",
+      "date": "2026-06-30",
+      "user": [
+        "헤더 유틸리티 버튼(글꼴 안내·초기화·다크/라이트) 모양이 조정됐습니다. 변환하기 버튼과 위계를 구분합니다."
+      ],
+      "dev": [
+        "[v4.9.16] style.css: .nav-shortcut-btn/.nav-reset-btn — border-radius pill(50px)→8px, padding 복원"
+      ]
+    },
     {
       "version": "4.9.15",
       "date": "2026-06-30",
