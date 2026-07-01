@@ -1850,7 +1850,17 @@ async function parsePptxSlideItems(xmlText, zip, slidePath, imageCounterRef) {
     }
 
     const items = [];
-    for (const child of Array.from(spTree.childNodes)) {
+    await collectPptxSpTreeItems(spTree, zip, relsMap, slideDir, imageCounterRef, items);
+    return items;
+}
+
+/**
+ * p:spTree(또는 그 안의 p:grpSp) 직계 자식을 순회해 items에 push한다.
+ * p:grpSp(그룹 도형)는 여러 도형을 하나로 묶은 컨테이너라 자식 도형이 spTree의
+ * 직계가 아니게 되므로, 그룹을 만나면 재귀로 내부까지 펼쳐서 콘텐츠 누락을 막는다.
+ */
+async function collectPptxSpTreeItems(container, zip, relsMap, slideDir, imageCounterRef, items) {
+    for (const child of Array.from(container.childNodes)) {
         if (child.nodeType !== 1) continue;
         const local = child.localName;
 
@@ -1884,9 +1894,10 @@ async function parsePptxSlideItems(xmlText, zip, slidePath, imageCounterRef) {
             const result = await extractPptxImage(child, relsMap, zip, slideDir, imageCounterRef);
             if (result?.type === 'image') items.push({ kind: 'image', image: result });
             else if (result?.type === 'para') items.push({ kind: 'para', text: result.text });
+        } else if (local === 'grpSp') {
+            await collectPptxSpTreeItems(child, zip, relsMap, slideDir, imageCounterRef, items);
         }
     }
-    return items;
 }
 
 async function parsePptx(arrayBuffer, docType = 'plain') {

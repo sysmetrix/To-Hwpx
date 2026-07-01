@@ -304,14 +304,14 @@
 
 ## PPTX
 
-관련 코드: `parsePptx()`, `parsePptxSlideItems()`, `extractPptxTable()`, `extractPptxImage()` in `js/parsers.js`
+관련 코드: `parsePptx()`, `parsePptxSlideItems()`, `collectPptxSpTreeItems()`, `extractPptxTable()`, `extractPptxImage()` in `js/parsers.js`
 
 목표:
-- 슬라이드 디자인(도형 위치·애니메이션)을 재현하지 않고, 슬라이드의 텍스트·표·그림을 순서대로 읽는 문서로 정리한다(v4.10.8 텍스트, v4.10.10 표/그림 추가).
+- 슬라이드 디자인(도형 위치·애니메이션)을 재현하지 않고, 슬라이드의 텍스트·표·그림을 순서대로 읽는 문서로 정리한다(v4.10.8 텍스트, v4.10.10 표/그림, v4.10.12 그룹 도형 재귀).
 
 보존:
 - 슬라이드 순서(`ppt/presentation.xml`의 `p:sldIdLst` + `ppt/_rels/presentation.xml.rels`로 확정, 실패 시 `slideN.xml` 파일명 숫자 정렬로 폴백)
-- 슬라이드 안 `p:spTree` 직계 자식(`p:sp`/`p:graphicFrame`/`p:pic`)을 도형 등장 순서대로 순회해 변환한다.
+- 슬라이드 안 `p:spTree`를 `collectPptxSpTreeItems()`가 도형 등장 순서대로 순회한다. `p:sp`/`p:graphicFrame`/`p:pic`를 변환하고, **`p:grpSp`(그룹 도형)를 만나면 재귀로 내부까지 펼쳐서** 그룹 안 텍스트·표·그림도 누락 없이 처리한다.
 - 제목 placeholder(`p:ph type="title"`/`"ctrTitle"`) → heading
 - 글머리 기호(`a:buChar`/`a:buAutoNum`, `a:buNone` 없음)가 있는 문단 → list, 없으면 para
 - `p:graphicFrame`의 `a:tbl`(DrawingML 표) → 공통 IR table 블록. `a:tc`의 `gridSpan`/`hMerge`/`vMerge`로 가로/세로 병합을 재구성한다.
@@ -321,14 +321,17 @@
 주의:
 - PPTX는 ZIP + OOXML이다(DOCX와 같은 계열이지만 `ppt/` 네임스페이스와 `p:`/`a:` 접두사를 쓴다).
 - **PPTX 표는 DOCX와 병합 표현이 다르다**: DOCX(`w:tbl`)는 가로 병합을 `gridSpan`으로 압축해 셀 자체가 줄어들지만, PPTX(`a:tbl`)는 병합된 칸도 각 열마다 `hMerge="1"`/`vMerge="1"` placeholder `a:tc`를 그대로 둔다. 그래서 `extractPptxTable()`은 논리열 인덱스를 raw cell 개수만큼 그대로 증가시키고, DOCX처럼 colSpan만큼 건너뛰지 않는다.
-- 도형(텍스트 상자·표·그림 제외), 애니메이션, 슬라이드 디자인/레이아웃, 발표자 노트는 다루지 않는다. WMF/EMF 벡터 이미지는 alt 텍스트가 있으면 안내 문단으로 대체한다.
+- **그룹 도형을 빠뜨리기 쉽다**: `p:spTree`의 직계 자식만 보면 `p:grpSp` 안의 텍스트박스·표·그림이 조용히 사라진다(실제 발표자료에서 매우 흔한 구조). 새 도형 종류를 추가할 때도 `collectPptxSpTreeItems()`를 거치는지 확인한다.
+- 그룹 도형 내부를 제외한 일반 도형(텍스트 상자·표·그림 제외), 애니메이션, 슬라이드 디자인/레이아웃, 발표자 노트는 다루지 않는다. WMF/EMF 벡터 이미지는 alt 텍스트가 있으면 안내 문단으로 대체한다.
 - `p:sldId`의 `r:id`, `p:pic`의 `a:blip@r:embed`는 모두 `DOCX_NS_R`(officeDocument relationships 네임스페이스)로 읽는다. `getAttributeNS(DOCX_NS_R, 'id'/'embed') || getAttribute('r:id'/'r:embed')` 패턴을 DOCX와 동일하게 유지한다.
 - 이미지 binName은 `pptx-img${n}`을 쓴다(다른 포맷과 접두사가 겹치지 않게).
+- `js/app.js`의 `getConversionSummaryForExt()`도 `FORMAT_INFO.pptx`와 같은 말을 하는지 반드시 함께 확인한다. 표/그림 지원 추가 당시 이 함수 갱신을 누락해 포맷 카드에 "이미지가 제외된다"는 문구가 남았던 회귀가 있었다(v4.10.12에서 수정).
+- **아직 실제 PowerPoint/Keynote/Google Slides로 내보낸 진짜 PPTX로 검증하지 않았다.** fixture는 손으로 만든 최소 XML이라 네임스페이스 접두사·구조가 실제 파일과 다를 가능성이 있다. 실 파일 회귀 전에는 "완료"로 보지 않는다.
 
 검증:
-- `tests/fixtures/sample.pptx`(2슬라이드: 제목+본문+목록+표+그림)
+- `tests/fixtures/sample.pptx`(2슬라이드: 제목+본문+목록+가로/세로 병합 표+그림+그룹 도형)
 - `npm run test:golden`
-- 슬라이드 순서, 표 병합, 그림 삽입은 한컴에서도 확인한다.
+- 슬라이드 순서, 표 병합, 그림 삽입, 그룹 도형 내부 텍스트는 한컴에서도 확인한다.
 
 ## HWP / HWPX
 

@@ -1,6 +1,20 @@
 {
-  "current": "4.10.11",
+  "current": "4.10.12",
   "versions": [
+    {
+      "version": "4.10.12",
+      "date": "2026-07-01",
+      "user": [
+        "PowerPoint(PPTX) 변환에서 그룹으로 묶인 도형 안의 텍스트·표·그림도 이제 빠짐없이 변환됩니다."
+      ],
+      "dev": [
+        "[v4.10.12] js/app.js: getConversionSummaryForExt()에 pptx 항목 추가 — 이미지 지원 반영 전 기본값(이미지 제외)으로 잘못 표시되던 포맷 카드 문구 회귀 수정. ipynb 항목도 이미지 출력 지원(v4.10.7) 기준으로 갱신",
+        "[v4.10.12] js/parsers.js: collectPptxSpTreeItems() 신규 — p:grpSp(그룹 도형)를 재귀로 펼쳐 내부 텍스트/표/그림 누락 방지. parsePptxSlideItems()가 이 함수를 호출하도록 리팩터링",
+        "[v4.10.12] tests/fixtures/sample.pptx, qa/fixtures/sample.pptx: 가로/세로 병합 표(hMerge/vMerge/gridSpan/rowSpan 모두 포함)와 그룹 도형(p:grpSp) fixture 추가 — 이전까지 병합 로직이 테스트되지 않았던 공백 해소",
+        "[v4.10.12] tests/golden.js: 표 병합(hp:cellSpan colSpan/rowSpan)과 그룹 도형 내부 텍스트 HWPX 반영 회귀 검증 추가",
+        "[v4.10.12] format_conversion_playbook.md/qa/release-qa.md: 그룹 도형 재귀 처리 기록, 실제 PowerPoint 파일 미검증 상태 명시"
+      ]
+    },
     {
       "version": "4.10.11",
       "date": "2026-07-01",

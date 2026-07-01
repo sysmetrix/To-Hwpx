@@ -3293,6 +3293,10 @@ function getConversionSummaryForExt(ext) {
             preserved: '본문, 제목, 번호·글머리 목록, 기본 표, 하이퍼링크, 인라인 서식·색상·이미지, 각주, 원본 우선 서식 정책',
             lossy: 'Word 페이지 배치·테마, WMF/EMF 실제 그림, 주석, 변경 추적, 복잡한 개체',
         },
+        pptx: {
+            preserved: '슬라이드 순서, 제목·본문 텍스트, 글머리 목록, 슬라이드 안 표(병합 포함), 그림',
+            lossy: '슬라이드 레이아웃·디자인·애니메이션, 도형 위치, 그룹 도형 내부 콘텐츠, 발표자 노트',
+        },
         txt: {
             preserved: '원문 텍스트, 줄바꿈, 빈 줄 기준 문단',
             lossy: '제목 구조, 표 구조, 굵게/색상 같은 서식 정보',
@@ -3318,8 +3322,8 @@ function getConversionSummaryForExt(ext) {
             lossy: '보고서형 레이아웃, 데이터 타입 의미, 원본 들여쓰기',
         },
         ipynb: {
-            preserved: '마크다운 셀, 코드 셀, 텍스트 출력',
-            lossy: '실행 상태, 이미지/차트 출력, 위젯, 수식, 메타데이터',
+            preserved: '마크다운 셀, 코드 셀, 텍스트 출력, 코드 셀 이미지 출력(PNG/JPEG)',
+            lossy: '실행 상태, 차트 라이브러리 위젯 출력, LaTeX 수식, 메타데이터',
         },
         hwp: {
             preserved: 'HWPX 오업로드 시 XML 텍스트와 일부 표',

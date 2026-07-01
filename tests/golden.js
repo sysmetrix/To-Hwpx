@@ -196,10 +196,14 @@ const CASES = [
       '목록 항목 English',
       '두 번째 슬라이드 제목',
       '두 번째 슬라이드 본문',
-      '표 헤더 A',
-      '표 헤더 B',
-      '표 값 1',
-      '표 값 2',
+      '병합 헤더',
+      '일반 헤더',
+      '값1',
+      '세로병합값',
+      '값2',
+      '값3',
+      '값4',
+      '그룹 도형 안 텍스트 Gamma',
     ],
   },
 ];
@@ -396,8 +400,14 @@ async function validateHwpxPackage(page, zip, testCase) {
       `${testCase.name}: 슬라이드 그림이 공통 그림 경로로 생성되지 않음`);
     const slideTable = [...sectionXml.matchAll(/<hp:tbl\b[\s\S]*?<\/hp:tbl>/g)]
       .map(match => match[0])
-      .find(table => table.includes('표 헤더 A') && table.includes('표 값 2'));
+      .find(table => table.includes('병합 헤더') && table.includes('세로병합값'));
     assert(slideTable, `${testCase.name}: 슬라이드 안 표(a:tbl)가 HWPX 표로 생성되지 않음`);
+    assert(/<hp:cellSpan colSpan="2" rowSpan="1"\/>/.test(slideTable),
+      `${testCase.name}: a:tc gridSpan(가로 병합)이 HWPX cellSpan으로 보존되지 않음`);
+    assert(/<hp:cellSpan colSpan="1" rowSpan="2"\/>/.test(slideTable),
+      `${testCase.name}: a:tc rowSpan(세로 병합)이 HWPX cellSpan으로 보존되지 않음`);
+    assert(sectionXml.includes('그룹 도형 안 텍스트 Gamma'),
+      `${testCase.name}: p:grpSp(그룹 도형) 안 텍스트가 누락됨`);
   }
   if (testCase.name === 'json') {
     const objectArrayTable = [...sectionXml.matchAll(/<hp:tbl\b[\s\S]*?<\/hp:tbl>/g)]
