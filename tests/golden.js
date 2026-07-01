@@ -1074,6 +1074,19 @@ async function validateCommercialUx(page) {
     'ux: 물음표 도움말 커스텀 툴팁이 표시되지 않음');
   assert(await page.locator('#workflow-hint').count() === 0,
     'ux: 고정 1/2/3단계 안내가 남아 있음');
+
+  // ESC 전체 초기화는 "더 알아보기" 포맷 탭이 열려 있어도 버튼·패널을 함께 닫아야 한다.
+  // (resetConverterState()가 stylePolicy 등 다른 상태도 초기화하므로 이 함수의 마지막에 둔다.)
+  await page.locator('.service-info .format-tab').first().click();
+  assert(await page.locator('.format-tab.active').count() === 1,
+    'ux: 포맷 탭 클릭이 열리지 않음(ESC 회귀 테스트 준비 실패)');
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(200);
+  assert(await page.locator('.format-tab.active').count() === 0,
+    'ux: ESC 초기화 후 포맷 탭 버튼이 열린 상태로 남음');
+  assert(await page.locator('.format-panel.active').count() === 0,
+    'ux: ESC 초기화 후 포맷 패널이 열린 상태로 남음');
+
   console.log('PASS UX    keyboard, modal, warning download, PWA scope');
 }
 

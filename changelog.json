@@ -1,6 +1,18 @@
 {
-  "current": "4.10.10",
+  "current": "4.10.11",
   "versions": [
+    {
+      "version": "4.10.11",
+      "date": "2026-07-01",
+      "user": [
+        "ESC로 전체 초기화할 때 '더 알아보기' 포맷 안내가 열려 있으면 이제 함께 닫힙니다."
+      ],
+      "dev": [
+        "[v4.10.11] js/app.js: QUALITY_FORMATS/FORMAT_QUALITY_METRICS에 pptx 추가(변환 품질 평가 탭 반영), IPYNB 지표를 이미지 출력 지원(v4.10.7) 기준으로 갱신, QUALITY_HISTORY 최신 항목(4.10.10) 추가",
+        "[v4.10.11] js/app.js: resetConverterState() — .format-tab.active/.format-panel.active를 함께 초기화해 ESC 전체 초기화 시 '더 알아보기' 패널도 닫히도록 수정",
+        "[v4.10.11] tests/golden.js: ESC 초기화 후 포맷 탭/패널이 닫히는지 회귀 검증 추가(함수 마지막에 배치해 stylePolicy 리셋이 이후 단계에 영향 주지 않게 함)"
+      ]
+    },
     {
       "version": "4.10.10",
       "date": "2026-07-01",

@@ -1173,23 +1173,30 @@ const FONT_DOWNLOADS = [
     },
 ];
 
-const QUALITY_FORMATS = ['md', 'html', 'docx', 'txt', 'csv', 'json', 'ipynb', 'hwp'];
+const QUALITY_FORMATS = ['md', 'html', 'docx', 'pptx', 'txt', 'csv', 'json', 'ipynb', 'hwp'];
 const FORMAT_QUALITY_METRICS = {
     md:    { conversion: 94, success: 97, risk: '낮음',     next: '표 셀 run 계약(표 안 링크·이미지)과 상대경로 이미지 묶음 업로드 지원을 추가하면 고급 문서 보존률이 오른다.' },
     html:  { conversion: 68, success: 88, risk: '중간',     next: 'CSS 중 일부(color/background/text-align)만 안전 allowlist로 승격하고, img/src data URL부터 그림 IR로 연결한다.' },
     docx:  { conversion: 80, success: 88, risk: '중간',     next: '섹션·머리말 반복 규칙을 IR로 분리하고, comments.xml 주석을 각주 형태로 변환하면 보존률이 추가로 오른다.' },
+    pptx:  { conversion: 42, success: 82, risk: '높음',     next: '발표자 노트 추출, 슬라이드 배경색/테마, 도형(텍스트 상자 외)의 순서 보존을 단계적으로 추가하면 보존률이 오른다.' },
     txt:   { conversion: 88, success: 97, risk: '낮음',     next: '표처럼 보이는 탭/공백 열을 선택적으로 표 IR로 승격하는 실험을 관리자 모드에서 검증한다.' },
     csv:   { conversion: 82, success: 94, risk: '낮음',     next: 'XLSX 다중 시트 선택, 셀 병합/색상 일부 보존을 별도 옵션으로 확장한다.' },
     json:  { conversion: 76, success: 90, risk: '중간',     next: '깊은 중첩 요약 규칙과 큰 JSON 스트리밍/샘플링 미리보기를 추가한다.' },
-    ipynb: { conversion: 70, success: 86, risk: '중간',     next: 'PNG/JPEG 출력 셀, LaTeX 수식 fallback, 실행 결과 접기 옵션을 단계적으로 추가한다.' },
+    ipynb: { conversion: 78, success: 88, risk: '중간',     next: 'LaTeX 수식 fallback, 차트 라이브러리 위젯 출력, 실행 결과 접기 옵션을 단계적으로 추가한다.' },
     hwp:   { conversion: 25, success: 45, risk: '높음',     next: '구형 HWP는 브라우저 한계가 커서 HWPX 재저장 안내를 유지하고, HWPX 오업로드 복구만 안정화한다.' },
 };
 
 const QUALITY_HISTORY = [
     {
+        version: '4.10.10',
+        date: '2026-07-01',
+        summary: '현재 기준. PPTX 신규 추가(슬라이드 텍스트·표·그림, v4.10.8~10), IPYNB 코드 셀 이미지 출력 지원(v4.10.7) 반영.',
+        scores: { md: 94, html: 68, docx: 80, pptx: 42, txt: 88, csv: 82, json: 76, ipynb: 78, hwp: 25 },
+    },
+    {
         version: '4.7.17',
         date: '2026-06-28',
-        summary: '현재 기준. MD GFM 각주·WebP·frontmatter(v4.7.15), DOCX 목록·하이퍼링크·WMF fallback·WebP(v4.7.16) 반영.',
+        summary: 'MD GFM 각주·WebP·frontmatter(v4.7.15), DOCX 목록·하이퍼링크·WMF fallback·WebP(v4.7.16) 반영.',
         scores: { md: 94, html: 68, docx: 80, txt: 88, csv: 82, json: 76, ipynb: 70, hwp: 25 },
     },
     {
@@ -4178,6 +4185,15 @@ function applyStylePolicyUi(policy = state.stylePolicy) {
 function resetConverterState() {
     clearSelectedFile();
     hideAlert();
+
+    // "더 알아보기" 포맷 탭이 열려 있으면 버튼(active/aria-selected)과 패널을 함께 닫는다.
+    document.querySelectorAll('.format-tab.active').forEach(tab => {
+        tab.classList.remove('active');
+        tab.setAttribute('aria-selected', 'false');
+    });
+    document.querySelectorAll('.format-panel.active').forEach(panel => {
+        panel.classList.remove('active');
+    });
 
     // 직접 입력 내용·모드 초기화 → 파일 업로드 모드로 복귀
     const pasteInputEl = document.getElementById('paste-input');
