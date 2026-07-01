@@ -1,6 +1,19 @@
 {
-  "current": "4.10.24",
+  "current": "4.10.25",
   "versions": [
+    {
+      "version": "4.10.25",
+      "date": "2026-07-01",
+      "user": [
+        "히어로 대제목이 두 줄 'TO HWPX, / 한글로'에서 한 줄 'TO HWPX - 한글로'로 바뀌어 브라우저 탭 제목과 완전히 같은 표기가 되었습니다.",
+        "직접 입력 탭의 안내문이 '빠른 시작'(파란 정보 박스)과 '베타 서비스'(호박색 경고 박스)로 분리되고 이모지 대신 아이콘을 사용해 한눈에 구분되도록 정리되었습니다."
+      ],
+      "dev": [
+        "[v4.10.25] index.html: 히어로 h1을 'TO HWPX,<br>한글로' 두 줄 → 'TO HWPX - 한글로' 한 줄로 변경(title/og/twitter/manifest.json과 완전 동일 표기)",
+        "[v4.10.25] index.html: .paste-beta-notice(팁+경고 혼합 단일 박스)를 .paste-notice--tip / .paste-notice--warn 2개 박스로 분리, 이모지(💡) 제거하고 info/alert-triangle SVG 아이콘으로 교체",
+        "[v4.10.25] style.css: .paste-beta-notice 규칙 제거, 공용 .paste-notice(+아이콘 레이아웃) 베이스와 --tip(파란, --c-primary-light)/--warn(호박색, 기존 --c-warnwash 토큰 재사용) 톤 분리 추가"
+      ]
+    },
     {
       "version": "4.10.24",
       "date": "2026-07-01",

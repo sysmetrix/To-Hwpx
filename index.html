@@ -173,7 +173,7 @@
             <span>｢BWYF｣ AX Challenger 2026</span>
             <!-- [주의] id="open-changelog"는 app.js에서 관리자 모드일 때 업데이트 내역 모달을 여는 연결값 -->
             <button class="util-changelog-btn" id="open-changelog" aria-label="버전 정보">
-                📋 v4.10.24
+                📋 v4.10.25
             </button>
         </div>
     </div>
@@ -242,7 +242,7 @@
     <div class="container">
         <!-- 메인 제목 -->
         <!-- [문구 수정 가능] h1 안의 글자와 줄바꿈(<br>)만 수정. id="hero-title"은 유지 -->
-        <h1 id="hero-title"><span class="hero-title-accent">TO HWPX</span>,<br>한글로</h1>
+        <h1 id="hero-title"><span class="hero-title-accent">TO HWPX</span> - 한글로</h1>
 
         <!-- 파일 드롭존 (app.js의 initDropZone에서 이벤트 연결) -->
         <div id="drop-zone" class="drop-zone" role="button" tabindex="0"
@@ -312,8 +312,12 @@
 
                 <!-- ── 모드 2: 직접 입력 (텍스트 기반 포맷을 붙여넣어 변환) ── -->
                 <div id="paste-mode" role="tabpanel" aria-labelledby="mode-paste" hidden>
-                    <div class="paste-beta-notice" role="note">
-                        <p><strong>💡 빠른 시작</strong> — ChatGPT·Claude 등 AI 채팅 답변을 복사해 <em>MD</em>로 붙여넣으면 제목·목록·표·강조가 그대로 HWPX로 변환됩니다. 미리 보기 결과를 <em>미리보기 복사</em>로 바로 가져갈 수도 있습니다.</p>
+                    <div class="paste-notice paste-notice--tip" role="note">
+                        <span class="paste-notice-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="11"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></span>
+                        <p><strong>빠른 시작</strong> — ChatGPT·Claude 등 AI 채팅 답변을 복사해 <em>MD</em>로 붙여넣으면 제목·목록·표·강조가 그대로 HWPX로 변환됩니다. 미리 보기 결과를 <em>미리보기 복사</em>로 바로 가져갈 수도 있습니다.</p>
+                    </div>
+                    <div class="paste-notice paste-notice--warn" role="note">
+                        <span class="paste-notice-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>
                         <p><strong>베타 서비스</strong> — 변환 품질이 아직 완성 수준이 아닙니다. 결과 파일을 한글에서 꼭 확인하세요. <strong>HTML 버튼</strong>은 HTML 소스 코드 전용이며, 웹 화면 복사 텍스트는 MD·TXT를 사용하세요.</p>
                     </div>
                     <div class="form-row">
