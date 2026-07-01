@@ -1,6 +1,19 @@
 {
-  "current": "4.10.12",
+  "current": "4.10.13",
   "versions": [
+    {
+      "version": "4.10.13",
+      "date": "2026-07-01",
+      "user": [
+        "To HWPX 브랜드 로고(변환 화살표 문서 마크)가 새로 생겨 헤더·파비콘·PWA 아이콘에 반영됐습니다."
+      ],
+      "dev": [
+        "[v4.10.13] 브랜드 컨셉 A(조용한 공공 신뢰) 확정 — icons/brand-concept/에 로고 3안 탐색 기록(concept-1~3, lockup, preview.html) 보관",
+        "[v4.10.13] icons/app-icon.svg: 컨셉 1(변환 화살표 문서) 최종 채택, 색상도 레거시 #2563eb → 디자인 토큰 --c-primary(#2252e4)로 통일",
+        "[v4.10.13] index.html: 헤더 site-logo에 아이콘 마크 추가(텍스트 워드마크 단독 → 아이콘+워드마크 락업)",
+        "[v4.10.13] index.html/manifest.json/js/app.js: theme-color/theme_color를 #2563eb에서 --c-primary(#2252e4)로 통일 — PWA/브라우저 크롬 색상이 실제 UI 포인트 컬러와 다르던 불일치 수정"
+      ]
+    },
     {
       "version": "4.10.12",
       "date": "2026-07-01",

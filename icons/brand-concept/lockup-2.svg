@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 160">
+  <defs>
+    <symbol id="mark2" viewBox="0 0 512 512">
+      <rect width="512" height="512" rx="112" fill="#eef2fd"/>
+      <path d="M116 84h132l48 48v220H116z" fill="#aebef0"/>
+      <path d="M248 84v48h48" fill="#eef2fd"/>
+      <path d="M188 156h156l60 60v212H188z" fill="#2252e4"/>
+      <path d="M344 156v60h60" fill="#c9d9fb"/>
+      <rect x="224" y="292" width="144" height="20" rx="10" fill="#ffffff"/>
+      <rect x="224" y="332" width="144" height="20" rx="10" fill="#ffffff" opacity=".82"/>
+      <rect x="224" y="372" width="104" height="20" rx="10" fill="#ffffff" opacity=".64"/>
+    </symbol>
+  </defs>
+  <rect width="640" height="160" fill="#faf9f6"/>
+  <use href="#mark2" x="16" y="24" width="112" height="112"/>
+  <text x="150" y="80" font-family="Arial, 'Noto Sans KR', sans-serif" font-size="42" font-weight="500" fill="#1c1d22">to</text>
+  <text x="196" y="80" font-family="Arial, 'Noto Sans KR', sans-serif" font-size="42" font-weight="800" fill="#2252e4">HWPX</text>
+  <text x="150" y="112" font-family="Arial, 'Noto Sans KR', sans-serif" font-size="17" fill="#565a62">설치 없이, 서버 없이</text>
+</svg>

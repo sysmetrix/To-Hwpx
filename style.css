@@ -306,6 +306,7 @@ a:hover { text-decoration: underline; }
     flex-shrink: 0;
 }
 .site-logo:hover { text-decoration: none; color: var(--c-primary-dark); }
+.site-logo-mark { flex-shrink: 0; border-radius: 6px; }
 .logo-badge {
     /* "HWPX" 텍스트를 강조하는 배지 */
     background: var(--c-primary);

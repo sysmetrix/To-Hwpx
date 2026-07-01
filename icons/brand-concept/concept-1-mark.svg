@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <!-- To HWPX 브랜드 마크 — "변환 화살표 문서" (브랜드 컨셉 A: 조용한 공공 신뢰, 2026-07 확정) -->
+  <!-- 컨셉 1: 변환 화살표 문서 — 문서(모서리 접힘) + 안쪽 전환 화살표. 문자 제거로 다국어/축소 대응 -->
   <rect width="512" height="512" rx="112" fill="#2252e4"/>
   <path d="M148 96h156l60 60v260H148z" fill="#ffffff"/>
   <path d="M304 96v68h68" fill="#c9d9fb"/>

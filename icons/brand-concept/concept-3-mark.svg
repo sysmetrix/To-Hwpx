@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- 컨셉 3: 미니멀 워드마크 + 도트 — 그림 요소를 최소화. 아이콘 단독 사용 시엔
+       "정확한 한 점"을 뜻하는 원 하나 + 문서 모서리 접힘만 남김 -->
+  <rect width="512" height="512" rx="112" fill="#ffffff" stroke="#2252e4" stroke-width="14"/>
+  <path d="M160 108h140l52 52v244H160z" fill="none" stroke="#d6d3ca" stroke-width="12"/>
+  <path d="M300 108v52h52" fill="none" stroke="#d6d3ca" stroke-width="12"/>
+  <circle cx="256" cy="256" r="54" fill="#2252e4"/>
+</svg>
