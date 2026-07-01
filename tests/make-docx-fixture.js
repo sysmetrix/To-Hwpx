@@ -43,13 +43,20 @@ async function buildDocx(outPath) {
   <Default Extension="xml" ContentType="application/xml"/>
   <Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
   <Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>
+  <Override PartName="/word/comments.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.comments+xml"/>
 </Types>`);
   zip.file('_rels/.rels', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
   <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>
 </Relationships>`);
   zip.file('word/_rels/document.xml.rels', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"></Relationships>`);
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/comments" Target="comments.xml"/>
+</Relationships>`);
+  zip.file('word/comments.xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:comments xmlns:w="${DOCX_NS}">
+  <w:comment w:id="0" w:author="골든테스터"><w:p><w:r><w:t>주석 내용 확인용</w:t></w:r></w:p></w:comment>
+</w:comments>`);
   zip.file('word/styles.xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <w:styles xmlns:w="${DOCX_NS}">
   <w:style w:type="paragraph" w:styleId="Heading1"><w:name w:val="Heading 1"/></w:style>
@@ -68,6 +75,7 @@ async function buildDocx(outPath) {
     ])}
     ${p('목록 항목 하나')}
     ${p('목록 항목 English')}
+    <w:p><w:commentRangeStart w:id="0"/><w:r><w:t>주석이 달린 문장</w:t></w:r><w:commentRangeEnd w:id="0"/><w:r><w:commentReference w:id="0"/></w:r></w:p>
     <w:tbl>
       ${tr(['구분', '값', '비고'])}
       ${tr(['표 제목', '표 값 한글', 'English Cell'])}

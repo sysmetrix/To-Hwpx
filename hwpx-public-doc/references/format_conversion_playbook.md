@@ -288,19 +288,21 @@
 - 기본 표, 가로/세로 병합, 셀 배경색, 셀 글자색 일부
 - PNG/JPG/GIF/BMP 본문 이미지
 - 각주 텍스트
-- 첫 머리글/바닥글 텍스트
+- 주석(`word/comments.xml`, v4.10.28~) — `w:commentReference`를 만나면 `run.footnote`와 같은 필드에 `[주석] 작성자: 내용`으로 삽입해 기존 각주 렌더 경로를 그대로 재사용한다. `commentRangeStart/End`(하이라이트 범위)는 다루지 않고 앵커 위치만 사용한다.
+- 첫 머리글/바닥글 텍스트(현재는 문서 전체에서 첫 번째로 발견된 관계만 사용 — 섹션별/첫 페이지 전용 머리글 구분은 아직 없음)
 
 주의:
-- DOCX는 ZIP + OOXML이다. `word/document.xml`, 관계 파일, `word/media`, footnotes, header/footer를 함께 본다.
-- WMF/EMF, 복잡한 drawing, 주석, 변경 추적, style theme, 섹션별 레이아웃은 손실 가능으로 안내한다.
+- DOCX는 ZIP + OOXML이다. `word/document.xml`, 관계 파일, `word/media`, footnotes, comments, header/footer를 함께 본다.
+- WMF/EMF, 복잡한 drawing, 변경 추적, style theme, 섹션별 레이아웃은 손실 가능으로 안내한다.
 - 목록 번호는 문서마다 XML 차이가 커서 변경 시 반드시 fixture를 추가한다.
 - 이미지 추가/수정은 `content.hpf` item id, manifest, `BinData` 파일, `hc:img@binaryItemIDRef`가 모두 맞아야 한다.
 - 표 병합은 HWPX에서 조용히 깨질 수 있다. row/col span 무결성과 borderFill ID를 검사한다.
+- 주석과 각주는 HWPX 안에서 구분되지 않는다(둘 다 같은 각주 필드로 나온다) — "각주가 늘었는데 원본엔 없었다"는 피드백을 받으면 comments.xml 여부부터 확인한다.
 
 검증:
-- `tests/fixtures/sample.docx`
+- `tests/fixtures/sample.docx`, `qa/fixtures/docx_table_test.docx`, `qa/fixtures/docx_image_test.docx`
 - `npm run test:golden`
-- 이미지/색/병합/머리글/각주는 자동 검증만으로 부족할 수 있으므로 한컴 확인을 요청한다.
+- 이미지/색/병합/머리글/각주(주석 포함)는 자동 검증만으로 부족할 수 있으므로 한컴 확인을 요청한다.
 
 ## PPTX
 

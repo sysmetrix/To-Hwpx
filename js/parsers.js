@@ -1106,7 +1106,7 @@ function groupDocxListItems(blocks) {
  * w:r, w:hyperlink(URL 포함), ins/del/sdt 컨테이너를 재귀 순회해
  * 공통 run 계약({text,bold,italic,underline,strike,color,href?})으로 반환한다.
  */
-function extractDocxInlineRuns(pNode, relsMap = {}, footnotesMap = {}) {
+function extractDocxInlineRuns(pNode, relsMap = {}, footnotesMap = {}, commentsMap = {}) {
     const runs = [];
     function walk(node, href) {
         for (const child of node.childNodes) {
@@ -1118,6 +1118,13 @@ function extractDocxInlineRuns(pNode, relsMap = {}, footnotesMap = {}) {
                 if (fnRef) {
                     const fnId = fnRef.getAttributeNS(DOCX_NS, 'id') || fnRef.getAttribute('w:id') || '';
                     if (fnId && footnotesMap[fnId]) runs.push({ text: '', footnote: footnotesMap[fnId] });
+                }
+                // 주석(comments.xml)도 각주와 같은 run.footnote 필드로 본문에 삽입한다(별도 렌더 경로 없이
+                // 기존 각주 출력 방식을 재사용 — QUALITY_HISTORY의 "주석을 각주 형태로 변환" 계획대로).
+                const cmRef = child.getElementsByTagNameNS(DOCX_NS, 'commentReference')[0];
+                if (cmRef) {
+                    const cmId = cmRef.getAttributeNS(DOCX_NS, 'id') || cmRef.getAttribute('w:id') || '';
+                    if (cmId && commentsMap[cmId]) runs.push({ text: '', footnote: commentsMap[cmId] });
                 }
                 const text = sanitize(Array.from(child.getElementsByTagNameNS(DOCX_NS, 't'))
                     .map(t => t.textContent).join(''));
@@ -1322,6 +1329,24 @@ async function parseDocx(arrayBuffer, docType = 'plain') {
         } catch (_) {}
     }
 
+    // word/comments.xml 로드 → 주석 ID → "[주석] 작성자: 내용" 텍스트 맵.
+    // comments.xml은 header/footer와 달리 고정 경로라 rels 조회 없이 바로 연다.
+    const commentsMap = {};
+    const commentsFile = zip.file('word/comments.xml');
+    if (commentsFile) {
+        try {
+            const commentsXml = await commentsFile.async('string');
+            const commentsDoc = new DOMParser().parseFromString(commentsXml, 'application/xml');
+            for (const comment of commentsDoc.getElementsByTagNameNS(DOCX_NS, 'comment')) {
+                const cId = comment.getAttributeNS(DOCX_NS, 'id') || comment.getAttribute('w:id') || '';
+                const author = sanitize(comment.getAttributeNS(DOCX_NS, 'author') || comment.getAttribute('w:author') || '').trim();
+                const tEls = comment.getElementsByTagNameNS(DOCX_NS, 't');
+                const cText = sanitize(Array.from(tEls).map(t => t.textContent).join('').trim());
+                if (cId && cText) commentsMap[cId] = author ? `[주석] ${author}: ${cText}` : `[주석] ${cText}`;
+            }
+        } catch (_) {}
+    }
+
     // 머리글/바닥글 텍스트 추출 헬퍼
     const extractFileText = async (relTarget) => {
         const f = zip.file('word/' + relTarget);
@@ -1379,7 +1404,7 @@ async function parseDocx(arrayBuffer, docType = 'plain') {
                     continue;
                 }
             }
-            const block = extractDocxParagraph(node, stylesMap, footnotesMap, relsMap, numberingInfo);
+            const block = extractDocxParagraph(node, stylesMap, footnotesMap, relsMap, numberingInfo, commentsMap);
             if (block) ir.blocks.push(block);
         } else if (localName === 'tbl') {
             const block = extractDocxTable(node);
@@ -1438,7 +1463,7 @@ function docxRunColor(r) {
 }
 
 /** w:p 단락 노드 → IR 블록 (텍스트 추출 + 스타일 판별 + 각주 + 목록 + 하이퍼링크) */
-function extractDocxParagraph(pNode, stylesMap = {}, footnotesMap = {}, relsMap = {}, numberingInfo = null) {
+function extractDocxParagraph(pNode, stylesMap = {}, footnotesMap = {}, relsMap = {}, numberingInfo = null, commentsMap = {}) {
     const pStyles = pNode.getElementsByTagNameNS(DOCX_NS, 'pStyle');
     let styleId = '';
     if (pStyles.length) {
@@ -1468,7 +1493,7 @@ function extractDocxParagraph(pNode, stylesMap = {}, footnotesMap = {}, relsMap 
                 const absId   = numberingInfo.numMap[numId];
                 const lvlDef  = absId ? numberingInfo.abstractMap[absId]?.lvls?.[ilvl] : null;
                 const ordered = lvlDef ? lvlDef.ordered : false;
-                const inlineRuns = extractDocxInlineRuns(pNode, relsMap, footnotesMap);
+                const inlineRuns = extractDocxInlineRuns(pNode, relsMap, footnotesMap, commentsMap);
                 const text = sanitize(inlineRuns.filter(r => r.text).map(r => r.text).join('').trim());
                 if (!text && !inlineRuns.some(r => r.footnote)) return null;
                 return { type: '_list_item', text, runs: inlineRuns, level: Math.min(ilvl, 2), ordered };
@@ -1477,7 +1502,7 @@ function extractDocxParagraph(pNode, stylesMap = {}, footnotesMap = {}, relsMap 
     }
 
     // 인라인 런 추출 — w:r, w:hyperlink, 변경 추적 컨테이너를 통합 처리
-    const inlineRuns = extractDocxInlineRuns(pNode, relsMap, footnotesMap);
+    const inlineRuns = extractDocxInlineRuns(pNode, relsMap, footnotesMap, commentsMap);
     const text = sanitize(inlineRuns.filter(r => r.text).map(r => r.text).join('').trim());
     // 각주만 있고 텍스트가 없는 경우도 각주 런이 있으면 null 반환 안 함
     const hasFootnotes = inlineRuns.some(r => r.footnote);

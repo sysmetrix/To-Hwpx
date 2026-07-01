@@ -542,3 +542,20 @@ Scope: static browser-only conversion flow from file selection to HWPX download.
 - [ ] 암호 보호되거나 손상된 `.hwp` 업로드 시 "HWP5 바이너리를 열지 못했습니다" 안내가 뜨고 크래시하지 않는지 확인
 - [ ] 오프라인/jsdelivr 접근 불가 환경에서 `.hwp` 업로드 시 "읽기 엔진을 불러오지 못했습니다" 안내로 우아하게 실패하는지 확인
 - [ ] 캐시를 비우고 `📋 v4.10.27` 확인
+
+## 35. v4.10.28 DOCX 주석(comments.xml) 각주 형태 추출
+
+원인: `parseDocx()`는 `word/comments.xml`을 전혀 읽지 않아 Word 주석이 통째로 사라졌다. `FORMAT_INFO.docx.limits`에는 이미 "주석 손실 가능"으로 정직하게 안내돼 있었지만, `QUALITY_HISTORY`의 기존 "next" 계획(comments.xml을 각주 형태로 변환)이 아직 구현되지 않은 상태였다.
+
+수정: `word/comments.xml`(고정 경로, rels 조회 불필요)을 읽어 주석ID→"[주석] 작성자: 내용" 맵을 만들고, 본문에서 `w:commentReference`를 만나면 기존 각주와 동일한 `run.footnote` 필드로 삽입한다. `commentRangeStart/End`(어느 텍스트가 하이라이트됐는지)는 다루지 않고 주석 아이콘 위치(앵커)만 사용한다 — Renderer(`js/hwpx.js`) 변경 없이 기존 각주 출력 경로를 그대로 재사용.
+
+자동 승인 기준:
+
+- [x] `npm run test:golden` PASS(12 cases) — `tests/make-docx-fixture.js`에 comments.xml + commentRangeStart/End/commentReference 추가, docx 케이스 mustContain에 주석 텍스트 확인 추가
+- [x] `node qa/gate.js qa/fixtures/md_hwpx_test.md` ①~⑧ PASS
+
+수동 확인 기준:
+
+- [ ] 실제 Word에서 주석을 단 DOCX를 업로드해 주석 내용이 "[주석] 작성자: 내용" 형태로 각주처럼 나오는지 한컴오피스에서 확인
+- [ ] 각주와 주석이 둘 다 있는 문서에서 순서·내용이 뒤섞이지 않는지 확인
+- [ ] 캐시를 비우고 `📋 v4.10.28` 확인
