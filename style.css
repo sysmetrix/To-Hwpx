@@ -568,8 +568,8 @@ a:hover { text-decoration: underline; }
 }
 
 .hero-title-accent {
-    /* 브랜드 컨셉 A(조용한 공공 신뢰) — 그라데이션 텍스트 효과 제거, 단일 primary로 통일 */
-    color: var(--c-primary);
+    /* "한글로"와 동일한 글자색으로 통일 (강조색 분리 제거) */
+    color: inherit;
 }
 
 .hero-sub {
@@ -583,17 +583,45 @@ a:hover { text-decoration: underline; }
     word-break: keep-all;
 }
 
-.hero-badges {
+/* 헤더 '사용 환경' 드롭다운 — PC/모바일 지원·설치·로컬 처리 안내를 한 버튼으로 통합 */
+.nav-env-menu {
+    position: relative;
+}
+.nav-btn-caret {
+    display: inline-flex;
+    width: 12px;
+    height: 12px;
+    margin-left: 2px;
+    vertical-align: middle;
+    transition: transform var(--trans);
+}
+.nav-btn-caret svg { width: 100%; height: 100%; }
+.nav-env-menu[data-open] .nav-btn-caret { transform: rotate(180deg); }
+.env-guide-menu {
+    /* [주의] display는 :not([hidden])에서만 설정한다.
+       여기서 바로 지정하면 클래스 선택자가 [hidden]의 UA display:none보다 우선해 항상 보여버린다. */
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    z-index: 999;
+    width: 280px;
+    max-width: calc(100vw - 32px);
+    padding: 8px;
+    border: 1px solid var(--c-border);
+    border-radius: var(--radius-md);
+    background: var(--c-surface);
+    box-shadow: var(--shadow-md);
+}
+.env-guide-menu:not([hidden]) {
     display: flex;
-    justify-content: center;
-    gap: 8px;
-    flex-wrap: wrap;
-    margin: 18px auto 0;
+    flex-direction: column;
+    gap: 6px;
 }
 
-/* Trust Bar 버튼 — 히어로 영역 지원 환경 안내 (icon + label + sub) */
+/* Trust Bar 버튼 — '사용 환경' 메뉴 안 안내 항목 (icon + label + sub) */
 .trust-btn {
-    display: inline-flex;
+    display: flex;
+    width: 100%;
     align-items: center;
     gap: 10px;
     padding: 10px 14px 10px 12px;
@@ -604,13 +632,14 @@ a:hover { text-decoration: underline; }
     font-family: var(--font-main);
     cursor: pointer;
     text-align: left;
-    transition: border-color var(--trans), background var(--trans), box-shadow var(--trans), transform var(--trans);
+    transition: border-color var(--trans), background var(--trans), box-shadow var(--trans);
 }
-.trust-btn:hover {
+.trust-btn:hover,
+.trust-btn:focus-visible {
     border-color: var(--c-primary);
     background: var(--c-primary-light);
     box-shadow: var(--shadow-sm);
-    transform: translateY(-2px);
+    outline: none;
 }
 .trust-btn-icon {
     color: var(--c-primary);
@@ -3137,24 +3166,6 @@ a:hover { text-decoration: underline; }
     .site-logo { font-size: 1.15rem; min-width: 0; }
     .hero      { padding: 48px 0 40px; }
     .hero-sub br { display: none; }
-    .hero-badges span,
-    .hero-badges button {
-        flex: 1 1 calc(50% - 4px);
-        min-width: 0;
-        flex-direction: column;
-        justify-content: center;
-        text-align: center;
-        padding: 8px 4px;
-        gap: 4px;
-    }
-    .hero-badges .trust-btn-icon,
-    .hero-badges .trust-btn-icon svg { width: 16px; height: 16px; }
-    .hero-badges .trust-btn-label {
-        font-size: 0.68rem;
-        white-space: normal;
-        line-height: 1.15;
-    }
-    .hero-badges .trust-btn-sub { display: none; }
     .quick-guide {
         align-items: stretch;
         flex-direction: column;

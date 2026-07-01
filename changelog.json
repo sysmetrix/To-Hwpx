@@ -1,6 +1,20 @@
 {
-  "current": "4.10.20",
+  "current": "4.10.21",
   "versions": [
+    {
+      "version": "4.10.21",
+      "date": "2026-07-01",
+      "user": [
+        "히어로 영역 'TO HWPX' 글자색이 '한글로'와 같은 색으로 통일되었습니다.",
+        "드롭존 아래 있던 PC 브라우저·모바일 브라우저·앱 설치·로컬 처리 안내 버튼 4개가 상단 내비게이션의 '사용 환경' 버튼 하나로 모였습니다. 눌러서 나오는 메뉴에서 4가지 안내를 그대로 열어볼 수 있습니다."
+      ],
+      "dev": [
+        "[v4.10.21] style.css: .hero-title-accent color를 var(--c-primary)에서 inherit으로 변경 — 'TO HWPX'가 '한글로'와 같은 글자색 사용",
+        "[v4.10.21] index.html: 히어로 하단 .hero-badges(PC/모바일/설치/로컬 처리 4버튼) 제거, 상단 내비 '도움말' 왼쪽에 '사용 환경' 드롭다운(#open-env-guide + #env-guide-menu) 신설. 기존 #open-pc-guide 등 버튼 id·안내 모달은 그대로 유지해 재사용",
+        "[v4.10.21] js/app.js: initEnvGuideMenu()/closeEnvGuideMenu() 추가 — 사용 환경 버튼 클릭 토글, 바깥 클릭 시 닫힘. 4개 안내 모달을 여는 기존 이벤트 바인딩은 변경 없음",
+        "[v4.10.21] tests/golden.js: 사용 환경 드롭다운 노출·토글·바깥 클릭 닫힘 검증 추가, PC/설치 안내 버튼 상호작용 전 드롭다운을 여는 단계 반영"
+      ]
+    },
     {
       "version": "4.10.20",
       "date": "2026-07-01",

@@ -173,7 +173,7 @@
             <span>｢BWYF｣ AX Challenger 2026</span>
             <!-- [주의] id="open-changelog"는 app.js에서 관리자 모드일 때 업데이트 내역 모달을 여는 연결값 -->
             <button class="util-changelog-btn" id="open-changelog" aria-label="버전 정보">
-                📋 v4.10.20
+                📋 v4.10.21
             </button>
         </div>
     </div>
@@ -195,6 +195,45 @@
             <!-- [링크 수정 가능] href와 화면 글자만 바꾸세요. class는 스타일/툴팁에 사용됩니다. -->
             <nav id="main-nav" role="navigation" aria-label="주 메뉴">
                 <ul class="main-nav">
+                    <li class="nav-env-menu">
+                        <button class="nav-shortcut-btn" id="open-env-guide" aria-label="사용 환경 안내 열기"
+                                aria-haspopup="menu" aria-expanded="false" aria-controls="env-guide-menu" title="지원 브라우저·설치·로컬 처리 안내">
+                            <span class="nav-btn-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg></span>
+                            사용 환경
+                            <span class="nav-btn-caret" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
+                        </button>
+                        <!-- [주의] 아래 버튼 id는 app.js 모달 열기 기능과 연결됨. id 유지 -->
+                        <div class="env-guide-menu" id="env-guide-menu" role="menu" aria-label="지원 실행 환경" hidden>
+                            <button type="button" id="open-pc-guide" class="trust-btn" role="menuitem" aria-label="PC 브라우저 지원 상세 보기">
+                                <span class="trust-btn-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></span>
+                                <span class="trust-btn-content">
+                                    <span class="trust-btn-label">PC 브라우저 지원</span>
+                                    <span class="trust-btn-sub">Chrome · Edge · Safari ›</span>
+                                </span>
+                            </button>
+                            <button type="button" id="open-mobile-guide" class="trust-btn" role="menuitem" aria-label="모바일 브라우저 지원 상세 보기">
+                                <span class="trust-btn-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><circle cx="12" cy="18" r=".5" fill="currentColor"/></svg></span>
+                                <span class="trust-btn-content">
+                                    <span class="trust-btn-label">모바일 브라우저</span>
+                                    <span class="trust-btn-sub">iOS · Android ›</span>
+                                </span>
+                            </button>
+                            <button type="button" id="open-install-guide" class="trust-btn" role="menuitem" aria-label="앱처럼 설치 안내 보기">
+                                <span class="trust-btn-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></span>
+                                <span class="trust-btn-content">
+                                    <span class="trust-btn-label">앱처럼 설치 가능</span>
+                                    <span class="trust-btn-sub">홈 화면에 추가 ›</span>
+                                </span>
+                            </button>
+                            <button type="button" id="open-privacy-guide" class="trust-btn" role="menuitem" aria-label="로컬 처리 안전성 상세 보기">
+                                <span class="trust-btn-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span>
+                                <span class="trust-btn-content">
+                                    <span class="trust-btn-label">안전한 로컬 처리</span>
+                                    <span class="trust-btn-sub">서버 전송 없음 ›</span>
+                                </span>
+                            </button>
+                        </div>
+                    </li>
                     <li>
                         <button class="nav-shortcut-btn" id="open-help" aria-label="도움말 열기" title="도움말 보기 (Shift + /)">
                             <span class="nav-btn-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><circle cx="12" cy="17" r=".5" fill="currentColor"/></svg></span>
@@ -251,39 +290,6 @@
             <div class="drop-title">여러 파일을 드래그하거나 클릭하세요</div>
             <div class="drop-sub">MD · HTML · DOCX · PPTX · CSV · XLSX · JSON · TXT · IPYNB · HWP</div>
         </div>
-        <!-- 보조 안내 버튼 — 첫 행동(파일 선택)을 방해하지 않도록 드롭존 아래에 배치 -->
-        <!-- [주의] 아래 버튼 id는 app.js 모달 열기 기능과 연결됨. id 유지 -->
-        <div class="hero-badges" aria-label="지원 실행 환경">
-            <button type="button" id="open-pc-guide" class="trust-btn" aria-label="PC 브라우저 지원 상세 보기">
-                <span class="trust-btn-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></span>
-                <span class="trust-btn-content">
-                    <span class="trust-btn-label">PC 브라우저 지원</span>
-                    <span class="trust-btn-sub">Chrome · Edge · Safari ›</span>
-                </span>
-            </button>
-            <button type="button" id="open-mobile-guide" class="trust-btn" aria-label="모바일 브라우저 지원 상세 보기">
-                <span class="trust-btn-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><circle cx="12" cy="18" r=".5" fill="currentColor"/></svg></span>
-                <span class="trust-btn-content">
-                    <span class="trust-btn-label">모바일 브라우저</span>
-                    <span class="trust-btn-sub">iOS · Android ›</span>
-                </span>
-            </button>
-            <button type="button" id="open-install-guide" class="trust-btn" aria-label="앱처럼 설치 안내 보기">
-                <span class="trust-btn-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></span>
-                <span class="trust-btn-content">
-                    <span class="trust-btn-label">앱처럼 설치 가능</span>
-                    <span class="trust-btn-sub">홈 화면에 추가 ›</span>
-                </span>
-            </button>
-            <button type="button" id="open-privacy-guide" class="trust-btn" aria-label="로컬 처리 안전성 상세 보기">
-                <span class="trust-btn-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span>
-                <span class="trust-btn-content">
-                    <span class="trust-btn-label">안전한 로컬 처리</span>
-                    <span class="trust-btn-sub">서버 전송 없음 ›</span>
-                </span>
-            </button>
-        </div>
-
         <!-- 숨겨진 파일 인풋 (드롭존 클릭 시 트리거됨) -->
         <!-- [포맷 추가 시] accept에 새 확장자를 추가해야 파일 선택창에서 보입니다. -->
         <!-- multiple: 여러 파일을 한 번에 선택해 배치 변환 -->
