@@ -1,6 +1,21 @@
 {
-  "current": "4.10.6",
+  "current": "4.10.7",
   "versions": [
+    {
+      "version": "4.10.7",
+      "date": "2026-07-01",
+      "user": [
+        "Jupyter Notebook(IPYNB)의 코드 셀 이미지 출력(그래프 등)이 이제 HWPX 그림으로 포함됩니다."
+      ],
+      "dev": [
+        "[v4.10.7] js/parsers.js: parseIpynb() — outputs의 image/png, image/jpeg를 base64 디코드 → sniffRasterImage()/imageSizeHwp()로 공통 image IR 블록 생성",
+        "[v4.10.7] js/parsers.js: binName을 ipynb-out${n} 접두사로 분리 — markdown 셀 이미지(resolveMarkdownAssets의 image${n})와 번호 충돌 방지",
+        "[v4.10.7] js/app.js: FORMAT_INFO.ipynb features/limits — 이미지 출력 지원 반영",
+        "[v4.10.7] tests/fixtures/sample.ipynb, qa/fixtures/sample.ipynb: 코드 셀 이미지 출력(display_data) 회귀 fixture 추가",
+        "[v4.10.7] tests/golden.js: IPYNB hc:img 2개(마크다운 이미지 + 코드 출력 이미지) 및 ipynb-out1.png BinData/manifest 검증 추가",
+        "[v4.10.7] format_conversion_playbook.md/qa/release-qa.md: IPYNB 이미지 출력 보존 정책 및 binName 충돌 주의사항 갱신"
+      ]
+    },
     {
       "version": "4.10.6",
       "date": "2026-07-01",

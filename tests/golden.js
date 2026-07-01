@@ -359,9 +359,12 @@ async function validateHwpxPackage(page, zip, testCase) {
   if (testCase.name === 'ipynb') {
     assert((sectionXml.match(/type="HYPERLINK"/g) || []).length === 1,
       `${testCase.name}: Markdown 셀 링크가 HYPERLINK 필드로 생성되지 않음`);
-    assert((sectionXml.match(/<hc:img\b/g) || []).length === 1
-      && contentHpf.includes('href="BinData/image1.png"') && zip.file('BinData/image1.png'),
+    assert((sectionXml.match(/<hc:img\b/g) || []).length === 2,
+      `${testCase.name}: Markdown 셀 이미지 + 코드 출력 이미지가 각각 hc:img로 생성되지 않음`);
+    assert(contentHpf.includes('href="BinData/image1.png"') && zip.file('BinData/image1.png'),
       `${testCase.name}: Markdown 셀 data URL 이미지가 공통 그림 경로로 생성되지 않음`);
+    assert(contentHpf.includes('href="BinData/ipynb-out1.png"') && zip.file('BinData/ipynb-out1.png'),
+      `${testCase.name}: 코드 셀 이미지 출력이 HWPX 그림으로 생성되지 않음`);
     const codeTable = [...sectionXml.matchAll(/<hp:tbl\b[\s\S]*?<\/hp:tbl>/g)]
       .map(match => match[0])
       .find(table => table.includes('코드 셀 Alpha') && table.includes('print(message)'));

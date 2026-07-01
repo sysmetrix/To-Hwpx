@@ -25,7 +25,7 @@ Scope: static browser-only conversion flow from file selection to HWPX download.
 | TXT | `qa/fixtures/sample.txt`, `empty.txt` | 순수 텍스트 변환, 빈 문서도 오류 없이 처리 |
 | CSV/XLSX | `sample.csv`, 수동 XLSX 샘플 | 첫 행 머리글, 숫자 오른쪽 정렬, 복잡 서식 손실 안내 |
 | JSON | `qa/fixtures/sample.json` | 제목, 목록, 객체 표 또는 텍스트 단순화 |
-| IPYNB | `qa/fixtures/sample.ipynb` | 마크다운/코드/텍스트 출력 추출, 이미지 출력 손실 안내 |
+| IPYNB | `qa/fixtures/sample.ipynb`, `tests/fixtures/sample.ipynb` | 마크다운/코드/텍스트 출력 추출, 코드 셀 이미지 출력(PNG/JPEG)을 HWPX 그림으로 변환 |
 | HWP/HWPX | 앱 생성 HWPX, HWP5 샘플 | HWPX 텍스트 재추출, HWP5는 변환 안내 메시지 |
 | XLSX 자동 fixture | `tests/fixtures/sample.xlsx` | 첫 시트·빈 셀·수식 표시값 보존, 두 번째 시트 제외 |
 | TXT 인코딩 | `tests/fixtures/sample.txt`, `sample-euckr.txt` | UTF-8/EUC-KR 한글·문단·목록 보존 |

@@ -262,15 +262,17 @@
 - markdown cell: Markdown 파서 재사용
 - code cell: 일반 문단이 아닌 등폭 코드블록 표
 - text output: 문서 본문으로 포함
+- image output(`image/png`, `image/jpeg`): base64 디코드 → `sniffRasterImage()`로 픽셀 크기 확인 → `imageSizeHwp()`로 HWP 단위 변환 → 공통 image IR 블록으로 변환(v4.10.7~)
 
 주의:
-- 이미지 출력, 차트, 위젯, LaTeX 수식, 실행 상태, metadata는 보존하지 않는다.
+- 차트 라이브러리의 인터랙티브·위젯 출력, LaTeX 수식, 실행 상태, metadata는 보존하지 않는다.
 - 첫 markdown 제목은 문서 제목 후보가 될 수 있다.
 - Markdown 파서 변경 시 IPYNB markdown cell도 함께 확인한다.
+- **binName 충돌 주의**: markdown cell 이미지는 `resolveMarkdownAssets()`가 `image1.png`부터 별도로 번호를 매긴다. 코드 출력 이미지가 같은 `image${n}` 접두사를 쓰면 같은 문서 안에서 binName(=BinData 파일명/manifest id)이 겹쳐 한쪽 그림이 조용히 사라진다. 그래서 코드 출력 이미지는 `ipynb-out${n}.ext` 접두사를 쓴다.
 
 검증:
-- `tests/fixtures/sample.ipynb`
-- markdown/code/output text가 구분되어 누락 없이 들어가는지 본다.
+- `tests/fixtures/sample.ipynb`(markdown cell 이미지 1개 + code output 이미지 1개 모두 포함)
+- markdown/code/output text가 구분되어 누락 없이 들어가는지, `<hc:img>`가 2개(마크다운 이미지 + 출력 이미지) 생성되는지 본다.
 
 ## DOCX
 

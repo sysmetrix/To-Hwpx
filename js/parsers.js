@@ -932,7 +932,7 @@ function jsonToBlocks(value, blocks, depth) {
 // [7] IPYNB 파서 (Jupyter Notebook)
 //     방법: IPYNB는 JSON 구조. cell_type에 따라 markdown/code/raw 처리
 //     지원: nbformat 3(worksheets) / 4(cells) 모두 처리
-//     한계: base64 이미지 출력 셀은 "[그림]" 안내 텍스트로 대체
+//     이미지 출력(image/png, image/jpeg)은 base64 → HWPX 그림 블록으로 변환
 // ─────────────────────────────────────────────────────────────────────────
 function parseIpynb(text, docType = 'plain') {
     let nb;
@@ -945,6 +945,7 @@ function parseIpynb(text, docType = 'plain') {
     const ir = emptyIR('Jupyter Notebook', docType);
     // nbformat 3: nb.worksheets[0].cells / nbformat 4: nb.cells
     const cells = nb.cells || (nb.worksheets && nb.worksheets[0] && nb.worksheets[0].cells) || [];
+    let imageCounter = 1;
 
     for (const cell of cells) {
         // source는 문자열 배열 또는 단일 문자열로 올 수 있음
@@ -972,9 +973,31 @@ function parseIpynb(text, docType = 'plain') {
                     if (txt.trim()) {
                         ir.blocks.push({ type: 'para', text: '[출력] ' + sanitize(txt) });
                     }
-                    // 이미지 출력은 안내 텍스트로 대체
-                    if (out.data && out.data['image/png']) {
-                        ir.blocks.push({ type: 'para', text: '[그림 — HWPX에서 이미지 삽입 미지원]' });
+                    // 이미지 출력(image/png, image/jpeg) → HWPX 그림 블록
+                    const imageMime = out.data && (out.data['image/png'] ? 'image/png' : out.data['image/jpeg'] ? 'image/jpeg' : null);
+                    if (imageMime) {
+                        const raw = out.data[imageMime];
+                        const b64 = Array.isArray(raw) ? raw.join('') : (raw || '');
+                        try {
+                            const imageBytes = decodeBase64Bytes(b64);
+                            const imageMeta = sniffRasterImage(imageBytes, imageMime);
+                            const size = imageSizeHwp(imageMeta);
+                            // binName은 markdown 셀 이미지가 resolveMarkdownAssets()에서
+                            // 별도로 image1.png부터 다시 번호를 매기므로, 접두사를 달리해
+                            // 같은 문서 안에서 binName(=BinData 파일명/manifest id)이 겹치지 않게 한다.
+                            ir.blocks.push({
+                                type: 'image',
+                                binName: `ipynb-out${imageCounter++}.${imageMeta.ext}`,
+                                mimeType: imageMeta.mimeType,
+                                data: imageBytes,
+                                ...size,
+                                alt: '노트북 출력 그림',
+                                title: '',
+                                sourceFormat: 'ipynb',
+                            });
+                        } catch (e) {
+                            ir.blocks.push({ type: 'para', text: '[그림 — HWPX에서 이미지 삽입 미지원]' });
+                        }
                     }
                 }
             }
