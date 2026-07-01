@@ -1,6 +1,16 @@
 {
-  "current": "4.10.13",
+  "current": "4.10.14",
   "versions": [
+    {
+      "version": "4.10.14",
+      "date": "2026-07-01",
+      "user": [
+        "메인 제목 'TO HWPX'의 그라데이션 효과가 단일 브랜드 블루로 바뀌었습니다. 로고·헤더와 같은 색으로 통일됩니다."
+      ],
+      "dev": [
+        "[v4.10.14] style.css: .hero-title-accent — linear-gradient text-clip 제거, color: var(--c-primary) 단일값으로 변경. DESIGN.md의 '과한 그라데이션·마케팅식 히어로 금지' 원칙과 v4.9.13에서 추가된 그라데이션 텍스트 효과가 충돌하던 것을 브랜드 컨셉 A(조용한 공공 신뢰) 확정에 맞춰 정리"
+      ]
+    },
     {
       "version": "4.10.13",
       "date": "2026-07-01",

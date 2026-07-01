@@ -554,10 +554,8 @@ a:hover { text-decoration: underline; }
 }
 
 .hero-title-accent {
-    background: linear-gradient(135deg, var(--c-primary) 0%, #818cf8 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    /* 브랜드 컨셉 A(조용한 공공 신뢰) — 그라데이션 텍스트 효과 제거, 단일 primary로 통일 */
+    color: var(--c-primary);
 }
 
 .hero-sub {
