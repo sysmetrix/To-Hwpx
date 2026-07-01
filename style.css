@@ -309,25 +309,23 @@ a:hover { text-decoration: underline; }
     gap: 24px;
 }
 
-/* 로고 */
+/* 로고 — 아이콘(고정 무채색)+워드마크를 단일 톤으로 통일(파란 배지 제거) */
 .site-logo {
     display: flex;
     align-items: center;
     gap: 10px;
     font-size: 1.4rem;
     font-weight: 700;
-    color: var(--c-primary);
+    color: var(--c-text);
     flex-shrink: 0;
+    letter-spacing: -0.01em;
 }
-.site-logo:hover { text-decoration: none; color: var(--c-primary-dark); }
+.site-logo:hover { text-decoration: none; color: var(--c-primary); }
 .site-logo-mark { flex-shrink: 0; border-radius: 6px; }
 .logo-badge {
-    /* "HWPX" 텍스트를 강조하는 배지 */
-    background: var(--c-primary);
-    color: #fff;
-    padding: 2px 8px;
-    border-radius: var(--radius-sm);
-    font-size: 0.9rem;
+    /* "HWPX"는 배경 배지 없이 자간만 살짝 벌려 워드마크 안에서 구분 */
+    font-weight: 800;
+    letter-spacing: 0.02em;
 }
 
 /* 주 내비게이션 */

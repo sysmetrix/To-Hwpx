@@ -1,6 +1,18 @@
 {
-  "current": "4.10.22",
+  "current": "4.10.23",
   "versions": [
+    {
+      "version": "4.10.23",
+      "date": "2026-07-01",
+      "user": [
+        "상단 로고가 파란 아이콘+파란 텍스트+파란 배지가 뒤섞인 모습에서, 무채색(진회색/검정 톤) 아이콘과 배지 없는 단일 톤 워드마크로 정리되었습니다."
+      ],
+      "dev": [
+        "[v4.10.23] icons/logo-mark.svg: 헤더 로고 전용 모노톤 아이콘 신규 추가(배경 #1c1d22, 문서 흰색, 접힌 모서리 라이트그레이). 즐겨찾기·PWA 아이콘으로 쓰이는 icons/app-icon.svg(브랜드 블루)는 그대로 유지",
+        "[v4.10.23] index.html: 헤더 .site-logo-mark img src를 app-icon.svg → logo-mark.svg로 교체",
+        "[v4.10.23] style.css: .site-logo color를 var(--c-primary)에서 var(--c-text)로 변경(라이트/다크 테마에 자동 대응), .logo-badge의 배경 배지(파란 알약) 제거하고 font-weight 800 + letter-spacing만으로 'HWPX' 강조"
+      ]
+    },
     {
       "version": "4.10.22",
       "date": "2026-07-01",
