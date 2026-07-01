@@ -991,13 +991,13 @@ async function validateCommercialUx(page) {
     'ux: 입력 포맷 패널 리드문에 카드 선택 안내 문구가 없음');
   const basicCardOrder = await page.locator('#panel-basic .format-card').evaluateAll(cards =>
     cards.map(card => card.getAttribute('data-ext')));
-  assert(JSON.stringify(basicCardOrder) === JSON.stringify(['md', 'docx', 'pptx', 'html', 'csv', 'json', 'txt', 'hwp']),
-    'ux: 입력 포맷 카드 순서가 MD/DOCX/PPTX/HTML/CSV/XLSX/JSON/TXT/HWP 기준과 다름');
+  assert(JSON.stringify(basicCardOrder) === JSON.stringify(['md', 'docx', 'pptx', 'html', 'csv', 'json', 'txt', 'hwp', 'ipynb']),
+    'ux: 입력 포맷 카드 순서가 MD/DOCX/PPTX/HTML/CSV/XLSX/JSON/TXT/HWP/IPYNB 기준과 다름');
   await tabs.nth(1).click();
   assert((await page.locator('#panel-ext > .section-sub').textContent()).includes('변환 품질 검증'),
     'ux: 예정 포맷 패널 리드문 누락');
-  assert(await page.locator('#panel-ext .format-card').first().getAttribute('data-ext') === 'ipynb',
-    'ux: 예정 포맷 안내에서 IPYNB 위치가 일관되지 않음');
+  assert(await page.locator('#panel-ext .format-card').first().getAttribute('data-ext') === 'pdf',
+    'ux: 예정 포맷 안내 첫 카드가 PDF가 아님(IPYNB는 지원됨으로 전환되어 입력 포맷 탭으로 이동)');
   await tabs.nth(3).click();
   assert(!(await page.locator('#panel-support').textContent()).includes('PC / 모바일 브라우저'),
     'ux: 지원 현황에 포맷이 아닌 PC / 모바일 브라우저 행이 남아 있음');

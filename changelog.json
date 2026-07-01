@@ -1,6 +1,17 @@
 {
-  "current": "4.10.8",
+  "current": "4.10.9",
   "versions": [
+    {
+      "version": "4.10.9",
+      "date": "2026-07-01",
+      "user": [
+        "Jupyter Notebook(IPYNB) 카드가 '예정 포맷'이 아닌 '입력 포맷' 탭으로 이동했습니다(이미 지원되는 형식이라 위치만 정리)."
+      ],
+      "dev": [
+        "[v4.10.9] index.html: IPYNB 카드를 panel-ext → panel-basic으로 이동(HWP 다음), panel-ext 안내 문구를 '변환 품질 검증 후 열 예정인 포맷'으로 단순화",
+        "[v4.10.9] tests/golden.js: 입력 포맷 카드 순서에 ipynb 추가, 예정 포맷 첫 카드 기대값을 ipynb→pdf로 수정"
+      ]
+    },
     {
       "version": "4.10.8",
       "date": "2026-07-01",
