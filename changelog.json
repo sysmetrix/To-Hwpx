@@ -1,6 +1,22 @@
 {
-  "current": "4.10.29",
+  "current": "4.10.30",
   "versions": [
+    {
+      "version": "4.10.30",
+      "date": "2026-07-01",
+      "user": [
+        "PowerPoint(PPTX) 변환 시 각 슬라이드의 발표자 노트도 이제 결과 문서에 포함됩니다. 슬라이드 본문 뒤에 '[발표자 노트]'로 표시됩니다."
+      ],
+      "dev": [
+        "[v4.10.30] js/parsers.js: extractPptxNotesText() 신규 — 슬라이드 rels에서 .../relationships/notesSlide 관계를 찾아 ppt/notesSlides/notesSlideN.xml을 열고 a:t 텍스트를 모두 이어붙임. 상대경로(../notesSlides/...)는 세그먼트 단위로 직접 정규화(Node path 모듈 미사용)",
+        "[v4.10.30] js/parsers.js: parsePptx() 슬라이드 루프 끝에서 notesText가 있으면 '[발표자 노트] ...' 문단 추가. 알려진 스코프 제한 — 본문 콘텐츠가 없는 빈 슬라이드는 통째로 continue되어 그 슬라이드의 노트도 함께 누락됨(플레이북에 기록)",
+        "[v4.10.30] tests/fixtures/sample.pptx: notesSlide1.xml + Content_Types Override + slide1 rels 관계를 기존 실 바이너리에 프로그래밍적으로 추가(스크립트 없이 JSZip으로 직접 augment)",
+        "[v4.10.30] tests/golden.js: pptx 케이스 mustContain에 '[발표자 노트] 골든 발표자 노트 확인용' 추가",
+        "[v4.10.30] js/app.js: FORMAT_INFO.pptx features/limits, QUALITY_ESTIMATES.pptx(42→48/82→83), QUALITY_HISTORY 새 항목 갱신",
+        "[v4.10.30] js/app.js: getConversionSummaryForExt()의 docx/pptx preserved·lossy 문구가 실제 코드와 어긋나 있던 걸 발견해 함께 정정 — docx lossy에서 '주석' 제거(v4.10.28에서 이미 지원), pptx lossy에서 '그룹 도형 내부 콘텐츠'(v4.10.12부터 지원) 제거하고 preserved로 이동, 발표자 노트도 preserved로 이동",
+        "[v4.10.30] format_conversion_playbook.md: PPTX 섹션에 extractPptxNotesText() 동작과 빈 슬라이드 스코프 제한 기록"
+      ]
+    },
     {
       "version": "4.10.29",
       "date": "2026-07-01",

@@ -578,3 +578,26 @@ Scope: static browser-only conversion flow from file selection to HWPX download.
 수동 확인 기준:
 
 - [ ] 캐시를 비우고 `📋 v4.10.29` 확인(코드 동작 자체는 개발자 도구용이라 사용자 화면 변화 없음)
+
+## 37. v4.10.30 PPTX 발표자 노트 추출 + 문구 드리프트 정정
+
+원인: `parsePptx()`는 `ppt/notesSlides/`를 전혀 읽지 않아 발표자 노트가 항상 사라졌다. `FORMAT_INFO.pptx.limits`에는 정직하게 "발표자 노트 미지원"으로 안내돼 있었지만, `QUALITY_HISTORY`의 기존 "next" 계획(발표자 노트 추출)이 아직 구현 전이었다.
+
+조사 부산물: 같은 김에 `getConversionSummaryForExt()`(포맷 카드 보존/손실 요약)를 보다가 **이미 지원되는 기능이 여전히 lossy로 표시된 기존 드리프트**를 발견해 함께 고쳤다 — DOCX 주석(v4.10.28에서 이미 지원), PPTX 그룹 도형 내부 콘텐츠(v4.10.12부터 지원). `format_conversion_playbook.md`가 "표/그림 지원 추가 당시 이 함수 갱신을 누락해 회귀가 있었다(v4.10.12에서 수정)"고 경고해둔 바로 그 지점에서 또 발생한 드리프트였다.
+
+수정:
+- `js/parsers.js`: `extractPptxNotesText()` 신규 — 슬라이드 rels의 notesSlide 관계 → `ppt/notesSlides/notesSlideN.xml`의 `a:t` 텍스트를 모두 이어붙여 슬라이드 본문 뒤에 `[발표자 노트] ...` 문단으로 추가.
+- `js/app.js`: `FORMAT_INFO.pptx`, `QUALITY_ESTIMATES.pptx`(42→48/82→83), `QUALITY_HISTORY`, `getConversionSummaryForExt()`의 docx/pptx preserved·lossy 문구 정정.
+
+알려진 스코프 제한(문서화됨): 슬라이드 본문(`items`)이 하나도 없는 빈 슬라이드는 통째로 `continue`되므로 그 슬라이드의 노트도 함께 누락된다.
+
+자동 승인 기준:
+
+- [x] `npm run test:golden` PASS(12 cases) — `tests/fixtures/sample.pptx`에 notesSlide1 추가, pptx 케이스 mustContain에 노트 텍스트 확인 추가
+- [x] `node qa/gate.js qa/fixtures/md_hwpx_test.md` ①~⑨ PASS
+
+수동 확인 기준:
+
+- [ ] 실제 PowerPoint에서 발표자 노트를 작성한 PPTX를 업로드해 노트 내용이 각 슬라이드 뒤에 "[발표자 노트] ..."로 나오는지 한컴오피스에서 확인
+- [ ] 포맷 카드(PPTX)의 보존/손실 요약이 실제 동작과 일치하는지 확인(그룹 도형 내부 콘텐츠·발표자 노트가 이제 "보존됨"으로 표시)
+- [ ] 캐시를 비우고 `📋 v4.10.30` 확인

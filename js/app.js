@@ -1148,9 +1148,10 @@ const FORMAT_INFO = {
             '제목 placeholder는 제목으로, 글머리 기호가 있는 문단은 목록으로 변환',
             '슬라이드 안 표(가로/세로 병합 포함)를 HWPX 표로 변환',
             'PNG/JPG/GIF/BMP 슬라이드 그림을 HWPX 그림으로 변환',
+            '발표자 노트를 각 슬라이드 본문 뒤에 "[발표자 노트]" 문단으로 포함',
             '일반적으로 슬라이드 변환은 발표 자료의 텍스트·표·그림 내용을 다시 읽기 좋은 문서로 정리하는 것이 목표',
         ],
-        limits: ['슬라이드 레이아웃·디자인·애니메이션 재현 불가(도형 위치 무시하고 순서대로만 나열)', 'WMF/EMF 벡터 이미지·도형(텍스트 상자 제외)·발표자 노트 미지원'],
+        limits: ['슬라이드 레이아웃·디자인·애니메이션 재현 불가(도형 위치 무시하고 순서대로만 나열)', 'WMF/EMF 벡터 이미지·도형(텍스트 상자 제외) 미지원'],
     },
     odt: {
         icon: '📃', name: 'ODT / RTF 오픈 문서',
@@ -1218,7 +1219,7 @@ const FORMAT_QUALITY_METRICS = {
     md:    { conversion: 94, success: 97, risk: '낮음',     next: '표 셀 run 계약(표 안 링크·이미지)과 상대경로 이미지 묶음 업로드 지원을 추가하면 고급 문서 보존률이 오른다.' },
     html:  { conversion: 68, success: 88, risk: '중간',     next: 'CSS 중 일부(color/background/text-align)만 안전 allowlist로 승격하고, img/src data URL부터 그림 IR로 연결한다.' },
     docx:  { conversion: 85, success: 90, risk: '중간',     next: '섹션별/첫 페이지 전용 머리글·바닥글을 구분해 IR로 분리하면 보존률이 추가로 오른다(현재는 문서 전체 첫 번째 관계만 사용).' },
-    pptx:  { conversion: 42, success: 82, risk: '높음',     next: '발표자 노트 추출, 슬라이드 배경색/테마, 도형(텍스트 상자 외)의 순서 보존을 단계적으로 추가하면 보존률이 오른다.' },
+    pptx:  { conversion: 48, success: 83, risk: '높음',     next: '슬라이드 배경색/테마, 도형(텍스트 상자 외)의 순서 보존을 단계적으로 추가하면 보존률이 오른다.' },
     txt:   { conversion: 88, success: 97, risk: '낮음',     next: '표처럼 보이는 탭/공백 열을 선택적으로 표 IR로 승격하는 실험을 관리자 모드에서 검증한다.' },
     csv:   { conversion: 82, success: 94, risk: '낮음',     next: 'XLSX 다중 시트 선택, 셀 병합/색상 일부 보존을 별도 옵션으로 확장한다.' },
     json:  { conversion: 76, success: 90, risk: '중간',     next: '깊은 중첩 요약 규칙과 큰 JSON 스트리밍/샘플링 미리보기를 추가한다.' },
@@ -1228,9 +1229,15 @@ const FORMAT_QUALITY_METRICS = {
 
 const QUALITY_HISTORY = [
     {
+        version: '4.10.30',
+        date: '2026-07-01',
+        summary: '현재 기준. PPTX 발표자 노트 추출 지원(v4.10.30) — 각 슬라이드 본문 뒤에 "[발표자 노트]" 문단으로 포함.',
+        scores: { md: 94, html: 68, docx: 85, pptx: 48, txt: 88, csv: 82, json: 76, ipynb: 78, hwp: 55 },
+    },
+    {
         version: '4.10.28',
         date: '2026-07-01',
-        summary: '현재 기준. DOCX 주석(comments.xml)을 각주 형태로 추출 지원(v4.10.28) — 이전에는 주석이 통째로 무시됐음.',
+        summary: 'DOCX 주석(comments.xml)을 각주 형태로 추출 지원(v4.10.28) — 이전에는 주석이 통째로 무시됐음.',
         scores: { md: 94, html: 68, docx: 85, pptx: 42, txt: 88, csv: 82, json: 76, ipynb: 78, hwp: 55 },
     },
     {
@@ -3335,12 +3342,12 @@ function getConversionSummaryForExt(ext) {
             lossy: 'CSS 레이아웃, 이미지, SVG, 스크립트, 외부 리소스',
         },
         docx: {
-            preserved: '본문, 제목, 번호·글머리 목록, 기본 표, 하이퍼링크, 인라인 서식·색상·이미지, 각주, 원본 우선 서식 정책',
-            lossy: 'Word 페이지 배치·테마, WMF/EMF 실제 그림, 주석, 변경 추적, 복잡한 개체',
+            preserved: '본문, 제목, 번호·글머리 목록, 기본 표, 하이퍼링크, 인라인 서식·색상·이미지, 각주, 주석(각주 형태), 원본 우선 서식 정책',
+            lossy: 'Word 페이지 배치·테마, WMF/EMF 실제 그림, 변경 추적, 복잡한 개체',
         },
         pptx: {
-            preserved: '슬라이드 순서, 제목·본문 텍스트, 글머리 목록, 슬라이드 안 표(병합 포함), 그림',
-            lossy: '슬라이드 레이아웃·디자인·애니메이션, 도형 위치, 그룹 도형 내부 콘텐츠, 발표자 노트',
+            preserved: '슬라이드 순서, 제목·본문 텍스트, 글머리 목록, 슬라이드 안 표(병합 포함), 그림, 그룹 도형 내부 콘텐츠, 발표자 노트',
+            lossy: '슬라이드 레이아웃·디자인·애니메이션, 도형 위치(텍스트 상자 외)',
         },
         txt: {
             preserved: '원문 텍스트, 줄바꿈, 빈 줄 기준 문단',

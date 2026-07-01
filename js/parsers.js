@@ -1925,6 +1925,46 @@ async function collectPptxSpTreeItems(container, zip, relsMap, slideDir, imageCo
     }
 }
 
+/**
+ * 슬라이드별 발표자 노트 텍스트 추출.
+ *   ppt/slides/_rels/slideN.xml.rels에서 notesSlide 관계를 찾아 대상 파일을 열고,
+ *   a:t 텍스트를 모두 이어붙인다(슬라이드 축소 이미지 placeholder에는 텍스트가 없어
+ *   실질적으로 노트 본문만 걸린다).
+ */
+async function extractPptxNotesText(zip, slidePath) {
+    const slideDir = slidePath.replace(/\/[^/]+$/, '');
+    const relsFile = zip.file(`${slideDir}/_rels/${slidePath.split('/').pop()}.rels`);
+    if (!relsFile) return '';
+    let notesTarget = '';
+    try {
+        const relsXml = await relsFile.async('string');
+        const relsDoc = new DOMParser().parseFromString(relsXml, 'application/xml');
+        for (const rel of relsDoc.getElementsByTagName('Relationship')) {
+            if ((rel.getAttribute('Type') || '').endsWith('/notesSlide')) {
+                notesTarget = rel.getAttribute('Target') || '';
+                break;
+            }
+        }
+    } catch (_) { return ''; }
+    if (!notesTarget) return '';
+
+    // Target은 slideDir 기준 상대경로(예: "../notesSlides/notesSlide1.xml") — 세그먼트 단위로 정규화
+    const parts = slideDir.split('/').concat(notesTarget.split('/'));
+    const resolved = [];
+    for (const seg of parts) {
+        if (seg === '' || seg === '.') continue;
+        if (seg === '..') resolved.pop();
+        else resolved.push(seg);
+    }
+    const notesFile = zip.file(resolved.join('/'));
+    if (!notesFile) return '';
+    try {
+        const notesXml = await notesFile.async('string');
+        const notesDoc = new DOMParser().parseFromString(notesXml, 'application/xml');
+        return sanitize(Array.from(notesDoc.getElementsByTagName('a:t')).map(t => t.textContent || '').join('').trim());
+    } catch (_) { return ''; }
+}
+
 async function parsePptx(arrayBuffer, docType = 'plain') {
     if (typeof JSZip === 'undefined') {
         throw new Error('JSZip 미로드: PPTX 처리 불가');
@@ -2034,6 +2074,9 @@ async function parsePptx(arrayBuffer, docType = 'plain') {
             }
         }
         flushList();
+
+        const notesText = await extractPptxNotesText(zip, path);
+        if (notesText) ir.blocks.push({ type: 'para', text: `[발표자 노트] ${notesText}` });
     }
 
     return ir;
