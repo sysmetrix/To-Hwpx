@@ -1065,7 +1065,7 @@ async function validateCommercialUx(page) {
     && serviceWorker.includes("'./icons/edge-install.svg'"),
     'pwa: 설치 안내 아이콘이 오프라인 앱 셸 캐시에 없음');
   assert(await page.locator('.help-dot[aria-label="줄 간격 도움말"]').count() === 0
-    && await page.locator('.help-dot[aria-label="가로 구분선 도움말"]').count() === 1
+    && await page.locator('.help-dot[aria-label="가로 구분선 도움말"]').count() === 0
     && await page.locator('.help-dot[aria-label="페이지 여백 도움말"]').count() === 1
     && await page.locator('.help-dot[aria-label="본문 고급 서식 도움말"]').count() === 1
     && await page.locator('#open-advanced-guide').count() === 0,
