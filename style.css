@@ -5598,20 +5598,42 @@ a:hover { text-decoration: underline; }
     font-size: 0.78rem;
     line-height: 1.5;
 }
-.paste-beta-notice {
-    margin: 10px 0 12px;
+/* 직접 입력 안내 — 성격이 다른 팁(정보)과 베타 경고를 색·아이콘으로 분리 */
+.paste-notice {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin: 10px 0;
     padding: 10px 13px;
-    border: 1px solid var(--c-warnwash-border);
     border-radius: var(--radius-sm);
-    background: var(--c-warnwash-bg);
     font-size: 0.78rem;
     line-height: 1.6;
     color: var(--c-text-muted);
 }
-.paste-beta-notice p { margin: 0; }
-.paste-beta-notice p + p { margin-top: 5px; }
-.paste-beta-notice strong { color: var(--c-warning); font-weight: 700; }
-.paste-beta-notice em { font-style: normal; font-weight: 600; color: var(--c-text); }
+.paste-notice + .paste-notice { margin-top: 6px; }
+.paste-notice-icon {
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    margin-top: 2px;
+}
+.paste-notice-icon svg { width: 100%; height: 100%; }
+.paste-notice p { margin: 0; }
+.paste-notice em { font-style: normal; font-weight: 600; color: var(--c-text); }
+
+.paste-notice--tip {
+    border: 1px solid var(--c-border);
+    background: var(--c-primary-light);
+}
+.paste-notice--tip .paste-notice-icon { color: var(--c-primary); }
+.paste-notice--tip strong { color: var(--c-primary); font-weight: 700; }
+
+.paste-notice--warn {
+    border: 1px solid var(--c-warnwash-border);
+    background: var(--c-warnwash-bg);
+}
+.paste-notice--warn .paste-notice-icon { color: var(--c-warning); }
+.paste-notice--warn strong { color: var(--c-warning); font-weight: 700; }
 .paste-preview-panel {
     margin: 12px 0 14px;
     border: 1px solid var(--c-border);
