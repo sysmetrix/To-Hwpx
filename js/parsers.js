@@ -2068,17 +2068,70 @@ function detectHwpFormat(buffer) {
     return 'unknown';
 }
 
+// @rhwp/core — Rust+WASM HWP5/HWPX 파서(MIT). 버전 고정 CDN URL(정밀 미리보기 iframe과
+// 같은 0.7.17). HWP5 입력 처리에만 필요하므로 정적 import 대신 parseHwp5WithRhwp()에서만
+// 동적 import한다(초기 로드에 5MB+ WASM을 얹지 않기 위함).
+const RHWP_CORE_URL = 'https://cdn.jsdelivr.net/npm/@rhwp/core@0.7.17/rhwp.js';
+
+/**
+ * HWP5(OLE2) 바이너리에서 본문 텍스트를 문단 단위로 추출.
+ *   @rhwp/core의 HwpDocument는 원본 레코드를 직접 읽으므로 표/이미지/서식 등
+ *   구조 정보까지는 다루지 않고 텍스트만 사용한다(TXT 포맷과 동일한 보존 수준).
+ */
+async function parseHwp5WithRhwp(buffer, ir) {
+    // CFBF(OLE2) 헤더 섹터는 항상 512바이트 — 이보다 작으면 유효한 구조가 될 수 없으므로
+    // WASM 엔진을 내려받기 전에 즉시 거부한다(손상 파일에서 불필요한 네트워크 요청 방지).
+    if (buffer.byteLength < 512) {
+        throw new Error('HWP5 바이너리 구조가 아닙니다(파일이 손상되었을 수 있습니다). 한컴오피스에서 HWPX로 다시 저장해 주세요.');
+    }
+    let HwpDocument;
+    try {
+        const rhwp = await import(/* webpackIgnore: true */ RHWP_CORE_URL);
+        await rhwp.default();
+        HwpDocument = rhwp.HwpDocument;
+    } catch (err) {
+        throw new Error('HWP5 읽기 엔진을 불러오지 못했습니다(네트워크 확인 후 다시 시도하거나, 한컴오피스에서 HWPX로 다시 저장해 주세요).');
+    }
+
+    let doc;
+    try {
+        doc = new HwpDocument(new Uint8Array(buffer));
+    } catch (err) {
+        throw new Error('HWP5 바이너리를 열지 못했습니다(암호 보호 또는 손상된 파일일 수 있습니다). 한컴오피스에서 HWPX로 다시 저장해 주세요.');
+    }
+
+    try {
+        const sectionCount = doc.getSectionCount();
+        for (let s = 0; s < sectionCount; s++) {
+            const paraCount = doc.getParagraphCount(s);
+            for (let p = 0; p < paraCount; p++) {
+                const len = doc.getParagraphLength(s, p);
+                const text = sanitize((len > 0 ? doc.getTextRange(s, p, 0, len) : '').trim());
+                if (!text) { ir.blocks.push({ type: 'blank' }); continue; }
+                ir.blocks.push({ type: 'para', text });
+            }
+        }
+    } finally {
+        doc.free();
+    }
+
+    if (!ir.blocks.some(b => b.type !== 'blank')) {
+        throw new Error('HWP5 문서에서 추출할 본문 텍스트를 찾지 못했습니다.');
+    }
+    return ir;
+}
+
 /**
  * HWP/HWPX 파서
  *   ZIP 형식이면 JSZip으로 열어 XML 섹션에서 텍스트 추출 시도
- *   OLE2(HWP5)이면 클라이언트 파싱 불가 안내 반환
+ *   OLE2(HWP5)이면 @rhwp/core(WASM)로 본문 텍스트 추출
  */
 async function parseHwp(buffer, docType = 'plain') {
     const ir = emptyIR('HWP 문서', docType);
     const fmt = detectHwpFormat(buffer);
 
     if (fmt === 'ole2') {
-        throw new Error('HWP5 바이너리는 브라우저에서 본문을 안전하게 추출할 수 없습니다. 한컴오피스에서 HWPX 또는 DOCX로 다시 저장해 주세요.');
+        return await parseHwp5WithRhwp(buffer, ir);
     }
 
     if (fmt === 'zip') {

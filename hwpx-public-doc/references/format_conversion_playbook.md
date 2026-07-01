@@ -335,19 +335,29 @@
 
 ## HWP / HWPX
 
-관련 코드: `parseHwp()`, `extractHwpxTable()` in `js/parsers.js`
+관련 코드: `parseHwp()`, `parseHwp5WithRhwp()`, `extractHwpxTable()` in `js/parsers.js`
 
 목표:
 - HWP는 베타 입력이다. HWPX는 출력 형식이며 입력 안내에서 분리한다.
 
 보존:
-- HWPX 오업로드 시 내부 XML 본문 텍스트와 일부 표
-- HWP5 바이너리는 결과 HWPX를 만들지 않고 실패 카드에서 HWPX/DOCX 재저장을 안내
+- HWPX 오업로드 시 내부 XML 본문 텍스트와 일부 표(기존 ZIP 경로, 변경 없음)
+- HWP5(OLE2) 바이너리는 v4.10.27부터 `@rhwp/core`(Rust+WASM, MIT, jsdelivr CDN 동적 import)로
+  문단 단위 본문 텍스트를 추출한다. 표·이미지·글머리·서식 등 구조 정보는 다루지 않는다
+  (TXT 포맷과 동일한 보존 수준 — 텍스트만).
+- CFBF(OLE2) 헤더 섹터는 항상 512바이트이므로, 그보다 작은 버퍼는 WASM을 내려받기 전에
+  즉시 거부한다(손상 파일에서 불필요한 네트워크 요청 방지, `parseHwp5WithRhwp()` 상단).
+- 암호 보호·손상된 HWP5는 `new HwpDocument()` 생성자가 던지는 예외를 잡아 안내 메시지로 변환한다.
 
 주의:
-- 사용자가 HWP 파일을 안정적으로 변환하고 싶다면 한컴오피스에서 HWPX 또는 DOCX로 다시 저장하도록 안내한다.
+- HWP5는 여전히 텍스트만 나온다. 서식·표·이미지까지 보존하고 싶다면 한컴오피스에서 HWPX로
+  다시 저장하도록 안내한다(카드의 tip/links는 유지).
 - 이미 HWPX인 파일은 변환보다 원본 사용을 권장한다.
-- HWP/HWPX 안내를 카드나 실패 메시지에서 과장하지 않는다.
+- HWP/HWPX 안내를 카드나 실패 메시지에서 과장하지 않는다 — "텍스트 추출됨"과 "서식까지 보존됨"을 구분한다.
+- `@rhwp/core`는 이 앱이 이미 "정밀 미리보기" iframe(`https://edwardkim.github.io/rhwp/`)으로 쓰던
+  것과 같은 프로젝트(edwardkim/rhwp)의 npm 패키지다. 버전을 올릴 때는 두 곳(CSP 주석 근처
+  `RHWP_CORE_URL`과 index.html의 rhwp iframe URL)의 버전이 서로 다를 수 있음을 인지한다
+  (iframe은 외부 사이트가 자체적으로 최신화하므로 이 앱이 직접 버전을 맞출 필요는 없다).
 
 ## HWPX 생성
 

@@ -1130,7 +1130,10 @@ async function validateRejectedInputs(page) {
     { name: 'malformed IPYNB', file: { name: 'broken.ipynb', mimeType: 'application/json', buffer: Buffer.from('{not notebook') }, expect: 'IPYNB 파싱 오류' },
     { name: 'unclosed CSV quote', file: { name: 'broken.csv', mimeType: 'text/csv', buffer: Buffer.from('a,b\n"open,cell') }, expect: '닫히지 않은 따옴표' },
     { name: 'broken DOCX', file: { name: 'broken.docx', mimeType: 'application/octet-stream', buffer: Buffer.from('not a zip') }, expect: 'DOCX ZIP 열기 실패' },
-    { name: 'HWP5 binary', file: { name: 'legacy.hwp', mimeType: 'application/octet-stream', buffer: Buffer.from([0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1]) }, expect: 'HWP5 바이너리' },
+    { name: 'HWP5 binary (too small)', file: { name: 'legacy.hwp', mimeType: 'application/octet-stream', buffer: Buffer.from([0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1]) }, expect: 'HWP5 바이너리' },
+    // 512바이트(CFBF 헤더 섹터 최소 크기) 이상이라 @rhwp/core(WASM) 로딩까지 실제로 진행되지만,
+    // magic 뒤가 전부 0이라 유효한 OLE2 구조가 아니므로 열기 단계에서 실패해야 한다.
+    { name: 'HWP5 binary (corrupt body)', file: { name: 'legacy2.hwp', mimeType: 'application/octet-stream', buffer: Buffer.concat([Buffer.from([0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1]), Buffer.alloc(600)]) }, expect: 'HWP5 바이너리를 열지 못했습니다' },
   ];
 
   for (const testCase of cases) {

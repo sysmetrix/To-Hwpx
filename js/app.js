@@ -1051,15 +1051,15 @@ const FORMAT_INFO = {
     },
     hwp: {
         icon: '🇰🇷', name: '한글 문서 (HWP)',
-        quality: '★☆☆', available: true, badge: '베타',
-        desc: '구형 HWP는 브라우저에서 안정적으로 해석하기 어려운 베타 입력입니다. HWPX는 변환 대상이 아니라 한컴오피스에서 바로 열 수 있는 출력 형식입니다.',
-        tech: 'ZIP 구조 시도 → 내부 XML/텍스트 추출 → IR',
+        quality: '★★☆', available: true, badge: '베타',
+        desc: '구형 HWP5 바이너리도 본문 텍스트를 문단 단위로 추출하는 베타 입력입니다. HWPX는 변환 대상이 아니라 한컴오피스에서 바로 열 수 있는 출력 형식입니다.',
+        tech: 'ZIP(HWPX 오업로드)이면 내부 XML/텍스트 추출, OLE2(HWP5)이면 @rhwp/core(WASM) 엔진으로 본문 레코드에서 텍스트 추출 → IR',
         features: [
             'HWPX를 잘못 업로드한 경우 내부 XML 본문 텍스트와 일부 표를 읽을 수 있음',
-            '구형 HWP5 바이너리는 결과 파일을 만들지 않고 HWPX/DOCX 재저장 방법을 안내',
-            '일반적으로 한글 문서는 한컴오피스에서 HWPX로 저장하는 편이 가장 안전',
+            '구형 HWP5 바이너리에서도 문단 단위 본문 텍스트를 추출(암호 보호·손상 파일은 재저장 안내)',
+            '일반적으로 한글 문서는 한컴오피스에서 HWPX로 저장하는 편이 서식까지 보존되어 가장 안전',
         ],
-        limits: ['HWP5(바이너리) 본문 파싱은 대폭 제한됨', '서식·이미지·개체·복잡한 표 복원 불완전', '이미 HWPX인 파일은 변환보다 원본 사용을 권장'],
+        limits: ['HWP5 표·이미지·글머리·서식 등 구조 정보는 제외되고 본문 텍스트만 추출됨', '암호 보호 문서는 열 수 없음', '이미 HWPX인 파일은 변환보다 원본 사용을 권장'],
         tip: {
             title: '💡 한글에서 HWPX로 직접 저장하는 더 쉬운 방법',
             steps: [
@@ -1223,14 +1223,20 @@ const FORMAT_QUALITY_METRICS = {
     csv:   { conversion: 82, success: 94, risk: '낮음',     next: 'XLSX 다중 시트 선택, 셀 병합/색상 일부 보존을 별도 옵션으로 확장한다.' },
     json:  { conversion: 76, success: 90, risk: '중간',     next: '깊은 중첩 요약 규칙과 큰 JSON 스트리밍/샘플링 미리보기를 추가한다.' },
     ipynb: { conversion: 78, success: 88, risk: '중간',     next: 'LaTeX 수식 fallback, 차트 라이브러리 위젯 출력, 실행 결과 접기 옵션을 단계적으로 추가한다.' },
-    hwp:   { conversion: 25, success: 45, risk: '높음',     next: '구형 HWP는 브라우저 한계가 커서 HWPX 재저장 안내를 유지하고, HWPX 오업로드 복구만 안정화한다.' },
+    hwp:   { conversion: 55, success: 75, risk: '중간',     next: '@rhwp/core로 표·이미지·글머리 구조까지 읽어오면 보존률이 추가로 오른다. HWPX 재저장 안내는 최고 품질 경로로 계속 유지한다.' },
 };
 
 const QUALITY_HISTORY = [
     {
+        version: '4.10.27',
+        date: '2026-07-01',
+        summary: '현재 기준. HWP5 바이너리 본문 텍스트 추출을 @rhwp/core(WASM) 엔진으로 지원(v4.10.27) — 이전에는 파싱 실패 안내만 반환했음.',
+        scores: { md: 94, html: 68, docx: 80, pptx: 42, txt: 88, csv: 82, json: 76, ipynb: 78, hwp: 55 },
+    },
+    {
         version: '4.10.10',
         date: '2026-07-01',
-        summary: '현재 기준. PPTX 신규 추가(슬라이드 텍스트·표·그림, v4.10.8~10), IPYNB 코드 셀 이미지 출력 지원(v4.10.7) 반영.',
+        summary: 'PPTX 신규 추가(슬라이드 텍스트·표·그림, v4.10.8~10), IPYNB 코드 셀 이미지 출력 지원(v4.10.7) 반영.',
         scores: { md: 94, html: 68, docx: 80, pptx: 42, txt: 88, csv: 82, json: 76, ipynb: 78, hwp: 25 },
     },
     {

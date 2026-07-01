@@ -43,16 +43,20 @@
                이스케이프(escHtml/xmlEsc)가 한 곳 빠져도 막는 2차 방어선.
          [수정 시] 새 CDN/외부 오리진을 추가하면 해당 디렉티브에도 추가해야
                    리소스가 차단되지 않는다.
-           script-src : 앱 JS(self) + JSZip/marked/SheetJS(cdnjs)
+           script-src : 앱 JS(self) + JSZip/marked/SheetJS(cdnjs) + @rhwp/core(jsdelivr,
+                        HWP5 바이너리 입력 파싱용 WASM, js/parsers.js에서 동적 import).
+                        'wasm-unsafe-eval'은 이 WASM 인스턴스화에 필요(없으면 CSP가
+                        WebAssembly.instantiate를 차단함).
            style-src  : 'unsafe-inline'은 인라인 style 속성과 미리보기 렌더가
                         주입하는 검증된 인라인 스타일(색상 정규식 통과분) 때문
            img-src    : 'self' data: — 브랜드 아이콘은 icons/brand/에 self-host.
                         원격 MD 이미지는 fetch()→data: URL 변환 후 HWPX에만 임베드;
                         IR 미리보기는 텍스트 플레이스홀더로 표시 → https: 불필요.
-           connect-src: Markdown 원격 이미지 fetch (임의 https 오리진)
+           connect-src: Markdown 원격 이미지 fetch (임의 https 오리진) + jsdelivr에서
+                        @rhwp/core의 rhwp_bg.wasm을 fetch (스크립트 자체 URL 기준 상대경로)
            frame-src  : 정밀 미리보기 rhwp 뷰어(외부 WASM, 선택 기능)
          ──────────────────────────────────────────────────────────── -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdnjs.cloudflare.com https://us.i.posthog.com https://eu.posthog.com https://us.posthog.com; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https:; frame-src https://edwardkim.github.io; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://us.i.posthog.com https://eu.posthog.com https://us.posthog.com; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https:; frame-src https://edwardkim.github.io; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
 
     <!-- SEO + SNS 공유용 메타 태그 -->
     <title>To HWPX - 한글로</title>
@@ -173,7 +177,7 @@
             <span>｢BWYF｣ AX Challenger 2026</span>
             <!-- [주의] id="open-changelog"는 app.js에서 관리자 모드일 때 업데이트 내역 모달을 여는 연결값 -->
             <button class="util-changelog-btn" id="open-changelog" aria-label="버전 정보">
-                📋 v4.10.26
+                📋 v4.10.27
             </button>
         </div>
     </div>

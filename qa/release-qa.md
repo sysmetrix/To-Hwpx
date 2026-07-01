@@ -514,3 +514,31 @@ Scope: static browser-only conversion flow from file selection to HWPX download.
 
 - [ ] iPhone Safari(또는 시뮬레이터) 390px에서 문서 제목 직접 입력, 여백 숫자 입력, 직접 입력(붙여넣기) textarea를 각각 탭했을 때 페이지가 자동 확대되지 않는지 확인
 - [ ] 캐시를 비우고 `📋 v4.10.26` 확인
+
+## 34. v4.10.27 HWP5 바이너리 텍스트 추출 (@rhwp/core 도입)
+
+원인: `js/parsers.js`의 `parseHwp()`는 OLE2(HWP5) 매직 바이트를 감지하면 항상 파싱 실패 오류를 던졌다. 브라우저에서 HWP5 바이너리(CFBF 컨테이너 + 압축 레코드)를 직접 해석할 자체 구현이 없었기 때문이다.
+
+조사: GitHub에서 변환 품질 개선용 참고 저장소를 탐색하던 중 `edwardkim/rhwp`(이 앱이 이미 "정밀 미리보기" iframe으로 쓰던 Rust+WASM 프로젝트)가 npm에 `@rhwp/core`로 HWP5/HWPX 파서를 공개하고 있음을 확인했다. `HwpDocument` 생성자가 원본 `.hwp` 바이트를 직접 받고 `getSectionCount()/getParagraphCount()/getTextRange()`로 본문 텍스트를 읽을 수 있어, 손으로 CFBF 레코드 파서를 새로 만드는 것보다 훨씬 안전했다.
+
+검증(중요 — 두 단계로 사용자 승인 받음):
+1. 로컬 Node 스크립트로 `@rhwp/core`(jsdelivr에서 다운로드)를 실행해 실제 HWP5 샘플(국립국어원 공개 예산 문서, `edwardkim/rhwp` 저장소의 공개 samples)에서 텍스트가 정확히 나오는지 확인(87개 문단, 정상적인 한글 텍스트 확인). 이 저장소에는 커밋하지 않음(제3자 실문서 라이선스 미확정).
+2. 실제 앱(정적 서버 + headless Chromium)에 같은 샘플을 업로드해 변환 → 다운로드된 HWPX의 `Contents/section0.xml`에 추출된 한글 텍스트가 그대로 들어있는지 확인.
+
+수정:
+- `js/parsers.js`: `parseHwp5WithRhwp()` 신규. CFBF 헤더 최소 크기(512바이트) 미만은 네트워크 요청 없이 즉시 거부, 그 이상이면 `@rhwp/core` 동적 import → `HwpDocument` 생성 → 문단 순회 → 텍스트만 IR로 변환(표/이미지/서식 제외).
+- `index.html`: CSP `script-src`에 `https://cdn.jsdelivr.net` + `'wasm-unsafe-eval'` 추가.
+- `js/app.js`: `FORMAT_INFO.hwp`, `QUALITY_ESTIMATES.hwp`(25→55/45→75/높음→중간), `QUALITY_HISTORY` 갱신.
+
+자동 승인 기준:
+
+- [x] `npm run test:golden` PASS(12 cases) — `validateRejectedInputs()`에 512바이트 이상 손상 HWP5 케이스 추가, 실제 WASM 로딩·`new HwpDocument()` 실패 경로까지 검증
+- [x] `node qa/gate.js qa/fixtures/md_hwpx_test.md` ①~⑧ PASS
+- [x] 로컬 실제 HWP5 샘플 → 앱 업로드 → HWPX 다운로드 → section0.xml에 원문 한글 텍스트 포함 확인(위 검증 2단계)
+
+수동 확인 기준:
+
+- [ ] 실제 보유 중인 구형 `.hwp`(HWP5) 파일을 업로드해 본문 텍스트가 읽히는지, 한컴오피스에서 열리는지 확인
+- [ ] 암호 보호되거나 손상된 `.hwp` 업로드 시 "HWP5 바이너리를 열지 못했습니다" 안내가 뜨고 크래시하지 않는지 확인
+- [ ] 오프라인/jsdelivr 접근 불가 환경에서 `.hwp` 업로드 시 "읽기 엔진을 불러오지 못했습니다" 안내로 우아하게 실패하는지 확인
+- [ ] 캐시를 비우고 `📋 v4.10.27` 확인
