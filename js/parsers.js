@@ -1657,44 +1657,236 @@ function extractDocxTable(tblNode) {
 
 
 // ─────────────────────────────────────────────────────────────────────────
-// [8] PPTX 파서 (PowerPoint) — 1차 스코프: 슬라이드 텍스트 추출
+// [8] PPTX 파서 (PowerPoint)
 //     방법: JSZip으로 열고 ppt/presentation.xml의 슬라이드 순서(p:sldIdLst) +
 //           ppt/_rels/presentation.xml.rels로 실제 슬라이드 파일 경로를 확정.
 //           실패 시 ppt/slides/slideN.xml 파일명 숫자 정렬로 폴백.
-//     한계: 레이아웃/애니메이션/이미지/도형/표/발표자 노트는 다루지 않는다(별도 릴리스).
+//           슬라이드 안 p:spTree를 도형 순서대로 순회해 텍스트(p:sp)·표
+//           (p:graphicFrame의 a:tbl)·이미지(p:pic)를 각각 IR로 변환한다.
+//     한계: 레이아웃·애니메이션·도형(표/그림 제외)·발표자 노트는 다루지 않는다.
 // ─────────────────────────────────────────────────────────────────────────
 
+/** 셀(a:tc) 텍스트 추출 — a:txBody 안의 a:p/a:r/a:t를 공백으로 이어붙임 */
+function pptxCellText(tc) {
+    const txBody = tc.getElementsByTagName('a:txBody')[0];
+    if (!txBody) return '';
+    const parts = Array.from(txBody.getElementsByTagName('a:p'))
+        .map(p => Array.from(p.getElementsByTagName('a:t')).map(t => t.textContent || '').join(''))
+        .filter(Boolean);
+    return sanitize(parts.join(' ').trim());
+}
+
 /**
- * 슬라이드 XML(ppt/slides/slideN.xml)에서 도형(p:sp)별 텍스트 문단을 추출.
- * @returns {Array<{isTitle:boolean, paragraphs:Array<{text:string, level:number, bullet:boolean, ordered:boolean}>}>}
+ * a:tbl(DrawingML 표) → IR table 블록.
+ * PPTX 표는 병합된 칸도 각 열마다 별도 a:tc(hMerge="1"/vMerge="1")로 나오므로
+ * DOCX(gridSpan 압축형)와 달리 매 a:tc가 논리 열 하나에 대응한다.
  */
-function parsePptxSlideShapes(xmlText) {
+function extractPptxTable(tblNode) {
+    const rowEls = Array.from(tblNode.getElementsByTagName('a:tr'));
+    if (!rowEls.length) return null;
+
+    const rawRows = rowEls.map(tr => Array.from(tr.getElementsByTagName('a:tc')).map(tc => ({
+        text: pptxCellText(tc),
+        colSpan: parseInt(tc.getAttribute('gridSpan') || '1', 10) || 1,
+        hMerge: tc.getAttribute('hMerge') === '1',
+        vMerge: tc.getAttribute('vMerge') === '1',
+    })));
+
+    const vMergeStart = {};     // logicalCol → 병합 시작 행 인덱스
+    const mergeStartCells = {}; // "행_열" → 병합 시작 셀 객체 (rowSpan 증가 대상)
+    const outputRows = [];
+
+    for (let r = 0; r < rawRows.length; r++) {
+        const outRow = [];
+        let logicalCol = 0;
+        for (const raw of rawRows[r]) {
+            if (raw.hMerge || raw.vMerge) {
+                // 가로/세로 병합 연속 칸 — 출력 없음. 세로 병합이면 시작 셀 rowSpan만 증가.
+                if (raw.vMerge) {
+                    const startKey = `${vMergeStart[logicalCol]}_${logicalCol}`;
+                    if (mergeStartCells[startKey]) mergeStartCells[startKey].rowSpan++;
+                }
+                logicalCol++;
+                continue;
+            }
+            const cell = { text: raw.text, colSpan: raw.colSpan, rowSpan: 1 };
+            vMergeStart[logicalCol] = r;
+            mergeStartCells[`${r}_${logicalCol}`] = cell;
+            outRow.push(cell);
+            logicalCol++;
+        }
+        outputRows.push(outRow);
+    }
+
+    if (!outputRows.some(row => row.length)) return null;
+    return { type: 'table', header: outputRows[0] || [], rows: outputRows.slice(1) };
+}
+
+/**
+ * 슬라이드 상대 경로 rels Target을 zip 절대 경로로 정규화.
+ * 예) baseDir="ppt/slides", target="../media/image1.png" → "ppt/media/image1.png"
+ */
+function resolvePptxRelPath(baseDir, target) {
+    if (!target || /^https?:/i.test(target)) return null;
+    const stack = [];
+    for (const part of (baseDir + '/' + target).split('/')) {
+        if (part === '' || part === '.') continue;
+        if (part === '..') stack.pop();
+        else stack.push(part);
+    }
+    return stack.join('/');
+}
+
+/**
+ * p:pic(그림 도형) → IR image 블록. r:embed로 슬라이드 rels에서 실제 media 경로를 찾는다.
+ * @param {Element} picNode
+ * @param {object}  relsMap   슬라이드 rels의 rId → Target 맵
+ * @param {JSZip}   zip
+ * @param {string}  slideDir  슬라이드 파일이 위치한 디렉터리(예: "ppt/slides")
+ * @param {{n:number}} counterRef  문서 전체에서 공유하는 이미지 카운터(참조로 증가)
+ */
+async function extractPptxImage(picNode, relsMap, zip, slideDir, counterRef) {
+    const blipEl = picNode.getElementsByTagName('a:blip')[0];
+    if (!blipEl) return null;
+    const rId = blipEl.getAttributeNS(DOCX_NS_R, 'embed') || blipEl.getAttribute('r:embed') || '';
+    const target = rId && relsMap[rId];
+    if (!target) return null;
+
+    const resolved = resolvePptxRelPath(slideDir, target);
+    if (!resolved) return null;
+    const ext = resolved.split('.').pop().toLowerCase();
+
+    const cNvPr = picNode.getElementsByTagName('p:cNvPr')[0];
+    const altText = cNvPr
+        ? sanitize(cNvPr.getAttribute('descr') || cNvPr.getAttribute('title') || cNvPr.getAttribute('name') || '').trim()
+        : '';
+
+    // WMF/EMF 벡터 이미지 — HWPX 삽입 미지원. alt 텍스트가 있으면 안내 문단으로 대체.
+    if (ext === 'wmf' || ext === 'emf') {
+        return altText ? { type: 'para', text: `[벡터 이미지: ${altText}]` } : null;
+    }
+
+    const mimeTypes = {
+        jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png',
+        gif: 'image/gif',  bmp: 'image/bmp',   tiff: 'image/tiff',
+        webp: 'image/webp',
+    };
+    const mimeType = mimeTypes[ext];
+    if (!mimeType) return null;
+
+    const imgFile = zip.file(resolved);
+    if (!imgFile) return null;
+    let imgData;
+    try {
+        imgData = await imgFile.async('uint8array');
+    } catch (_) { return null; }
+
+    // EMU → HWPX 단위: 1 inch = 914400 EMU = 7200 HWP units → divide EMU by 127
+    const extEl = picNode.getElementsByTagName('a:ext')[0];
+    const cx = extEl ? parseInt(extEl.getAttribute('cx') || '0', 10) : 0;
+    const cy = extEl ? parseInt(extEl.getAttribute('cy') || '0', 10) : 0;
+    let widthHwp  = Math.round(cx / 127);
+    let heightHwp = Math.round(cy / 127);
+
+    // WebP → PNG 변환 (HWPX는 PNG/JPEG/GIF/BMP만 지원)
+    let finalExt = ext, finalMime = mimeType;
+    if (ext === 'webp') {
+        try {
+            const conv = await convertWebpToPng(imgData);
+            imgData = conv.bytes;
+            finalExt = 'png'; finalMime = 'image/png';
+            if (!widthHwp || !heightHwp) {
+                const sz = imageSizeHwp({ width: conv.width, height: conv.height });
+                widthHwp = sz.widthHwp; heightHwp = sz.heightHwp;
+            }
+        } catch (_) { return altText ? { type: 'para', text: `[이미지: ${altText}]` } : null; }
+    }
+    // 슬라이드 도형 크기(a:ext)가 없거나 0이면 픽셀 크기로 보정
+    if (!widthHwp || !heightHwp) {
+        try {
+            const meta = sniffRasterImage(imgData, finalMime);
+            const sz = imageSizeHwp(meta);
+            widthHwp = sz.widthHwp; heightHwp = sz.heightHwp;
+        } catch (_) {}
+    }
+
+    counterRef.n = (counterRef.n || 0) + 1;
+    return {
+        type: 'image',
+        binName: `pptx-img${counterRef.n}.${finalExt}`,
+        mimeType: finalMime,
+        data: imgData,
+        widthHwp: widthHwp || 40000,
+        heightHwp: heightHwp || 30000,
+        alt: altText,
+        sourceFormat: 'pptx',
+    };
+}
+
+/**
+ * 슬라이드 XML(ppt/slides/slideN.xml)을 p:spTree 자식 순서대로 순회해
+ * 텍스트(kind: title/para/listItem)·표(kind: table)·이미지(kind: image) 항목을 만든다.
+ * @returns {Promise<Array<object>>}
+ */
+async function parsePptxSlideItems(xmlText, zip, slidePath, imageCounterRef) {
     const doc = new DOMParser().parseFromString(xmlText, 'application/xml');
     if (doc.querySelector('parsererror')) return [];
-    const shapes = [];
-    for (const sp of Array.from(doc.getElementsByTagName('p:sp'))) {
-        const nvPr = sp.getElementsByTagName('p:nvSpPr')[0];
-        const ph = nvPr ? nvPr.getElementsByTagName('p:ph')[0] : null;
-        const phType = ph ? (ph.getAttribute('type') || '') : '';
-        const isTitle = phType === 'title' || phType === 'ctrTitle';
+    const spTree = doc.getElementsByTagName('p:spTree')[0];
+    if (!spTree) return [];
 
-        const txBody = sp.getElementsByTagName('p:txBody')[0];
-        if (!txBody) continue;
-        const paragraphs = [];
-        for (const p of Array.from(txBody.getElementsByTagName('a:p'))) {
-            const text = sanitize(Array.from(p.getElementsByTagName('a:t')).map(t => t.textContent).join(''));
-            if (!text.trim()) continue;
-            const pPr = p.getElementsByTagName('a:pPr')[0];
-            const lvl = pPr ? parseInt(pPr.getAttribute('lvl') || '0', 10) || 0 : 0;
-            const hasBuNone = !!(pPr && pPr.getElementsByTagName('a:buNone')[0]);
-            const hasBuAutoNum = !!(pPr && pPr.getElementsByTagName('a:buAutoNum')[0]);
-            const hasBuChar = !!(pPr && pPr.getElementsByTagName('a:buChar')[0]);
-            const bullet = !isTitle && !hasBuNone && (hasBuAutoNum || hasBuChar);
-            paragraphs.push({ text, level: Math.max(0, Math.min(lvl, 2)), bullet, ordered: hasBuAutoNum });
-        }
-        if (paragraphs.length) shapes.push({ isTitle, paragraphs });
+    // 슬라이드별 관계 파일 — p:pic의 r:embed를 실제 media 경로로 바꾸는 데 필요
+    const slideDir = slidePath.replace(/\/[^/]+$/, '');
+    const relsMap = {};
+    const relsFile = zip.file(`${slideDir}/_rels/${slidePath.split('/').pop()}.rels`);
+    if (relsFile) {
+        try {
+            const relsXml = await relsFile.async('string');
+            const relsDoc = new DOMParser().parseFromString(relsXml, 'application/xml');
+            for (const rel of relsDoc.getElementsByTagName('Relationship')) {
+                const id = rel.getAttribute('Id') || '';
+                if (id) relsMap[id] = rel.getAttribute('Target') || '';
+            }
+        } catch (_) {}
     }
-    return shapes;
+
+    const items = [];
+    for (const child of Array.from(spTree.childNodes)) {
+        if (child.nodeType !== 1) continue;
+        const local = child.localName;
+
+        if (local === 'sp') {
+            const nvPr = child.getElementsByTagName('p:nvSpPr')[0];
+            const ph = nvPr ? nvPr.getElementsByTagName('p:ph')[0] : null;
+            const phType = ph ? (ph.getAttribute('type') || '') : '';
+            const isTitle = phType === 'title' || phType === 'ctrTitle';
+            const txBody = child.getElementsByTagName('p:txBody')[0];
+            if (!txBody) continue;
+            for (const p of Array.from(txBody.getElementsByTagName('a:p'))) {
+                const text = sanitize(Array.from(p.getElementsByTagName('a:t')).map(t => t.textContent).join(''));
+                if (!text.trim()) continue;
+                const pPr = p.getElementsByTagName('a:pPr')[0];
+                const lvl = pPr ? parseInt(pPr.getAttribute('lvl') || '0', 10) || 0 : 0;
+                const hasBuNone = !!(pPr && pPr.getElementsByTagName('a:buNone')[0]);
+                const hasBuAutoNum = !!(pPr && pPr.getElementsByTagName('a:buAutoNum')[0]);
+                const hasBuChar = !!(pPr && pPr.getElementsByTagName('a:buChar')[0]);
+                const bullet = !isTitle && !hasBuNone && (hasBuAutoNum || hasBuChar);
+                if (isTitle) items.push({ kind: 'title', text });
+                else if (bullet) items.push({ kind: 'listItem', text, level: Math.max(0, Math.min(lvl, 2)), ordered: hasBuAutoNum });
+                else items.push({ kind: 'para', text });
+            }
+        } else if (local === 'graphicFrame') {
+            const tbl = child.getElementsByTagName('a:tbl')[0];
+            if (tbl) {
+                const table = extractPptxTable(tbl);
+                if (table) items.push({ kind: 'table', table });
+            }
+        } else if (local === 'pic') {
+            const result = await extractPptxImage(child, relsMap, zip, slideDir, imageCounterRef);
+            if (result?.type === 'image') items.push({ kind: 'image', image: result });
+            else if (result?.type === 'para') items.push({ kind: 'para', text: result.text });
+        }
+    }
+    return items;
 }
 
 async function parsePptx(arrayBuffer, docType = 'plain') {
@@ -1760,6 +1952,7 @@ async function parsePptx(arrayBuffer, docType = 'plain') {
     }
 
     const ir = emptyIR('', docType);
+    const imageCounterRef = { n: 0 };
     let slideNum = 0;
     for (const path of slidePaths) {
         slideNum++;
@@ -1769,8 +1962,8 @@ async function parsePptx(arrayBuffer, docType = 'plain') {
         try {
             xmlText = await slideFile.async('string');
         } catch (_) { continue; }
-        const shapes = parsePptxSlideShapes(xmlText);
-        if (!shapes.length) continue;
+        const items = await parsePptxSlideItems(xmlText, zip, path, imageCounterRef);
+        if (!items.length) continue;
 
         ir.blocks.push({ type: 'heading', level: 2, text: `슬라이드 ${slideNum}` });
         let listBuf = [];
@@ -1780,24 +1973,28 @@ async function parsePptx(arrayBuffer, docType = 'plain') {
                 listBuf = [];
             }
         };
-        for (const shape of shapes) {
-            for (const para of shape.paragraphs) {
-                if (shape.isTitle) {
-                    flushList();
-                    ir.blocks.push({ type: 'heading', level: 3, text: para.text });
-                } else if (para.bullet) {
-                    listBuf.push({
-                        text: para.text,
-                        runs: [{ text: para.text }],
-                        level: para.level,
-                        ordered: para.ordered,
-                        marker: null,
-                        task: false, checked: false, codeBlocks: [],
-                    });
-                } else {
-                    flushList();
-                    ir.blocks.push({ type: 'para', text: para.text });
-                }
+        for (const item of items) {
+            if (item.kind === 'title') {
+                flushList();
+                ir.blocks.push({ type: 'heading', level: 3, text: item.text });
+            } else if (item.kind === 'listItem') {
+                listBuf.push({
+                    text: item.text,
+                    runs: [{ text: item.text }],
+                    level: item.level,
+                    ordered: item.ordered,
+                    marker: null,
+                    task: false, checked: false, codeBlocks: [],
+                });
+            } else if (item.kind === 'table') {
+                flushList();
+                ir.blocks.push(item.table);
+            } else if (item.kind === 'image') {
+                flushList();
+                ir.blocks.push(item.image);
+            } else {
+                flushList();
+                ir.blocks.push({ type: 'para', text: item.text });
             }
         }
         flushList();

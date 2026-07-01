@@ -1102,13 +1102,15 @@ const FORMAT_INFO = {
         icon: '📑', svgIcon: 'icons/brand/microsoftpowerpoint.svg', name: 'PowerPoint (PPTX)',
         quality: '★☆☆', available: true, badge: '베타',
         desc: '슬라이드의 텍스트를 순서대로 문서로 옮기는 데 초점을 둔 입력 포맷입니다. 슬라이드 레이아웃은 재현하지 않습니다.',
-        tech: 'JSZip → presentation.xml 슬라이드 순서 확인 → slideN.xml 텍스트 추출 → IR',
+        tech: 'JSZip → presentation.xml 슬라이드 순서 확인 → slideN.xml 도형 순서대로 텍스트·표·그림 추출 → IR',
         features: [
             '슬라이드 순서대로 제목·본문 텍스트를 문서로 정리',
             '제목 placeholder는 제목으로, 글머리 기호가 있는 문단은 목록으로 변환',
-            '일반적으로 슬라이드 변환은 발표 자료의 텍스트 내용을 다시 읽기 좋은 문서로 정리하는 것이 목표',
+            '슬라이드 안 표(가로/세로 병합 포함)를 HWPX 표로 변환',
+            'PNG/JPG/GIF/BMP 슬라이드 그림을 HWPX 그림으로 변환',
+            '일반적으로 슬라이드 변환은 발표 자료의 텍스트·표·그림 내용을 다시 읽기 좋은 문서로 정리하는 것이 목표',
         ],
-        limits: ['슬라이드 레이아웃·디자인·애니메이션 재현 불가', '이미지·도형·표·발표자 노트 미지원(텍스트만 추출)'],
+        limits: ['슬라이드 레이아웃·디자인·애니메이션 재현 불가(도형 위치 무시하고 순서대로만 나열)', 'WMF/EMF 벡터 이미지·도형(텍스트 상자 제외)·발표자 노트 미지원'],
     },
     odt: {
         icon: '📃', name: 'ODT / RTF 오픈 문서',

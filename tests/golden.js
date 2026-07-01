@@ -188,7 +188,7 @@ const CASES = [
     name: 'pptx',
     file: 'sample.pptx',
     format: 'PPTX',
-    minTables: 0,
+    minTables: 1,
     mustContain: [
       'PPTX 골든 테스트 제목 Alpha',
       '슬라이드 본문 문단입니다',
@@ -196,6 +196,10 @@ const CASES = [
       '목록 항목 English',
       '두 번째 슬라이드 제목',
       '두 번째 슬라이드 본문',
+      '표 헤더 A',
+      '표 헤더 B',
+      '표 값 1',
+      '표 값 2',
     ],
   },
 ];
@@ -384,6 +388,16 @@ async function validateHwpxPackage(page, zip, testCase) {
       .find(table => table.includes('코드 셀 Alpha') && table.includes('print(message)'));
     assert(codeTable, `${testCase.name}: 코드 셀이 코드 블록 표로 출력되지 않음`);
     assert(/charPrIDRef="6"/.test(codeTable), `${testCase.name}: 코드 셀에 등폭 코드 글자 모양이 적용되지 않음`);
+  }
+  if (testCase.name === 'pptx') {
+    assert((sectionXml.match(/<hc:img\b/g) || []).length === 1,
+      `${testCase.name}: 슬라이드 그림(p:pic)이 hc:img로 생성되지 않음`);
+    assert(contentHpf.includes('href="BinData/pptx-img1.png"') && zip.file('BinData/pptx-img1.png'),
+      `${testCase.name}: 슬라이드 그림이 공통 그림 경로로 생성되지 않음`);
+    const slideTable = [...sectionXml.matchAll(/<hp:tbl\b[\s\S]*?<\/hp:tbl>/g)]
+      .map(match => match[0])
+      .find(table => table.includes('표 헤더 A') && table.includes('표 값 2'));
+    assert(slideTable, `${testCase.name}: 슬라이드 안 표(a:tbl)가 HWPX 표로 생성되지 않음`);
   }
   if (testCase.name === 'json') {
     const objectArrayTable = [...sectionXml.matchAll(/<hp:tbl\b[\s\S]*?<\/hp:tbl>/g)]

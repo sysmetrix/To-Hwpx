@@ -1,6 +1,22 @@
 {
-  "current": "4.10.9",
+  "current": "4.10.10",
   "versions": [
+    {
+      "version": "4.10.10",
+      "date": "2026-07-01",
+      "user": [
+        "PowerPoint(PPTX) 변환에서 슬라이드 안의 표(병합 포함)와 그림이 이제 HWPX 표/그림으로 포함됩니다."
+      ],
+      "dev": [
+        "[v4.10.10] js/parsers.js: parsePptxSlideItems() 신규 — p:spTree 자식(p:sp/p:graphicFrame/p:pic)을 도형 순서대로 순회",
+        "[v4.10.10] js/parsers.js: extractPptxTable() — a:tbl(gridSpan/hMerge/vMerge)을 공통 IR table 블록으로 변환. PPTX는 병합 칸도 placeholder a:tc를 유지하는 DOCX와 다른 구조라 논리열 증가 방식을 별도로 구현",
+        "[v4.10.10] js/parsers.js: extractPptxImage() — p:pic의 a:blip@r:embed를 슬라이드 rels로 해석해 공통 IR image 블록 생성(PNG/JPG/GIF/BMP, WebP→PNG 변환, WMF/EMF는 alt 안내로 대체)",
+        "[v4.10.10] js/app.js: FORMAT_INFO.pptx features/limits — 표/그림 지원 반영",
+        "[v4.10.10] tests/fixtures/sample.pptx, qa/fixtures/sample.pptx: 표(2x2)와 그림이 포함된 fixture로 갱신",
+        "[v4.10.10] tests/golden.js: PPTX 표/그림 HWPX 생성 회귀 검증 추가",
+        "[v4.10.10] format_conversion_playbook.md/qa/release-qa.md: PPTX 표/그림 보존 정책과 DOCX 대비 병합 구조 차이 문서화"
+      ]
+    },
     {
       "version": "4.10.9",
       "date": "2026-07-01",

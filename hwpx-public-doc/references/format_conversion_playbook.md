@@ -304,26 +304,31 @@
 
 ## PPTX
 
-관련 코드: `parsePptx()`, `parsePptxSlideShapes()` in `js/parsers.js`
+관련 코드: `parsePptx()`, `parsePptxSlideItems()`, `extractPptxTable()`, `extractPptxImage()` in `js/parsers.js`
 
 목표:
-- 슬라이드 디자인을 재현하지 않고, 슬라이드 텍스트를 순서대로 읽는 문서로 정리한다(1차 스코프, v4.10.8~).
+- 슬라이드 디자인(도형 위치·애니메이션)을 재현하지 않고, 슬라이드의 텍스트·표·그림을 순서대로 읽는 문서로 정리한다(v4.10.8 텍스트, v4.10.10 표/그림 추가).
 
 보존:
 - 슬라이드 순서(`ppt/presentation.xml`의 `p:sldIdLst` + `ppt/_rels/presentation.xml.rels`로 확정, 실패 시 `slideN.xml` 파일명 숫자 정렬로 폴백)
+- 슬라이드 안 `p:spTree` 직계 자식(`p:sp`/`p:graphicFrame`/`p:pic`)을 도형 등장 순서대로 순회해 변환한다.
 - 제목 placeholder(`p:ph type="title"`/`"ctrTitle"`) → heading
 - 글머리 기호(`a:buChar`/`a:buAutoNum`, `a:buNone` 없음)가 있는 문단 → list, 없으면 para
+- `p:graphicFrame`의 `a:tbl`(DrawingML 표) → 공통 IR table 블록. `a:tc`의 `gridSpan`/`hMerge`/`vMerge`로 가로/세로 병합을 재구성한다.
+- `p:pic`의 `a:blip@r:embed` → 슬라이드 rels(`ppt/slides/_rels/slideN.xml.rels`)로 실제 `ppt/media/...` 경로를 찾아 공통 IR image 블록으로 변환(PNG/JPG/GIF/BMP, WebP는 PNG로 변환). 크기는 `a:ext`(EMU) ÷127, 없으면 픽셀 크기로 보정.
 - 슬라이드마다 "슬라이드 N" heading으로 구분
 
 주의:
 - PPTX는 ZIP + OOXML이다(DOCX와 같은 계열이지만 `ppt/` 네임스페이스와 `p:`/`a:` 접두사를 쓴다).
-- 이미지, 도형, 표, 애니메이션, 슬라이드 디자인/레이아웃, 발표자 노트는 1차 스코프에서 다루지 않는다. 추가하려면 별도 릴리스로 진행한다.
-- `p:sldId`의 `r:id`는 `DOCX_NS_R`(officeDocument relationships 네임스페이스)로 읽는다. `getAttributeNS(DOCX_NS_R, 'id') || getAttribute('r:id')` 패턴을 DOCX와 동일하게 유지한다.
+- **PPTX 표는 DOCX와 병합 표현이 다르다**: DOCX(`w:tbl`)는 가로 병합을 `gridSpan`으로 압축해 셀 자체가 줄어들지만, PPTX(`a:tbl`)는 병합된 칸도 각 열마다 `hMerge="1"`/`vMerge="1"` placeholder `a:tc`를 그대로 둔다. 그래서 `extractPptxTable()`은 논리열 인덱스를 raw cell 개수만큼 그대로 증가시키고, DOCX처럼 colSpan만큼 건너뛰지 않는다.
+- 도형(텍스트 상자·표·그림 제외), 애니메이션, 슬라이드 디자인/레이아웃, 발표자 노트는 다루지 않는다. WMF/EMF 벡터 이미지는 alt 텍스트가 있으면 안내 문단으로 대체한다.
+- `p:sldId`의 `r:id`, `p:pic`의 `a:blip@r:embed`는 모두 `DOCX_NS_R`(officeDocument relationships 네임스페이스)로 읽는다. `getAttributeNS(DOCX_NS_R, 'id'/'embed') || getAttribute('r:id'/'r:embed')` 패턴을 DOCX와 동일하게 유지한다.
+- 이미지 binName은 `pptx-img${n}`을 쓴다(다른 포맷과 접두사가 겹치지 않게).
 
 검증:
-- `tests/fixtures/sample.pptx`(2슬라이드: 제목+본문+목록)
+- `tests/fixtures/sample.pptx`(2슬라이드: 제목+본문+목록+표+그림)
 - `npm run test:golden`
-- 슬라이드 순서와 목록/제목 구분은 한컴에서도 확인한다.
+- 슬라이드 순서, 표 병합, 그림 삽입은 한컴에서도 확인한다.
 
 ## HWP / HWPX
 
