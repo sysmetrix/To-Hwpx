@@ -306,7 +306,7 @@
 
 ## PPTX
 
-관련 코드: `parsePptx()`, `parsePptxSlideItems()`, `collectPptxSpTreeItems()`, `extractPptxTable()`, `extractPptxImage()` in `js/parsers.js`
+관련 코드: `parsePptx()`, `parsePptxSlideItems()`, `collectPptxSpTreeItems()`, `extractPptxTable()`, `extractPptxImage()`, `extractPptxNotesText()` in `js/parsers.js`
 
 목표:
 - 슬라이드 디자인(도형 위치·애니메이션)을 재현하지 않고, 슬라이드의 텍스트·표·그림을 순서대로 읽는 문서로 정리한다(v4.10.8 텍스트, v4.10.10 표/그림, v4.10.12 그룹 도형 재귀).
@@ -318,22 +318,24 @@
 - 글머리 기호(`a:buChar`/`a:buAutoNum`, `a:buNone` 없음)가 있는 문단 → list, 없으면 para
 - `p:graphicFrame`의 `a:tbl`(DrawingML 표) → 공통 IR table 블록. `a:tc`의 `gridSpan`/`hMerge`/`vMerge`로 가로/세로 병합을 재구성한다.
 - `p:pic`의 `a:blip@r:embed` → 슬라이드 rels(`ppt/slides/_rels/slideN.xml.rels`)로 실제 `ppt/media/...` 경로를 찾아 공통 IR image 블록으로 변환(PNG/JPG/GIF/BMP, WebP는 PNG로 변환). 크기는 `a:ext`(EMU) ÷127, 없으면 픽셀 크기로 보정.
+- 발표자 노트(v4.10.30~) — `extractPptxNotesText()`가 슬라이드 rels에서 `.../relationships/notesSlide` 관계를 찾아 `ppt/notesSlides/notesSlideN.xml`을 열고 `a:t` 텍스트를 모두 이어붙인다. 슬라이드 본문 뒤에 `[발표자 노트] ...` 문단으로 추가(슬라이드에 표시되는 내용과 구분되게 접두사 유지). 슬라이드 본문(`items`)이 하나도 없는 빈 슬라이드는 통째로 건너뛰므로 그런 슬라이드의 노트는 함께 누락된다 — 알려진 스코프 제한.
 - 슬라이드마다 "슬라이드 N" heading으로 구분
 
 주의:
 - PPTX는 ZIP + OOXML이다(DOCX와 같은 계열이지만 `ppt/` 네임스페이스와 `p:`/`a:` 접두사를 쓴다).
 - **PPTX 표는 DOCX와 병합 표현이 다르다**: DOCX(`w:tbl`)는 가로 병합을 `gridSpan`으로 압축해 셀 자체가 줄어들지만, PPTX(`a:tbl`)는 병합된 칸도 각 열마다 `hMerge="1"`/`vMerge="1"` placeholder `a:tc`를 그대로 둔다. 그래서 `extractPptxTable()`은 논리열 인덱스를 raw cell 개수만큼 그대로 증가시키고, DOCX처럼 colSpan만큼 건너뛰지 않는다.
 - **그룹 도형을 빠뜨리기 쉽다**: `p:spTree`의 직계 자식만 보면 `p:grpSp` 안의 텍스트박스·표·그림이 조용히 사라진다(실제 발표자료에서 매우 흔한 구조). 새 도형 종류를 추가할 때도 `collectPptxSpTreeItems()`를 거치는지 확인한다.
-- 그룹 도형 내부를 제외한 일반 도형(텍스트 상자·표·그림 제외), 애니메이션, 슬라이드 디자인/레이아웃, 발표자 노트는 다루지 않는다. WMF/EMF 벡터 이미지는 alt 텍스트가 있으면 안내 문단으로 대체한다.
+- 그룹 도형 내부를 제외한 일반 도형(텍스트 상자·표·그림 제외), 애니메이션, 슬라이드 디자인/레이아웃은 다루지 않는다. WMF/EMF 벡터 이미지는 alt 텍스트가 있으면 안내 문단으로 대체한다.
+- `extractPptxNotesText()`의 상대경로 정규화(`../notesSlides/notesSlideN.xml` → `ppt/notesSlides/notesSlideN.xml`)는 세그먼트 단위 `..`/`.` 처리를 직접 구현한다(Node 환경이 아니라 `path.resolve`를 못 쓰므로). 새 상대경로 해석이 필요한 곳이 생기면 이 패턴을 재사용한다.
 - `p:sldId`의 `r:id`, `p:pic`의 `a:blip@r:embed`는 모두 `DOCX_NS_R`(officeDocument relationships 네임스페이스)로 읽는다. `getAttributeNS(DOCX_NS_R, 'id'/'embed') || getAttribute('r:id'/'r:embed')` 패턴을 DOCX와 동일하게 유지한다.
 - 이미지 binName은 `pptx-img${n}`을 쓴다(다른 포맷과 접두사가 겹치지 않게).
 - `js/app.js`의 `getConversionSummaryForExt()`도 `FORMAT_INFO.pptx`와 같은 말을 하는지 반드시 함께 확인한다. 표/그림 지원 추가 당시 이 함수 갱신을 누락해 포맷 카드에 "이미지가 제외된다"는 문구가 남았던 회귀가 있었다(v4.10.12에서 수정).
 - **아직 실제 PowerPoint/Keynote/Google Slides로 내보낸 진짜 PPTX로 검증하지 않았다.** fixture는 손으로 만든 최소 XML이라 네임스페이스 접두사·구조가 실제 파일과 다를 가능성이 있다. 실 파일 회귀 전에는 "완료"로 보지 않는다.
 
 검증:
-- `tests/fixtures/sample.pptx`(2슬라이드: 제목+본문+목록+가로/세로 병합 표+그림+그룹 도형)
+- `tests/fixtures/sample.pptx`(2슬라이드: 제목+본문+목록+가로/세로 병합 표+그림+그룹 도형+슬라이드1 발표자 노트, v4.10.30부터 notesSlide1 포함)
 - `npm run test:golden`
-- 슬라이드 순서, 표 병합, 그림 삽입, 그룹 도형 내부 텍스트는 한컴에서도 확인한다.
+- 슬라이드 순서, 표 병합, 그림 삽입, 그룹 도형 내부 텍스트, 발표자 노트 문단은 한컴에서도 확인한다.
 
 ## HWP / HWPX
 
