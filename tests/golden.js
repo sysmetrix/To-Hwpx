@@ -1003,21 +1003,31 @@ async function validateCommercialUx(page) {
   const tabs = page.locator('.service-info .format-tab');
   assert(await page.locator('#formats-title').count() === 0,
     'ux: 입력 포맷 섹션에 별도 상단 타이틀이 다시 노출됨');
-  assert(await tabs.first().getAttribute('data-target') === 'panel-basic'
-    && await tabs.nth(1).getAttribute('data-target') === 'panel-ext'
-    && await tabs.nth(2).getAttribute('data-target') === 'panel-how',
-    'ux: 포맷 탭 순서가 입력 포맷 / 예정 포맷 / 변환 과정이 아님');
-  assert((await tabs.first().textContent()).trim() === '입력 포맷',
+  const tabTargets = await tabs.evaluateAll(els => els.map(e => e.dataset.target));
+  assert(JSON.stringify(tabTargets) === JSON.stringify(
+    ['panel-dev-story', 'panel-basic', 'panel-ext', 'panel-support', 'panel-how', 'panel-quality']),
+    'ux: 포맷 탭 순서가 개발 배경/입력 포맷/예정 포맷/지원 현황/변환 과정/변환 품질이 아님');
+  assert((await tabs.first().textContent()).trim() === '개발 배경',
+    'ux: 첫 탭이 개발 배경이 아님');
+  assert((await tabs.nth(1).textContent()).trim() === '입력 포맷',
     'ux: 입력 포맷 탭에 설명 문구가 섞여 있음');
-  assert((await tabs.nth(1).textContent()).trim() === '예정 포맷',
+  assert((await tabs.nth(2).textContent()).trim() === '예정 포맷',
     'ux: 예정 포맷 탭에 불필요한 이모지 또는 설명 문구가 섞여 있음');
+  await tabs.first().click();
+  assert(await page.locator('#panel-dev-story').isVisible(), 'ux: 개발 배경 탭 클릭 후 패널이 열리지 않음');
+  const devStoryText = await page.locator('#panel-dev-story').textContent();
+  assert(devStoryText.includes('AI 시대의 작업물을 한글 행정 문서로 연결합니다')
+    && devStoryText.includes('청소년 문화 활동 지원 사업')
+    && devStoryText.includes('10초'),
+    'ux: 개발 배경 패널에 헤드라인/사례/시간 절약 문구가 누락됨');
+  await tabs.first().click(); // 다시 닫아 다음 검사에 영향 없게 함
   assert((await page.locator('#panel-basic > .section-sub').textContent()).includes('보존 범위와 제한사항'),
     'ux: 입력 포맷 패널 리드문에 카드 선택 안내 문구가 없음');
   const basicCardOrder = await page.locator('#panel-basic .format-card').evaluateAll(cards =>
     cards.map(card => card.getAttribute('data-ext')));
   assert(JSON.stringify(basicCardOrder) === JSON.stringify(['md', 'docx', 'pptx', 'html', 'csv', 'json', 'txt', 'hwp', 'ipynb']),
     'ux: 입력 포맷 카드 순서가 MD/DOCX/PPTX/HTML/CSV/XLSX/JSON/TXT/HWP/IPYNB 기준과 다름');
-  await tabs.nth(1).click();
+  await tabs.nth(2).click();
   assert((await page.locator('#panel-ext > .section-sub').textContent()).includes('변환 품질 검증'),
     'ux: 예정 포맷 패널 리드문 누락');
   assert(await page.locator('#panel-ext .format-card').first().getAttribute('data-ext') === 'pdf',

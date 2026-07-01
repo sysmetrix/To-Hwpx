@@ -832,20 +832,15 @@ a:hover { text-decoration: underline; }
 
 
 /* ─────────────────────────────────────────────────────────────────
-   [서비스 가치]  공공 문서 개방성과 로컬 처리 안내
+   [서비스 가치]  "더 알아보기 → 개발 배경" 탭 패널 내용(구 .value-section)
    ───────────────────────────────────────────────────────────────── */
-.value-section {
-    padding: clamp(44px, 6vw, 72px) 0;
-    background: var(--c-bg);
-    border-top: 1px solid var(--c-border);
-}
 .value-layout {
     display: grid;
     grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
     gap: clamp(28px, 5vw, 56px);
     align-items: center;
     max-width: var(--max-w-work);
-    margin: 0 auto;
+    margin: 16px auto 0;
 }
 .value-kicker {
     display: inline-flex;
@@ -3181,7 +3176,6 @@ a:hover { text-decoration: underline; }
         text-align: center;
     }
     .formats-section,
-    .value-section,
     .converter-section,
     .how-section,
     .support-section { padding: 48px 0; }

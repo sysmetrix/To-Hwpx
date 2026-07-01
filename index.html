@@ -173,7 +173,7 @@
             <span>｢BWYF｣ AX Challenger 2026</span>
             <!-- [주의] id="open-changelog"는 app.js에서 관리자 모드일 때 업데이트 내역 모달을 여는 연결값 -->
             <button class="util-changelog-btn" id="open-changelog" aria-label="버전 정보">
-                📋 v4.10.17
+                📋 v4.10.18
             </button>
         </div>
     </div>
@@ -236,8 +236,6 @@
         <!-- 메인 제목 -->
         <!-- [문구 수정 가능] h1 안의 글자와 줄바꿈(<br>)만 수정. id="hero-title"은 유지 -->
         <h1 id="hero-title">한글로,<br><span class="hero-title-accent">TO HWPX</span></h1>
-        <!-- [문구 수정 가능] 브랜드 태그라인 — 핵심 가치(설치·서버 업로드 없음)만 짧게 -->
-        <p class="hero-sub">설치 없이, 서버 업로드 없이 — 브라우저에서 바로 HWPX로 변환합니다.</p>
 
         <!-- 파일 드롭존 (app.js의 initDropZone에서 이벤트 연결) -->
         <div id="drop-zone" class="drop-zone" role="button" tabindex="0"
@@ -799,58 +797,7 @@
 
 
 <!-- ════════════════════════════════════════════════════════════════
-     [서비스 가치]  AI 시대 작업 형식과 HWPX 제출 형식 연결
-     ════════════════════════════════════════════════════════════════ -->
-<section class="value-section" aria-labelledby="value-title">
-    <div class="container">
-        <div class="value-layout">
-            <div class="value-copy anim-target">
-                <span class="value-kicker">왜 To HWPX인가</span>
-                <h2 id="value-title">AI 시대의 작업물을 한글 행정 문서로 연결합니다</h2>
-                <p>
-                    AI와 함께 일하면 초안은 MD·DOCX·HTML로, 데이터는 CSV·JSON으로,
-                    분석은 노트북(.ipynb)으로 더 빠르게 만들어집니다만 공공 행정의
-                    제출 환경에서는 여전히 한글 문서(hwpx)가 필요할 때가 많습니다.<br>
-                    <strong>한글로, To HWPX</strong>는 새롭게 만들어지는 작업 형식을 한글 행정 문서로
-                    연결해 반복 복사·붙여넣기와 오래 걸리는 서식 재작업을 줄입니다.
-                </p>
-            </div>
-            <div class="value-demo anim-target" aria-label="변환 전후 비교" style="--anim-delay:0.12s">
-                <div class="value-demo-before">
-                    <span class="value-demo-label">AI 채팅 / Markdown 작업물</span>
-                    <pre class="value-demo-md"><span class="vd-h"># 청소년 문화 활동 지원 사업</span>
-
-<span class="vd-li">-</span> 대상: <span class="vd-bold">**만 13~18세**</span> 청소년 150명
-<span class="vd-li">-</span> 기간: <span class="vd-em">2026년 3~12월</span>
-<span class="vd-li">-</span> 예산: 3,500만 원</pre>
-                </div>
-                <div class="value-demo-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg></div>
-                <div class="value-demo-after">
-                    <span class="value-demo-label">HWPX 변환 결과</span>
-                    <div class="value-demo-doc">
-                        <p class="vd-doc-h1">청소년 문화 활동 지원 사업</p>
-                        <ul class="vd-doc-list">
-                            <li>대상: <strong>만 13~18세</strong> 청소년 150명</li>
-                            <li>기간: 2026년 3~12월</li>
-                            <li>예산: 3,500만 원</li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="value-demo-footer">
-                    <span class="value-demo-time">
-                        <span class="vd-time-before"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> 수동 서식 재작업</span>
-                        <span class="vd-time-arrow">→</span>
-                        <span class="vd-time-after"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> 10초</span>
-                    </span>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
-
-<!-- ════════════════════════════════════════════════════════════════
-     [입력 포맷 + 동작 원리 + 지원 현황]  탭 전환
+     [입력 포맷 + 개발 배경 + 동작 원리 + 지원 현황]  탭 전환
      ════════════════════════════════════════════════════════════════ -->
 <section class="formats-section" id="formats" aria-label="입력 포맷">
     <div class="container">
@@ -858,6 +805,13 @@
             <div class="service-info-bar">
                 <span class="service-info-label">더 알아보기</span>
                 <div class="format-tabs service-tabs" id="format-more-tabs" role="tablist" aria-label="포맷 안내">
+                    <button class="format-tab"
+                            data-target="panel-dev-story"
+                            role="tab"
+                            aria-selected="false"
+                            aria-controls="panel-dev-story">
+                        개발 배경
+                    </button>
                     <button class="format-tab"
                             data-target="panel-basic"
                             role="tab"
@@ -873,18 +827,18 @@
                         예정 포맷
                     </button>
                     <button class="format-tab"
-                            data-target="panel-how"
-                            role="tab"
-                            aria-selected="false"
-                            aria-controls="panel-how">
-                        변환 과정
-                    </button>
-                    <button class="format-tab"
                             data-target="panel-support"
                             role="tab"
                             aria-selected="false"
                             aria-controls="panel-support">
                         지원 현황
+                    </button>
+                    <button class="format-tab"
+                            data-target="panel-how"
+                            role="tab"
+                            aria-selected="false"
+                            aria-controls="panel-how">
+                        변환 과정
                     </button>
                     <button class="format-tab"
                             data-target="panel-quality"
@@ -896,6 +850,56 @@
                 </div>
             </div>
             <div id="format-more-panels" class="format-more-panels">
+
+        <!-- ── 개발 배경 패널 ───────────────────────────────────────
+             AI 시대 작업 형식(MD/DOCX/CSV/JSON/ipynb 등)과 공공 행정 제출
+             형식(HWPX)을 잇는다는 개발 배경 + 변환 전후 비교 예시.
+             탭 클릭으로 노출되므로(스크롤 노출 아님) anim-target을 쓰지 않는다.
+             ─────────────────────────────────────────────────────── -->
+        <div class="format-panel" id="panel-dev-story" role="tabpanel">
+            <div class="value-layout">
+                <div class="value-copy">
+                    <span class="value-kicker">왜 To HWPX인가</span>
+                    <h2 id="value-title">AI 시대의 작업물을 한글 행정 문서로 연결합니다</h2>
+                    <p>
+                        AI와 함께 일하면 초안은 MD·DOCX·HTML로, 데이터는 CSV·JSON으로,
+                        분석은 노트북(.ipynb)으로 더 빠르게 만들어집니다만 공공 행정의
+                        제출 환경에서는 여전히 한글 문서(hwpx)가 필요할 때가 많습니다.<br>
+                        <strong>한글로, To HWPX</strong>는 새롭게 만들어지는 작업 형식을 한글 행정 문서로
+                        연결해 반복 복사·붙여넣기와 오래 걸리는 서식 재작업을 줄입니다.
+                    </p>
+                </div>
+                <div class="value-demo" aria-label="변환 전후 비교">
+                    <div class="value-demo-before">
+                        <span class="value-demo-label">AI 채팅 / Markdown 작업물</span>
+                        <pre class="value-demo-md"><span class="vd-h"># 청소년 문화 활동 지원 사업</span>
+
+<span class="vd-li">-</span> 대상: <span class="vd-bold">**만 13~18세**</span> 청소년 150명
+<span class="vd-li">-</span> 기간: <span class="vd-em">2026년 3~12월</span>
+<span class="vd-li">-</span> 예산: 3,500만 원</pre>
+                    </div>
+                    <div class="value-demo-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg></div>
+                    <div class="value-demo-after">
+                        <span class="value-demo-label">HWPX 변환 결과</span>
+                        <div class="value-demo-doc">
+                            <p class="vd-doc-h1">청소년 문화 활동 지원 사업</p>
+                            <ul class="vd-doc-list">
+                                <li>대상: <strong>만 13~18세</strong> 청소년 150명</li>
+                                <li>기간: 2026년 3~12월</li>
+                                <li>예산: 3,500만 원</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="value-demo-footer">
+                        <span class="value-demo-time">
+                            <span class="vd-time-before"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> 수동 서식 재작업</span>
+                            <span class="vd-time-arrow">→</span>
+                            <span class="vd-time-after"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> 10초</span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div><!-- /#panel-dev-story -->
 
         <!-- ── 기본 서비스 패널 ─────────────────────────────────────
              [수정 시] 새 포맷 카드 추가 → .format-card 복사 후 data-ext/내용 수정
