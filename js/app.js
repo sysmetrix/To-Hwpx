@@ -130,8 +130,7 @@ function initApp() {
     initScrollBehavior();       // 스크롤 시 헤더 효과
     initMobileMenu();           // 모바일 햄버거 메뉴
     initNavLinks();             // 부드러운 스크롤 네비게이션
-    initModals();               // 미리보기·업데이트 내역 모달
-    initEnvGuideMenu();         // 헤더 '사용 환경' 드롭다운(PC/모바일/설치/로컬 처리 안내)
+    initModals();               // 미리보기·업데이트 내역 모달(지원 환경 탭 포함)
     initHelpDots();             // 설정 라벨의 짧은 도움말 버튼
     initQuickGuide();           // 닫아도 남는 첫 사용 흐름 안내
     initResetButton();          // 현재 선택 파일과 변환 옵션 초기화
@@ -3791,10 +3790,7 @@ function initModals() {
     // 닫기 버튼
     document.getElementById('close-preview')?.addEventListener('click', closePreview);
     document.getElementById('close-changelog')?.addEventListener('click', closeChangelog);
-    document.getElementById('close-pc-guide')?.addEventListener('click', closePcGuide);
-    document.getElementById('close-mobile-guide')?.addEventListener('click', closeMobileGuide);
-    document.getElementById('close-install-guide')?.addEventListener('click', closeInstallGuide);
-    document.getElementById('close-privacy-guide')?.addEventListener('click', closePrivacyGuide);
+    document.getElementById('close-env-guide')?.addEventListener('click', closeEnvGuide);
     document.getElementById('close-font-guide')?.addEventListener('click', closeFontGuide);
     document.getElementById('close-onboarding-guide')?.addEventListener('click', closeOnboardingGuide);
     document.getElementById('close-advanced-guide')?.addEventListener('click', closeAdvancedGuide);
@@ -3817,10 +3813,7 @@ function initModals() {
         showChangelog();
     });
     document.getElementById('open-help')?.addEventListener('click', showOnboardingGuide);
-    document.getElementById('open-pc-guide')?.addEventListener('click', showPcGuide);
-    document.getElementById('open-mobile-guide')?.addEventListener('click', showMobileGuide);
-    document.getElementById('open-install-guide')?.addEventListener('click', showInstallGuide);
-    document.getElementById('open-privacy-guide')?.addEventListener('click', showPrivacyGuide);
+    document.getElementById('open-env-guide')?.addEventListener('click', showEnvGuide);
     document.getElementById('open-font-guide')?.addEventListener('click', showFontGuide);
     document.getElementById('open-rhwp-precise')?.addEventListener('click', loadRhwpPrecise);
 
@@ -3831,17 +3824,8 @@ function initModals() {
     document.getElementById('changelog-modal')?.addEventListener('click', (e) => {
         if (e.target === e.currentTarget) closeChangelog();
     });
-    document.getElementById('pc-guide-modal')?.addEventListener('click', (e) => {
-        if (e.target === e.currentTarget) closePcGuide();
-    });
-    document.getElementById('mobile-guide-modal')?.addEventListener('click', (e) => {
-        if (e.target === e.currentTarget) closeMobileGuide();
-    });
-    document.getElementById('install-guide-modal')?.addEventListener('click', (e) => {
-        if (e.target === e.currentTarget) closeInstallGuide();
-    });
-    document.getElementById('privacy-guide-modal')?.addEventListener('click', (e) => {
-        if (e.target === e.currentTarget) closePrivacyGuide();
+    document.getElementById('env-guide-modal')?.addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) closeEnvGuide();
     });
     document.getElementById('font-guide-modal')?.addEventListener('click', (e) => {
         if (e.target === e.currentTarget) closeFontGuide();
@@ -3917,6 +3901,23 @@ function initModals() {
         });
     });
     initHelpDetailDemo();
+
+    document.querySelectorAll('.env-tab').forEach((tab, index) => {
+        tab.addEventListener('click', () => activateEnvTab(tab.dataset.envTab));
+        tab.addEventListener('keydown', (e) => {
+            if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) return;
+            e.preventDefault();
+            const tabs = Array.from(document.querySelectorAll('.env-tab'));
+            let nextIndex = index;
+            if (e.key === 'ArrowRight') nextIndex = (index + 1) % tabs.length;
+            if (e.key === 'ArrowLeft') nextIndex = (index - 1 + tabs.length) % tabs.length;
+            if (e.key === 'Home') nextIndex = 0;
+            if (e.key === 'End') nextIndex = tabs.length - 1;
+            const nextTab = tabs[nextIndex];
+            activateEnvTab(nextTab.dataset.envTab);
+            nextTab.focus();
+        });
+    });
 }
 
 function closePreview() {
@@ -3962,6 +3963,20 @@ function activateHelpTab(name = 'usage') {
     });
 }
 
+function activateEnvTab(name = 'pc') {
+    const selected = ['pc', 'mobile', 'install', 'privacy'].includes(name) ? name : 'pc';
+    document.querySelectorAll('.env-tab').forEach(tab => {
+        const active = tab.dataset.envTab === selected;
+        tab.classList.toggle('active', active);
+        tab.setAttribute('aria-selected', String(active));
+    });
+    document.querySelectorAll('.env-panel').forEach(panel => {
+        const active = panel.id === `env-panel-${selected}`;
+        panel.classList.toggle('active', active);
+        panel.hidden = !active;
+    });
+}
+
 // 도움말 '세부 설정' 탭의 인터랙티브 미리보기: 칩 클릭 → 미리보기 doc의 data-* 속성만 바꾸고
 // 실제 시각 변화는 CSS가 담당한다(실 HWPX 렌더러가 아닌 효과 데모).
 function initHelpDetailDemo() {
@@ -3998,30 +4013,6 @@ function closeAdvancedGuide() {
     closeModal(document.getElementById('advanced-guide-modal'));
 }
 
-function showPcGuide() {
-    openModal(document.getElementById('pc-guide-modal'));
-}
-
-function closePcGuide() {
-    closeModal(document.getElementById('pc-guide-modal'));
-}
-
-function showMobileGuide() {
-    openModal(document.getElementById('mobile-guide-modal'));
-}
-
-function closeMobileGuide() {
-    closeModal(document.getElementById('mobile-guide-modal'));
-}
-
-function showPrivacyGuide() {
-    openModal(document.getElementById('privacy-guide-modal'));
-}
-
-function closePrivacyGuide() {
-    closeModal(document.getElementById('privacy-guide-modal'));
-}
-
 function showShortcuts() {
     activateHelpTab('shortcuts');
     openModal(document.getElementById('onboarding-guide-modal'));
@@ -4031,39 +4022,14 @@ function closeShortcuts() {
     closeOnboardingGuide();
 }
 
-function showInstallGuide() {
-    openModal(document.getElementById('install-guide-modal'));
+// 헤더 '지원 환경' 버튼 — PC/모바일 지원, 설치, 로컬 처리 안내를 탭 4개로 통합한 모달
+function showEnvGuide() {
+    activateEnvTab('pc');
+    openModal(document.getElementById('env-guide-modal'));
 }
 
-function closeInstallGuide() {
-    closeModal(document.getElementById('install-guide-modal'));
-}
-
-// 헤더 '사용 환경' 드롭다운 — PC/모바일 지원, 설치, 로컬 처리 4개 안내 버튼을 한 메뉴로 통합
-function closeEnvGuideMenu() {
-    const menu = document.getElementById('env-guide-menu');
-    const btn = document.getElementById('open-env-guide');
-    if (menu) menu.hidden = true;
-    if (btn) {
-        btn.setAttribute('aria-expanded', 'false');
-        btn.closest('.nav-env-menu')?.removeAttribute('data-open');
-    }
-}
-
-function initEnvGuideMenu() {
-    const btn = document.getElementById('open-env-guide');
-    const menu = document.getElementById('env-guide-menu');
-    if (!btn || !menu) return;
-    btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const open = menu.hidden;
-        menu.hidden = !open;
-        btn.setAttribute('aria-expanded', String(open));
-        btn.closest('.nav-env-menu')?.toggleAttribute('data-open', open);
-    });
-    document.addEventListener('click', (e) => {
-        if (!menu.hidden && !menu.contains(e.target) && e.target !== btn) closeEnvGuideMenu();
-    });
+function closeEnvGuide() {
+    closeModal(document.getElementById('env-guide-modal'));
 }
 
 

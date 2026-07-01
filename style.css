@@ -583,98 +583,44 @@ a:hover { text-decoration: underline; }
     word-break: keep-all;
 }
 
-/* 헤더 '사용 환경' 드롭다운 — PC/모바일 지원·설치·로컬 처리 안내를 한 버튼으로 통합 */
-.nav-env-menu {
-    position: relative;
-}
-.nav-btn-caret {
-    display: inline-flex;
-    width: 12px;
-    height: 12px;
-    margin-left: 2px;
-    vertical-align: middle;
-    transition: transform var(--trans);
-}
-.nav-btn-caret svg { width: 100%; height: 100%; }
-.nav-env-menu[data-open] .nav-btn-caret { transform: rotate(180deg); }
-.env-guide-menu {
-    /* [주의] display는 :not([hidden])에서만 설정한다.
-       여기서 바로 지정하면 클래스 선택자가 [hidden]의 UA display:none보다 우선해 항상 보여버린다. */
-    position: absolute;
-    top: calc(100% + 8px);
-    right: 0;
-    z-index: 999;
-    width: 280px;
-    max-width: calc(100vw - 32px);
-    padding: 8px;
-    border: 1px solid var(--c-border);
-    border-radius: var(--radius-md);
-    background: var(--c-surface);
-    box-shadow: var(--shadow-md);
-}
-.env-guide-menu:not([hidden]) {
+/* 헤더 '지원 환경' 모달 — PC/모바일 지원·설치·로컬 처리 안내를 탭 4개로 통합 (도움말 모달의 .help-tabs와 동일한 패턴,
+   전역 querySelectorAll을 쓰는 activateHelpTab()과 충돌하지 않도록 클래스명을 분리) */
+.env-tabs {
     display: flex;
-    flex-direction: column;
     gap: 6px;
-}
-
-/* Trust Bar 버튼 — '사용 환경' 메뉴 안 안내 항목 (icon + label + sub) */
-.trust-btn {
-    display: flex;
-    width: 100%;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 14px 10px 12px;
+    margin-bottom: 16px;
+    padding: 4px;
     border: 1px solid var(--c-border);
     border-radius: var(--radius-md);
-    background: var(--c-surface);
+    background: var(--c-surface-alt);
+}
+.env-tab {
+    flex: 1;
+    min-height: 38px;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: transparent;
     color: var(--c-text-sub);
-    font-family: var(--font-main);
+    font-weight: 800;
+    font-size: 0.86rem;
     cursor: pointer;
-    text-align: left;
-    transition: border-color var(--trans), background var(--trans), box-shadow var(--trans);
+    transition: background var(--trans), color var(--trans), box-shadow var(--trans);
 }
-.trust-btn:hover,
-.trust-btn:focus-visible {
-    border-color: var(--c-primary);
-    background: var(--c-primary-light);
-    box-shadow: var(--shadow-sm);
-    outline: none;
-}
-.trust-btn-icon {
+.env-tab:hover {
     color: var(--c-primary);
-    width: 20px;
-    height: 20px;
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
 }
-.trust-btn-icon svg {
-    width: 20px;
-    height: 20px;
+.env-tab.active {
+    background: var(--c-surface);
+    color: var(--c-primary);
+    box-shadow: var(--shadow-sm);
 }
-.trust-btn-content {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
+.env-tab:focus-visible {
+    outline: 2px solid var(--c-primary);
+    outline-offset: 2px;
 }
-.trust-btn-label {
-    font-size: 0.84rem;
-    font-weight: 600;
-    line-height: 1.2;
-    color: var(--c-text);
-    white-space: nowrap;
+.env-panel[hidden] {
+    display: none;
 }
-.trust-btn-sub {
-    font-size: 0.72rem;
-    color: var(--c-text-muted);
-    white-space: nowrap;
-    font-weight: 400;
-    line-height: 1.2;
-}
-.trust-btn:hover .trust-btn-label { color: var(--c-primary); }
-.trust-btn:hover .trust-btn-sub   { color: color-mix(in srgb, var(--c-primary) 65%, var(--c-text-muted)); }
 /* 변환(서비스) 화면 헤더의 베타 식별자 — 관리자 모드 + 베타 포맷 파일일 때만 노출(#converter-beta) */
 .options-panel-title {
     display: flex;

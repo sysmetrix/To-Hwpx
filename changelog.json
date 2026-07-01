@@ -1,6 +1,20 @@
 {
-  "current": "4.10.21",
+  "current": "4.10.22",
   "versions": [
+    {
+      "version": "4.10.22",
+      "date": "2026-07-01",
+      "user": [
+        "상단 내비게이션 버튼 이름이 '사용 환경'에서 '지원 환경'으로 바뀌었습니다.",
+        "'지원 환경' 버튼을 누르면 이제 클릭 한 번으로 PC 브라우저·모바일·설치·로컬 처리 안내 모달이 바로 열립니다. 모달 안 탭을 눌러 4가지 내용을 전환해서 볼 수 있어 드롭다운을 열고 다시 항목을 클릭하던 2단계가 1단계로 줄었습니다."
+      ],
+      "dev": [
+        "[v4.10.22] index.html: 헤더 '지원 환경' 버튼에서 팝오버 드롭다운(#env-guide-menu)과 하위 4개 trust-btn 제거, 클릭 시 바로 열리는 단일 #env-guide-modal(탭 4개: PC/모바일/설치/로컬 처리)로 교체. 기존 pc/mobile/install/privacy-guide-modal 4개 div를 병합",
+        "[v4.10.22] js/app.js: initEnvGuideMenu()/closeEnvGuideMenu()(팝오버 토글) 및 개별 show*Guide/close*Guide 4쌍 제거, activateEnvTab()·showEnvGuide()·closeEnvGuide()로 교체(도움말 모달의 activateHelpTab() 탭 패턴과 동일하되 전역 셀렉터 충돌 방지를 위해 클래스명 분리)",
+        "[v4.10.22] style.css: .nav-env-menu/.env-guide-menu/.nav-btn-caret/.trust-btn* (팝오버·메뉴 버튼 전용) 제거, .env-tabs/.env-tab/.env-panel 추가(.help-tabs와 동일 패턴)",
+        "[v4.10.22] tests/golden.js: 지원 환경 버튼 클릭 1번으로 모달이 열리는지, 기본 탭이 PC 브라우저인지, 설치/로컬 처리 탭 전환이 되는지로 검증 갱신(기존 팝오버·개별 모달 전제 검증 제거)"
+      ]
+    },
     {
       "version": "4.10.21",
       "date": "2026-07-01",

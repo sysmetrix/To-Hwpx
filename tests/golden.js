@@ -938,31 +938,30 @@ async function validateCommercialUx(page) {
     'ux: 고급 사용 팁 종료 후 상단 도움말 버튼으로 포커스가 복귀하지 않음');
 
   assert(await page.locator('.hero-badges').count() === 0,
-    'ux: 드롭존 아래 PC/모바일/설치/로컬 처리 버튼이 남아 있음 (사용 환경 메뉴로 이동해야 함)');
+    'ux: 드롭존 아래 PC/모바일/설치/로컬 처리 버튼이 남아 있음 (지원 환경 모달로 이동해야 함)');
   const envGuideBtn = page.locator('#open-env-guide');
-  assert((await envGuideBtn.textContent()).includes('사용 환경'), 'ux: 사용 환경 드롭다운 버튼 라벨이 없음');
-  const envGuideMenu = page.locator('#env-guide-menu');
-  assert(!(await envGuideMenu.isVisible()), 'ux: 사용 환경 메뉴가 열기 전부터 보임');
-  await envGuideBtn.click();
-  assert(await envGuideMenu.isVisible(), 'ux: 사용 환경 버튼 클릭으로 메뉴가 열리지 않음');
+  assert((await envGuideBtn.textContent()).includes('지원 환경'), 'ux: 지원 환경 버튼 라벨이 없음');
+  const envGuideModal = page.locator('#env-guide-modal');
+  assert(!(await envGuideModal.isVisible()), 'ux: 지원 환경 모달이 열기 전부터 보임');
 
-  const pcGuide = page.locator('#open-pc-guide');
-  await pcGuide.focus();
-  await pcGuide.press('Enter');
-  assert(await page.locator('#pc-guide-modal').isVisible(), 'ux: PC 안내 모달이 키보드로 열리지 않음');
+  await envGuideBtn.focus();
+  await envGuideBtn.press('Enter');
+  assert(await envGuideModal.isVisible(), 'ux: 지원 환경 버튼 클릭(키보드) 1번으로 모달이 열리지 않음');
+  assert(await page.locator('.env-tab[data-env-tab="pc"]').getAttribute('aria-selected') === 'true'
+    && await page.locator('#env-panel-pc').isVisible(),
+    'ux: 지원 환경 모달의 기본 탭이 PC 브라우저가 아님');
   await page.waitForFunction(() => {
-    const modal = document.querySelector('#pc-guide-modal');
+    const modal = document.querySelector('#env-guide-modal');
     return modal?.contains(document.activeElement);
   });
   await page.keyboard.press('Tab');
-  assert(await page.locator('#pc-guide-modal').evaluate(modal => modal.contains(document.activeElement)),
-    'ux: 모달 Tab 포커스가 배경으로 이탈함');
-  await page.keyboard.press('Escape');
-  assert(await pcGuide.evaluate(el => document.activeElement === el), 'ux: 모달 종료 후 열기 버튼으로 포커스가 복귀하지 않음');
+  assert(await envGuideModal.evaluate(modal => modal.contains(document.activeElement)),
+    'ux: 지원 환경 모달 Tab 포커스가 배경으로 이탈함');
 
-  const installGuide = page.locator('#open-install-guide');
-  await installGuide.click();
-  assert(await page.locator('#install-guide-modal').isVisible(), 'ux: 앱 설치 안내 모달이 열리지 않음');
+  await page.locator('.env-tab[data-env-tab="install"]').click();
+  assert(await page.locator('#env-panel-install').isVisible()
+    && !(await page.locator('#env-panel-pc').isVisible()),
+    'ux: 지원 환경 모달에서 설치 탭 전환이 되지 않음');
   assert(await page.locator('img[src="icons/chrome-install.svg"]').count() === 1,
     'ux: Chrome 설치 아이콘 안내가 없음');
   assert(await page.locator('img[src="icons/edge-install.svg"]').count() === 1,
@@ -976,18 +975,19 @@ async function validateCommercialUx(page) {
     && chromeInstallIcon.includes('linearGradient')
     && edgeInstallIcon.includes('linearGradient'),
     'ux: Chrome/Edge 설치 아이콘의 색상 또는 배경 스타일이 통일되지 않음');
-  const installGuideText = await page.locator('#install-guide-modal').textContent();
-  assert(installGuideText.includes('브라우저마다 설치 아이콘 모양이 다릅니다'),
+  const installPanelText = await page.locator('#env-panel-install').textContent();
+  assert(installPanelText.includes('브라우저마다 설치 아이콘 모양이 다릅니다'),
     'ux: 브라우저별 아이콘 차이 안내가 없음');
-  assert(installGuideText.includes('이미 설치된 경우에는 아이콘이 나타나지 않을 수 있습니다'),
+  assert(installPanelText.includes('이미 설치된 경우에는 아이콘이 나타나지 않을 수 있습니다'),
     'ux: 설치 아이콘이 보이지 않는 경우의 설명이 없음');
-  await page.keyboard.press('Escape');
-  assert(await installGuide.evaluate(el => document.activeElement === el),
-    'ux: 설치 안내 종료 후 열기 버튼으로 포커스가 복귀하지 않음');
 
-  assert(await envGuideMenu.isVisible(), 'ux: 안내 모달을 여닫아도 사용 환경 메뉴가 그대로 유지되지 않음');
-  await page.locator('#hero-title').click();
-  assert(!(await envGuideMenu.isVisible()), 'ux: 바깥 클릭으로 사용 환경 메뉴가 닫히지 않음');
+  await page.locator('.env-tab[data-env-tab="privacy"]').click();
+  assert(await page.locator('#env-panel-privacy').isVisible(), 'ux: 지원 환경 모달에서 로컬 처리 탭 전환이 되지 않음');
+
+  await page.keyboard.press('Escape');
+  assert(!(await envGuideModal.isVisible()), 'ux: 지원 환경 모달이 ESC로 닫히지 않음');
+  assert(await envGuideBtn.evaluate(el => document.activeElement === el),
+    'ux: 지원 환경 모달 종료 후 열기 버튼으로 포커스가 복귀하지 않음');
 
   const mdCard = page.locator('.format-card[data-ext="md"]');
   assert(await page.locator('#format-more-tabs').isVisible()
