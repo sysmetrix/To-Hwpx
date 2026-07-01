@@ -1,6 +1,21 @@
 {
-  "current": "4.10.27",
+  "current": "4.10.28",
   "versions": [
+    {
+      "version": "4.10.28",
+      "date": "2026-07-01",
+      "user": [
+        "Word(DOCX) 문서의 주석(코멘트)이 이제 변환 결과에 포함됩니다. 각주와 같은 형태로 '[주석] 작성자: 내용'처럼 표시됩니다."
+      ],
+      "dev": [
+        "[v4.10.28] js/parsers.js: parseDocx()에 word/comments.xml 로드 → 주석ID→\"[주석] 작성자: 내용\" 맵 생성 추가(comments.xml은 고정 경로라 rels 조회 불필요). extractDocxInlineRuns()가 w:commentReference를 만나면 footnoteReference와 동일하게 run.footnote 필드로 삽입 — 별도 렌더 경로 없이 기존 각주 출력을 재사용. commentRangeStart/End(하이라이트 범위)는 다루지 않고 앵커 위치만 사용",
+        "[v4.10.28] js/parsers.js: extractDocxInlineRuns()/extractDocxParagraph() 시그니처에 commentsMap 파라미터 추가, parseDocx()의 두 호출부 갱신",
+        "[v4.10.28] tests/make-docx-fixture.js: comments.xml + [Content_Types].xml Override + document.xml.rels 관계 + commentRangeStart/End/commentReference 앵커를 포함하도록 골든 fixture 확장",
+        "[v4.10.28] tests/golden.js: docx 케이스 mustContain에 '주석이 달린 문장', '[주석] 골든테스터: 주석 내용 확인용' 추가",
+        "[v4.10.28] js/app.js: FORMAT_INFO.docx features/limits, QUALITY_ESTIMATES.docx(80→85/88→90/next), QUALITY_HISTORY 새 항목 갱신",
+        "[v4.10.28] format_conversion_playbook.md: DOCX 섹션에 주석→각주 변환 방식과 주의사항(각주와 시각적으로 구분 안 됨) 기록"
+      ]
+    },
     {
       "version": "4.10.27",
       "date": "2026-07-01",

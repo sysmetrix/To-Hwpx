@@ -1043,11 +1043,11 @@ const FORMAT_INFO = {
             '제목 후보, 문단, 번호·글머리 목록(numbering.xml), 기본 표를 추출',
             '굵게/기울임/밑줄/취소선/글자색, 가운데·오른쪽 정렬 일부 보존',
             '표의 가로·세로 병합, 셀 배경색, 셀 글자색 일부 보존',
-            'PNG/JPG/GIF/BMP/WebP 본문 이미지, 각주, 첫 머리글/바닥글 텍스트 추출',
+            'PNG/JPG/GIF/BMP/WebP 본문 이미지, 각주, 주석, 첫 머리글/바닥글 텍스트 추출',
             '클릭 가능한 하이퍼링크(http/https/mailto) 보존',
             'WMF/EMF 벡터 이미지 — 대체 텍스트가 있으면 안내 문구로 보존',
         ],
-        limits: ['원본 Word 페이지 배치·섹션·스타일 테마는 단순화', 'WMF/EMF 실제 그림은 HWPX 미지원(대체 텍스트로 보존)', '주석·변경 추적·복잡한 개체는 손실 가능'],
+        limits: ['원본 Word 페이지 배치·섹션·스타일 테마는 단순화', 'WMF/EMF 실제 그림은 HWPX 미지원(대체 텍스트로 보존)', '주석은 각주와 구분 없이 같은 형태로 표시, 변경 추적·복잡한 개체는 손실 가능'],
     },
     hwp: {
         icon: '🇰🇷', name: '한글 문서 (HWP)',
@@ -1217,7 +1217,7 @@ const QUALITY_FORMATS = ['md', 'html', 'docx', 'pptx', 'txt', 'csv', 'json', 'ip
 const FORMAT_QUALITY_METRICS = {
     md:    { conversion: 94, success: 97, risk: '낮음',     next: '표 셀 run 계약(표 안 링크·이미지)과 상대경로 이미지 묶음 업로드 지원을 추가하면 고급 문서 보존률이 오른다.' },
     html:  { conversion: 68, success: 88, risk: '중간',     next: 'CSS 중 일부(color/background/text-align)만 안전 allowlist로 승격하고, img/src data URL부터 그림 IR로 연결한다.' },
-    docx:  { conversion: 80, success: 88, risk: '중간',     next: '섹션·머리말 반복 규칙을 IR로 분리하고, comments.xml 주석을 각주 형태로 변환하면 보존률이 추가로 오른다.' },
+    docx:  { conversion: 85, success: 90, risk: '중간',     next: '섹션별/첫 페이지 전용 머리글·바닥글을 구분해 IR로 분리하면 보존률이 추가로 오른다(현재는 문서 전체 첫 번째 관계만 사용).' },
     pptx:  { conversion: 42, success: 82, risk: '높음',     next: '발표자 노트 추출, 슬라이드 배경색/테마, 도형(텍스트 상자 외)의 순서 보존을 단계적으로 추가하면 보존률이 오른다.' },
     txt:   { conversion: 88, success: 97, risk: '낮음',     next: '표처럼 보이는 탭/공백 열을 선택적으로 표 IR로 승격하는 실험을 관리자 모드에서 검증한다.' },
     csv:   { conversion: 82, success: 94, risk: '낮음',     next: 'XLSX 다중 시트 선택, 셀 병합/색상 일부 보존을 별도 옵션으로 확장한다.' },
@@ -1228,9 +1228,15 @@ const FORMAT_QUALITY_METRICS = {
 
 const QUALITY_HISTORY = [
     {
+        version: '4.10.28',
+        date: '2026-07-01',
+        summary: '현재 기준. DOCX 주석(comments.xml)을 각주 형태로 추출 지원(v4.10.28) — 이전에는 주석이 통째로 무시됐음.',
+        scores: { md: 94, html: 68, docx: 85, pptx: 42, txt: 88, csv: 82, json: 76, ipynb: 78, hwp: 55 },
+    },
+    {
         version: '4.10.27',
         date: '2026-07-01',
-        summary: '현재 기준. HWP5 바이너리 본문 텍스트 추출을 @rhwp/core(WASM) 엔진으로 지원(v4.10.27) — 이전에는 파싱 실패 안내만 반환했음.',
+        summary: 'HWP5 바이너리 본문 텍스트 추출을 @rhwp/core(WASM) 엔진으로 지원(v4.10.27) — 이전에는 파싱 실패 안내만 반환했음.',
         scores: { md: 94, html: 68, docx: 80, pptx: 42, txt: 88, csv: 82, json: 76, ipynb: 78, hwp: 55 },
     },
     {
