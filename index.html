@@ -1079,15 +1079,15 @@
                             <td><strong>DOCX</strong></td>
                             <td>★★★</td>
                             <td><span class="card-badge badge-beta">베타</span></td>
-                            <td>JSZip → document.xml + numbering.xml + rels → IR</td>
-                            <td>페이지 배치·스타일 테마·주석·변경 추적 손실 가능</td>
+                            <td>JSZip → document.xml + numbering.xml + rels + comments.xml → IR</td>
+                            <td>페이지 배치·스타일 테마·변경 추적 손실 가능(주석은 각주 형태로 보존)</td>
                         </tr>
                         <tr>
                             <td><strong>PPTX</strong></td>
                             <td>★☆☆</td>
                             <td><span class="card-badge badge-beta">베타</span></td>
-                            <td>JSZip → presentation.xml 슬라이드 순서 + slideN.xml 텍스트/표/그림 추출 → IR</td>
-                            <td>레이아웃·애니메이션·도형 위치 미보존, WMF/EMF·발표자 노트 미지원</td>
+                            <td>JSZip → presentation.xml 슬라이드 순서 + slideN.xml 텍스트/표/그림 + notesSlideN.xml 발표자 노트 추출 → IR</td>
+                            <td>레이아웃·애니메이션·도형 위치 미보존, WMF/EMF 미지원</td>
                         </tr>
                         <tr>
                             <td><strong>HTML</strong></td>
@@ -1126,10 +1126,10 @@
                         </tr>
                         <tr>
                             <td><strong>HWP</strong></td>
-                            <td>★☆☆</td>
+                            <td>★★☆</td>
                             <td><span class="card-badge badge-beta">베타</span></td>
-                            <td>ZIP 시도 → 텍스트 추출</td>
-                            <td>HWP5(바이너리) 파싱 제한적</td>
+                            <td>ZIP(HWPX 오업로드)이면 텍스트 추출, OLE2(HWP5)면 @rhwp/core(WASM)로 본문 텍스트 추출</td>
+                            <td>HWP5는 표·이미지·서식 제외, 본문 텍스트만 추출</td>
                         </tr>
                         <tr>
                             <td><strong>IPYNB</strong></td>
