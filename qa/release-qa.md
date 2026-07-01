@@ -559,3 +559,22 @@ Scope: static browser-only conversion flow from file selection to HWPX download.
 - [ ] 실제 Word에서 주석을 단 DOCX를 업로드해 주석 내용이 "[주석] 작성자: 내용" 형태로 각주처럼 나오는지 한컴오피스에서 확인
 - [ ] 각주와 주석이 둘 다 있는 문서에서 순서·내용이 뒤섞이지 않는지 확인
 - [ ] 캐시를 비우고 `📋 v4.10.28` 확인
+
+## 36. v4.10.29 qa/gate.js ⑨ ZIP CRC32 무결성 + python-hwpx 대조 결론
+
+조사: GitHub 리서치(변환 품질 개선 계획) Phase 4로 `airmang/python-hwpx`의 검증 방식(`src/hwpx/tools/validator.py`, `docs/owpml-deviations.md`)을 이 저장소의 `qa/gate.js` 8게이트와 대조했다.
+
+결론(포팅하지 않기로 한 것도 기록):
+- python-hwpx는 공식 OWPML XSD로 스키마 검증을 하지만, **스키마 위반을 하드 에러가 아니라 lint 경고로만 취급**한다. 이유는 `owpml-deviations.md`에 명시: 공식 스키마(2024 네임스페이스 중심)가 한컴 실제 동작(2011 본체 + 2016 확장 네임스페이스)과 다르기 때문 — 이 저장소가 이미 채택한 "스펙보다 호환 구현체(hwpxlib)를 믿는다"는 원칙과 정확히 같은 결론에 독립적으로 도달한 것. XSD 스키마 검증 자체는 포팅하지 않는다(오히려 오탐 위험).
+- `repair.py`의 `archive.testzip()` 방식(ZIP CRC32 무결성)은 방법론과 무관하게 유효한 안전장치라 판단해 `qa/gate.js`에 게이트 ⑨로 추가했다.
+
+수정: `qa/gate.js`가 `JSZip.loadAsync(buf, {checkCRC32:true})`로 HWPX를 열고, 모든 엔트리를 실제로 압축 해제해 CRC32 불일치 시 즉시 실패하도록 게이트 ⑨ 추가.
+
+자동 승인 기준:
+
+- [x] `node qa/gate.js qa/fixtures/md_hwpx_test.md` ①~⑨ PASS(⑨ 신규 확인)
+- [x] `npm run test:golden` PASS(12 cases, 회귀 없음)
+
+수동 확인 기준:
+
+- [ ] 캐시를 비우고 `📋 v4.10.29` 확인(코드 동작 자체는 개발자 도구용이라 사용자 화면 변화 없음)

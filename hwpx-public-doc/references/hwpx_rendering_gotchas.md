@@ -96,6 +96,8 @@ XML 구조/네임스페이스/요소명/속성명이 의심되면 **추측하지
   - 예: `BorderFillWriter`는 테두리에 `ElementNames.hh_leftBorder`, 채우기에 `ElementNames.hc_fillBrush`를 쓴다.
   - 네임스페이스 URI: `commonstrings/Namespaces.java` (`hc=.../core`, `hh=.../head` 등).
 - **hancom-io/hwpx-owpml-model** (한컴 공식 모델): https://github.com/hancom-io/hwpx-owpml-model
+- **airmang/python-hwpx** (Python, 공식 OWPML XSD로 검증): https://github.com/airmang/python-hwpx
+  - `docs/owpml-deviations.md`에서 "공식 OWPML 2024 스키마"와 "한컴 실동작(2011 본체 + 2016 확장 네임스페이스)"이 다르다는 것을 자체 확인하고, **스키마 위반을 하드 에러가 아니라 lint 경고로만 취급**한다(`src/hwpx/tools/validator.py`). 이 저장소가 2011/hh·hc 네임스페이스를 정답으로 삼는 것과 같은 결론 — "공식 스펙보다 호환 구현체를 믿는다"는 원칙의 독립적 교차검증.
 
 GitHub API로 빠르게 파일 내용 확인(토큰은 git credential에서):
 ```

@@ -12,6 +12,7 @@
  *   ⑥ 모든 표(hp:tbl)의 격자가 span 반영 시 (행,열) 정확히 1회 덮임 (깨진 표 차단)
  *   ⑦ 그림의 hc:img 참조가 content.hpf item·BinData·package manifest까지 연결됨
  *   ⑧ 하이퍼링크 fieldBegin/fieldEnd의 id·fieldid가 짝을 이루고 위험 URL이 없음
+ *   ⑨ ZIP 각 엔트리의 CRC32가 실제 압축 해제 내용과 일치(생성 과정 손상 방지)
  *
  * [사전 준비] (CDN 전용 저장소라 개발 의존성은 일시 설치)
  *   npm i playwright jszip
@@ -87,7 +88,7 @@ function childCount(xml, container, child) {
     await dl.saveAs(outPath);
 
     const buf = fs.readFileSync(outPath);
-    const zip = await JSZip.loadAsync(buf);
+    const zip = await JSZip.loadAsync(buf, { checkCRC32: true });
     const header = await zip.file('Contents/header.xml').async('string');
     const section = await zip.file('Contents/section0.xml').async('string');
     const contentHpf = await zip.file('Contents/content.hpf').async('string');
@@ -195,7 +196,19 @@ function childCount(xml, container, child) {
     const c8 = hyperlinkBegins.length === hyperlinkEnds.length
         && badHyperlinks.length === 0 && unsafePaths.length === 0;
 
-    const gate = [c1, c2, c3, c4, c5, c6, c7, c8];
+    // ⑨ ZIP CRC32 무결성: 압축 해제 시 저장된 CRC32와 실제 내용이 어긋나면 loadAsync({checkCRC32:true})가
+    // 세팅한 플래그를 각 파일 .async() 호출 시점에 검사해 예외를 던진다(python-hwpx repair.py의
+    // archive.testzip() 방식과 동일한 목적 — 생성 과정 손상을 well-formed 검사보다 먼저 잡는다).
+    let crcError = null;
+    try {
+        for (const name of Object.keys(zip.files)) {
+            if (zip.files[name].dir) continue;
+            await zip.file(name).async('uint8array');
+        }
+    } catch (e) { crcError = e.message; }
+    const c9 = crcError === null;
+
+    const gate = [c1, c2, c3, c4, c5, c6, c7, c8, c9];
     console.log(`입력: ${path.relative(ROOT, input)}  (${buf.length} bytes)`);
     console.log(`① mimetype STORED 첫항목 : ${c1 ? 'PASS' : 'FAIL'}`);
     console.log(`② META-INF+Preview+Contents: ${c2 ? 'PASS' : 'FAIL'}${missing.length ? ' missing=' + missing : ''}`);
@@ -206,6 +219,7 @@ function childCount(xml, container, child) {
     console.log(`⑥ 표 격자 무결성(${tbls.length}개)    : ${c6 ? 'PASS' : 'FAIL'}${c6 ? '' : ' ' + badTbl}`);
     console.log(`⑦ 그림 참조 무결성(${imageRefs.length}개)  : ${c7 ? 'PASS' : 'FAIL'}${c7 ? '' : ' ' + badImages.join(' | ')}`);
     console.log(`⑧ 링크 필드 무결성(${hyperlinkBegins.length}개)  : ${c8 ? 'PASS' : 'FAIL'}${c8 ? '' : ` pair=${badHyperlinks.join(',')} unsafe=${unsafePaths.join(',')}`}`);
+    console.log(`⑨ ZIP CRC32 무결성        : ${c9 ? 'PASS' : 'FAIL'}${c9 ? '' : ' ' + crcError}`);
     if (errs.length) console.log('page errors:', errs);
 
     await browser.close();
