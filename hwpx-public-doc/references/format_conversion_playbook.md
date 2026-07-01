@@ -302,6 +302,29 @@
 - `npm run test:golden`
 - 이미지/색/병합/머리글/각주는 자동 검증만으로 부족할 수 있으므로 한컴 확인을 요청한다.
 
+## PPTX
+
+관련 코드: `parsePptx()`, `parsePptxSlideShapes()` in `js/parsers.js`
+
+목표:
+- 슬라이드 디자인을 재현하지 않고, 슬라이드 텍스트를 순서대로 읽는 문서로 정리한다(1차 스코프, v4.10.8~).
+
+보존:
+- 슬라이드 순서(`ppt/presentation.xml`의 `p:sldIdLst` + `ppt/_rels/presentation.xml.rels`로 확정, 실패 시 `slideN.xml` 파일명 숫자 정렬로 폴백)
+- 제목 placeholder(`p:ph type="title"`/`"ctrTitle"`) → heading
+- 글머리 기호(`a:buChar`/`a:buAutoNum`, `a:buNone` 없음)가 있는 문단 → list, 없으면 para
+- 슬라이드마다 "슬라이드 N" heading으로 구분
+
+주의:
+- PPTX는 ZIP + OOXML이다(DOCX와 같은 계열이지만 `ppt/` 네임스페이스와 `p:`/`a:` 접두사를 쓴다).
+- 이미지, 도형, 표, 애니메이션, 슬라이드 디자인/레이아웃, 발표자 노트는 1차 스코프에서 다루지 않는다. 추가하려면 별도 릴리스로 진행한다.
+- `p:sldId`의 `r:id`는 `DOCX_NS_R`(officeDocument relationships 네임스페이스)로 읽는다. `getAttributeNS(DOCX_NS_R, 'id') || getAttribute('r:id')` 패턴을 DOCX와 동일하게 유지한다.
+
+검증:
+- `tests/fixtures/sample.pptx`(2슬라이드: 제목+본문+목록)
+- `npm run test:golden`
+- 슬라이드 순서와 목록/제목 구분은 한컴에서도 확인한다.
+
 ## HWP / HWPX
 
 관련 코드: `parseHwp()`, `extractHwpxTable()` in `js/parsers.js`

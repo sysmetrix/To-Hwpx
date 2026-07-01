@@ -184,6 +184,20 @@ const CASES = [
       'long text wraps safely',
     ],
   },
+  {
+    name: 'pptx',
+    file: 'sample.pptx',
+    format: 'PPTX',
+    minTables: 0,
+    mustContain: [
+      'PPTX 골든 테스트 제목 Alpha',
+      '슬라이드 본문 문단입니다',
+      '목록 항목 하나',
+      '목록 항목 English',
+      '두 번째 슬라이드 제목',
+      '두 번째 슬라이드 본문',
+    ],
+  },
 ];
 
 const TYPES = {
@@ -813,7 +827,7 @@ async function validateCommercialUx(page) {
   await page.waitForFunction(() => window.JSZip && window.marked && window.XLSX && window.__appReady, null, { timeout: 30000 });
 
   const heroDropText = await page.locator('#drop-zone .drop-sub').textContent();
-  assert(heroDropText.includes('MD · HTML · DOCX · CSV · XLSX · JSON · TXT · IPYNB · HWP'),
+  assert(heroDropText.includes('MD · HTML · DOCX · PPTX · CSV · XLSX · JSON · TXT · IPYNB · HWP'),
     'ux: 첫 화면 드롭존 입력 포맷 순서가 안내 기준과 다름');
   // 베타 배지는 관리자 전용 — 일반 사용자 화면엔 generic 배지 제거 + 모든 .badge-beta가 hidden
   assert(await page.locator('.hero-beta-badge').count() === 0,
@@ -836,7 +850,7 @@ async function validateCommercialUx(page) {
     'ux: 관리자 모드에서 베타 배지가 표시되지 않음');
   await page.goto(`${baseUrl}?admin=0`, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => window.JSZip && window.marked && window.XLSX && window.__appReady, null, { timeout: 30000 });
-  assert((await page.locator('#file-input').getAttribute('accept')).startsWith('.md,.markdown,.docx,.html,.htm,.csv,.xlsx,.xls,.json,.txt,.hwp,.ipynb'),
+  assert((await page.locator('#file-input').getAttribute('accept')).startsWith('.md,.markdown,.docx,.pptx,.html,.htm,.csv,.xlsx,.xls,.json,.txt,.hwp,.ipynb'),
     'ux: 파일 선택 accept 순서가 드롭존 입력 포맷 순서와 다름');
   const versionButtonText = (await page.locator('#open-changelog').textContent()).trim();
   assert(/^📋 v\d+\.\d+\.\d+$/.test(versionButtonText) && !versionButtonText.includes('업데이트 내역'),
@@ -977,8 +991,8 @@ async function validateCommercialUx(page) {
     'ux: 입력 포맷 패널 리드문에 카드 선택 안내 문구가 없음');
   const basicCardOrder = await page.locator('#panel-basic .format-card').evaluateAll(cards =>
     cards.map(card => card.getAttribute('data-ext')));
-  assert(JSON.stringify(basicCardOrder) === JSON.stringify(['md', 'docx', 'html', 'csv', 'json', 'txt', 'hwp']),
-    'ux: 입력 포맷 카드 순서가 MD/DOCX/HTML/CSV/XLSX/JSON/TXT/HWP 기준과 다름');
+  assert(JSON.stringify(basicCardOrder) === JSON.stringify(['md', 'docx', 'pptx', 'html', 'csv', 'json', 'txt', 'hwp']),
+    'ux: 입력 포맷 카드 순서가 MD/DOCX/PPTX/HTML/CSV/XLSX/JSON/TXT/HWP 기준과 다름');
   await tabs.nth(1).click();
   assert((await page.locator('#panel-ext > .section-sub').textContent()).includes('변환 품질 검증'),
     'ux: 예정 포맷 패널 리드문 누락');
@@ -988,9 +1002,9 @@ async function validateCommercialUx(page) {
   assert(!(await page.locator('#panel-support').textContent()).includes('PC / 모바일 브라우저'),
     'ux: 지원 현황에 포맷이 아닌 PC / 모바일 브라우저 행이 남아 있음');
   const supportOrder = await page.locator('#panel-support tbody tr').evaluateAll(rows =>
-    rows.slice(0, 9).map(row => row.cells[0].textContent.trim()));
+    rows.slice(0, 10).map(row => row.cells[0].textContent.trim()));
   assert(JSON.stringify(supportOrder) === JSON.stringify([
-    'MD (Markdown)', 'DOCX', 'HTML', 'CSV', 'XLSX', 'JSON', 'TXT', 'HWP', 'IPYNB',
+    'MD (Markdown)', 'DOCX', 'PPTX', 'HTML', 'CSV', 'XLSX', 'JSON', 'TXT', 'HWP', 'IPYNB',
   ]), 'ux: 지원 현황 표 순서가 포맷 카드/안내 순서와 다름');
   await tabs.first().focus();
   await tabs.first().press('ArrowRight');

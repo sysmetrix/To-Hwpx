@@ -22,6 +22,7 @@ Scope: static browser-only conversion flow from file selection to HWPX download.
 | MD | `tests/fixtures/sample.md`, `qa/fixtures/md_link_image_test.md` | 제목, 본문, 목록, 표, 코드블록, 클릭 가능한 본문 링크, data URL 그림 생성. 상대경로 이미지는 fallback 안내 |
 | HTML | `qa/fixtures/sample.html` | 스크립트 미실행, 텍스트/표/목록만 추출 |
 | DOCX | 수동 DOCX 샘플 | 본문, 표, 일부 굵게/기울임, 이미지, 첫 머리글/바닥글, 각주 텍스트 보존. 페이지 배치·복잡 개체 손실 안내 |
+| PPTX | `tests/fixtures/sample.pptx`, `qa/fixtures/sample.pptx` | 슬라이드 순서대로 제목/본문/목록 텍스트 추출. 이미지·도형·표·애니메이션·레이아웃·발표자 노트 손실 안내 |
 | TXT | `qa/fixtures/sample.txt`, `empty.txt` | 순수 텍스트 변환, 빈 문서도 오류 없이 처리 |
 | CSV/XLSX | `sample.csv`, 수동 XLSX 샘플 | 첫 행 머리글, 숫자 오른쪽 정렬, 복잡 서식 손실 안내 |
 | JSON | `qa/fixtures/sample.json` | 제목, 목록, 객체 표 또는 텍스트 단순화 |

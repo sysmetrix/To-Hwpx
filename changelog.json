@@ -1,6 +1,22 @@
 {
-  "current": "4.10.7",
+  "current": "4.10.8",
   "versions": [
+    {
+      "version": "4.10.8",
+      "date": "2026-07-01",
+      "user": [
+        "PowerPoint(PPTX) 파일을 업로드하면 슬라이드 제목·본문·목록 텍스트를 순서대로 HWPX 문서로 변환합니다(베타, 텍스트 중심)."
+      ],
+      "dev": [
+        "[v4.10.8] js/parsers.js: parsePptx()/parsePptxSlideShapes() 신규 — presentation.xml 슬라이드 순서 확정(폴백: 파일명 숫자 정렬) → 제목/본문/목록 텍스트를 공통 IR로 변환",
+        "[v4.10.8] js/parsers.js: PARSERS 레지스트리에 pptx(accept:buffer, async) 등록",
+        "[v4.10.8] js/app.js: SUPPORTED_EXTENSIONS/BINARY_EXTENSIONS/SUPPORTED_FORMAT_LABEL에 pptx 추가, FORMAT_INFO.pptx를 available:true/베타로 전환",
+        "[v4.10.8] index.html: PPTX 카드를 '예정 포맷'에서 '입력 포맷' 그리드로 이동(DOCX 다음), 드롭존/accept/지원 현황 표 순서 갱신, IPYNB 이미지 출력 관련 표 문구 정합성 수정",
+        "[v4.10.8] tests/fixtures/sample.pptx, qa/fixtures/sample.pptx: 2슬라이드(제목+본문+목록) 회귀 fixture 추가",
+        "[v4.10.8] tests/golden.js: PPTX 변환 회귀 케이스 및 포맷 카드/accept/지원 현황 표 순서 검증 갱신",
+        "[v4.10.8] format_conversion_playbook.md/qa/release-qa.md: PPTX 보존/손실 정책 섹션 신규 작성"
+      ]
+    },
     {
       "version": "4.10.7",
       "date": "2026-07-01",

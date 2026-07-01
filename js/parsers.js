@@ -1657,6 +1657,156 @@ function extractDocxTable(tblNode) {
 
 
 // ─────────────────────────────────────────────────────────────────────────
+// [8] PPTX 파서 (PowerPoint) — 1차 스코프: 슬라이드 텍스트 추출
+//     방법: JSZip으로 열고 ppt/presentation.xml의 슬라이드 순서(p:sldIdLst) +
+//           ppt/_rels/presentation.xml.rels로 실제 슬라이드 파일 경로를 확정.
+//           실패 시 ppt/slides/slideN.xml 파일명 숫자 정렬로 폴백.
+//     한계: 레이아웃/애니메이션/이미지/도형/표/발표자 노트는 다루지 않는다(별도 릴리스).
+// ─────────────────────────────────────────────────────────────────────────
+
+/**
+ * 슬라이드 XML(ppt/slides/slideN.xml)에서 도형(p:sp)별 텍스트 문단을 추출.
+ * @returns {Array<{isTitle:boolean, paragraphs:Array<{text:string, level:number, bullet:boolean, ordered:boolean}>}>}
+ */
+function parsePptxSlideShapes(xmlText) {
+    const doc = new DOMParser().parseFromString(xmlText, 'application/xml');
+    if (doc.querySelector('parsererror')) return [];
+    const shapes = [];
+    for (const sp of Array.from(doc.getElementsByTagName('p:sp'))) {
+        const nvPr = sp.getElementsByTagName('p:nvSpPr')[0];
+        const ph = nvPr ? nvPr.getElementsByTagName('p:ph')[0] : null;
+        const phType = ph ? (ph.getAttribute('type') || '') : '';
+        const isTitle = phType === 'title' || phType === 'ctrTitle';
+
+        const txBody = sp.getElementsByTagName('p:txBody')[0];
+        if (!txBody) continue;
+        const paragraphs = [];
+        for (const p of Array.from(txBody.getElementsByTagName('a:p'))) {
+            const text = sanitize(Array.from(p.getElementsByTagName('a:t')).map(t => t.textContent).join(''));
+            if (!text.trim()) continue;
+            const pPr = p.getElementsByTagName('a:pPr')[0];
+            const lvl = pPr ? parseInt(pPr.getAttribute('lvl') || '0', 10) || 0 : 0;
+            const hasBuNone = !!(pPr && pPr.getElementsByTagName('a:buNone')[0]);
+            const hasBuAutoNum = !!(pPr && pPr.getElementsByTagName('a:buAutoNum')[0]);
+            const hasBuChar = !!(pPr && pPr.getElementsByTagName('a:buChar')[0]);
+            const bullet = !isTitle && !hasBuNone && (hasBuAutoNum || hasBuChar);
+            paragraphs.push({ text, level: Math.max(0, Math.min(lvl, 2)), bullet, ordered: hasBuAutoNum });
+        }
+        if (paragraphs.length) shapes.push({ isTitle, paragraphs });
+    }
+    return shapes;
+}
+
+async function parsePptx(arrayBuffer, docType = 'plain') {
+    if (typeof JSZip === 'undefined') {
+        throw new Error('JSZip 미로드: PPTX 처리 불가');
+    }
+
+    let zip;
+    try {
+        zip = await JSZip.loadAsync(arrayBuffer);
+    } catch (e) {
+        throw new Error('PPTX ZIP 열기 실패: ' + e.message);
+    }
+
+    // [보안] Zip Bomb 방지: 압축 해제 예상 크기 합산 (DOCX와 동일 기준)
+    let totalUncompressed = 0;
+    zip.forEach((_, entry) => {
+        totalUncompressed += entry._data ? (entry._data.uncompressedSize || 0) : 0;
+    });
+    if (totalUncompressed > 50 * 1024 * 1024) {
+        throw new Error('PPTX 압축 해제 크기 초과 (50MB): 처리 거부');
+    }
+
+    const presFile = zip.file('ppt/presentation.xml');
+    if (!presFile) {
+        throw new Error('ppt/presentation.xml 없음: 유효한 PPTX 파일이 아닙니다.');
+    }
+
+    // 슬라이드 순서: p:sldIdLst의 r:id → presentation.xml.rels → 실제 슬라이드 경로
+    let slidePaths = [];
+    try {
+        const presXml = await presFile.async('string');
+        const presDoc = new DOMParser().parseFromString(presXml, 'application/xml');
+        const relsMap = {};
+        const relsFile = zip.file('ppt/_rels/presentation.xml.rels');
+        if (relsFile) {
+            const relsXml = await relsFile.async('string');
+            const relsDoc = new DOMParser().parseFromString(relsXml, 'application/xml');
+            for (const rel of relsDoc.getElementsByTagName('Relationship')) {
+                const id = rel.getAttribute('Id') || '';
+                if (id) relsMap[id] = rel.getAttribute('Target') || '';
+            }
+        }
+        for (const sldId of Array.from(presDoc.getElementsByTagName('p:sldId'))) {
+            const rid = sldId.getAttributeNS(DOCX_NS_R, 'id') || sldId.getAttribute('r:id') || '';
+            const target = rid && relsMap[rid];
+            if (target) slidePaths.push('ppt/' + target.replace(/^\.?\/?/, ''));
+        }
+    } catch (_) {}
+
+    // presentation.xml에서 순서를 못 얻으면 파일명 숫자 정렬로 폴백
+    if (!slidePaths.length) {
+        slidePaths = Object.keys(zip.files)
+            .filter(name => /^ppt\/slides\/slide\d+\.xml$/.test(name))
+            .sort((a, b) => {
+                const na = parseInt((/slide(\d+)\.xml$/.exec(a) || [])[1] || '0', 10);
+                const nb = parseInt((/slide(\d+)\.xml$/.exec(b) || [])[1] || '0', 10);
+                return na - nb;
+            });
+    }
+    if (!slidePaths.length) {
+        throw new Error('슬라이드를 찾을 수 없습니다: 유효한 PPTX 파일이 아닙니다.');
+    }
+
+    const ir = emptyIR('', docType);
+    let slideNum = 0;
+    for (const path of slidePaths) {
+        slideNum++;
+        const slideFile = zip.file(path);
+        if (!slideFile) continue;
+        let xmlText;
+        try {
+            xmlText = await slideFile.async('string');
+        } catch (_) { continue; }
+        const shapes = parsePptxSlideShapes(xmlText);
+        if (!shapes.length) continue;
+
+        ir.blocks.push({ type: 'heading', level: 2, text: `슬라이드 ${slideNum}` });
+        let listBuf = [];
+        const flushList = () => {
+            if (listBuf.length) {
+                ir.blocks.push({ type: 'list', items: listBuf });
+                listBuf = [];
+            }
+        };
+        for (const shape of shapes) {
+            for (const para of shape.paragraphs) {
+                if (shape.isTitle) {
+                    flushList();
+                    ir.blocks.push({ type: 'heading', level: 3, text: para.text });
+                } else if (para.bullet) {
+                    listBuf.push({
+                        text: para.text,
+                        runs: [{ text: para.text }],
+                        level: para.level,
+                        ordered: para.ordered,
+                        marker: null,
+                        task: false, checked: false, codeBlocks: [],
+                    });
+                } else {
+                    flushList();
+                    ir.blocks.push({ type: 'para', text: para.text });
+                }
+            }
+        }
+        flushList();
+    }
+
+    return ir;
+}
+
+// ─────────────────────────────────────────────────────────────────────────
 // [7] HWP 파서
 //     HWP 포맷에는 두 가지 종류가 있음:
 //       HWP5 : 바이너리 OLE2 컴파운드 도큐먼트 (D0 CF 11 E0 마법 바이트)
@@ -2145,6 +2295,7 @@ const PARSERS = {
     'json':     { fn: parseJson,  async: false, label: 'JSON',     accept: 'text'   },
     'ipynb':    { fn: parseIpynb, async: false, label: 'IPYNB',    accept: 'text'   },
     'docx':     { fn: parseDocx,  async: true,  label: 'DOCX',     accept: 'buffer' },
+    'pptx':     { fn: parsePptx,  async: true,  label: 'PPTX',     accept: 'buffer' },
     'hwp':      { fn: parseHwp,   async: true,  label: 'HWP',      accept: 'buffer' },
     'hwpx':     { fn: parseHwp,   async: true,  label: 'HWPX',     accept: 'buffer' },
 };

@@ -85,10 +85,10 @@ const PIPELINE_STEPS = [
 
 const SUPPORTED_EXTENSIONS = new Set([
     'md', 'markdown', 'html', 'htm', 'txt', 'text',
-    'csv', 'xlsx', 'xls', 'json', 'ipynb', 'docx', 'hwp', 'hwpx',
+    'csv', 'xlsx', 'xls', 'json', 'ipynb', 'docx', 'pptx', 'hwp', 'hwpx',
 ]);
-const BINARY_EXTENSIONS = new Set(['xlsx', 'xls', 'docx', 'hwp', 'hwpx']);
-const SUPPORTED_FORMAT_LABEL = 'MD, DOCX, HTML, CSV/XLSX, JSON, TXT, HWP, IPYNB';
+const BINARY_EXTENSIONS = new Set(['xlsx', 'xls', 'docx', 'pptx', 'hwp', 'hwpx']);
+const SUPPORTED_FORMAT_LABEL = 'MD, DOCX, PPTX, HTML, CSV/XLSX, JSON, TXT, HWP, IPYNB';
 const ONBOARDING_SEEN_KEY = 'tohwpx_onboarding_seen';
 const QUICK_GUIDE_HIDDEN_KEY = 'tohwpx_quick_guide_hidden';
 
@@ -1100,11 +1100,15 @@ const FORMAT_INFO = {
     },
     pptx: {
         icon: '📑', svgIcon: 'icons/brand/microsoftpowerpoint.svg', name: 'PowerPoint (PPTX)',
-        quality: '★☆☆', available: false, badge: '예정',
-        desc: 'Microsoft PowerPoint 슬라이드 파일입니다.',
-        tech: 'OOXML 파싱 → 슬라이드 텍스트 추출 예정',
-        features: ['슬라이드별 텍스트 추출 예정'],
-        limits: ['슬라이드 레이아웃·디자인 재현 불가', '이미지 미지원'],
+        quality: '★☆☆', available: true, badge: '베타',
+        desc: '슬라이드의 텍스트를 순서대로 문서로 옮기는 데 초점을 둔 입력 포맷입니다. 슬라이드 레이아웃은 재현하지 않습니다.',
+        tech: 'JSZip → presentation.xml 슬라이드 순서 확인 → slideN.xml 텍스트 추출 → IR',
+        features: [
+            '슬라이드 순서대로 제목·본문 텍스트를 문서로 정리',
+            '제목 placeholder는 제목으로, 글머리 기호가 있는 문단은 목록으로 변환',
+            '일반적으로 슬라이드 변환은 발표 자료의 텍스트 내용을 다시 읽기 좋은 문서로 정리하는 것이 목표',
+        ],
+        limits: ['슬라이드 레이아웃·디자인·애니메이션 재현 불가', '이미지·도형·표·발표자 노트 미지원(텍스트만 추출)'],
     },
     odt: {
         icon: '📃', name: 'ODT / RTF 오픈 문서',

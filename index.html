@@ -173,7 +173,7 @@
             <span>｢BWYF｣ AX Challenger 2026</span>
             <!-- [주의] id="open-changelog"는 app.js에서 관리자 모드일 때 업데이트 내역 모달을 여는 연결값 -->
             <button class="util-changelog-btn" id="open-changelog" aria-label="버전 정보">
-                📋 v4.10.7
+                📋 v4.10.8
             </button>
         </div>
     </div>
@@ -248,7 +248,7 @@
                 <img src="icons/brand/jupyter.svg" alt="IPYNB">
             </div>
             <div class="drop-title">여러 파일을 드래그하거나 클릭하세요</div>
-            <div class="drop-sub">MD · HTML · DOCX · CSV · XLSX · JSON · TXT · IPYNB · HWP</div>
+            <div class="drop-sub">MD · HTML · DOCX · PPTX · CSV · XLSX · JSON · TXT · IPYNB · HWP</div>
         </div>
         <!-- 보조 안내 버튼 — 첫 행동(파일 선택)을 방해하지 않도록 드롭존 아래에 배치 -->
         <!-- [주의] 아래 버튼 id는 app.js 모달 열기 기능과 연결됨. id 유지 -->
@@ -287,7 +287,7 @@
         <!-- [포맷 추가 시] accept에 새 확장자를 추가해야 파일 선택창에서 보입니다. -->
         <!-- multiple: 여러 파일을 한 번에 선택해 배치 변환 -->
         <input type="file" id="file-input" hidden multiple
-               accept=".md,.markdown,.docx,.html,.htm,.csv,.xlsx,.xls,.json,.txt,.hwp,.ipynb,.hwpx">
+               accept=".md,.markdown,.docx,.pptx,.html,.htm,.csv,.xlsx,.xls,.json,.txt,.hwp,.ipynb,.hwpx">
     </div>
 </section>
 
@@ -921,6 +921,15 @@
                     <span class="card-badge badge-available">입력 가능</span>
                 </div>
 
+                <!-- PPTX (PowerPoint) — 슬라이드 텍스트 추출, DOCX 다음에 배치 -->
+                <div class="format-card" data-ext="pptx" role="button" tabindex="0">
+                    <div class="card-icon"><img src="icons/brand/microsoftpowerpoint.svg" alt="" class="format-brand-icon" loading="lazy" aria-hidden="true"></div>
+                    <div class="card-ext">PPTX</div>
+                    <div class="card-name">PowerPoint</div>
+                    <div class="card-quality">★☆☆</div>
+                    <span class="card-badge badge-beta">베타</span>
+                </div>
+
                 <!-- HTML -->
                 <div class="format-card" data-ext="html" role="button" tabindex="0">
                     <div class="card-icon"><img src="icons/brand/html5.svg" alt="" class="format-brand-icon" loading="lazy" aria-hidden="true"></div>
@@ -992,15 +1001,6 @@
                         <div class="card-ext">PDF</div>
                         <div class="card-name">PDF 문서</div>
                         <div class="card-quality">★★☆</div>
-                        <span class="card-badge badge-soon">예정</span>
-                    </div>
-
-                    <!-- PPTX (Coming Soon) -->
-                    <div class="format-card coming-soon" data-ext="pptx" aria-disabled="true">
-                        <div class="card-icon"><img src="icons/brand/microsoftpowerpoint.svg" alt="" class="format-brand-icon" loading="lazy" aria-hidden="true"></div>
-                        <div class="card-ext">PPTX</div>
-                        <div class="card-name">PowerPoint</div>
-                        <div class="card-quality">★☆☆</div>
                         <span class="card-badge badge-soon">예정</span>
                     </div>
 
@@ -1095,6 +1095,13 @@
                             <td>페이지 배치·스타일 테마·주석·변경 추적 손실 가능</td>
                         </tr>
                         <tr>
+                            <td><strong>PPTX</strong></td>
+                            <td>★☆☆</td>
+                            <td><span class="card-badge badge-beta">베타</span></td>
+                            <td>JSZip → presentation.xml 슬라이드 순서 + slideN.xml 텍스트 추출 → IR</td>
+                            <td>레이아웃·애니메이션·이미지·도형·표·발표자 노트 미보존(텍스트 중심)</td>
+                        </tr>
+                        <tr>
                             <td><strong>HTML</strong></td>
                             <td>★★☆</td>
                             <td><span class="card-badge badge-beta">베타</span></td>
@@ -1141,7 +1148,7 @@
                             <td>★★☆</td>
                             <td><span class="card-badge badge-available">지원됨</span></td>
                             <td>JSON 파싱 → cell_type별 처리</td>
-                            <td>이미지 출력 셀 미지원</td>
+                            <td>차트 라이브러리의 인터랙티브·위젯 출력 미지원(정적 이미지만 변환)</td>
                         </tr>
                         <tr>
                             <td><strong>PDF</strong></td>
@@ -1149,13 +1156,6 @@
                             <td><span class="card-badge badge-soon">예정</span></td>
                             <td>—</td>
                             <td>레이아웃 추출 복잡도로 백엔드 필요</td>
-                        </tr>
-                        <tr>
-                            <td><strong>PPTX</strong></td>
-                            <td>★☆☆</td>
-                            <td><span class="card-badge badge-soon">예정</span></td>
-                            <td>—</td>
-                            <td>슬라이드→문서 변환 시 정보 손실 큼</td>
                         </tr>
                         <tr>
                             <td><strong>ODT / RTF</strong></td>
