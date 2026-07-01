@@ -937,6 +937,15 @@ async function validateCommercialUx(page) {
   assert(await helpButton.evaluate(el => document.activeElement === el),
     'ux: 고급 사용 팁 종료 후 상단 도움말 버튼으로 포커스가 복귀하지 않음');
 
+  assert(await page.locator('.hero-badges').count() === 0,
+    'ux: 드롭존 아래 PC/모바일/설치/로컬 처리 버튼이 남아 있음 (사용 환경 메뉴로 이동해야 함)');
+  const envGuideBtn = page.locator('#open-env-guide');
+  assert((await envGuideBtn.textContent()).includes('사용 환경'), 'ux: 사용 환경 드롭다운 버튼 라벨이 없음');
+  const envGuideMenu = page.locator('#env-guide-menu');
+  assert(!(await envGuideMenu.isVisible()), 'ux: 사용 환경 메뉴가 열기 전부터 보임');
+  await envGuideBtn.click();
+  assert(await envGuideMenu.isVisible(), 'ux: 사용 환경 버튼 클릭으로 메뉴가 열리지 않음');
+
   const pcGuide = page.locator('#open-pc-guide');
   await pcGuide.focus();
   await pcGuide.press('Enter');
@@ -975,6 +984,10 @@ async function validateCommercialUx(page) {
   await page.keyboard.press('Escape');
   assert(await installGuide.evaluate(el => document.activeElement === el),
     'ux: 설치 안내 종료 후 열기 버튼으로 포커스가 복귀하지 않음');
+
+  assert(await envGuideMenu.isVisible(), 'ux: 안내 모달을 여닫아도 사용 환경 메뉴가 그대로 유지되지 않음');
+  await page.locator('#hero-title').click();
+  assert(!(await envGuideMenu.isVisible()), 'ux: 바깥 클릭으로 사용 환경 메뉴가 닫히지 않음');
 
   const mdCard = page.locator('.format-card[data-ext="md"]');
   assert(await page.locator('#format-more-tabs').isVisible()

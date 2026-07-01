@@ -131,6 +131,7 @@ function initApp() {
     initMobileMenu();           // 모바일 햄버거 메뉴
     initNavLinks();             // 부드러운 스크롤 네비게이션
     initModals();               // 미리보기·업데이트 내역 모달
+    initEnvGuideMenu();         // 헤더 '사용 환경' 드롭다운(PC/모바일/설치/로컬 처리 안내)
     initHelpDots();             // 설정 라벨의 짧은 도움말 버튼
     initQuickGuide();           // 닫아도 남는 첫 사용 흐름 안내
     initResetButton();          // 현재 선택 파일과 변환 옵션 초기화
@@ -4036,6 +4037,33 @@ function showInstallGuide() {
 
 function closeInstallGuide() {
     closeModal(document.getElementById('install-guide-modal'));
+}
+
+// 헤더 '사용 환경' 드롭다운 — PC/모바일 지원, 설치, 로컬 처리 4개 안내 버튼을 한 메뉴로 통합
+function closeEnvGuideMenu() {
+    const menu = document.getElementById('env-guide-menu');
+    const btn = document.getElementById('open-env-guide');
+    if (menu) menu.hidden = true;
+    if (btn) {
+        btn.setAttribute('aria-expanded', 'false');
+        btn.closest('.nav-env-menu')?.removeAttribute('data-open');
+    }
+}
+
+function initEnvGuideMenu() {
+    const btn = document.getElementById('open-env-guide');
+    const menu = document.getElementById('env-guide-menu');
+    if (!btn || !menu) return;
+    btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const open = menu.hidden;
+        menu.hidden = !open;
+        btn.setAttribute('aria-expanded', String(open));
+        btn.closest('.nav-env-menu')?.toggleAttribute('data-open', open);
+    });
+    document.addEventListener('click', (e) => {
+        if (!menu.hidden && !menu.contains(e.target) && e.target !== btn) closeEnvGuideMenu();
+    });
 }
 
 
