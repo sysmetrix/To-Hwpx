@@ -173,7 +173,7 @@
             <span>｢BWYF｣ AX Challenger 2026</span>
             <!-- [주의] id="open-changelog"는 app.js에서 관리자 모드일 때 업데이트 내역 모달을 여는 연결값 -->
             <button class="util-changelog-btn" id="open-changelog" aria-label="버전 정보">
-                📋 v4.10.21
+                📋 v4.10.22
             </button>
         </div>
     </div>
@@ -195,44 +195,12 @@
             <!-- [링크 수정 가능] href와 화면 글자만 바꾸세요. class는 스타일/툴팁에 사용됩니다. -->
             <nav id="main-nav" role="navigation" aria-label="주 메뉴">
                 <ul class="main-nav">
-                    <li class="nav-env-menu">
-                        <button class="nav-shortcut-btn" id="open-env-guide" aria-label="사용 환경 안내 열기"
-                                aria-haspopup="menu" aria-expanded="false" aria-controls="env-guide-menu" title="지원 브라우저·설치·로컬 처리 안내">
+                    <li>
+                        <!-- [주의] id="open-env-guide"는 app.js에서 지원 환경 통합 모달을 여는 연결값 -->
+                        <button class="nav-shortcut-btn" id="open-env-guide" aria-label="지원 환경 안내 열기" title="PC/모바일 브라우저 지원·설치·로컬 처리 안내">
                             <span class="nav-btn-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg></span>
-                            사용 환경
-                            <span class="nav-btn-caret" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
+                            지원 환경
                         </button>
-                        <!-- [주의] 아래 버튼 id는 app.js 모달 열기 기능과 연결됨. id 유지 -->
-                        <div class="env-guide-menu" id="env-guide-menu" role="menu" aria-label="지원 실행 환경" hidden>
-                            <button type="button" id="open-pc-guide" class="trust-btn" role="menuitem" aria-label="PC 브라우저 지원 상세 보기">
-                                <span class="trust-btn-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></span>
-                                <span class="trust-btn-content">
-                                    <span class="trust-btn-label">PC 브라우저 지원</span>
-                                    <span class="trust-btn-sub">Chrome · Edge · Safari ›</span>
-                                </span>
-                            </button>
-                            <button type="button" id="open-mobile-guide" class="trust-btn" role="menuitem" aria-label="모바일 브라우저 지원 상세 보기">
-                                <span class="trust-btn-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><circle cx="12" cy="18" r=".5" fill="currentColor"/></svg></span>
-                                <span class="trust-btn-content">
-                                    <span class="trust-btn-label">모바일 브라우저</span>
-                                    <span class="trust-btn-sub">iOS · Android ›</span>
-                                </span>
-                            </button>
-                            <button type="button" id="open-install-guide" class="trust-btn" role="menuitem" aria-label="앱처럼 설치 안내 보기">
-                                <span class="trust-btn-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></span>
-                                <span class="trust-btn-content">
-                                    <span class="trust-btn-label">앱처럼 설치 가능</span>
-                                    <span class="trust-btn-sub">홈 화면에 추가 ›</span>
-                                </span>
-                            </button>
-                            <button type="button" id="open-privacy-guide" class="trust-btn" role="menuitem" aria-label="로컬 처리 안전성 상세 보기">
-                                <span class="trust-btn-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span>
-                                <span class="trust-btn-content">
-                                    <span class="trust-btn-label">안전한 로컬 처리</span>
-                                    <span class="trust-btn-sub">서버 전송 없음 ›</span>
-                                </span>
-                            </button>
-                        </div>
                     </li>
                     <li>
                         <button class="nav-shortcut-btn" id="open-help" aria-label="도움말 열기" title="도움말 보기 (Shift + /)">
@@ -1300,118 +1268,90 @@
 </div>
 
 <!-- ════════════════════════════════════════════════════════════════
-     [PC 브라우저 지원 안내 모달]
+     [지원 환경 안내 모달]  PC/모바일 브라우저 지원 · 설치 · 로컬 처리를
+     탭 4개로 통합 (헤더 '지원 환경' 버튼 클릭 1번으로 바로 열림)
      ════════════════════════════════════════════════════════════════ -->
-<div id="pc-guide-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="pc-guide-title">
+<div id="env-guide-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="env-guide-title">
     <div class="modal-box modal-box--md">
         <div class="modal-header">
-            <span class="modal-title" id="pc-guide-title">PC 브라우저 지원</span>
-            <button class="modal-close" id="close-pc-guide" aria-label="PC 브라우저 안내 닫기">✕</button>
+            <span class="modal-title" id="env-guide-title">지원 환경</span>
+            <button class="modal-close" id="close-env-guide" aria-label="지원 환경 안내 닫기">✕</button>
         </div>
         <div class="modal-body">
-            <div class="trust-modal-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div>
-            <p class="trust-modal-lead">설치 없이 PC 브라우저에서 바로 사용합니다.</p>
-            <div class="trust-fact-row">
-                <div class="trust-fact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Chrome · Edge</div>
-                <div class="trust-fact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Safari · Firefox</div>
-                <div class="trust-fact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>드래그앤드롭</div>
+            <div class="env-tabs" role="tablist" aria-label="지원 환경 항목">
+                <button type="button" class="env-tab active" data-env-tab="pc" role="tab" aria-selected="true" aria-controls="env-panel-pc">PC 브라우저</button>
+                <button type="button" class="env-tab" data-env-tab="mobile" role="tab" aria-selected="false" aria-controls="env-panel-mobile">모바일</button>
+                <button type="button" class="env-tab" data-env-tab="install" role="tab" aria-selected="false" aria-controls="env-panel-install">설치</button>
+                <button type="button" class="env-tab" data-env-tab="privacy" role="tab" aria-selected="false" aria-controls="env-panel-privacy">로컬 처리</button>
             </div>
-            <p class="trust-modal-note">자동 다운로드가 차단되면 완료 카드의 <strong>HWPX 다운로드</strong> 버튼으로 받을 수 있습니다.</p>
-        </div>
-    </div>
-</div>
-
-<!-- ════════════════════════════════════════════════════════════════
-     [모바일 브라우저 지원 안내 모달]
-     ════════════════════════════════════════════════════════════════ -->
-<div id="mobile-guide-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="mobile-guide-title">
-    <div class="modal-box modal-box--md">
-        <div class="modal-header">
-            <span class="modal-title" id="mobile-guide-title">모바일 브라우저 지원</span>
-            <button class="modal-close" id="close-mobile-guide" aria-label="모바일 브라우저 안내 닫기">✕</button>
-        </div>
-        <div class="modal-body">
-            <div class="trust-modal-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><circle cx="12" cy="18" r=".5" fill="currentColor"/></svg></div>
-            <p class="trust-modal-lead">스마트폰 브라우저에서도 동일하게 사용합니다.</p>
-            <div class="trust-fact-row">
-                <div class="trust-fact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Android Chrome</div>
-                <div class="trust-fact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>iOS Safari</div>
+            <div class="env-panel active" id="env-panel-pc" role="tabpanel">
+                <div class="trust-modal-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div>
+                <p class="trust-modal-lead">설치 없이 PC 브라우저에서 바로 사용합니다.</p>
+                <div class="trust-fact-row">
+                    <div class="trust-fact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Chrome · Edge</div>
+                    <div class="trust-fact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Safari · Firefox</div>
+                    <div class="trust-fact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>드래그앤드롭</div>
+                </div>
+                <p class="trust-modal-note">자동 다운로드가 차단되면 완료 카드의 <strong>HWPX 다운로드</strong> 버튼으로 받을 수 있습니다.</p>
             </div>
-            <p class="trust-modal-note">iOS는 다운로드 폴더 또는 <strong>파일 앱</strong>에 저장됩니다. Android는 <strong>Chrome 다운로드</strong>에 저장됩니다.</p>
-        </div>
-    </div>
-</div>
-
-<!-- ════════════════════════════════════════════════════════════════
-     [앱 설치 안내 모달]  Chrome/Edge에서 앱처럼 설치하는 방법
-     ════════════════════════════════════════════════════════════════ -->
-<div id="install-guide-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="install-guide-title">
-    <div class="modal-box modal-box--md">
-        <div class="modal-header">
-            <span class="modal-title" id="install-guide-title">앱처럼 설치하기</span>
-            <button class="modal-close" id="close-install-guide" aria-label="설치 안내 닫기">✕</button>
-        </div>
-        <div class="modal-body">
-            <div class="trust-modal-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div>
-            <p class="trust-modal-lead">주소창 오른쪽 아이콘 한 번으로 설치합니다.</p>
-            <div class="install-guide-grid">
-                <section class="install-browser-card">
-                    <div class="install-browser-head">
-                        <div>
-                            <span class="install-browser-kicker">Google</span>
-                            <h3>Chrome</h3>
+            <div class="env-panel" id="env-panel-mobile" role="tabpanel" hidden>
+                <div class="trust-modal-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><circle cx="12" cy="18" r=".5" fill="currentColor"/></svg></div>
+                <p class="trust-modal-lead">스마트폰 브라우저에서도 동일하게 사용합니다.</p>
+                <div class="trust-fact-row">
+                    <div class="trust-fact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Android Chrome</div>
+                    <div class="trust-fact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>iOS Safari</div>
+                </div>
+                <p class="trust-modal-note">iOS는 다운로드 폴더 또는 <strong>파일 앱</strong>에 저장됩니다. Android는 <strong>Chrome 다운로드</strong>에 저장됩니다.</p>
+            </div>
+            <div class="env-panel" id="env-panel-install" role="tabpanel" hidden>
+                <div class="trust-modal-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div>
+                <p class="trust-modal-lead">주소창 오른쪽 아이콘 한 번으로 설치합니다.</p>
+                <div class="install-guide-grid">
+                    <section class="install-browser-card">
+                        <div class="install-browser-head">
+                            <div>
+                                <span class="install-browser-kicker">Google</span>
+                                <h3>Chrome</h3>
+                            </div>
+                            <figure class="install-icon-sample">
+                                <img src="icons/chrome-install.svg" alt="모니터와 아래쪽 화살표 모양의 Chrome 설치 아이콘">
+                                <figcaption>이 모양을 찾으세요</figcaption>
+                            </figure>
                         </div>
-                        <figure class="install-icon-sample">
-                            <img src="icons/chrome-install.svg" alt="모니터와 아래쪽 화살표 모양의 Chrome 설치 아이콘">
-                            <figcaption>이 모양을 찾으세요</figcaption>
-                        </figure>
-                    </div>
-                    <ol>
-                        <li><strong>주소창 오른쪽</strong> 아이콘을 누릅니다.</li>
-                        <li>확인 창에서 <strong>설치</strong>를 누릅니다.</li>
-                    </ol>
-                </section>
-                <section class="install-browser-card">
-                    <div class="install-browser-head">
-                        <div>
-                            <span class="install-browser-kicker">Microsoft</span>
-                            <h3>Edge</h3>
+                        <ol>
+                            <li><strong>주소창 오른쪽</strong> 아이콘을 누릅니다.</li>
+                            <li>확인 창에서 <strong>설치</strong>를 누릅니다.</li>
+                        </ol>
+                    </section>
+                    <section class="install-browser-card">
+                        <div class="install-browser-head">
+                            <div>
+                                <span class="install-browser-kicker">Microsoft</span>
+                                <h3>Edge</h3>
+                            </div>
+                            <figure class="install-icon-sample">
+                                <img src="icons/edge-install.svg" alt="창과 더하기 표시 모양의 Edge 앱 설치 아이콘">
+                                <figcaption>이 모양을 찾으세요</figcaption>
+                            </figure>
                         </div>
-                        <figure class="install-icon-sample">
-                            <img src="icons/edge-install.svg" alt="창과 더하기 표시 모양의 Edge 앱 설치 아이콘">
-                            <figcaption>이 모양을 찾으세요</figcaption>
-                        </figure>
-                    </div>
-                    <ol>
-                        <li><strong>주소창 오른쪽</strong> 아이콘을 누릅니다.</li>
-                        <li>확인 창에서 <strong>설치</strong>를 누릅니다.</li>
-                    </ol>
-                </section>
+                        <ol>
+                            <li><strong>주소창 오른쪽</strong> 아이콘을 누릅니다.</li>
+                            <li>확인 창에서 <strong>설치</strong>를 누릅니다.</li>
+                        </ol>
+                    </section>
+                </div>
+                <p class="trust-modal-note">브라우저마다 설치 아이콘 모양이 다릅니다. 이미 설치된 경우에는 아이콘이 나타나지 않을 수 있습니다.<br>아이콘이 없으면 브라우저 메뉴 → <strong>앱 설치</strong>를 찾으세요.<br>설치 후 Windows 시작 메뉴에서 <strong>To HWPX</strong>로 바로 열 수 있습니다.</p>
             </div>
-            <p class="trust-modal-note">브라우저마다 설치 아이콘 모양이 다릅니다. 이미 설치된 경우에는 아이콘이 나타나지 않을 수 있습니다.<br>아이콘이 없으면 브라우저 메뉴 → <strong>앱 설치</strong>를 찾으세요.<br>설치 후 Windows 시작 메뉴에서 <strong>To HWPX</strong>로 바로 열 수 있습니다.</p>
-        </div>
-    </div>
-</div>
-
-<!-- ════════════════════════════════════════════════════════════════
-     [안전한 로컬 처리 안내 모달]
-     파일은 사용자 기기(브라우저) 안에서만 처리되고 서버로 전송되지 않음
-     ════════════════════════════════════════════════════════════════ -->
-<div id="privacy-guide-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="privacy-guide-title">
-    <div class="modal-box modal-box--md">
-        <div class="modal-header">
-            <span class="modal-title" id="privacy-guide-title">안전한 로컬 처리</span>
-            <button class="modal-close" id="close-privacy-guide" aria-label="안전한 로컬 처리 안내 닫기">✕</button>
-        </div>
-        <div class="modal-body">
-            <div class="trust-modal-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
-            <p class="trust-modal-lead">파일이 기기 밖으로 나가지 않습니다.</p>
-            <div class="trust-fact-row">
-                <div class="trust-fact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>서버 미전송</div>
-                <div class="trust-fact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>브라우저 내 처리</div>
-                <div class="trust-fact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>닫으면 즉시 삭제</div>
+            <div class="env-panel" id="env-panel-privacy" role="tabpanel" hidden>
+                <div class="trust-modal-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+                <p class="trust-modal-lead">파일이 기기 밖으로 나가지 않습니다.</p>
+                <div class="trust-fact-row">
+                    <div class="trust-fact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>서버 미전송</div>
+                    <div class="trust-fact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>브라우저 내 처리</div>
+                    <div class="trust-fact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>닫으면 즉시 삭제</div>
+                </div>
+                <p class="trust-modal-note">Markdown 원격 이미지는 해당 이미지 서버에 브라우저가 직접 요청합니다.<br>원본 문서와 HWPX 파일은 전송하지 않습니다.</p>
             </div>
-            <p class="trust-modal-note">Markdown 원격 이미지는 해당 이미지 서버에 브라우저가 직접 요청합니다.<br>원본 문서와 HWPX 파일은 전송하지 않습니다.</p>
         </div>
     </div>
 </div>
