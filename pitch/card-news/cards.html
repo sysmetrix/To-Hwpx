@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>To HWPX 카드뉴스</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&display=swap');
+
+  :root {
+    --c-primary: #2252e4;
+    --c-primary-dark: #1640c8;
+    --c-primary-light: #e9effc;
+    --c-bg: #faf9f6;
+    --c-surface: #ffffff;
+    --c-text: #1c1d22;
+    --c-text-sub: #565a62;
+    --c-border: #e6e4dd;
+    --c-success: #047857;
+    --c-success-light: #e4f2ec;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: 'Noto Sans KR', Arial, sans-serif; background: #ccc; }
+
+  .card {
+    width: 1080px;
+    height: 1080px;
+    background: var(--c-bg);
+    position: relative;
+    overflow: hidden;
+    padding: 72px;
+    margin-bottom: 40px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .brand-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .brand-mark { width: 44px; height: 44px; border-radius: 10px; }
+  .brand-word { font-size: 26px; font-weight: 800; color: var(--c-text); }
+  .brand-word b { color: var(--c-primary); }
+  .card-index {
+    margin-left: auto;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--c-text-sub);
+  }
+
+  .card-body { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+  .eyebrow { font-size: 26px; font-weight: 700; color: var(--c-primary); margin-bottom: 18px; }
+  .headline { font-size: 64px; font-weight: 900; line-height: 1.28; color: var(--c-text); letter-spacing: -0.02em; margin: 0 0 24px; }
+  .sub { font-size: 30px; line-height: 1.6; color: var(--c-text-sub); margin: 0; }
+
+  .pain-list { list-style: none; margin: 40px 0 0; padding: 0; display: flex; flex-direction: column; gap: 24px; }
+  .pain-item { display: flex; align-items: center; gap: 20px; background: var(--c-surface); border: 1px solid var(--c-border); border-radius: 20px; padding: 28px 32px; }
+  .pain-icon { width: 56px; height: 56px; flex-shrink: 0; display:flex; align-items:center; justify-content:center; background: #fdecea; border-radius: 50%; font-size: 30px; }
+  .pain-text { font-size: 30px; font-weight: 700; color: var(--c-text); }
+
+  .fmt-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 44px; }
+  .fmt-cell { background: var(--c-surface); border: 1px solid var(--c-border); border-radius: 20px; padding: 28px; display: flex; flex-direction: column; align-items: center; gap: 14px; }
+  .fmt-cell img { width: 56px; height: 56px; object-fit: contain; }
+  .fmt-cell span { font-size: 24px; font-weight: 700; color: var(--c-text); }
+
+  .center-mark { display: flex; justify-content: center; margin: 20px 0 40px; }
+  .center-mark img { width: 220px; height: 220px; }
+
+  .shield-wrap { display: flex; justify-content: center; margin: 24px 0 44px; }
+  .shield { width: 220px; height: 220px; border-radius: 50%; background: var(--c-primary-light); display: flex; align-items: center; justify-content: center; }
+  .shield svg { width: 120px; height: 120px; color: var(--c-primary); }
+
+  .kanban-mini { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-top: 44px; }
+  .kmini-col { background: var(--c-surface); border: 1px solid var(--c-border); border-radius: 16px; padding: 16px; }
+  .kmini-head { font-size: 20px; font-weight: 700; color: var(--c-text-sub); margin-bottom: 12px; }
+  .kmini-card { height: 40px; border-radius: 8px; background: var(--c-primary-light); border: 1px solid var(--c-border); margin-bottom: 10px; }
+  .kmini-card.done { background: var(--c-success-light); }
+
+  .cta-box { text-align: center; margin-top: 20px; }
+  .cta-url { display: inline-block; margin-top: 28px; font-size: 30px; font-weight: 800; color: #fff; background: var(--c-primary); padding: 20px 44px; border-radius: 100px; }
+
+  .footer-tag { position: absolute; bottom: 56px; left: 72px; right: 72px; font-size: 22px; color: var(--c-text-sub); border-top: 1px solid var(--c-border); padding-top: 20px; }
+</style>
+</head>
+<body>
+
+  <!-- 카드 1: 표지/훅 -->
+  <div class="card" id="card-1">
+    <div class="brand-row">
+      <img class="brand-mark" src="../../icons/app-icon.svg">
+      <span class="brand-word">To <b>HWPX</b></span>
+      <span class="card-index">1 / 7</span>
+    </div>
+    <div class="card-body">
+      <div class="eyebrow">한글 문서 변환, 이제는</div>
+      <h1 class="headline">한컴오피스 없이,<br>서버에 안 올리고,<br>HWPX 만드는 법</h1>
+      <p class="sub">브라우저 하나로 끝나는 문서 변환기 — To HWPX</p>
+    </div>
+  </div>
+
+  <!-- 카드 2: 문제 제기 -->
+  <div class="card" id="card-2">
+    <div class="brand-row">
+      <img class="brand-mark" src="../../icons/app-icon.svg">
+      <span class="brand-word">To <b>HWPX</b></span>
+      <span class="card-index">2 / 7</span>
+    </div>
+    <div class="card-body">
+      <div class="eyebrow">이런 적 있으신가요?</div>
+      <h1 class="headline" style="font-size:52px;">한글 문서 제출, 매번 이렇게 번거로웠다면</h1>
+      <ul class="pain-list">
+        <li class="pain-item"><span class="pain-icon">💻</span><span class="pain-text">한컴오피스가 없거나 라이선스가 없다</span></li>
+        <li class="pain-item"><span class="pain-icon">📤</span><span class="pain-text">온라인 변환기는 서버 업로드가 불안하다</span></li>
+        <li class="pain-item"><span class="pain-icon">⌨️</span><span class="pain-text">이미 만든 문서를 매번 손으로 다시 입력한다</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 카드 3: 솔루션 -->
+  <div class="card" id="card-3">
+    <div class="brand-row">
+      <img class="brand-mark" src="../../icons/app-icon.svg">
+      <span class="brand-word">To <b>HWPX</b></span>
+      <span class="card-index">3 / 7</span>
+    </div>
+    <div class="card-body" style="text-align:center;">
+      <div class="center-mark"><img src="../../icons/app-icon.svg"></div>
+      <h1 class="headline">To HWPX 하나면<br>끝납니다</h1>
+      <p class="sub">설치 없이, 회원가입 없이, 서버 업로드 없이 —<br>브라우저 안에서 바로 HWPX로.</p>
+    </div>
+  </div>
+
+  <!-- 카드 4: 핵심 기능 1 - 포맷 -->
+  <div class="card" id="card-4">
+    <div class="brand-row">
+      <img class="brand-mark" src="../../icons/app-icon.svg">
+      <span class="brand-word">To <b>HWPX</b></span>
+      <span class="card-index">4 / 7</span>
+    </div>
+    <div class="card-body">
+      <div class="eyebrow">지금 되는 것</div>
+      <h1 class="headline" style="font-size:52px;">9가지 포맷을 HWPX로</h1>
+      <div class="fmt-grid">
+        <div class="fmt-cell"><img src="../../icons/brand/markdown.svg"><span>Markdown</span></div>
+        <div class="fmt-cell"><img src="../../icons/brand/microsoftword.svg"><span>Word</span></div>
+        <div class="fmt-cell"><img src="../../icons/brand/microsoftpowerpoint.svg"><span>PowerPoint</span></div>
+        <div class="fmt-cell"><img src="../../icons/brand/html5.svg"><span>HTML</span></div>
+        <div class="fmt-cell"><img src="../../icons/brand/microsoftexcel.svg"><span>CSV/Excel</span></div>
+        <div class="fmt-cell"><img src="../../icons/brand/jupyter.svg"><span>Jupyter</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 카드 5: 핵심 기능 2 - 프라이버시 -->
+  <div class="card" id="card-5">
+    <div class="brand-row">
+      <img class="brand-mark" src="../../icons/app-icon.svg">
+      <span class="brand-word">To <b>HWPX</b></span>
+      <span class="card-index">5 / 7</span>
+    </div>
+    <div class="card-body" style="text-align:center;">
+      <div class="shield-wrap">
+        <div class="shield">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+      </div>
+      <h1 class="headline">당신의 파일은<br>브라우저를 떠나지 않습니다</h1>
+      <p class="sub">변환은 전부 로컬(클라이언트)에서 처리됩니다.<br>서버 업로드가 없습니다.</p>
+    </div>
+  </div>
+
+  <!-- 카드 6: 핵심 기능 3 - 칸반 배치 -->
+  <div class="card" id="card-6">
+    <div class="brand-row">
+      <img class="brand-mark" src="../../icons/app-icon.svg">
+      <span class="brand-word">To <b>HWPX</b></span>
+      <span class="card-index">6 / 7</span>
+    </div>
+    <div class="card-body">
+      <div class="eyebrow">여러 파일도 한 번에</div>
+      <h1 class="headline" style="font-size:52px;">진행 상황을<br>실시간 칸반 보드로</h1>
+      <p class="sub">대기 → 변환 중 → 완료/실패 —<br>카드가 실제 변환 진행에 맞춰 스스로 움직입니다.</p>
+      <div class="kanban-mini">
+        <div class="kmini-col"><div class="kmini-head">대기</div></div>
+        <div class="kmini-col"><div class="kmini-head">변환 중</div><div class="kmini-card"></div></div>
+        <div class="kmini-col"><div class="kmini-head">완료</div><div class="kmini-card done"></div><div class="kmini-card done"></div><div class="kmini-card done"></div></div>
+        <div class="kmini-col"><div class="kmini-head">실패</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 카드 7: 마무리/CTA -->
+  <div class="card" id="card-7">
+    <div class="brand-row">
+      <img class="brand-mark" src="../../icons/app-icon.svg">
+      <span class="brand-word">To <b>HWPX</b></span>
+      <span class="card-index">7 / 7</span>
+    </div>
+    <div class="card-body" style="text-align:center;">
+      <h1 class="headline">지금 바로,<br>무료로 사용해보세요</h1>
+      <p class="sub">설치 없이 링크만 열면 시작합니다.</p>
+      <div class="cta-box">
+        <span class="cta-url">sysmetrix.github.io/To-Hwpx</span>
+      </div>
+    </div>
+    <div class="footer-tag">「BWYF」 AX Challenger 2026 참가작 · To HWPX</div>
+  </div>
+
+</body>
+</html>
