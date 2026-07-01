@@ -3098,6 +3098,17 @@ a:hover { text-decoration: underline; }
 
     /* 배치 큐 칸반 보드 — 4열 → 2열 */
     .file-queue-board { grid-template-columns: repeat(2, 1fr); }
+
+    /* iOS Safari는 포커스되는 입력 요소의 font-size가 16px 미만이면 페이지를 자동 확대한다.
+       데스크톱 값은 유지하고 실제 타이핑이 발생하는 폼 컨트롤만 16px 이상으로 올린다.
+       .paste-textarea는 이 파일 뒤쪽(.paste-textarea 정의부)에서 별도로 오버라이드한다 —
+       동일 특이도(class 1개)일 때는 소스상 나중에 나오는 규칙이 이기므로 여기 두면 무효화된다. */
+    .form-row select,
+    .form-row input[type="text"],
+    .form-row input[type="number"],
+    .margin-item > input[type="number"] {
+        font-size: 16px;
+    }
 }
 
 /* ─────────────────────────────────────────────────────────────────
@@ -5585,6 +5596,10 @@ a:hover { text-decoration: underline; }
     font-size: 0.86rem;
     line-height: 1.6;
     transition: border-color var(--trans), box-shadow var(--trans);
+}
+/* iOS Safari 자동 확대 방지 — .paste-textarea 정의 뒤에 둬야 동일 특이도에서 이긴다 */
+@media (max-width: 768px) {
+    .paste-textarea { font-size: 16px; }
 }
 .paste-textarea::placeholder { color: var(--c-text-muted); }
 .paste-textarea:focus {

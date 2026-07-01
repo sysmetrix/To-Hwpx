@@ -1540,6 +1540,36 @@ async function validateDetailSettingsUx(page) {
   console.log('PASS DETAIL hr option + margin paper map');
 }
 
+async function validateMobileFormFontSize(page) {
+  // iOS Safari는 포커스되는 입력 요소의 computed font-size가 16px 미만이면 페이지를 자동 확대한다.
+  // 768px 이하 뷰포트에서 실제 타이핑이 발생하는 대표 폼 컨트롤이 16px 이상인지 확인한다.
+  const baseUrl = `http://127.0.0.1:${PORT}/index.html`;
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => window.__appReady, null, { timeout: 30000 });
+  await page.locator('.advanced-settings > summary').click();
+  await page.locator('#mode-paste').click();
+  const sizes = await page.evaluate(() => {
+    const px = sel => {
+      const el = document.querySelector(sel);
+      return el ? parseFloat(getComputedStyle(el).fontSize) : null;
+    };
+    return {
+      optionSelect: px('#font-size'),
+      marginInput: px('#margin-top'),
+      pasteTextarea: px('#paste-input'),
+    };
+  });
+  await page.setViewportSize({ width: 1280, height: 720 });
+  assert(sizes.optionSelect >= 16,
+    `mobile: 옵션 select font-size가 16px 미만이라 iOS 자동 확대 위험 (${sizes.optionSelect}px)`);
+  assert(sizes.marginInput >= 16,
+    `mobile: 여백 입력 font-size가 16px 미만이라 iOS 자동 확대 위험 (${sizes.marginInput}px)`);
+  assert(sizes.pasteTextarea >= 16,
+    `mobile: 직접 입력 textarea font-size가 16px 미만이라 iOS 자동 확대 위험 (${sizes.pasteTextarea}px)`);
+  console.log('PASS MOBILE 768px 이하 폼 컨트롤 font-size >= 16px (iOS 자동 확대 방지)');
+}
+
 async function validatePretendardCompatibility(page) {
   const baseUrl = `http://127.0.0.1:${PORT}/index.html`;
   await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
@@ -1654,6 +1684,7 @@ async function validatePretendardCompatibility(page) {
     await validatePaperMatrix(page);
     await validateLineSpacingOption(page);
     await validateDetailSettingsUx(page);
+    await validateMobileFormFontSize(page);
     await validatePretendardCompatibility(page);
     assert(pageErrors.length === 0, `브라우저 오류 발생: ${pageErrors.join(' | ')}`);
     console.log(`\nGOLDEN: ${CASES.length} cases passed`);
