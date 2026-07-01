@@ -1,6 +1,21 @@
 {
-  "current": "4.10.26",
+  "current": "4.10.27",
   "versions": [
+    {
+      "version": "4.10.27",
+      "date": "2026-07-01",
+      "user": [
+        "구형 한글(HWP) 파일도 이제 본문 텍스트를 추출해 변환할 수 있습니다. 이전에는 옛날 방식(HWP5)으로 저장된 .hwp 파일을 올리면 무조건 실패했지만, 이제 문단 단위로 텍스트를 읽어 HWPX로 만듭니다(표·이미지·서식은 아직 지원하지 않습니다)."
+      ],
+      "dev": [
+        "[v4.10.27] js/parsers.js: parseHwp5WithRhwp() 신규 — OLE2(HWP5) 바이너리를 @rhwp/core(Rust+WASM, MIT, jsdelivr CDN 동적 import)로 열어 섹션·문단을 순회하며 getTextRange()로 본문 텍스트만 추출(표/이미지/서식 미지원, TXT와 동일한 보존 수준). 기존 parseHwp()의 'HWP5는 파싱 불가' throw를 대체",
+        "[v4.10.27] js/parsers.js: CFBF 헤더 섹터 최소 크기(512바이트) 미만 버퍼는 WASM 로딩 전에 즉시 거부 — 손상 파일에서 불필요한 네트워크 요청 방지",
+        "[v4.10.27] index.html: CSP script-src에 https://cdn.jsdelivr.net과 'wasm-unsafe-eval' 추가(WASM 인스턴스화에 필수, 없으면 브라우저가 WebAssembly.instantiate를 차단함)",
+        "[v4.10.27] js/app.js: FORMAT_INFO.hwp 품질 ★☆☆→★★☆, desc/tech/features/limits를 HWP5 텍스트 추출 지원 기준으로 갱신. QUALITY_ESTIMATES.hwp conversion 25→55, success 45→75, risk 높음→중간. QUALITY_HISTORY 새 항목(v4.10.27) 추가",
+        "[v4.10.27] tests/golden.js: validateRejectedInputs()에 512바이트 이상이지만 유효하지 않은 HWP5 버퍼 케이스 추가 — 실제 WASM 로딩·열기 실패 경로까지 검증(기존 8바이트 케이스는 크기 사전 거부 경로만 검증)",
+        "[v4.10.27] format_conversion_playbook.md: HWP/HWPX 섹션에 @rhwp/core 도입 배경·보존 수준·주의사항 갱신"
+      ]
+    },
     {
       "version": "4.10.26",
       "date": "2026-07-01",
