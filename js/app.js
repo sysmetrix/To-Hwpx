@@ -1984,22 +1984,9 @@ const ADMIN_ACCESS_KEY = 'tohwpx_admin_access';
 const LEGACY_LAB_STATE_KEY = 'tohwpx_lab';
 const LEGACY_LAB_ACCESS_KEY = 'tohwpx_lab_access';
 const ADMIN_FEATURES = [
-    {
-        id: 'paste_preview',
-        label: '직접 입력 미리보기',
-        status: '실험',
-        desc: '붙여넣은 내용을 변환 전 IR 기반 HTML 미리보기로 확인합니다.',
-        defaultOn: true,
-    },
-    {
-        id: 'html_actions',
-        label: 'HTML 복사/다운로드',
-        status: '실험',
-        desc: '직접 입력 미리보기 HTML을 복사하거나 .html 파일로 내려받습니다.',
-        defaultOn: true,
-    },
     // ir_preanalysis → v4.9.5부터 정식 공개, ADMIN_FEATURES에서 제거
     // format_quality → v4.9.5부터 정식 공개, ADMIN_FEATURES에서 제거
+    // paste_preview, html_actions → v4.10.6부터 정식 공개, ADMIN_FEATURES에서 제거
 ];
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -2301,7 +2288,6 @@ function bindLabControl() {
             const enabled = btn.getAttribute('aria-pressed') === 'true';
             setAdminFeatureEnabled(id, !enabled);
             renderChangelogContent('admin');
-            applyAdminFeatureVisibility();
         });
     });
     bindReleaseGatePanel();
@@ -2360,19 +2346,10 @@ function initInputMode() {
     initPasteHtmlMenu();
     document.getElementById('copy-paste-html')?.addEventListener('click', copyPasteHtml);
     document.getElementById('download-paste-html')?.addEventListener('click', downloadPasteHtml);
-    applyAdminFeatureVisibility();
     renderPastePreview();
 }
-
-function applyAdminFeatureVisibility() {
-    const previewPanel = document.querySelector('.paste-preview-panel');
-    const previewOn = isAdminMode() && isAdminFeatureEnabled('paste_preview');
-    if (previewPanel) previewPanel.hidden = !previewOn;
-
-    const htmlOn = isAdminMode() && isAdminFeatureEnabled('html_actions');
-    const htmlMenu = document.querySelector('.paste-html-menu');
-    if (htmlMenu) htmlMenu.hidden = !htmlOn;
-}
+// 직접 입력 미리보기(paste_preview)와 HTML 복사/다운로드(html_actions)는
+// v4.10.6부터 정식 공개되어 항상 노출된다(더 이상 admin 게이트 대상 아님).
 
 const PASTE_FORMAT_HELP = {
     md:   'ChatGPT·Claude 등 AI 채팅 답변을 그대로 붙여넣으면 제목·목록·표·강조가 모두 살아납니다.',
@@ -2473,7 +2450,6 @@ function summarizeIr(ir) {
 }
 
 function renderPastePreview() {
-    if (!isAdminFeatureEnabled('paste_preview')) return;
     const output = document.getElementById('paste-preview-output');
     const status = document.getElementById('paste-preview-status');
     const ta = document.getElementById('paste-input');

@@ -1,6 +1,19 @@
 {
-  "current": "4.10.5",
+  "current": "4.10.6",
   "versions": [
+    {
+      "version": "4.10.6",
+      "date": "2026-07-01",
+      "user": [
+        "직접 입력 탭의 실시간 미리보기와 HTML 복사/다운로드 메뉴를 이제 누구나 사용할 수 있습니다."
+      ],
+      "dev": [
+        "[v4.10.6] js/app.js: ADMIN_FEATURES에서 paste_preview/html_actions 제거 — 정식 공개 게이트(golden/문구 정합성) 통과 처리, 한컴 시각 확인은 신규 HWPX 생성 경로가 없어 N/A로 판단",
+        "[v4.10.6] js/app.js: applyAdminFeatureVisibility() 및 관련 admin 게이트 3곳 제거, renderPastePreview()가 관리자 여부와 무관하게 항상 렌더링",
+        "[v4.10.6] tests/golden.js: 일반 모드에서 미리보기 패널·HTML 메뉴 노출 검증으로 전환, ADMIN_FEATURES 빈 배열 시 기능 토글 미렌더링 확인으로 교체",
+        "[v4.10.6] AGENTS.md/qa/release-qa.md/format_conversion_playbook.md: 정식 공개 반영 문구 갱신"
+      ]
+    },
     {
       "version": "4.10.5",
       "date": "2026-07-01",

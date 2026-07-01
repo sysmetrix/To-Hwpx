@@ -581,8 +581,16 @@ async function validateDirectInput(page) {
   await page.waitForFunction(() => window.__appReady, null, { timeout: 30000 });
   assert(await page.locator('.input-mode-tabs').isVisible(),
     'direct: 일반 사용자에게 직접 입력 탭이 보이지 않음 (v4.8.3 베타 공개)');
-  assert(!await page.locator('.paste-preview-panel:not([hidden])').count(),
-    'direct: 일반 모드에서 미리보기 패널이 노출됨 (관리자 전용)');
+  assert(await page.locator('.paste-preview-panel:not([hidden])').count() === 1,
+    'direct: 일반 모드에서 미리보기 패널이 노출되지 않음 (v4.10.6부터 정식 공개)');
+  await page.locator('#mode-paste').click();
+  await page.locator('.paste-format-btn[data-paste-format="md"]').click();
+  await page.locator('#paste-input').fill('# 일반 모드 미리보기\n\n본문 내용');
+  await page.waitForFunction(() => document.querySelector('#paste-preview-status')?.textContent.includes('MD 해석 완료'));
+  assert((await page.locator('#paste-preview-output').textContent()).includes('일반 모드 미리보기'),
+    'direct: 일반 모드에서 직접 입력 미리보기가 동작하지 않음 (v4.10.6부터 정식 공개)');
+  assert(await page.locator('#paste-html-action').isVisible(),
+    'direct: 일반 모드에서 HTML 복사/다운로드 버튼이 노출되지 않음 (v4.10.6부터 정식 공개)');
   await page.locator('#open-changelog').click();
   assert(!(await page.locator('#changelog-modal').isVisible()),
     'admin: 일반 모드에서 버전 클릭으로 업데이트 내역이 열림');
@@ -711,18 +719,10 @@ async function validateDirectInput(page) {
   await page.locator('.changelog-tab[data-tab="admin"]').click();
   assert(await page.locator('[data-lab-toggle]').getAttribute('aria-pressed') === 'true',
     'admin: 호환용 ?lab=1 후 관리자 토글 상태가 켜짐으로 표시되지 않음');
-  // 개별 기능 토글이 실제로 켜고 꺼지는지 — isAdminMode 부수효과로 즉시 리셋되던 회귀 방지
-  // direct_input은 v4.8.3 공개 이후 ADMIN_FEATURES에서 제거됨 → paste_preview로 검사
-  const featBtn = page.locator('.admin-feature-toggle[data-admin-feature="paste_preview"]');
-  const featBefore = await featBtn.getAttribute('aria-pressed');
-  await featBtn.click();
-  await page.waitForTimeout(150);
-  const featAfter = await featBtn.getAttribute('aria-pressed');
-  const featLs = await page.evaluate(() => localStorage.getItem('tohwpx_feature_paste_preview'));
-  assert(featBefore === 'true' && featAfter === 'false' && featLs === '0',
-    'admin: 기능 토글 클릭이 반영되지 않음(isAdminMode 부수효과로 리셋되는 회귀)');
-  await featBtn.click();   // 원복
-  await page.waitForTimeout(100);
+  // paste_preview/html_actions는 v4.10.6부터 정식 공개되어 ADMIN_FEATURES가 비어있음
+  // → 개별 기능 토글 목록 자체가 렌더링되지 않는 것을 확인
+  assert(await page.locator('.admin-feature-toggle').count() === 0,
+    'admin: ADMIN_FEATURES가 비었는데 기능 토글이 렌더링됨');
   await page.locator('[data-lab-toggle]').click();
   await page.waitForLoadState('domcontentloaded');
   // 직접 입력 탭은 v4.8.3부터 일반 공개 — 관리자 모드 해제 후에도 항상 노출
