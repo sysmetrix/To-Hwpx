@@ -1192,14 +1192,6 @@ a:hover { text-decoration: underline; }
     font-weight: 700;
     margin-top: 2px;
 }
-.card-loss-preview {
-    width: 100%;
-    margin-top: 8px;
-    color: var(--c-text-muted);
-    font-size: 0.72rem;
-    line-height: 1.35;
-}
-
 /* 상태 배지 */
 .card-badge {
     font-size: 0.72rem;

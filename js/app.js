@@ -1401,7 +1401,6 @@ function decorateFormatCard(card) {
     const ext = card.dataset.ext || '';
     const info = getFormatInfoForExt(ext);
     if (!info) return;
-    const summary = getConversionSummaryForExt(ext);
     const badge = card.querySelector('.card-badge');
     if (badge && info.available && !info.badge) badge.textContent = '입력 가능';
     const qualityEl = card.querySelector('.card-quality');
@@ -1410,12 +1409,6 @@ function decorateFormatCard(card) {
             <span class="card-quality-stars">${escHtml(info.quality || '')}</span>
             <span class="card-quality-label">${escHtml(qualityText(info.quality))}</span>
         `;
-    }
-    if (!card.querySelector('.card-loss-preview')) {
-        const preview = document.createElement('div');
-        preview.className = 'card-loss-preview';
-        preview.textContent = `제외 가능: ${summary.lossy}`;
-        card.appendChild(preview);
     }
 }
 
