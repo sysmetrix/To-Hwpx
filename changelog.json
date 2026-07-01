@@ -1,6 +1,14 @@
 {
-  "current": "4.10.3",
+  "current": "4.10.5",
   "versions": [
+    {
+      "version": "4.10.5",
+      "date": "2026-07-01",
+      "user": [],
+      "dev": [
+        "[v4.10.5] 관리자 모드: 정식 공개 게이트 구현 — ADMIN_FEATURES 각 항목에 golden/한컴 시각/QA 회귀/사용자 문구 4단계 체크리스트 추가. 모두 통과 시 '정식 공개 가능' 배너 표시. renderReleaseGatePanel()/bindReleaseGatePanel() + GATE_CHECKS 상수 + gate-* CSS. 추천 실험 기능 목록에서 '정식 공개 게이트 후보' 항목 제거(구현 완료)."
+      ]
+    },
     {
       "version": "4.10.3",
       "date": "2026-07-01",

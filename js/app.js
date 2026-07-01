@@ -2002,6 +2002,54 @@ const ADMIN_FEATURES = [
     // format_quality → v4.9.5부터 정식 공개, ADMIN_FEATURES에서 제거
 ];
 
+// ─────────────────────────────────────────────────────────────────────────
+// [정식 공개 게이트]
+//   ADMIN_FEATURES의 베타/실험 기능이 정식 공개 전환 전에 통과해야 할 체크리스트.
+//   localStorage key: tohwpx_gate_{featureId}_{checkId} = '1' | '0'
+// ─────────────────────────────────────────────────────────────────────────
+const GATE_CHECKS = [
+    {
+        id: 'golden',
+        label: 'Golden/Gate 자동 테스트',
+        desc: 'node qa/gate.js 및 npm run test:golden 통과 확인',
+        auto: true,
+    },
+    {
+        id: 'hancom',
+        label: '한컴 시각 확인',
+        desc: '한컴 한글에서 직접 열어 렌더링·서식·그림 시각 확인',
+        auto: false,
+    },
+    {
+        id: 'regression',
+        label: 'QA 회귀 시나리오',
+        desc: 'qa/release-qa.md 체크리스트 전 항목 수동 확인',
+        auto: false,
+    },
+    {
+        id: 'docs',
+        label: '사용자 문구 갱신',
+        desc: 'FORMAT_INFO·결과 카드·changelog 사용자 항목이 서로 같은 말을 하는지 확인',
+        auto: false,
+    },
+];
+
+function gateCheckKey(featureId, checkId) {
+    return `tohwpx_gate_${featureId}_${checkId}`;
+}
+
+function isGateCheckPassed(featureId, checkId) {
+    try { return localStorage.getItem(gateCheckKey(featureId, checkId)) === '1'; } catch { return false; }
+}
+
+function setGateCheckPassed(featureId, checkId, passed) {
+    try { localStorage.setItem(gateCheckKey(featureId, checkId), passed ? '1' : '0'); } catch {}
+}
+
+function isGateAllPassed(featureId) {
+    return GATE_CHECKS.every(c => isGateCheckPassed(featureId, c.id));
+}
+
 function parseModeFlag(value) {
     const v = (value || '').toLowerCase();
     return v !== '0' && v !== 'off' && v !== 'false';
@@ -2160,6 +2208,57 @@ function renderImplementedFeaturePanel() {
     `;
 }
 
+function renderReleaseGatePanel() {
+    if (!canManageAdmin() || ADMIN_FEATURES.length === 0) return '';
+    const items = ADMIN_FEATURES.map(feature => {
+        const allPassed = isGateAllPassed(feature.id);
+        const passCount = GATE_CHECKS.filter(c => isGateCheckPassed(feature.id, c.id)).length;
+        const checks = GATE_CHECKS.map(check => {
+            const passed = isGateCheckPassed(feature.id, check.id);
+            return `
+                <li class="gate-check-item${passed ? ' gate-check-item--done' : ''}">
+                    <label class="gate-check-label">
+                        <input type="checkbox" class="gate-check-input"
+                               data-gate-feature="${escHtml(feature.id)}"
+                               data-gate-check="${escHtml(check.id)}"
+                               ${passed ? 'checked' : ''}>
+                        <span class="gate-check-text">
+                            <b>${escHtml(check.label)}</b>
+                            <span>${escHtml(check.desc)}</span>
+                        </span>
+                    </label>
+                </li>
+            `;
+        }).join('');
+        return `
+            <li class="gate-feature-item${allPassed ? ' gate-feature-item--ready' : ''}">
+                <div class="gate-feature-header">
+                    <strong>${escHtml(feature.label)}</strong>
+                    <span class="gate-progress${allPassed ? ' gate-progress--done' : ''}">
+                        ${allPassed ? '정식 공개 가능 ✓' : `${passCount} / ${GATE_CHECKS.length} 통과`}
+                    </span>
+                </div>
+                <ul class="gate-check-list">${checks}</ul>
+                ${allPassed ? `
+                    <div class="gate-ready-banner">
+                        <strong>모든 기준 통과 — 정식 공개 전환 가능</strong>
+                        <span>ADMIN_FEATURES에서 제거 후 changelog 사용자 항목·FORMAT_INFO·UI 문구를 함께 반영하세요.</span>
+                    </div>
+                ` : ''}
+            </li>
+        `;
+    }).join('');
+    return `
+        <section class="changelog-gate-panel" aria-label="정식 공개 게이트">
+            <div class="changelog-experiment-head">
+                <strong>정식 공개 게이트</strong>
+                <span>베타 → 정식 공개 전환 체크리스트</span>
+            </div>
+            <ul class="gate-feature-list">${items}</ul>
+        </section>
+    `;
+}
+
 function renderExperimentPanel() {
     return `
         <section class="changelog-experiment-panel" aria-label="추천 실험 기능">
@@ -2171,14 +2270,13 @@ function renderExperimentPanel() {
                 <li><b>원본 서식 우선 모드 고도화 <em>후보</em></b><span>DOCX·HTML 입력 시 원본 레이아웃을 최대한 보존하는 고충실도 변환 모드를 별도로 제공합니다.</span></li>
                 <li><b>상세 구조 진단 <em>후보</em></b><span>HWPX 패키지, XML, IDRef, 링크 필드, 그림 참조 문제를 관리자용으로 더 자세히 확인합니다.</span></li>
                 <li><b>결과 카드 문구 실험 <em>후보</em></b><span>성공·경고·실패 안내 문구를 비교해 사용자가 다음 행동을 더 빨리 고르게 합니다.</span></li>
-                <li><b>정식 공개 게이트 <em>후보</em></b><span>베타 기능이 사용자 화면에 노출되기 전 한컴 시각 확인과 golden 기준을 함께 통과시키는 체크를 추가합니다.</span></li>
             </ul>
         </section>
     `;
 }
 
 function renderAdminPanel() {
-    return `${renderLabControl()}${renderImplementedFeaturePanel()}${renderExperimentPanel()}`;
+    return `${renderLabControl()}${renderImplementedFeaturePanel()}${renderReleaseGatePanel()}${renderExperimentPanel()}`;
 }
 
 function bindLabControl() {
@@ -2204,6 +2302,18 @@ function bindLabControl() {
             setAdminFeatureEnabled(id, !enabled);
             renderChangelogContent('admin');
             applyAdminFeatureVisibility();
+        });
+    });
+    bindReleaseGatePanel();
+}
+
+function bindReleaseGatePanel() {
+    document.querySelectorAll('.gate-check-input').forEach(input => {
+        input.addEventListener('change', () => {
+            const featureId = input.dataset.gateFeature;
+            const checkId = input.dataset.gateCheck;
+            setGateCheckPassed(featureId, checkId, input.checked);
+            renderChangelogContent('admin');
         });
     });
 }

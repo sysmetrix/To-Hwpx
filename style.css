@@ -4589,6 +4589,124 @@ a:hover { text-decoration: underline; }
     opacity: 0.55;
     cursor: not-allowed;
 }
+
+/* ── 정식 공개 게이트 패널 ──────────────────────────────────── */
+.changelog-gate-panel {
+    margin: 0 16px 16px;
+    padding: 14px;
+    border: 1px solid var(--c-border);
+    border-radius: var(--radius-md);
+    background: var(--c-surface);
+}
+.gate-feature-list {
+    display: grid;
+    gap: 12px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+.gate-feature-item {
+    padding: 12px;
+    border: 1px solid var(--c-border);
+    border-radius: var(--radius-sm);
+    background: var(--c-surface-alt);
+    transition: border-color var(--trans);
+}
+.gate-feature-item--ready {
+    border-color: var(--c-success, #22c55e);
+    background: var(--c-success-light, #f0fdf4);
+}
+.gate-feature-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+.gate-feature-header strong {
+    color: var(--c-text);
+    font-size: 0.82rem;
+}
+.gate-progress {
+    flex-shrink: 0;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--c-surface-alt);
+    color: var(--c-text-muted);
+    font-size: 0.7rem;
+    font-weight: 700;
+    line-height: 1.35;
+    white-space: nowrap;
+}
+.gate-progress--done {
+    background: var(--c-success-light, #f0fdf4);
+    color: var(--c-success, #16a34a);
+}
+.gate-check-list {
+    display: grid;
+    gap: 5px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+.gate-check-item {
+    padding: 7px 9px;
+    border-radius: var(--radius-sm);
+    background: var(--c-surface);
+    border: 1px solid var(--c-border);
+}
+.gate-check-item--done {
+    background: var(--c-success-light, #f0fdf4);
+    border-color: var(--c-success, #22c55e);
+}
+.gate-check-label {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: start;
+    gap: 8px;
+    cursor: pointer;
+}
+.gate-check-input {
+    margin-top: 2px;
+    flex-shrink: 0;
+    accent-color: var(--c-success, #22c55e);
+    width: 15px;
+    height: 15px;
+    cursor: pointer;
+}
+.gate-check-text {
+    display: grid;
+    gap: 1px;
+}
+.gate-check-text b {
+    color: var(--c-text);
+    font-size: 0.77rem;
+    font-weight: 600;
+}
+.gate-check-text span {
+    color: var(--c-text-sub);
+    font-size: 0.72rem;
+    line-height: 1.45;
+}
+.gate-ready-banner {
+    display: grid;
+    gap: 3px;
+    margin-top: 10px;
+    padding: 9px 11px;
+    border-radius: var(--radius-sm);
+    background: var(--c-success-light, #f0fdf4);
+    border: 1px solid var(--c-success, #22c55e);
+}
+.gate-ready-banner strong {
+    color: var(--c-success, #16a34a);
+    font-size: 0.78rem;
+}
+.gate-ready-banner span {
+    color: var(--c-text-sub);
+    font-size: 0.72rem;
+    line-height: 1.5;
+}
+
 .format-quality-intro,
 .quality-cadence,
 .quality-plan,
