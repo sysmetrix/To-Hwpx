@@ -1,6 +1,17 @@
 {
-  "current": "4.10.23",
+  "current": "4.10.24",
   "versions": [
+    {
+      "version": "4.10.24",
+      "date": "2026-07-01",
+      "user": [
+        "서비스명 표기 순서를 'TO HWPX - 한글로'(브랜드명 먼저)로 통일했습니다. 히어로 대제목과 '왜 To HWPX인가' 본문이 브라우저 탭 제목·공유 미리보기와 같은 순서로 바뀌었습니다."
+      ],
+      "dev": [
+        "[v4.10.24] index.html: 히어로 h1을 '한글로,<br>TO HWPX' → 'TO HWPX,<br>한글로'로 순서 변경(title/og/twitter/manifest.json은 이미 'To HWPX - 한글로' 순서라 변경 없음)",
+        "[v4.10.24] index.html: '왜 To HWPX인가' 탭 본문의 '한글로, To HWPX는' → 'To HWPX, 한글로는'으로 순서 변경(는 조사는 '한글로'가 모음으로 끝나 그대로 유지)"
+      ]
+    },
     {
       "version": "4.10.23",
       "date": "2026-07-01",
