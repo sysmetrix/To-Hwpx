@@ -3135,6 +3135,9 @@ a:hover { text-decoration: underline; }
     /* 푸터 단일 컬럼 */
     .footer-inner { grid-template-columns: 1fr; gap: 24px; }
     .footer-bottom { flex-direction: column; text-align: center; }
+
+    /* 배치 큐 칸반 보드 — 4열 → 2열 */
+    .file-queue-board { grid-template-columns: repeat(2, 1fr); }
 }
 
 /* ─────────────────────────────────────────────────────────────────
@@ -3226,6 +3229,9 @@ a:hover { text-decoration: underline; }
         justify-content: center;
         width: 100%;
     }
+
+    /* 배치 큐 칸반 보드 — 2열 → 1열(세로 스크롤) */
+    .file-queue-board { grid-template-columns: 1fr; }
 }
 
 /* ─────────────────────────────────────────────────────────────────
@@ -5329,26 +5335,78 @@ a:hover { text-decoration: underline; }
     transition: background var(--trans), border-color var(--trans), color var(--trans);
 }
 .file-queue-clear:hover { background: var(--c-primary-light); border-color: var(--c-primary); color: var(--c-primary); }
-.file-queue-list {
+/* 칸반 보드 — 대기/변환 중/완료/실패 4개 컬럼. 카드 이동은 실제 변환 진행 상태를 그대로 반영한다(수동 드래그 아님). */
+.file-queue-board {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    padding: 8px;
+}
+.fq-column {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    background: var(--c-surface);
+    border: 1px solid var(--c-border);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+}
+.fq-column-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    padding: 6px 9px;
+    font-size: var(--fs-xs);
+    font-weight: 700;
+    color: var(--c-text-sub);
+    border-bottom: 1px solid var(--c-border);
+}
+.fq-column[data-status="converting"] .fq-column-head { color: var(--c-primary); }
+.fq-column[data-status="done"]      .fq-column-head { color: var(--c-success); }
+.fq-column[data-status="error"]     .fq-column-head { color: var(--c-error); }
+.fq-column-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 100px;
+    background: var(--c-surface-alt);
+    font-size: var(--fs-2xs);
+}
+.fq-column-list {
     list-style: none;
     margin: 0;
-    padding: 4px;
+    padding: 6px;
+    min-height: 44px;
     max-height: 240px;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 6px;
+}
+.fq-column-empty {
+    color: var(--c-text-muted);
+    font-size: var(--fs-2xs);
+    padding: 4px 3px;
 }
 .file-queue-item {
     display: flex;
-    align-items: center;
-    gap: 9px;
+    flex-direction: column;
+    gap: 4px;
     padding: 7px 9px;
+    background: var(--c-surface-alt);
+    border: 1px solid var(--c-border);
     border-radius: var(--radius-sm);
-    font-size: 0.83rem;
+    font-size: var(--fs-sm);
 }
-.file-queue-item + .file-queue-item { border-top: 1px solid var(--c-border); }
-.file-queue-item.is-converting { background: var(--c-primary-light); }
+.file-queue-item.is-converting { background: var(--c-primary-light); border-color: var(--c-primary); }
+.file-queue-item.is-done, .file-queue-item.is-warn { border-color: var(--c-success); }
+.file-queue-item.is-error { border-color: var(--c-error); }
+.fq-row { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.fq-row:last-child { justify-content: space-between; }
 .fq-icon     { flex-shrink: 0; font-size: 1.05rem; line-height: 1; }
 .fq-fmt-icon { width: 20px; height: 20px; object-fit: contain; flex-shrink: 0; }
 .fq-name {

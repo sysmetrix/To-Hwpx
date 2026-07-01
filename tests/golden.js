@@ -1128,6 +1128,45 @@ async function validateRejectedInputs(page) {
   console.log(`PASS FAIL  ${cases.length} malformed/unsupported inputs rejected`);
 }
 
+async function validateBatchKanban(page) {
+  const baseUrl = `http://127.0.0.1:${PORT}/index.html`;
+  await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => window.JSZip && window.marked && window.XLSX && window.__appReady, null, { timeout: 30000 });
+
+  // setInputFiles는 경로와 buffer를 같은 배열에 섞을 수 없어 전부 buffer로 통일한다.
+  const files = [
+    { name: 'sample.md',   mimeType: 'text/markdown; charset=utf-8', buffer: fs.readFileSync(path.join(FIXTURES, 'sample.md')) },
+    { name: 'sample.html', mimeType: 'text/html; charset=utf-8',     buffer: fs.readFileSync(path.join(FIXTURES, 'sample.html')) },
+    { name: 'sample.csv',  mimeType: 'text/csv; charset=utf-8',      buffer: fs.readFileSync(path.join(FIXTURES, 'sample.csv')) },
+    { name: 'broken.json', mimeType: 'application/json',             buffer: Buffer.from('{"open":') },
+  ];
+  await page.setInputFiles('#file-input', files);
+  await page.waitForTimeout(300);
+
+  assert(await page.locator('.file-queue-board').isVisible(), 'batch: 배치 큐가 칸반 보드로 렌더링되지 않음');
+  const columnKeys = await page.locator('.fq-column').evaluateAll(cols => cols.map(c => c.dataset.status));
+  assert(JSON.stringify(columnKeys) === JSON.stringify(['pending', 'converting', 'done', 'error']),
+    'batch: 칸반 컬럼 순서가 대기/변환 중/완료/실패가 아님');
+  const pendingBefore = (await page.locator('.fq-column[data-status="pending"] .fq-column-count').textContent()).trim();
+  assert(pendingBefore === '4', 'batch: 변환 전 대기 컬럼 카운트가 파일 개수(4)와 다름');
+
+  await page.locator('#convert-btn').click();
+  await page.locator('.batch-result-head').waitFor({ state: 'visible', timeout: 30000 });
+  await page.waitForTimeout(300);
+
+  const doneCount    = (await page.locator('.fq-column[data-status="done"] .fq-column-count').textContent()).trim();
+  const errorCount   = (await page.locator('.fq-column[data-status="error"] .fq-column-count').textContent()).trim();
+  const pendingAfter = (await page.locator('.fq-column[data-status="pending"] .fq-column-count').textContent()).trim();
+  const runningAfter = (await page.locator('.fq-column[data-status="converting"] .fq-column-count').textContent()).trim();
+  assert(doneCount === '3', `batch: 성공 3개가 완료 컬럼으로 이동하지 않음 (완료=${doneCount})`);
+  assert(errorCount === '1', `batch: 실패 1개가 실패 컬럼으로 이동하지 않음 (실패=${errorCount})`);
+  assert(pendingAfter === '0' && runningAfter === '0', 'batch: 변환 완료 후에도 대기/변환 중 컬럼에 항목이 남음');
+  assert(await page.locator('.fq-column[data-status="error"] .file-queue-item.is-error').count() === 1,
+    'batch: 실패 카드에 is-error 클래스가 반영되지 않음');
+
+  console.log('PASS BATCH 칸반 보드(대기→완료/실패 실시간 이동)');
+}
+
 async function validatePaperMatrix(page) {
   const baseUrl = `http://127.0.0.1:${PORT}/index.html`;
   const papers = {
@@ -1588,6 +1627,7 @@ async function validatePretendardCompatibility(page) {
     await validateXssHardening(page);
     await validateCommercialUx(page);
     await validateRejectedInputs(page);
+    await validateBatchKanban(page);
     await validatePaperMatrix(page);
     await validateLineSpacingOption(page);
     await validateDetailSettingsUx(page);

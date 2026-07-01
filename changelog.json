@@ -1,6 +1,20 @@
 {
-  "current": "4.10.15",
+  "current": "4.10.16",
   "versions": [
+    {
+      "version": "4.10.16",
+      "date": "2026-07-01",
+      "user": [
+        "여러 파일을 한 번에 변환할 때 파일 목록이 대기·변환 중·완료·실패 4단계 칸반 보드로 표시됩니다. 카드는 실제 변환 진행에 따라 컬럼을 자동으로 이동합니다."
+      ],
+      "dev": [
+        "[v4.10.16] js/app.js: renderQueueList()가 flat list 대신 칸반 보드(QUEUE_COLUMNS: pending/converting/done/error)를 렌더링하도록 재구성. done/warn은 '완료' 컬럼에 함께 묶고 배지로만 구분(queueColumnKey())",
+        "[v4.10.16] js/app.js: renderQueueCard() 분리 — 카드 내부를 2행(아이콘+이름+제거 / 크기+상태배지) 구조로 재배치해 좁은 컬럼 폭에서도 겹치지 않게 함",
+        "[v4.10.16] style.css: .file-queue-board 그리드(4열→2열→1열 반응형), .fq-column 컬럼 헤더에 상태별 색상(대기=중립, 변환 중=primary, 완료=success, 실패=error) 적용",
+        "[v4.10.16] tests/golden.js: validateBatchKanban() 신규 — 배치 큐 칸반 컬럼 구조와 변환 전/후 컬럼별 카운트(대기→완료/실패 이동)를 검증. 기존에 배치 큐 UI 자동 테스트가 전혀 없던 공백을 메움",
+        "[v4.10.16] qa/release-qa.md: 다중 파일 드롭 체크리스트를 칸반 보드 기준으로 갱신"
+      ]
+    },
     {
       "version": "4.10.15",
       "date": "2026-07-01",

@@ -489,6 +489,39 @@ function updateDropZoneMulti(n) {
 }
 
 /** 선택한 파일 목록(배치) 렌더 — 2개 이상일 때만 표시 */
+/** 큐 상태 → 칸반 컬럼 키. done/warn은 "완료" 컬럼에 함께 묶고 배지로만 구분한다. */
+function queueColumnKey(status) {
+    return status === 'warn' ? 'done' : status;
+}
+
+const QUEUE_COLUMNS = [
+    { key: 'pending',    label: '대기' },
+    { key: 'converting', label: '변환 중' },
+    { key: 'done',       label: '완료' },
+    { key: 'error',      label: '실패' },
+];
+
+function renderQueueCard(item, canEdit) {
+    return `
+        <li class="file-queue-item is-${item.status}" data-id="${item.id}">
+            <div class="fq-row">
+                ${getFormatIconHtml(item.ext, 'fq-fmt-icon')}
+                <span class="fq-name" title="${escHtml(item.file.name)}">${escHtml(item.file.name)}</span>
+                ${canEdit ? `<button type="button" class="fq-remove" data-id="${item.id}" aria-label="${escHtml(item.file.name)} 제거">✕</button>` : ''}
+            </div>
+            <div class="fq-row">
+                <span class="fq-size">${formatBytes(item.file.size)}</span>
+                <span class="fq-status">${queueStatusLabel(item)}</span>
+            </div>
+        </li>
+    `;
+}
+
+/**
+ * 배치 큐를 칸반 보드로 그린다(대기/변환 중/완료/실패 4개 컬럼).
+ * 실제 변환 진행에 따라 item.status가 바뀔 때마다 이 함수가 다시 호출되므로,
+ * 카드는 사람이 손으로 옮기는 게 아니라 실제 파이프라인 진행에 맞춰 컬럼을 이동한다.
+ */
 function renderQueueList() {
     const box = document.getElementById('file-queue');
     if (!box) return;
@@ -499,23 +532,30 @@ function renderQueueList() {
     }
     box.hidden = false;
     const canEdit = !state.isConverting;
-    // eslint-disable-next-line no-unsanitized/property -- escHtml() applied to all user strings (file.name); queue.length and canEdit are not user strings
+    const columns = QUEUE_COLUMNS.map(col => ({
+        ...col,
+        items: state.queue.filter(item => queueColumnKey(item.status) === col.key),
+    }));
+    // eslint-disable-next-line no-unsanitized/property -- escHtml() applied to all user strings (file.name); queue.length/canEdit/column labels are not user strings
     box.innerHTML = `
         <div class="file-queue-head">
             <strong>선택한 파일 ${state.queue.length}개</strong>
             ${canEdit ? '<button type="button" class="file-queue-clear" id="queue-clear-btn">모두 비우기</button>' : ''}
         </div>
-        <ul class="file-queue-list">
-            ${state.queue.map(item => `
-                <li class="file-queue-item is-${item.status}" data-id="${item.id}">
-                    ${getFormatIconHtml(item.ext, 'fq-fmt-icon')}
-                    <span class="fq-name" title="${escHtml(item.file.name)}">${escHtml(item.file.name)}</span>
-                    <span class="fq-size">${formatBytes(item.file.size)}</span>
-                    <span class="fq-status">${queueStatusLabel(item)}</span>
-                    ${canEdit ? `<button type="button" class="fq-remove" data-id="${item.id}" aria-label="${escHtml(item.file.name)} 제거">✕</button>` : ''}
-                </li>
+        <div class="file-queue-board">
+            ${columns.map(col => `
+                <div class="fq-column" data-status="${col.key}">
+                    <div class="fq-column-head">
+                        <span>${col.label}</span>
+                        <span class="fq-column-count">${col.items.length}</span>
+                    </div>
+                    <ul class="fq-column-list">
+                        ${col.items.map(item => renderQueueCard(item, canEdit)).join('')
+                            || '<li class="fq-column-empty">없음</li>'}
+                    </ul>
+                </div>
             `).join('')}
-        </ul>
+        </div>
     `;
     if (canEdit) {
         box.querySelector('#queue-clear-btn')?.addEventListener('click', () => { if (!state.isConverting) clearSelectedFile(); });
