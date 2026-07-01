@@ -10,8 +10,9 @@
 - `docx_image_test.docx` — **본문 이미지(PNG)** 가 든 DOCX (그림 hp:pic·content.hpf 선언·BinData 회귀 방지 — 한글에서 열리는지 확인)
 - `md_link_image_test.md` — Markdown 본문/굵은 링크, 위험 URL 비활성화, data URL 그림 4단 연결, 상대경로 이미지 fallback 회귀
 - `../samples/*.hwpx` — 위 입력의 변환 통과본(참고용, 한컴오피스로 직접 열어 시각 확인)
-- 자동 검증: 저장소 루트에서 `node qa/gate.js qa/fixtures/md_hwpx_test.md` 및 `node qa/gate.js qa/fixtures/md_link_image_test.md` (①~⑧ 모두 PASS면 exit 0). 사용법은 `qa/gate.js` 상단 주석 참고.
+- 자동 검증: 저장소 루트에서 `node qa/gate.js qa/fixtures/md_hwpx_test.md` 및 `node qa/gate.js qa/fixtures/md_link_image_test.md` (①~⑨ 모두 PASS면 exit 0). 사용법은 `qa/gate.js` 상단 주석 참고.
   - ⑥ 표 격자 무결성: 모든 표의 (행,열)이 span 반영 시 정확히 1회 덮이는지 검사 — 중첩 표 누수·들쭉날쭉한 행이 만드는 "한컴이 안 열리는 깨진 표" 차단
+  - ⑨ ZIP CRC32 무결성: `JSZip.loadAsync(buf, {checkCRC32:true})`로 모든 엔트리를 실제로 압축 해제해 저장된 CRC32와 대조 — well-formed 검사보다 먼저 생성 과정의 손상을 잡는다(python-hwpx의 `archive.testzip()` 대조 확인)
 
 ## 포맷별 수동 케이스
 

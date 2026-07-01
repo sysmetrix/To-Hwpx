@@ -1,6 +1,17 @@
 {
-  "current": "4.10.28",
+  "current": "4.10.29",
   "versions": [
+    {
+      "version": "4.10.29",
+      "date": "2026-07-01",
+      "user": [],
+      "dev": [
+        "[v4.10.29] qa/gate.js: 게이트 ⑨ 신규 — JSZip.loadAsync(buf, {checkCRC32:true})로 생성된 HWPX의 모든 ZIP 엔트리를 실제 압축 해제해 저장된 CRC32와 대조. well-formed 검사보다 먼저 ZIP 생성 과정의 손상을 잡는다(python-hwpx repair.py의 archive.testzip()과 같은 목적, GitHub 리서치로 확인)",
+        "[v4.10.29] AGENTS.md, qa/fixtures/README.md: 게이트 설명을 ①~⑧에서 ①~⑨로 갱신",
+        "[v4.10.29] hwpx-public-doc/references/hwpx_rendering_gotchas.md: airmang/python-hwpx를 정답 확인처 목록에 추가 — 공식 OWPML 스키마보다 호환 구현체(2011 hh/hc 네임스페이스)를 신뢰하는 이 저장소의 원칙을 독립적으로 교차검증한 근거로 기록",
+        "[v4.10.29] 조사 결론: python-hwpx의 XSD 스키마 검증 방식 자체는 이식하지 않음 — 그 프로젝트도 공식 스키마 위반을 하드 에러가 아닌 lint로 낮춰 취급할 만큼 스키마를 신뢰하지 않기 때문. 기존 qa/gate.js의 hand-rolled 불변식 검사(IDRef/itemCnt/표 격자/그림 참조/링크 필드)가 더 실용적이라는 판단을 유지하고, CRC32처럼 방식과 무관하게 유효한 안전장치만 추가했다."
+      ]
+    },
     {
       "version": "4.10.28",
       "date": "2026-07-01",
