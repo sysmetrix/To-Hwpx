@@ -1,6 +1,18 @@
 {
-  "current": "4.10.25",
+  "current": "4.10.26",
   "versions": [
+    {
+      "version": "4.10.26",
+      "date": "2026-07-01",
+      "user": [
+        "모바일(iOS Safari)에서 문서 제목, 여백 숫자 입력, 직접 입력 텍스트 상자를 탭할 때 화면이 저절로 확대되던 문제가 해결되었습니다."
+      ],
+      "dev": [
+        "[v4.10.26] style.css: @media (max-width: 768px)에 .form-row select/input[text|number], .margin-item > input[number] font-size를 16px로 오버라이드 추가, .paste-textarea는 동일 특이도 소스 순서 문제(뒤에 나오는 기본 규칙이 이겨 무효화됨)로 정의부 바로 뒤에 별도 @media 블록 추가 — iOS Safari는 포커스되는 입력의 computed font-size가 16px 미만이면 자동 확대(zoom)한다. 데스크톱 값(0.9rem/0.82rem/0.86rem)은 그대로 유지",
+        "[v4.10.26] tests/golden.js: validateMobileFormFontSize() 신규 — 390px 뷰포트에서 #font-size(select)/#margin-top(number input)/#paste-input(textarea) computed font-size ≥16px 검증, validateDetailSettingsUx() 다음 순서로 실행",
+        "[v4.10.26] qa/release-qa.md: '33. v4.10.26 모바일 폼 입력 자동 확대 방지' 섹션 추가 — 원인/수정 방향과 iPhone Safari 실기기 확인 체크리스트 기록"
+      ]
+    },
     {
       "version": "4.10.25",
       "date": "2026-07-01",

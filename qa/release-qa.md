@@ -498,3 +498,19 @@ Scope: static browser-only conversion flow from file selection to HWPX download.
 - [ ] 직접 입력 미리보기 HTML 다운로드 파일이 브라우저 다운로드 목록에서 `.html`로 보이는지 확인
 - [ ] `?admin=1` 관리자 모드 탭에서 구현된 기능 토글이 최신 스위치형으로 보이는지 확인
 - [ ] 캐시를 비우고 `📋 v4.6.25` 확인
+
+## 33. v4.10.26 모바일 폼 입력 자동 확대 방지
+
+원인: iOS Safari는 포커스되는 `input`/`select`/`textarea`의 computed font-size가 16px 미만이면 페이지를 자동 확대한다. `.form-row select/input`(14.4px), `.margin-item input[number]`(13.12px), `.paste-textarea`(13.76px)가 모두 기준 미달이었다.
+
+수정: 768px 이하 미디어쿼리에서 위 세 그룹만 `font-size: 16px`로 오버라이드(데스크톱 값은 유지).
+
+자동 승인 기준:
+
+- [x] `npm run test:golden` PASS — `validateMobileFormFontSize()` 신규: 390px 뷰포트에서 옵션 select(`#font-size`)·여백 입력(`#margin-top`)·직접 입력 textarea(`#paste-input`) computed font-size ≥16px 확인
+- [x] 데스크톱 폭(1280px)에서 동일 요소 font-size가 기존 값(0.9rem/0.82rem/0.86rem)으로 유지되어 시각 회귀 없음
+
+수동 확인 기준:
+
+- [ ] iPhone Safari(또는 시뮬레이터) 390px에서 문서 제목 직접 입력, 여백 숫자 입력, 직접 입력(붙여넣기) textarea를 각각 탭했을 때 페이지가 자동 확대되지 않는지 확인
+- [ ] 캐시를 비우고 `📋 v4.10.26` 확인
