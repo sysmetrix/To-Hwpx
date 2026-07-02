@@ -37,6 +37,7 @@
 - 부분 롤백을 쉽게 하려면 파서 변경, HWPX XML 생성 변경, 관리자 UI/품질 문구 변경을 커밋 메시지와 테스트에서 분리해 추적한다.
 
 검증:
+
 - `tests/golden.js`의 관리자 회귀는 직접 입력 탭 일반 모드 노출, `?admin=1` 미리보기·HTML 메뉴 노출, `?lab=1` 호환, 관리자 모드 토글, 추천 실험 패널, 포맷 품질 평가 탭의 핵심 문구를 확인한다.
 - 품질 숫자나 개선 계획을 바꾸면 관련 포맷 fixture와 이 문서의 제한사항 설명이 같은 방향인지 확인한다.
 
@@ -51,6 +52,7 @@
 - JSON처럼 형식 오류가 생길 수 있는 입력은 변환 전 미리보기 패널에서 오류를 보여주고, 실제 변환 버튼은 기존 검증/실패 카드 흐름을 유지한다.
 
 검증:
+
 - 직접 입력 미리보기 회귀는 Markdown 제목·문단·표가 미리보기 영역에 표시되는지, HTML 메뉴에 복사/다운로드 선택지가 있는지 확인한다.
 - 파일 입력과 직접 입력의 HWPX 본문·표·링크·이미지 개수 동등성 검사는 기존 `tests/golden.js` 기준을 유지한다.
 
@@ -59,6 +61,7 @@
 관련 코드: `initOptions()`, `updateAdvancedSettingsSummary()` in `js/app.js`; `buildHeaderXml()`, `buildSection()`, `buildTable()`, `buildParaRuns()`, `buildImageRun()` in `js/hwpx.js`
 
 목표:
+
 - 이 옵션들(원본 서식 처리·문단 간격·제목/표/링크·이미지·첫 제목 처리)은 `문서 세부 설정` 접힘 영역 안의 `본문 서식` 하위 블록(`.document-detail-settings`)에 모여 있다. 바깥 접힘 컨테이너 이름과 구분한다.
 - UI는 세그먼트 버튼(`.detail-field .seg-btn[data-seg-for][data-seg-value]`)이고, 값/state/localStorage의 단일 소스는 같은 `id`의 숨김 `<select class="sr-only">`다. 버튼 클릭은 `select.value`를 바꾸고 `change`를 디스패치하며, 활성 표시는 `syncDetailSegButtons()`가 select 값에 맞춘다(초기 로드·리셋 후 호출). 버튼 라벨은 짧게 줄여도 되지만 select의 `option` 텍스트(`큰 제목·굵게` 등)와 `value`는 변환 계약이므로 유지한다.
 - `원본 서식 처리`(style-policy)는 나머지 7개 옵션의 전제이므로 그리드 밖 상위 마스터(`.detail-field--master`)로 분리한다. golden `validateDetailSettingsUx`가 마스터 분리와 `.detail-settings-grid` 밖 위치를 검사한다.
@@ -83,7 +86,7 @@
 | 문단 앞/뒤 간격 | 간격 작게 / 기본 간격 / 간격 크게 | `compact` / `normal` / `relaxed` | `hh:paraPr`의 `hh:prev`, `hh:next` 값. 기본은 본문 아래 `850`, 제목 앞 `850`, 제목 뒤 `567`; 작게는 본문 아래 `283`; 크게는 본문 아래 `1134`, 제목 앞 `1134`, 제목 뒤 `850`. |
 | 제목 스타일 | 작은 제목 / 기본 제목 / 큰 제목·굵게 | `compact` / `standard` / `prominent` | `hh:charPr` 제목 크기. 기본 글꼴 pt 기준 H1은 `+4/+6/+8pt`, H2는 `+3/+4/+6pt`, H3는 `+1/+2/+3pt`; 제목은 기본적으로 bold. |
 | 표 스타일 | 기본 테두리 / 단순 테두리 / 머리행 음영 | `standard` / `plain` / `report` | `buildTable()`의 머리행 처리. `plain`은 머리행 bold/음영을 끄고, `report`는 머리행에 `EAF2FF` 배경 borderFill을 추가한다. 모든 표는 격자·병합·제목 행 반복 무결성을 유지해야 한다. |
-| 링크 표시 | 파란색+밑줄 / 검정 본문 / 텍스트+주소 | `blue` / `plain` / `url` | `buildParaRuns()`의 HYPERLINK 필드는 유지한다. `blue`는 동적 charPr로 파란 밑줄, `plain`은 일반 본문처럼 표시, `url`은 표시문자 뒤에 ` (URL)`을 붙인다. |
+| 링크 표시 | 파란색+밑줄 / 검정 본문 / 텍스트+주소 | `blue` / `plain` / `url` | `buildParaRuns()`의 HYPERLINK 필드는 유지한다. `blue`는 동적 charPr로 파란 밑줄, `plain`은 일반 본문처럼 표시, `url`은 표시문자 뒤에 `(URL)`을 붙인다. |
 | 이미지 최대 폭 | 본문의 50% / 75% / 본문 폭까지 | `50` / `75` / `100` | `buildImageRun()`의 `hp:curSz` 폭을 본문 폭 기준으로 제한한다. 원본 비율을 유지하며 0 또는 본문 폭 초과가 나오면 안 된다. |
 | 이미지 정렬 | 왼쪽 정렬 / 가운데 정렬 / 오른쪽 정렬 | `left` / `center` / `right` | 그림 위치의 `horzAlign`을 LEFT/CENTER/RIGHT로 기록한다. |
 | 첫 제목 본문 처리 | 본문 첫 제목 제거 / 본문 첫 제목 유지 | `remove` / `keep` | `applyDocumentTitlePolicy()`에서 자동 제목으로 쓴 첫 heading을 본문에서 제거하거나 유지한다. parser가 이미 title을 선점한 경우에도 같은 정책을 적용한다. |
@@ -91,6 +94,7 @@
 | 페이지 여백 | 위/아래/왼쪽/오른쪽/머리말/꼬리말 mm | `pageMargins` | `marginsMmToHwp()`로 HWPUNIT 변환 후 `hp:pagePr`와 내용 폭 계산에 반영한다. 미니맵은 실제 mm 비율에 맞춰 상하좌우 라벨과 본문 영역을 표시한다. |
 
 검증:
+
 - `tests/golden.js`의 `validateDetailSettingsUx()`는 세부 설정 컨트롤 존재, 결과 중심 라벨, 구분선 숨김/표시 XML, 여백 미니맵 라벨, 문단 간격/제목/표/링크/이미지/첫 제목 정책의 HWPX 반영을 함께 확인한다.
 - 세부 설정을 추가하거나 `value`를 바꾸면 `state`, localStorage key, reset 기본값, `buildHwpx()` 옵션 객체, changelog, 이 표, golden 검증을 동시에 갱신한다.
 - UI 라벨만 바꾸는 경우에도 사용자가 보는 라벨과 `updateAdvancedSettingsSummary()` 문구가 같은 의미인지 확인한다.
@@ -100,10 +104,12 @@
 관련 코드: `parseMd()`, `extractMarkdownTokens()`, `markdownInlineRuns()`, `processMdInlineBlocks()`, `resolveMarkdownAssets()` in `js/parsers.js`; `buildParaRuns()`, `buildImageRun()` in `js/hwpx.js`
 
 목표:
+
 - 현재 가장 안정적인 구조형 입력이다.
 - 제목, 문단, 목록, 표, 코드블록, 인용구, 클릭 가능한 본문 링크와 해결 가능한 이미지를 안정적으로 HWPX로 옮긴다.
 
 보존:
+
 - H1-H6 제목
 - 문단과 빈 줄
 - 순서/비순서 목록, 중첩 목록, task list
@@ -113,6 +119,7 @@
 - 인용문(왼쪽 강조선+옅은 배경)과 수평선
 
 주의:
+
 - `marked.lexer()` 경로가 우선이다. 실패하면 HTML 파서로 폴백한다.
 - marked가 구두점 인접 강조를 놓치는 경우가 있어 `splitInlineEmphasis()` 보정이 있다.
 - 작은따옴표(`'`)는 `hp:t` 본문에서 `&apos;`로 바꾸지 않고 문자 그대로 출력한다. XML 문법상 안전하며, 한컴에서 `&apos;`가 표시되지 않는 회귀를 막기 위한 처리다.
@@ -132,6 +139,7 @@
 - CORS로 바이너리를 읽을 수 없는 원격 이미지는 정적 브라우저 앱에서 임베딩할 수 없다. 이 경우 실패 이유와 클릭 가능한 `원본 이미지 열기` 링크를 남긴다.
 
 검증:
+
 - `tests/fixtures/sample.md`
 - 코드블록, 목록, 표, 인용구, 한글/영문 혼합, 특수문자가 `section0.xml`에 남는지 본다.
 - 작은따옴표 회귀는 일반 문장·인라인 강조의 원문 `'`와 입력 엔티티 `&#39;`가 문단·강조·목록·표 모두에서 문자 `'`로 남는지 확인한다. `section0.xml`에는 `&apos;`, `&#39;`, `&amp;#39;`가 없어야 한다.
@@ -150,9 +158,11 @@
 관련 코드: `parseHtml()`, `extractInlineRuns()`, `elementToTable()` in `js/parsers.js`
 
 목표:
+
 - 웹 화면 복제가 아니라 문서 구조 추출이다.
 
 보존:
+
 - `h1`-`h6`, `p`, `ul`, `ol`, `li`, `table`
 - 들여쓴 중첩 `ul/ol`의 항목 레벨과 `table`의 `rowspan/colspan`
 - `blockquote`(Markdown 인용구와 같은 HWPX 인용 문단)
@@ -160,6 +170,7 @@
 - 일부 글자색(`style="color:"`, `<font color>`)
 
 주의:
+
 - CSS 레이아웃, 반응형 배치, 클래스 기반 디자인은 보존하지 않는다.
 - `script`, `style`, `head`, `nav`, `footer`, `aside` 등 비본문 요소는 건너뛴다.
 - 이미지, SVG, 외부 리소스는 안내상 제외 가능으로 둔다.
@@ -167,6 +178,7 @@
 - HTML 변경 후에는 Markdown fallback 경로도 같이 깨지지 않았는지 확인한다.
 
 검증:
+
 - `tests/fixtures/sample.html`
 - 제목/문단/중첩 목록/병합 표 텍스트와 namespace, 굵게·기울임·밑줄·취소선·글자색을 확인한다.
 
@@ -175,20 +187,24 @@
 관련 코드: `parseTxt()` in `js/parsers.js`
 
 목표:
+
 - 서식보다 원문 텍스트 보존을 우선한다.
 
 보존:
+
 - 원문 텍스트
 - 줄바꿈과 빈 줄 기반 문단
 - 한글/영문/특수문자
 - UTF-8(BOM 포함), UTF-16 BOM, EUC-KR(CP949) 디코딩
 
 주의:
+
 - 제목, 표, bold 같은 서식 정보는 원본에 없으므로 추정하지 않는다.
 - 표처럼 보이는 텍스트도 기본적으로 일반 문단으로 처리될 수 있다.
 - 인코딩 감지는 앱 로딩 경로와 함께 확인한다.
 
 검증:
+
 - `tests/fixtures/sample.txt`, `tests/fixtures/sample-euckr.txt`
 - UTF-8/EUC-KR의 제목·문단·목록·한글이 동일하게 HWPX에 남는지 확인한다.
 
@@ -197,9 +213,11 @@
 관련 코드: `parseCsv()`, `csvToRows()`, `parseXlsx()` in `js/parsers.js`; `buildTable()` in `js/hwpx.js`
 
 목표:
+
 - 데이터 표의 행/열과 셀 텍스트를 HWPX 표로 안정적으로 옮긴다.
 
 보존:
+
 - CSV 전체 데이터
 - XLSX 첫 번째 시트
 - 첫 행 머리글
@@ -207,6 +225,7 @@
 - 기본 표 테두리와 머리행 스타일
 
 주의:
+
 - XLSX는 SheetJS로 첫 시트를 CSV로 바꾼 뒤 CSV 파서를 재사용한다.
 - 직접 입력의 CSV 모드는 쉼표 CSV와 Excel·Google Sheets에서 복사한 탭 구분 표(TSV)를 따옴표 밖 구분자 개수로 자동 판별한다.
 - 행마다 열 수가 다르면 가장 넓은 행에 맞춰 빈 셀을 보충해 HWPX 표 격자 불일치를 막는다.
@@ -218,6 +237,7 @@
 - 제목 줄 자동 반복은 표의 `repeatHeader="1"`만으로 부족하다. 첫 행의 모든 실제 셀을 `header="1"`로 함께 지정해야 한다.
 
 검증:
+
 - `tests/fixtures/sample.csv`
 - `tests/fixtures/long-table.csv`
 - `tests/fixtures/sample.xlsx`
@@ -230,9 +250,11 @@
 관련 코드: `parseJson()`, `jsonToBlocks()` in `js/parsers.js`
 
 목표:
+
 - 데이터 구조를 사람이 읽기 쉬운 문단/목록/표 형태로 펼친다.
 
 보존:
+
 - 객체 key/value
 - 배열 값
 - 배열 안 객체 구조의 표 변환
@@ -240,12 +262,14 @@
 - IR 직접 입력의 runs/items/table/quote 내부 XML 금지 제어문자 재귀 정규화
 
 주의:
+
 - 보고서형 편집 레이아웃을 자동 설계하지 않는다.
 - 깊은 중첩은 길게 펼쳐질 수 있다.
 - 데이터 타입의 의미, 원본 들여쓰기, JSON formatting 자체는 보존 목표가 아니다.
 - 안내 문구에서 JSON을 “문서 품질 높음”처럼 표현하지 않는다. 값 보존과 가독성 중심이다.
 
 검증:
+
 - `tests/fixtures/sample.json`
 - `tests/fixtures/sample-ir.json`
 - 제목/문단/표 텍스트 누락이 없는지 확인한다.
@@ -256,21 +280,25 @@
 관련 코드: `parseIpynb()` in `js/parsers.js`
 
 목표:
+
 - 실행 가능한 노트북 복제가 아니라 읽는 문서화다.
 
 보존:
+
 - markdown cell: Markdown 파서 재사용
 - code cell: 일반 문단이 아닌 등폭 코드블록 표
 - text output: 문서 본문으로 포함
 - image output(`image/png`, `image/jpeg`): base64 디코드 → `sniffRasterImage()`로 픽셀 크기 확인 → `imageSizeHwp()`로 HWP 단위 변환 → 공통 image IR 블록으로 변환(v4.10.7~)
 
 주의:
+
 - 차트 라이브러리의 인터랙티브·위젯 출력, LaTeX 수식, 실행 상태, metadata는 보존하지 않는다.
 - 첫 markdown 제목은 문서 제목 후보가 될 수 있다.
 - Markdown 파서 변경 시 IPYNB markdown cell도 함께 확인한다.
 - **binName 충돌 주의**: markdown cell 이미지는 `resolveMarkdownAssets()`가 `image1.png`부터 별도로 번호를 매긴다. 코드 출력 이미지가 같은 `image${n}` 접두사를 쓰면 같은 문서 안에서 binName(=BinData 파일명/manifest id)이 겹쳐 한쪽 그림이 조용히 사라진다. 그래서 코드 출력 이미지는 `ipynb-out${n}.ext` 접두사를 쓴다.
 
 검증:
+
 - `tests/fixtures/sample.ipynb`(markdown cell 이미지 1개 + code output 이미지 1개 모두 포함)
 - markdown/code/output text가 구분되어 누락 없이 들어가는지, `<hc:img>`가 2개(마크다운 이미지 + 출력 이미지) 생성되는지 본다.
 
@@ -279,9 +307,11 @@
 관련 코드: `parseDocx()`, `extractDocxParagraph()`, `extractDocxTable()`, `extractDocxImage()` in `js/parsers.js`; image/table/footnote paths in `js/hwpx.js`
 
 목표:
+
 - Word 화면을 픽셀 단위로 복제하지 않고, 본문 구조 중심으로 HWPX 문서를 재구성한다.
 
 보존:
+
 - 문서 순서 기준 heading/paragraph 후보
 - 문단, 일부 정렬(center/right/justify)
 - bold, italic, underline, strike, text color
@@ -292,6 +322,7 @@
 - 첫 머리글/바닥글 텍스트(현재는 문서 전체에서 첫 번째로 발견된 관계만 사용 — 섹션별/첫 페이지 전용 머리글 구분은 아직 없음)
 
 주의:
+
 - DOCX는 ZIP + OOXML이다. `word/document.xml`, 관계 파일, `word/media`, footnotes, comments, header/footer를 함께 본다.
 - WMF/EMF, 복잡한 drawing, 변경 추적, style theme, 섹션별 레이아웃은 손실 가능으로 안내한다.
 - 목록 번호는 문서마다 XML 차이가 커서 변경 시 반드시 fixture를 추가한다.
@@ -300,6 +331,7 @@
 - 주석과 각주는 HWPX 안에서 구분되지 않는다(둘 다 같은 각주 필드로 나온다) — "각주가 늘었는데 원본엔 없었다"는 피드백을 받으면 comments.xml 여부부터 확인한다.
 
 검증:
+
 - `tests/fixtures/sample.docx`, `qa/fixtures/docx_table_test.docx`, `qa/fixtures/docx_image_test.docx`
 - `npm run test:golden`
 - 이미지/색/병합/머리글/각주(주석 포함)는 자동 검증만으로 부족할 수 있으므로 한컴 확인을 요청한다.
@@ -309,9 +341,11 @@
 관련 코드: `parsePptx()`, `parsePptxSlideItems()`, `collectPptxSpTreeItems()`, `extractPptxTable()`, `extractPptxImage()`, `extractPptxNotesText()` in `js/parsers.js`
 
 목표:
+
 - 슬라이드 디자인(도형 위치·애니메이션)을 재현하지 않고, 슬라이드의 텍스트·표·그림을 순서대로 읽는 문서로 정리한다(v4.10.8 텍스트, v4.10.10 표/그림, v4.10.12 그룹 도형 재귀).
 
 보존:
+
 - 슬라이드 순서(`ppt/presentation.xml`의 `p:sldIdLst` + `ppt/_rels/presentation.xml.rels`로 확정, 실패 시 `slideN.xml` 파일명 숫자 정렬로 폴백)
 - 슬라이드 안 `p:spTree`를 `collectPptxSpTreeItems()`가 도형 등장 순서대로 순회한다. `p:sp`/`p:graphicFrame`/`p:pic`를 변환하고, **`p:grpSp`(그룹 도형)를 만나면 재귀로 내부까지 펼쳐서** 그룹 안 텍스트·표·그림도 누락 없이 처리한다.
 - 제목 placeholder(`p:ph type="title"`/`"ctrTitle"`) → heading
@@ -322,6 +356,7 @@
 - 슬라이드마다 "슬라이드 N" heading으로 구분
 
 주의:
+
 - PPTX는 ZIP + OOXML이다(DOCX와 같은 계열이지만 `ppt/` 네임스페이스와 `p:`/`a:` 접두사를 쓴다).
 - **PPTX 표는 DOCX와 병합 표현이 다르다**: DOCX(`w:tbl`)는 가로 병합을 `gridSpan`으로 압축해 셀 자체가 줄어들지만, PPTX(`a:tbl`)는 병합된 칸도 각 열마다 `hMerge="1"`/`vMerge="1"` placeholder `a:tc`를 그대로 둔다. 그래서 `extractPptxTable()`은 논리열 인덱스를 raw cell 개수만큼 그대로 증가시키고, DOCX처럼 colSpan만큼 건너뛰지 않는다.
 - **그룹 도형을 빠뜨리기 쉽다**: `p:spTree`의 직계 자식만 보면 `p:grpSp` 안의 텍스트박스·표·그림이 조용히 사라진다(실제 발표자료에서 매우 흔한 구조). 새 도형 종류를 추가할 때도 `collectPptxSpTreeItems()`를 거치는지 확인한다.
@@ -333,6 +368,7 @@
 - **아직 실제 PowerPoint/Keynote/Google Slides로 내보낸 진짜 PPTX로 검증하지 않았다.** fixture는 손으로 만든 최소 XML이라 네임스페이스 접두사·구조가 실제 파일과 다를 가능성이 있다. 실 파일 회귀 전에는 "완료"로 보지 않는다.
 
 검증:
+
 - `tests/fixtures/sample.pptx`(2슬라이드: 제목+본문+목록+가로/세로 병합 표+그림+그룹 도형+슬라이드1 발표자 노트, v4.10.30부터 notesSlide1 포함)
 - `npm run test:golden`
 - 슬라이드 순서, 표 병합, 그림 삽입, 그룹 도형 내부 텍스트, 발표자 노트 문단은 한컴에서도 확인한다.
@@ -342,9 +378,11 @@
 관련 코드: `parseHwp()`, `parseHwp5WithRhwp()`, `extractHwpxTable()` in `js/parsers.js`
 
 목표:
+
 - HWP는 베타 입력이다. HWPX는 출력 형식이며 입력 안내에서 분리한다.
 
 보존:
+
 - HWPX 오업로드 시 내부 XML 본문 텍스트와 일부 표(기존 ZIP 경로, 변경 없음)
 - HWP5(OLE2) 바이너리는 v4.10.27부터 `@rhwp/core`(Rust+WASM, MIT, jsdelivr CDN 동적 import)로
   문단 단위 본문 텍스트를 추출한다. 표·이미지·글머리·서식 등 구조 정보는 다루지 않는다
@@ -354,6 +392,7 @@
 - 암호 보호·손상된 HWP5는 `new HwpDocument()` 생성자가 던지는 예외를 잡아 안내 메시지로 변환한다.
 
 주의:
+
 - HWP5는 여전히 텍스트만 나온다. 서식·표·이미지까지 보존하고 싶다면 한컴오피스에서 HWPX로
   다시 저장하도록 안내한다(카드의 tip/links는 유지).
 - 이미 HWPX인 파일은 변환보다 원본 사용을 권장한다.
@@ -368,6 +407,7 @@
 관련 코드: `buildHwpx()`, `buildHeaderXml()`, `buildTable()`, `buildParaRuns()` in `js/hwpx.js`
 
 핵심:
+
 - `mimetype`은 ZIP 첫 엔트리이며 `application/hwp+zip`이어야 한다.
 - 필수 엔트리: `Contents/header.xml`, `Contents/section0.xml`, `Contents/content.hpf`, `META-INF/manifest.xml`, `Preview/PrvText.txt`.
 - `header.xml`의 `charPr`, `paraPr`, `borderFill` 정의와 `section0.xml` 참조가 맞아야 한다.
@@ -379,20 +419,24 @@
 ## 기본 미리보기 페이지 처리
 
 목표:
+
 - 용지 크기와 방향을 시각적으로 정확히 전달하면서 모든 내용을 빠짐없이 보여준다.
 
 불변식:
+
 - 페이지 폭과 높이는 선택한 용지의 종횡비로 고정한다.
 - 내용이 페이지 높이를 넘으면 다음 페이지로 분할한다.
 - 종이 자체에 스크롤을 넣거나, 넘친 내용을 `overflow:hidden`만으로 잘라서는 안 된다.
 - 한 블록이 페이지보다 큰 경우에도 해당 블록을 조용히 누락하지 않는다. 향후 블록 내부 분할을 지원하기 전까지는 회귀 테스트에서 큰 단일 블록 표본을 별도로 확인한다.
 
 v4.5.7 회귀에서 피해야 할 오답:
+
 - `aspect-ratio`와 `.ir-page { overflow:auto; }`를 함께 적용해 겉보기 폭·높이만 가로로 만드는 방식.
 - `renderedWidth > renderedHeight` 하나만 성공 조건으로 삼는 테스트.
 - 이 방식은 긴 문서에서 종이 내부 스크롤과 콘텐츠 잘림을 만들지만 단순 치수 테스트는 통과한다.
 
 검증:
+
 - `tests/golden.js`: 긴 A3 가로 표본이 두 페이지 이상으로 나뉘고, 모든 페이지가 넘침 없이 유지되는지 확인한다.
 - `tests/orientation-e2e.js`: 실제 파일 선택 → 변환 → 미리보기 흐름에서 가로 비율, 페이지 수, 잘림 여부, 안내 문구를 확인한다.
 - 화면 캡처에서 종이 내부 스크롤이 없고 각 페이지가 가로 형태로 보이는지 사람이 확인한다.
