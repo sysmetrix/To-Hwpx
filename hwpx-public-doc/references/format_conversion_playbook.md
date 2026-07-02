@@ -86,7 +86,7 @@
 | 문단 앞/뒤 간격 | 간격 작게 / 기본 간격 / 간격 크게 | `compact` / `normal` / `relaxed` | `hh:paraPr`의 `hh:prev`, `hh:next` 값. 기본은 본문 아래 `850`, 제목 앞 `850`, 제목 뒤 `567`; 작게는 본문 아래 `283`; 크게는 본문 아래 `1134`, 제목 앞 `1134`, 제목 뒤 `850`. |
 | 제목 스타일 | 작은 제목 / 기본 제목 / 큰 제목·굵게 | `compact` / `standard` / `prominent` | `hh:charPr` 제목 크기. 기본 글꼴 pt 기준 H1은 `+4/+6/+8pt`, H2는 `+3/+4/+6pt`, H3는 `+1/+2/+3pt`; 제목은 기본적으로 bold. |
 | 표 스타일 | 기본 테두리 / 단순 테두리 / 머리행 음영 | `standard` / `plain` / `report` | `buildTable()`의 머리행 처리. `plain`은 머리행 bold/음영을 끄고, `report`는 머리행에 `EAF2FF` 배경 borderFill을 추가한다. 모든 표는 격자·병합·제목 행 반복 무결성을 유지해야 한다. |
-| 링크 표시 | 파란색+밑줄 / 검정 본문 / 텍스트+주소 | `blue` / `plain` / `url` | `buildParaRuns()`의 HYPERLINK 필드는 유지한다. `blue`는 동적 charPr로 파란 밑줄, `plain`은 일반 본문처럼 표시, `url`은 표시문자 뒤에 `(URL)`을 붙인다. |
+| 링크 표시 | 파란색+밑줄 / 검정 본문 / 텍스트+주소 | `blue` / `plain` / `url` | `buildParaRuns()`의 HYPERLINK 필드는 유지한다. `blue`는 동적 charPr로 파란 밑줄, `plain`은 일반 본문처럼 표시, `url`은 표시문자 뒤에 ` (URL)`을 붙인다. |
 | 이미지 최대 폭 | 본문의 50% / 75% / 본문 폭까지 | `50` / `75` / `100` | `buildImageRun()`의 `hp:curSz` 폭을 본문 폭 기준으로 제한한다. 원본 비율을 유지하며 0 또는 본문 폭 초과가 나오면 안 된다. |
 | 이미지 정렬 | 왼쪽 정렬 / 가운데 정렬 / 오른쪽 정렬 | `left` / `center` / `right` | 그림 위치의 `horzAlign`을 LEFT/CENTER/RIGHT로 기록한다. |
 | 첫 제목 본문 처리 | 본문 첫 제목 제거 / 본문 첫 제목 유지 | `remove` / `keep` | `applyDocumentTitlePolicy()`에서 자동 제목으로 쓴 첫 heading을 본문에서 제거하거나 유지한다. parser가 이미 title을 선점한 경우에도 같은 정책을 적용한다. |
@@ -365,6 +365,7 @@
 - `p:sldId`의 `r:id`, `p:pic`의 `a:blip@r:embed`는 모두 `DOCX_NS_R`(officeDocument relationships 네임스페이스)로 읽는다. `getAttributeNS(DOCX_NS_R, 'id'/'embed') || getAttribute('r:id'/'r:embed')` 패턴을 DOCX와 동일하게 유지한다.
 - 이미지 binName은 `pptx-img${n}`을 쓴다(다른 포맷과 접두사가 겹치지 않게).
 - `js/app.js`의 `getConversionSummaryForExt()`도 `FORMAT_INFO.pptx`와 같은 말을 하는지 반드시 함께 확인한다. 표/그림 지원 추가 당시 이 함수 갱신을 누락해 포맷 카드에 "이미지가 제외된다"는 문구가 남았던 회귀가 있었다(v4.10.12에서 수정).
+- 본문 콘텐츠가 없는 빈 슬라이드라도 발표자 노트가 있으면 `슬라이드 N` 제목과 노트 문단을 출력한다. 본문과 노트가 모두 없을 때만 건너뛴다.
 - **아직 실제 PowerPoint/Keynote/Google Slides로 내보낸 진짜 PPTX로 검증하지 않았다.** fixture는 손으로 만든 최소 XML이라 네임스페이스 접두사·구조가 실제 파일과 다를 가능성이 있다. 실 파일 회귀 전에는 "완료"로 보지 않는다.
 
 검증:

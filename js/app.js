@@ -66,7 +66,7 @@ const state = {
     downloadTimer: null                // Blob URL 해제 타이머
 };
 let modalReturnFocus = null;
-let _initialDropZoneHTML = null;
+let _initialDropZoneNodes = null;
 
 // ─────────────────────────────────────────────────────────────────────────
 // [7단계 파이프라인 정의]
@@ -264,8 +264,8 @@ function initDropZone() {
     const fileInput = document.getElementById('file-input');
     if (!dropZone || !fileInput) return;
 
-    // 초기 드롭존 HTML 저장 — clearSelectedFile()에서 재생성 없이 복원
-    _initialDropZoneHTML = dropZone.innerHTML;
+    // 초기 드롭존 노드 저장 — 문자열 HTML 재주입 없이 안전하게 복원
+    _initialDropZoneNodes = Array.from(dropZone.childNodes, node => node.cloneNode(true));
 
     // 클릭 → 숨겨진 <input type="file"> 트리거
     dropZone.addEventListener('click', (e) => {
@@ -614,8 +614,8 @@ function clearSelectedFile() {
     resetIrPreview();
 
     const dz = document.getElementById('drop-zone');
-    if (dz && _initialDropZoneHTML) {
-        dz.innerHTML = _initialDropZoneHTML;
+    if (dz && _initialDropZoneNodes) {
+        dz.replaceChildren(..._initialDropZoneNodes.map(node => node.cloneNode(true)));
     }
 
     const cda = document.getElementById('converter-drop-area');
@@ -4166,6 +4166,8 @@ function updateThemeToggleUI(theme) {
     // 아이콘/라벨은 "지금 누르면 전환될 방향"을 안내한다.
     const _moonSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
     const _sunSvg  = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/></svg>';
+    // 두 SVG는 위에서 정의한 고정 리터럴이며 사용자 입력을 포함하지 않는다.
+    // eslint-disable-next-line no-unsanitized/property
     if (icon)  icon.innerHTML = isDark ? _sunSvg : _moonSvg;
     if (label) label.textContent = isDark ? '라이트' : '다크';
     btn.setAttribute('aria-pressed', String(isDark));
