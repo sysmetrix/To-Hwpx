@@ -1,6 +1,19 @@
 {
-  "current": "4.10.30",
+  "current": "4.11.0",
   "versions": [
+    {
+      "version": "4.11.0",
+      "date": "2026-07-02",
+      "user": [
+        "PowerPoint(PPTX)의 본문이 비어 있는 슬라이드도 발표자 노트가 있으면 결과 문서에서 빠지지 않도록 수정했습니다."
+      ],
+      "dev": [
+        "[v4.11.0] js/parsers.js: PPTX 슬라이드 본문 items가 비어 있어도 notesText를 먼저 추출하고, 본문과 노트가 모두 없을 때만 건너뛰도록 수정",
+        "[v4.11.0] js/app.js: 드롭존 초기 상태를 innerHTML 문자열 대신 복제 노드로 복원해 no-unsanitized 경고 제거",
+        "[v4.11.0] js/app.js, js/parsers.js: 고정 SVG 리터럴과 버전 고정 @rhwp/core CDN import에 사용자 입력이 없음을 좁은 ESLint 예외와 근거 주석으로 명시해 lint 경고 0건 달성",
+        "[v4.11.0] format_conversion_playbook.md: 링크 URL 표시의 실제 공백 규칙과 빈 PPTX 슬라이드의 발표자 노트 보존 조건을 코드와 일치시킴"
+      ]
+    },
     {
       "version": "4.10.30",
       "date": "2026-07-01",

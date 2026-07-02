@@ -2039,7 +2039,8 @@ async function parsePptx(arrayBuffer, docType = 'plain') {
             xmlText = await slideFile.async('string');
         } catch (_) { continue; }
         const items = await parsePptxSlideItems(xmlText, zip, path, imageCounterRef);
-        if (!items.length) continue;
+        const notesText = await extractPptxNotesText(zip, path);
+        if (!items.length && !notesText) continue;
 
         ir.blocks.push({ type: 'heading', level: 2, text: `슬라이드 ${slideNum}` });
         let listBuf = [];
@@ -2075,7 +2076,6 @@ async function parsePptx(arrayBuffer, docType = 'plain') {
         }
         flushList();
 
-        const notesText = await extractPptxNotesText(zip, path);
         if (notesText) ir.blocks.push({ type: 'para', text: `[발표자 노트] ${notesText}` });
     }
 
@@ -2154,6 +2154,8 @@ async function parseHwp5WithRhwp(buffer, ir) {
     }
     let HwpDocument;
     try {
+        // URL은 사용자 입력이 아닌 위의 버전 고정 상수다. HWP5 요청 때만 WASM을 지연 로드한다.
+        // eslint-disable-next-line no-unsanitized/method
         const rhwp = await import(/* webpackIgnore: true */ RHWP_CORE_URL);
         await rhwp.default();
         HwpDocument = rhwp.HwpDocument;
