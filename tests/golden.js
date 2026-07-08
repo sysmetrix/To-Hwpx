@@ -1093,6 +1093,12 @@ async function validateCommercialUx(page) {
   assert(indexHtml.includes('<script src="js/posthog-init.js" defer></script>')
     && !indexHtml.includes("var POSTHOG_KEY"),
     'security: PostHog 초기화가 CSP 비호환 인라인 스크립트로 남아 있음');
+  const rhwpFrame = await page.locator('#rhwp-iframe').evaluate(iframe => ({
+    src: iframe.getAttribute('src'),
+    dataSrc: iframe.getAttribute('data-src'),
+  }));
+  assert(!rhwpFrame.src && rhwpFrame.dataSrc === 'https://edwardkim.github.io/rhwp/',
+    'security: rhwp iframe이 사용자 확인 전부터 외부 뷰어를 로드함');
   assert(await page.locator('.help-dot[aria-label="줄 간격 도움말"]').count() === 0
     && await page.locator('.help-dot[aria-label="가로 구분선 도움말"]').count() === 0
     && await page.locator('.help-dot[aria-label="페이지 여백 도움말"]').count() === 1

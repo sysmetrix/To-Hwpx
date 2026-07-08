@@ -13,35 +13,91 @@ Scope: static browser-only conversion flow from file selection to HWPX download.
 - PWA 설치 품질을 위해 192/512 PNG 아이콘을 추가했다.
 - `qa/gate.js`는 고정 포트 대신 사용 가능 포트를 자동 배정해 병렬 실행 충돌을 줄였다.
 
+검증일/환경:
+- 검증일: 2026-07-08 18:47 KST
+- 실행 환경: Windows PowerShell, Node.js v24.16.0, Playwright Chromium(headless)
+- 기준 커밋/버전: v4.12.1, PR #120 머지 후 main
+
 자동 확인:
-- [ ] `npm run lint`
-- [ ] `npm run test:golden`
-- [ ] `node qa/gate.js qa/fixtures/md_hwpx_test.md`
-- [ ] `node qa/gate.js qa/fixtures/sample.docx`
-- [ ] `node qa/gate.js qa/fixtures/docx_table_test.docx`
-- [ ] `node qa/gate.js qa/fixtures/docx_image_test.docx`
-- [ ] `node qa/gate.js tests/fixtures/sample.xlsx`
+- [x] `npm run lint` — PASS, ESLint 오류/경고 없음
+- [x] `npm run test:golden` — PASS, 12 cases + 보안/PWA/SW/rhwp iframe 사전 미로드 회귀 포함
+- [x] `node qa/gate.js qa/fixtures/md_hwpx_test.md` — PASS, 게이트 ①~⑨ ALL PASS
+- [x] `node qa/gate.js qa/fixtures/sample.docx` — PASS, 게이트 ①~⑨ ALL PASS
+- [x] `node qa/gate.js qa/fixtures/docx_table_test.docx` — PASS, 게이트 ①~⑨ ALL PASS
+- [x] `node qa/gate.js qa/fixtures/docx_image_test.docx` — PASS, 그림 참조 1개 포함 게이트 ①~⑨ ALL PASS
+- [x] `node qa/gate.js tests/fixtures/sample.xlsx` — PASS, 게이트 ①~⑨ ALL PASS
+- [x] `qa/gate.js` 5개 fixture 병렬 smoke — PASS, 동적 포트/입력별 임시 파일명으로 충돌 없음
+- [x] 운영 도메인 HTML GET 확인 — `https://to-hwpx.vercel.app/` 응답에 `📋 v4.12.1`, CSP meta, `js/posthog-init.js`, `rhwp-iframe`, PNG 아이콘 참조 포함
 
 수동 확인 기준:
-- [ ] 운영 도메인 DevTools Console에서 CSP 오류가 없고 PostHog 이벤트가 문서 내용 없이 기록됨
+- [ ] 운영 도메인 DevTools Console에서 CSP 오류가 없음
+- [ ] PostHog 이벤트에 파일명, 문서 제목, 본문, HWPX 바이트가 포함되지 않음
 - [ ] 정밀 미리보기 버튼을 처음 눌렀을 때 외부 rhwp/HWPX 전달 확인 창이 먼저 뜸
 - [ ] 확인 취소 시 `#rhwp-iframe`에 `src`가 설정되지 않고 기본 미리보기만 유지됨
-- [ ] Markdown 원격 이미지 변환 후 Cache Storage에 해당 이미지 URL이 저장되지 않음
-- [ ] Android Chrome 설치 화면에서 PNG 아이콘이 정상 표시됨
-- [ ] iPhone Safari와 Android Chrome에서 `.hwpx` 파일명, 자동/수동 다운로드, 화면 회전, safe-area 확인
-- [ ] 한컴오피스에서 MD 링크/이미지, DOCX 이미지/표, XLSX 표, PPTX 그림/노트, HWP5 텍스트, A3 landscape 열기 확인
+- [ ] Markdown 원격 이미지 변환 후 Cache Storage에 해당 외부 이미지 URL이 저장되지 않음
+- [ ] Android Chrome 설치 화면에서 192/512 PNG 아이콘이 정상 표시됨
+- [ ] iPhone Safari와 Android Chrome에서 `.hwpx` 파일명, 자동 다운로드, 수동 다운로드, 화면 회전, safe-area 확인
+- [ ] 한컴오피스에서 MD 링크/이미지, DOCX 이미지/표, XLSX 표, PPTX 그림/발표자 노트, HWP5 텍스트, A3 landscape 문서 열기 확인
+
+운영 도메인 수동 확인 체크리스트:
+- [x] 운영 도메인에서 `📋 v4.12.1` 표시 확인 — 2026-07-08 HTML GET 기준
+- [ ] DevTools Console에서 CSP 오류 없음
+- [ ] PostHog 이벤트에 파일명, 문서 제목, 본문, HWPX 바이트가 포함되지 않음
+- [ ] 정밀 미리보기 최초 클릭 시 외부 rhwp/HWPX 전달 확인창 표시
+- [ ] 확인 취소 시 rhwp iframe `src` 미설정 및 기본 미리보기 유지
+- [ ] Markdown 원격 이미지 변환 후 Cache Storage에 해당 외부 이미지 URL이 저장되지 않음
+- [ ] Android Chrome 설치 화면에서 192/512 PNG 아이콘 정상 표시
+- [ ] iPhone Safari와 Android Chrome에서 `.hwpx` 파일명, 자동 다운로드, 수동 다운로드, 화면 회전, safe-area 확인
+- [ ] 한컴오피스에서 MD 링크/이미지, DOCX 이미지/표, XLSX 표, PPTX 그림/발표자 노트, HWP5 텍스트, A3 landscape 문서 열기 확인
+
+최종 승인 샘플 세트:
+- Markdown: 제목, 표, 코드블록, 인라인 코드, `http/https/mailto` 링크, data URL 이미지, 실패 이미지(CORS/상대경로 fallback) 포함. 후보: `tests/fixtures/sample.md`, `qa/fixtures/md_hwpx_test.md`, `qa/fixtures/md_link_image_test.md`.
+- DOCX: 제목, 본문, 표, 이미지, 각주, 주석, 머리글/바닥글 포함. 후보: `tests/fixtures/sample.docx`, `qa/fixtures/sample.docx`, 실제 Word 수동 샘플 1개.
+- XLSX: 긴 표, 숫자, 빈 셀, 수식 표시값, 첫 시트 변환 확인. 후보: `tests/fixtures/sample.xlsx`, `qa/fixtures/long-table.csv`, 실제 Excel 수동 샘플 1개.
+- PPTX: 제목, 본문, 표, 그림, 그룹 도형, 발표자 노트 포함. 후보: `tests/fixtures/sample.pptx`, 실제 PowerPoint 수동 샘플 1개.
+- HWP5: 본문 텍스트 추출 확인. 후보: 라이선스 확인 가능한 실제 HWP5 샘플 1개(저장소 미커밋).
+- A3 landscape: 용지 방향, 본문 폭, 표 경계 확인. 후보: `tests/fixtures/sample.md`를 A3/landscape로 변환한 산출물, 긴 표 fixture.
+
+CI 회귀 검사 상태:
+- [x] `qa/gate.js` 병렬 실행 smoke test — `.github/workflows/pages.yml`에 추가
+- [x] 서비스 워커 캐시 allowlist 회귀 검사 — `tests/golden.js`에 추가
+- [x] PostHog 인라인 스크립트 재유입 방지 검사 — `tests/golden.js`에 추가
+- [x] manifest PNG 아이콘 존재 검사 — `tests/golden.js`에 추가
+- [x] rhwp iframe이 사용자 확인 전 로드되지 않는지 검사 — `tests/golden.js`에 추가
+
+v4.12.1 출시 승인 판정:
+- 자동 검증 기준: 출시 가능
+- 운영/실기기/한컴 수동 기준: 수동 확인 완료 전까지 조건부 출시 가능
+- 최종 판정: B 조건부 출시 가능. 원본 업로드 없음, HWPX 구조, XSS 방어, PWA/SW 회귀는 자동 증빙 완료. 단, DevTools/운영 분석 payload, 모바일 다운로드, 한컴 실제 렌더링은 사람 승인 필요.
+
+남은 리스크:
+- 한컴오피스 렌더링은 XML 구조 게이트로 완전히 보증할 수 없다.
+- iOS/Android 다운로드 파일명과 safe-area는 OS/브라우저 정책 영향을 받는다.
+- PostHog/Vercel 이벤트 payload는 운영 DevTools Network에서 실제 이벤트 단위 확인이 필요하다.
+- rhwp 정밀 미리보기는 외부 iframe 코드 의존 기능이므로 네트워크/서드파티 변경에 따라 실패할 수 있다.
+
+다음 버전으로 넘길 개선 과제:
+- 운영 도메인 smoke test를 Playwright로 분리해 버전 표시, 콘솔 CSP 오류, rhwp 취소 흐름, Cache Storage allowlist를 자동화한다.
+- PostHog 이벤트 스키마를 코드 상수로 고정하고 이벤트 payload snapshot 테스트를 추가한다.
+- 한컴오피스 수동 승인 샘플 산출물을 릴리스별로 보관할 위치와 네이밍 규칙을 정한다.
+- 모바일 실기기 체크 결과를 스크린샷과 함께 기록하는 QA 템플릿을 추가한다.
 
 ## 1. Release Risk Diagnosis
 
-| Severity | 위치 | 문제 | 사용자 영향 | 수정 방향 | 난이도 |
-| --- | --- | --- | --- | --- | --- |
-| Critical | `js/app.js` `handleFileSelect()`, `js/parsers.js` `fileToIR()` | 지원하지 않는 확장자가 오류 문서로 HWPX 생성될 수 있음 | 사용자가 실패를 성공으로 오해 | 선택 단계에서 차단하고 파서 실패는 변환 중단 | Low |
-| High | `js/app.js` 배치 변환 | 다중 파일을 큐로 순차 변환(부분 실패 허용) — 일부 실패가 전체를 막거나 결과 누락될 위험 | 일부 파일 누락/오해 | 파일별 상태 표시 + 실패해도 계속 + 전체 ZIP/개별 다운로드 | Medium |
-| High | `js/app.js` 결과 카드 | 변환 후 보존/손실 가능 요소 안내 부족 | DOCX/HTML/XLSX 서식 손실을 품질 오류로 인식 | 결과 카드에 포맷별 보존/손실 안내 표시 | Medium |
-| High | `js/parsers.js` DOCX/HWPX ZIP 처리 | 손상 ZIP/비정상 구조가 오류 문서로 변환될 수 있음 | 실패 파일을 정상 결과로 오해 | 손상/비정상 ZIP은 파싱 실패로 중단 | Medium |
-| Medium | `index.html` 미리보기 안내 | rhwp 미리보기와 한컴오피스 결과 차이 고지 약함 | 최종 렌더링 오해 | 글꼴/여백/표 너비 차이 가능성 명시 | Low |
-| Medium | `sw.js` 캐시 | 배포 후 오래된 JS/CSS 캐시 가능 | 최신 안내/방어 로직 미반영 | 변경 시 `CACHE_VERSION` 갱신 | Low |
-| Low | `qa/fixtures` 부재 | 반복 회귀 테스트 기준 부족 | 릴리스마다 수동 확인 누락 | 작은 샘플 입력과 체크리스트 추가 | Low |
+| Severity | 위치 | 문제 | 사용자 영향 | 현재 상태 | 남은 조치 | 검증 방법 |
+| --- | --- | --- | --- | --- | --- | --- |
+| Critical | `js/app.js` `handleFileSelect()`, `js/parsers.js` `fileToIR()` | 지원하지 않는 확장자가 오류 문서로 HWPX 생성될 수 있음 | 사용자가 실패를 성공으로 오해 | 해결됨: 선택 단계 차단, 파서 실패 시 다운로드 없음 | 없음 | `npm run test:golden`의 malformed/unsupported 입력 6건 rejected |
+| High | `js/parsers.js` DOCX/HWPX ZIP 처리 | 손상 ZIP/비정상 구조가 오류 문서로 변환될 수 있음 | 실패 파일을 정상 결과로 오해 | 해결됨: 손상 DOCX/HWP5 실패 케이스가 HWPX 다운로드를 만들지 않음 | 실제 손상 파일 추가 샘플은 다음 버전에서 확장 | `npm run test:golden`, `node qa/gate.js qa/fixtures/sample.docx` |
+| High | `index.html`, `js/posthog-init.js` | CSP와 PostHog 인라인 초기화 충돌 | 운영 지표 누락, CSP 오류 | 해결됨: self-host `js/posthog-init.js`로 분리, golden 재유입 검사 추가 | 운영 DevTools에서 CSP 오류와 payload 수동 확인 | `npm run lint`, `npm run test:golden`, 운영 Network 확인 |
+| High | `js/app.js` rhwp 정밀 미리보기 | 외부 iframe에 HWPX 바이트 전달 고지 부족 | 로컬 변환 기대와 충돌 | 해결됨: 최초 사용 전 확인창, iframe source 검증, 사전 미로드 테스트 추가 | 운영 브라우저에서 확인 취소 흐름 수동 확인 | `npm run test:golden`, 운영 DevTools Elements 확인 |
+| High | `sw.js` 서비스 워커 캐시 | 임의 외부 GET 응답이 Cache Storage에 남을 수 있음 | 원격 이미지 URL/응답 캐시 개인정보 리스크 | 해결됨: APP_SHELL allowlist만 런타임 캐시, golden 회귀 추가 | 운영 브라우저 Cache Storage 수동 확인 | `npm run test:golden`, 운영 Application 탭 확인 |
+| Medium | `js/app.js` 배치 변환 | 다중 파일 일부 실패가 전체 결과를 막거나 누락될 위험 | 일부 파일 누락/오해 | 해결됨: 파일별 큐/상태/부분 실패/ZIP/개별 다운로드 회귀 통과 | 모바일 배치 다운로드는 수동 확인 권장 | `npm run test:golden`의 BATCH 칸반 보드 |
+| Medium | `js/app.js` 결과 카드/포맷 안내 | 변환 후 보존/손실 가능 요소 안내 부족 | DOCX/HTML/XLSX 서식 손실을 품질 오류로 인식 | 해결됨: 포맷별 보존/제외 안내와 결과 요약 회귀 통과 | 실제 사용자 문구 이해도는 운영 관찰 | `npm run test:golden`의 UX/FORMAT_INFO 검사 |
+| Medium | `index.html` 미리보기 안내 | 기본/rhwp 미리보기와 한컴오피스 결과 차이 | 최종 렌더링 오해 | 잔여 리스크: 안내는 있으나 실제 렌더링 보증 불가 | 한컴오피스 승인 샘플 세트 수동 열기 | 한컴오피스에서 MD/DOCX/XLSX/PPTX/HWP5/A3 산출물 확인 |
+| Medium | 모바일 Safari/Android Chrome | 다운로드 파일명, 자동 다운로드, safe-area/회전 | 저장 실패 또는 버튼 가림 | 잔여 리스크: 자동 테스트는 레이아웃 일부만 보증 | iPhone Safari/Android Chrome 실기기 확인 | 운영 도메인 수동 체크리스트 |
+| Medium | 운영 분석 payload | PostHog/Vercel 이벤트에 문서 정보가 섞일 가능성 | 개인정보 신뢰 리스크 | 잔여 리스크: 코드상 track은 이벤트 중심이나 운영 payload 미확인 | DevTools Network에서 이벤트 payload 수동 검토 | PostHog `/e/`, `/batch/` 요청 payload 확인 |
+| Low | PWA 설치 아이콘 | SVG 단일 아이콘 호환성 | 설치 화면 품질 저하 | 해결됨: 192/512 PNG maskable 추가 | Android 설치 화면 수동 확인 | `npm run test:golden`, 운영 설치 UI 확인 |
+| Low | `qa/gate.js` 병렬 실행 | 포트/임시 파일명 충돌 | CI smoke 불안정 | 해결됨: 동적 포트와 입력별 임시 파일명, CI 병렬 smoke 추가 | 없음 | 로컬 병렬 smoke PASS, GitHub Actions 병렬 smoke |
 
 ## 2. Conversion Quality Test Matrix
 

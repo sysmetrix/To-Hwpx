@@ -39,22 +39,23 @@
          [보안] 정적 사이트(GitHub Pages)라 서버 응답 헤더를 못 다는 대신
                 meta로 선언한다. 문서 파싱 시점부터 적용되므로 어떤 리소스보다
                 먼저 와야 한다(여기 위치 유지).
-         핵심: script-src를 'self' + cdnjs로 고정 → XSS가 실행될 통로 차단.
+         핵심: script-src를 'self' + 고정 CDN으로 제한 → XSS가 실행될 통로 차단.
                이스케이프(escHtml/xmlEsc)가 한 곳 빠져도 막는 2차 방어선.
          [수정 시] 새 CDN/외부 오리진을 추가하면 해당 디렉티브에도 추가해야
                    리소스가 차단되지 않는다.
-           script-src : 앱 JS(self) + JSZip/marked/SheetJS(cdnjs) + @rhwp/core(jsdelivr,
-                        HWP5 바이너리 입력 파싱용 WASM, js/parsers.js에서 동적 import).
+           script-src : 앱 JS(self: theme/app/parsers/hwpx/posthog-init) +
+                        JSZip/marked/SheetJS(cdnjs) + @rhwp/core(jsdelivr,
+                        HWP5 바이너리 입력 파싱용 WASM, js/parsers.js에서 동적 import) +
+                        PostHog array.js(us.i.posthog.com).
                         'wasm-unsafe-eval'은 이 WASM 인스턴스화에 필요(없으면 CSP가
                         WebAssembly.instantiate를 차단함).
-           style-src  : 'unsafe-inline'은 인라인 style 속성과 미리보기 렌더가
-                        주입하는 검증된 인라인 스타일(색상 정규식 통과분) 때문
+           style-src  : self style.css + Google Fonts CSS. 인라인 style/script는 허용하지 않는다.
            img-src    : 'self' data: — 브랜드 아이콘은 icons/brand/에 self-host.
                         원격 MD 이미지는 fetch()→data: URL 변환 후 HWPX에만 임베드;
                         IR 미리보기는 텍스트 플레이스홀더로 표시 → https: 불필요.
-           connect-src: Markdown 원격 이미지 fetch (임의 https 오리진) + jsdelivr에서
+           connect-src: 'self' + 임의 https 오리진. Markdown 원격 이미지 fetch + jsdelivr에서
                         @rhwp/core의 rhwp_bg.wasm을 fetch (스크립트 자체 URL 기준 상대경로)
-                        + 분석/성능 지표 수집 오리진
+                        + Vercel/PostHog 분석·성능 지표 수집 요청을 포함한다.
            frame-src  : 정밀 미리보기 rhwp 뷰어(외부 WASM, 선택 기능)
          ──────────────────────────────────────────────────────────── -->
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://us.i.posthog.com https://eu.posthog.com https://us.posthog.com; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https:; frame-src https://edwardkim.github.io; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
