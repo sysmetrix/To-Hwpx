@@ -1076,10 +1076,23 @@ async function validateCommercialUx(page) {
   const manifest = JSON.parse(fs.readFileSync(path.join(ROOT, 'manifest.json'), 'utf8'));
   assert(manifest.id === './' && manifest.start_url === './' && manifest.scope === './',
     'pwa: 하위 경로용 id/start_url/scope 불일치');
+  assert(manifest.icons.some(icon => icon.src === 'icons/app-icon-192.png' && icon.type === 'image/png')
+    && manifest.icons.some(icon => icon.src === 'icons/app-icon-512.png' && icon.type === 'image/png'),
+    'pwa: PNG 설치 아이콘이 manifest에 없음');
   const serviceWorker = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
   assert(serviceWorker.includes("'./icons/chrome-install.svg'")
-    && serviceWorker.includes("'./icons/edge-install.svg'"),
-    'pwa: 설치 안내 아이콘이 오프라인 앱 셸 캐시에 없음');
+    && serviceWorker.includes("'./icons/edge-install.svg'")
+    && serviceWorker.includes("'./icons/app-icon-192.png'")
+    && serviceWorker.includes("'./icons/app-icon-512.png'")
+    && serviceWorker.includes("'./js/posthog-init.js'"),
+    'pwa: 설치/분석 앱 셸 파일이 오프라인 캐시에 없음');
+  assert(serviceWorker.includes('isCacheableRequest')
+    && serviceWorker.includes('CACHEABLE_URLS.has(request.url)'),
+    'pwa: 서비스 워커가 명시 허용 URL만 런타임 캐시하도록 제한되지 않음');
+  const indexHtml = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  assert(indexHtml.includes('<script src="js/posthog-init.js" defer></script>')
+    && !indexHtml.includes("var POSTHOG_KEY"),
+    'security: PostHog 초기화가 CSP 비호환 인라인 스크립트로 남아 있음');
   assert(await page.locator('.help-dot[aria-label="줄 간격 도움말"]').count() === 0
     && await page.locator('.help-dot[aria-label="가로 구분선 도움말"]').count() === 0
     && await page.locator('.help-dot[aria-label="페이지 여백 도움말"]').count() === 1

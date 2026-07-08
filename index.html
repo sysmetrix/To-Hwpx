@@ -54,6 +54,7 @@
                         IR 미리보기는 텍스트 플레이스홀더로 표시 → https: 불필요.
            connect-src: Markdown 원격 이미지 fetch (임의 https 오리진) + jsdelivr에서
                         @rhwp/core의 rhwp_bg.wasm을 fetch (스크립트 자체 URL 기준 상대경로)
+                        + 분석/성능 지표 수집 오리진
            frame-src  : 정밀 미리보기 rhwp 뷰어(외부 WASM, 선택 기능)
          ──────────────────────────────────────────────────────────── -->
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://us.i.posthog.com https://eu.posthog.com https://us.posthog.com; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https:; frame-src https://edwardkim.github.io; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
@@ -140,24 +141,10 @@
 
     <!-- ─── PostHog Product Analytics ───────────────────────────────
          퍼널 분석(포맷별 성공률), 세션 경로, 옵션 사용 분포 등 심층 분석.
-         CSP script-src: us.i.posthog.com (array.js 로더)
+         CSP script-src: self의 js/posthog-init.js + us.i.posthog.com(array.js 로더)
          CSP connect-src: https: 범위로 us.i.posthog.com 포함됨.
          ──────────────────────────────────────────────────────────── -->
-    <script>
-    (function() {
-        var POSTHOG_KEY = 'phc_qxSMoqzHzeZXFhi464YVPYEGdrrEpbbTPXv5H7FMdjnZ';
-        var POSTHOG_HOST = 'https://us.i.posthog.com';
-        if (!POSTHOG_KEY) return;
-        !function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]);t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.async=!0,p.src=s.api_host+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString()+" (stub)"},o="capture identify alias people.set people.set_once set_config register register_once unregister opt_out_capturing has_opted_out_capturing opt_in_capturing reset isFeatureEnabled onFeatureFlags getFeatureFlag getFeatureFlagPayload reloadFeatureFlags group updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures getActiveMatchingSurveys getSurveys".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
-        posthog.init(POSTHOG_KEY, {
-            api_host: POSTHOG_HOST,
-            autocapture: false,
-            capture_pageview: true,
-            disable_session_recording: true,
-            persistence: 'memory',
-        });
-    })();
-    </script>
+    <script src="js/posthog-init.js" defer></script>
 </head>
 <body>
 
@@ -177,7 +164,7 @@
             <span>｢BWYF｣ AX Challenger 2026</span>
             <!-- [주의] id="open-changelog"는 app.js에서 관리자 모드일 때 업데이트 내역 모달을 여는 연결값 -->
             <button class="util-changelog-btn" id="open-changelog" aria-label="버전 정보">
-                📋 v4.12.0
+                📋 v4.12.1
             </button>
         </div>
     </div>
@@ -1351,13 +1338,13 @@
             </div>
             <div class="env-panel" id="env-panel-privacy" role="tabpanel" hidden>
                 <div class="trust-modal-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
-                <p class="trust-modal-lead">파일이 기기 밖으로 나가지 않습니다.</p>
+                <p class="trust-modal-lead">원본 파일과 생성된 HWPX는 서버에 업로드하지 않습니다.</p>
                 <div class="trust-fact-row">
                     <div class="trust-fact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>서버 미전송</div>
                     <div class="trust-fact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>브라우저 내 처리</div>
                     <div class="trust-fact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>닫으면 즉시 삭제</div>
                 </div>
-                <p class="trust-modal-note">Markdown 원격 이미지는 해당 이미지 서버에 브라우저가 직접 요청합니다.<br>원본 문서와 HWPX 파일은 전송하지 않습니다.</p>
+                <p class="trust-modal-note">예외적으로 원격 Markdown 이미지는 이미지 서버에 직접 요청하고, HWP5 입력은 jsDelivr의 WASM 엔진을 불러옵니다.<br>정밀 미리보기(베타)는 확인 후 외부 rhwp iframe에 생성된 HWPX 바이트를 전달합니다.<br>분석 도구는 페이지뷰와 변환 성공/실패 같은 사용 이벤트만 기록하며 문서 내용은 보내지 않습니다.</p>
             </div>
         </div>
     </div>

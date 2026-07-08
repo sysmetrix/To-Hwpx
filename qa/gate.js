@@ -27,12 +27,13 @@
 'use strict';
 const http = require('http');
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
 const { chromium } = require('playwright');
 const JSZip = require('jszip');
 
 const ROOT = path.resolve(__dirname, '..');
-const PORT = 8731;
+const PORT = Number(process.env.QA_GATE_PORT || 0);
 const input = process.argv[2] || path.join(ROOT, 'qa/fixtures/md_hwpx_test.md');
 
 const TYPES = { '.html': 'text/html', '.css': 'text/css', '.js': 'text/javascript',
@@ -66,6 +67,7 @@ function childCount(xml, container, child) {
 (async () => {
     if (!fs.existsSync(input)) { console.error('입력 파일 없음:', input); process.exit(2); }
     const srv = await serve();
+    const port = srv.address().port;
     const browser = await chromium.launch();
     const ctx = await browser.newContext({ acceptDownloads: true });
     await ctx.addInitScript(() => {
@@ -78,13 +80,14 @@ function childCount(xml, container, child) {
         errs.push(e.message);
     });
 
-    await page.goto(`http://127.0.0.1:${PORT}/index.html`, { waitUntil: 'networkidle' });
+    await page.goto(`http://127.0.0.1:${port}/index.html`, { waitUntil: 'networkidle' });
     const dlP = page.waitForEvent('download', { timeout: 20000 });
     await page.setInputFiles('#file-input', input);
     await page.waitForTimeout(500);
     await page.locator('#convert-btn').click();
     const dl = await dlP;
-    const outPath = path.join(require('os').tmpdir(), 'qa_gate_out.hwpx');
+    const safeInputName = path.basename(input).replace(/[^\w.-]+/g, '_');
+    const outPath = path.join(os.tmpdir(), `qa_gate_out_${process.pid}_${safeInputName}.hwpx`);
     await dl.saveAs(outPath);
 
     const buf = fs.readFileSync(outPath);

@@ -2,15 +2,16 @@
  * [sw.js]  Service Worker — CDN 리소스 캐싱 (오프라인 동작 지원)
  * ===================================================================
  * 캐싱 전략: Cache First → Network Fallback
- *   1. 캐시에 있으면 캐시에서 반환 (빠른 응답)
- *   2. 없으면 네트워크에서 가져온 후 캐시에 저장
+ *   1. 앱 셸/명시 CDN은 캐시에 있으면 캐시에서 반환 (빠른 응답)
+ *   2. 허용된 앱 셸/명시 CDN만 네트워크 응답을 캐시에 저장
+ *   3. 원격 Markdown 이미지 등 임의 외부 GET은 캐시하지 않고 네트워크 통과
  *
  * [수정 시] CACHE_VERSION 값을 변경하면 이전 캐시가 자동으로 삭제됨
  * ===================================================================*/
 
 'use strict';
 
-const CACHE_VERSION = 'to-hwpx-v4.12.0';
+const CACHE_VERSION = 'to-hwpx-v4.12.1';
 
 // 설치 시 미리 캐시할 파일 목록 (앱 셸)
 // [주의] 절대경로(/)가 아닌 상대경로(./)를 사용해야 함.
@@ -21,11 +22,14 @@ const APP_SHELL = [
     './index.html',
     './style.css',
     './js/theme-init.js',
+    './js/posthog-init.js',
     './js/parsers.js',
     './js/hwpx.js',
     './js/app.js',
     './manifest.json',
     './icons/app-icon.svg',
+    './icons/app-icon-192.png',
+    './icons/app-icon-512.png',
     './icons/chrome-install.svg',
     './icons/edge-install.svg',
     './icons/brand/markdown.svg',
@@ -43,6 +47,13 @@ const APP_SHELL = [
     // 한글 웹 폰트
     'https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700;800&display=swap',
 ];
+
+const CACHEABLE_URLS = new Set(APP_SHELL.map(url => new URL(url, self.location.href).href));
+
+function isCacheableRequest(request) {
+    if (request.method !== 'GET') return false;
+    return CACHEABLE_URLS.has(request.url);
+}
 
 // ── 설치 이벤트: 앱 셸을 캐시에 미리 저장 ────────────────────────
 // Promise.allSettled: 개별 파일 실패(CDN 불가 등)가 전체 SW 설치를 중단시키지 않음.
@@ -78,6 +89,8 @@ self.addEventListener('fetch', event => {
 
     // Chrome extension 요청 무시
     if (event.request.url.startsWith('chrome-extension://')) return;
+
+    if (!isCacheableRequest(event.request)) return;
 
     event.respondWith(
         caches.match(event.request).then(cached => {

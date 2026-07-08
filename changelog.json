@@ -1,6 +1,23 @@
 {
-  "current": "4.12.0",
+  "current": "4.12.1",
   "versions": [
+    {
+      "version": "4.12.1",
+      "date": "2026-07-08",
+      "user": [
+        "상용화 전 보안·개인정보 경계를 강화했습니다. 정밀 미리보기는 외부 rhwp 뷰어 사용 전 확인을 거치며, 로컬 변환의 외부 요청 예외를 README와 지원 환경 안내에 더 명확히 표시했습니다.",
+        "PWA 설치용 PNG 아이콘을 추가하고 서비스 워커 캐시 범위를 앱 파일과 명시 CDN으로 제한했습니다."
+      ],
+      "dev": [
+        "[v4.12.1] index.html/js/posthog-init.js: CSP와 충돌하던 인라인 PostHog 초기화를 self-host JS로 분리",
+        "[v4.12.1] js/app.js: rhwp 정밀 미리보기 최초 실행 전 외부 iframe/HWPX 바이트 전달 확인 추가, postMessage 응답 source 검증",
+        "[v4.12.1] sw.js: APP_SHELL allowlist 기반 런타임 캐시로 변경해 임의 외부 GET 응답 캐시 방지",
+        "[v4.12.1] README.md/index.html/qa/release-qa.md: 원격 이미지, HWP5 WASM, rhwp iframe, 분석 도구 외부 요청 예외와 수동 QA 기준 명시",
+        "[v4.12.1] manifest.json/icons: 192/512 PNG maskable 앱 아이콘 추가",
+        "[v4.12.1] qa/gate.js: 동적 포트와 입력별 임시 출력 파일명으로 병렬 게이트 실행 충돌 제거",
+        "[v4.12.1] tests/golden.js: PostHog 외부화, SW allowlist 캐시, PWA PNG 아이콘 회귀 검사 추가"
+      ]
+    },
     {
       "version": "4.12.0",
       "date": "2026-07-08",
