@@ -3,6 +3,34 @@
 Date: 2026-06-25
 Scope: static browser-only conversion flow from file selection to HWPX download.
 
+## 39. v4.12.1 상용화 전 보안·개인정보 경계 강화
+
+수정:
+- PostHog 초기화를 `js/posthog-init.js`로 분리해 CSP `script-src`가 인라인 스크립트를 허용하지 않아도 동작하게 했다.
+- 정밀 미리보기(rhwp)는 사용자가 확인하기 전까지 외부 iframe을 로드하거나 생성 HWPX 바이트를 전달하지 않는다. iframe 응답도 `contentWindow`가 일치할 때만 받는다.
+- 서비스 워커 런타임 캐시는 앱 셸과 명시 CDN만 허용한다. Markdown 원격 이미지 같은 임의 외부 GET은 Cache Storage에 저장하지 않는다.
+- README와 지원 환경 모달에 원격 이미지, HWP5 WASM, rhwp iframe, 분석 도구의 외부 요청 예외를 명시했다.
+- PWA 설치 품질을 위해 192/512 PNG 아이콘을 추가했다.
+- `qa/gate.js`는 고정 포트 대신 사용 가능 포트를 자동 배정해 병렬 실행 충돌을 줄였다.
+
+자동 확인:
+- [ ] `npm run lint`
+- [ ] `npm run test:golden`
+- [ ] `node qa/gate.js qa/fixtures/md_hwpx_test.md`
+- [ ] `node qa/gate.js qa/fixtures/sample.docx`
+- [ ] `node qa/gate.js qa/fixtures/docx_table_test.docx`
+- [ ] `node qa/gate.js qa/fixtures/docx_image_test.docx`
+- [ ] `node qa/gate.js tests/fixtures/sample.xlsx`
+
+수동 확인 기준:
+- [ ] 운영 도메인 DevTools Console에서 CSP 오류가 없고 PostHog 이벤트가 문서 내용 없이 기록됨
+- [ ] 정밀 미리보기 버튼을 처음 눌렀을 때 외부 rhwp/HWPX 전달 확인 창이 먼저 뜸
+- [ ] 확인 취소 시 `#rhwp-iframe`에 `src`가 설정되지 않고 기본 미리보기만 유지됨
+- [ ] Markdown 원격 이미지 변환 후 Cache Storage에 해당 이미지 URL이 저장되지 않음
+- [ ] Android Chrome 설치 화면에서 PNG 아이콘이 정상 표시됨
+- [ ] iPhone Safari와 Android Chrome에서 `.hwpx` 파일명, 자동/수동 다운로드, 화면 회전, safe-area 확인
+- [ ] 한컴오피스에서 MD 링크/이미지, DOCX 이미지/표, XLSX 표, PPTX 그림/노트, HWP5 텍스트, A3 landscape 열기 확인
+
 ## 1. Release Risk Diagnosis
 
 | Severity | 위치 | 문제 | 사용자 영향 | 수정 방향 | 난이도 |

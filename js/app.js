@@ -4345,6 +4345,7 @@ class RhwpEditorClient {
     }
 
     _onMessage(e) {
+        if (e.source !== this._iframe.contentWindow) return;
         if (!e.data || e.data.type !== 'rhwp-response' || e.data.id == null) return;
         const cb = this._pending.get(e.data.id);
         if (!cb) return;
@@ -4356,6 +4357,9 @@ class RhwpEditorClient {
         const id = ++this._reqId;
         return new Promise((resolve, reject) => {
             this._pending.set(id, { resolve, reject });
+            // The rhwp iframe is sandboxed without allow-same-origin, so its
+            // effective origin is opaque ("null"). Keep targetOrigin "*" but
+            // accept responses only from iframe.contentWindow in _onMessage().
             this._iframe.contentWindow.postMessage(
                 { type: 'rhwp-request', id, method, params }, '*'
             );
@@ -4392,6 +4396,17 @@ class RhwpEditorClient {
 }
 
 let _rhwpClient = null;
+let _rhwpConsentGranted = false;
+
+function confirmRhwpExternalPreview() {
+    if (_rhwpConsentGranted) return true;
+    const ok = window.confirm(
+        '정밀 미리보기는 외부 rhwp WebAssembly 뷰어를 불러오고, 생성된 HWPX 바이트를 그 iframe으로 전달합니다.\n\n'
+        + '원본 파일을 서버에 업로드하지는 않지만 외부 뷰어 코드가 문서를 해석합니다. 계속할까요?'
+    );
+    if (ok) _rhwpConsentGranted = true;
+    return ok;
+}
 
 function getXmlNodesByName(root, localName) {
     return [
@@ -4707,6 +4722,7 @@ async function loadRhwpPrecise() {
     const loading = document.getElementById('preview-loading');
     const countEl = document.getElementById('preview-pagecount');
     if (!wrap || !iframe || !state.hwpxBlob) return;
+    if (!confirmRhwpExternalPreview()) return;
 
     if (irBox) irBox.hidden = true;
     wrap.hidden = false;
