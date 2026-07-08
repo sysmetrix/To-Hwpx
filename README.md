@@ -55,7 +55,7 @@
 
 ## 개인정보와 외부 요청
 
-문서 파일과 생성된 HWPX는 변환 서버로 업로드하지 않습니다. 브라우저가 외부로 접속하는 경우는 다음으로 제한됩니다.
+원본 파일과 생성된 HWPX는 서버에 업로드하지 않습니다. 브라우저가 외부로 접속하는 경우는 다음으로 제한됩니다.
 
 - CDN 라이브러리(JSZip, marked, SheetJS), Google Fonts, Vercel Analytics/Speed Insights, PostHog 페이지뷰·사용 이벤트
 - Markdown 원격 이미지가 있는 경우 해당 이미지 URL 직접 요청
