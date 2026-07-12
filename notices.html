@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="index,follow">
+    <title>오픈소스·글꼴 고지 | To HWPX</title>
+    <link rel="canonical" href="https://to-hwpx.vercel.app/notices.html">
+    <link rel="stylesheet" href="legal.css">
+</head>
+<body><main class="legal-shell">
+    <nav class="legal-nav" aria-label="법적 문서"><a href="index.html">서비스로 돌아가기</a><a href="privacy.html">개인정보처리방침</a><a href="terms.html">이용약관</a></nav>
+    <h1>오픈소스·글꼴 고지</h1>
+    <p class="legal-date">최종 갱신: 2026년 7월 12일</p>
+    <p>To HWPX 본체는 MIT License로 배포됩니다. 아래 구성요소의 저작권과 라이선스는 각 원저작자에게 있습니다.</p>
+
+    <h2>브라우저 라이브러리</h2>
+    <table><thead><tr><th>구성요소</th><th>고정 버전</th><th>라이선스</th><th>용도</th></tr></thead><tbody>
+        <tr><td>JSZip</td><td>3.10.1</td><td>MIT</td><td>HWPX·DOCX·PPTX ZIP 처리</td></tr>
+        <tr><td>marked</td><td>9.1.6</td><td>MIT</td><td>Markdown 구문 분석</td></tr>
+        <tr><td>SheetJS Community Edition</td><td>0.20.3</td><td>Apache-2.0</td><td>XLS/XLSX 첫 시트 읽기</td></tr>
+        <tr><td>@rhwp/core</td><td>0.7.17</td><td>MIT</td><td>HWP5 본문 추출용 JS·WASM</td></tr>
+        <tr><td>rhwp viewer</td><td>외부 서비스</td><td>원저작자 조건 적용</td><td>사용자가 동의한 경우의 정밀 미리보기</td></tr>
+    </tbody></table>
+    <p>자체 호스팅 파일은 버전과 SHA-256을 고정하고 출시 CI에서 바이트 무결성을 확인합니다. 각 라이선스 전문은 배포 패키지의 <code>js/vendor/</code> 및 루트 <code>LICENSE</code>에 포함됩니다.</p>
+
+    <h2>글꼴</h2>
+    <table><thead><tr><th>글꼴</th><th>권리자·출처</th><th>라이선스·배포 조건</th></tr></thead><tbody>
+        <tr><td>Noto Sans KR</td><td>Google Noto Fonts</td><td>SIL Open Font License 1.1</td></tr>
+        <tr><td>NanumGothic</td><td>NAVER</td><td>SIL Open Font License 1.1, Reserved Font Name 조건 유지</td></tr>
+        <tr><td>Pretendard GOV</td><td>길형진 및 기여자</td><td>SIL Open Font License 1.1</td></tr>
+        <tr><td>KoPubWorldDotum</td><td>한국출판인회의</td><td>재배포 조건 최종 확인 전 운영 배포에서 제외</td></tr>
+    </tbody></table>
+    <p>글꼴 파일 자체를 단독 판매하지 않습니다. 수정·재배포 시 각 라이선스의 이름 유지 또는 변경 조건을 별도로 확인해야 합니다.</p>
+
+    <h2>외부 처리 경계</h2>
+    <ul>
+        <li>Markdown 원격 이미지는 사용자가 입력한 이미지 서버로 브라우저가 직접 요청합니다.</li>
+        <li>HWP5 엔진은 같은 서비스 도메인에 고정된 파일을 불러옵니다.</li>
+        <li>정밀 미리보기는 별도 확인 후 외부 rhwp iframe에 생성 HWPX 바이트를 전달합니다.</li>
+        <li>익명 사용 통계는 사용자가 동의한 경우에만 로드합니다.</li>
+    </ul>
+</main></body></html>

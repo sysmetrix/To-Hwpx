@@ -11,7 +11,7 @@
 
 'use strict';
 
-const CACHE_VERSION = 'to-hwpx-v4.13.0';
+const CACHE_VERSION = 'to-hwpx-v4.13.1';
 
 // 설치 시 미리 캐시할 파일 목록 (앱 셸)
 // [주의] 절대경로(/)가 아닌 상대경로(./)를 사용해야 함.
@@ -48,6 +48,7 @@ const APP_SHELL = [
     './fonts/NotoSansKR-Regular.ttf',
     './privacy.html',
     './terms.html',
+    './notices.html',
     './legal.css',
     // changelog.json(≈170KB)은 모달 열 때 fetch로 온디맨드 로드 → 선점 캐시 불필요
 ];

@@ -97,7 +97,7 @@ jobs:
       - name: 배포 파일 구성
         run: |
           mkdir _site
-          cp index.html style.css legal.css privacy.html terms.html LICENSE THIRD_PARTY_NOTICES.md robots.txt sitemap.xml sw.js manifest.json changelog.json _site/
+          cp index.html style.css legal.css privacy.html terms.html notices.html LICENSE robots.txt sitemap.xml sw.js manifest.json changelog.json _site/
           cp -R js icons _site/
           mkdir -p _site/fonts _site/.well-known
           cp fonts/NotoSansKR-Regular.ttf fonts/NanumGothic.ttf fonts/PretendardGOVVariable.ttf fonts/OFL-1.1.txt fonts/README.md _site/fonts/

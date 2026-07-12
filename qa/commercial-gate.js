@@ -12,7 +12,7 @@ const mustExist = file => {
 const assert = (condition, message) => { if (!condition) throw new Error(message); };
 
 for (const file of [
-    'LICENSE', 'THIRD_PARTY_NOTICES.md', 'privacy.html', 'terms.html', 'legal.css',
+    'LICENSE', 'THIRD_PARTY_NOTICES.md', 'privacy.html', 'terms.html', 'notices.html', 'legal.css',
     'vercel.json', '.vercelignore', 'robots.txt', 'sitemap.xml', '.well-known/security.txt',
     'fonts/OFL-1.1.txt', 'qa/release-qa.md', 'qa/manual-release-evidence-template.md',
     'OPERATIONS.md', '.github/workflows/production-smoke.yml',
@@ -31,7 +31,11 @@ assert(!/xlsx\/0\.18\.5|cdnjs\.cloudflare\.com|fonts\.googleapis\.com|_vercel\/(
 for (const file of ['js/vendor/jszip-3.10.1.min.js', 'js/vendor/marked-9.1.6.min.js', 'js/vendor/xlsx-0.20.3.full.min.js']) {
     assert(index.includes(file), `고정 vendor 스크립트 미참조: ${file}`);
 }
-assert(index.includes('privacy.html') && index.includes('terms.html'), '법적 문서 링크 누락');
+assert(index.includes('privacy.html') && index.includes('terms.html') && index.includes('notices.html'), '법적 문서 링크 누락');
+assert(!/github\.com|bwyf\.or\.kr/.test(index.replace(/<!--[^]*?-->/g, ''))
+    && !/github\.com|bwyf\.or\.kr/.test(read('privacy.html'))
+    && !/github\.com|bwyf\.or\.kr/.test(read('terms.html')),
+    '사용자 화면에 GitHub/BWYF 외부 링크가 남아 있음');
 
 const pkg = JSON.parse(read('package.json'));
 const lock = JSON.parse(read('package-lock.json'));
@@ -58,6 +62,8 @@ assert(app.includes('const ANALYTICS_SCHEMA') && app.includes("window.ToHwpxAnal
     && !app.includes('window.va?.'), '분석 이벤트 allowlist/동의 방어 또는 Vercel 분석 제거 누락');
 
 const vercel = JSON.parse(read('vercel.json'));
+assert(vercel.redirects?.some(rule => rule.source === '/THIRD_PARTY_NOTICES.md' && rule.destination === '/notices.html'),
+    '기존 오픈소스 고지 URL의 HTML 리다이렉트 누락');
 const allHeaders = vercel.headers.flatMap(rule => rule.headers || []);
 for (const key of ['Content-Security-Policy', 'X-Content-Type-Options', 'Referrer-Policy', 'Permissions-Policy', 'X-Frame-Options']) {
     assert(allHeaders.some(header => header.key === key), `Vercel 보안 헤더 누락: ${key}`);
@@ -72,8 +78,9 @@ assert(metaCsp && headerCsp?.replace("frame-ancestors 'none'; ", '') === metaCsp
 const vercelIgnore = read('.vercelignore');
 assert(vercelIgnore.includes('fonts/KoPubWorldDotum-Medium.ttf') && vercelIgnore.includes('hwpx-public-doc'),
     '미검증 글꼴/개발 산출물 Vercel 배포 제외 누락');
+assert(vercelIgnore.includes('THIRD_PARTY_NOTICES.md'), 'Markdown 고지 파일의 운영 직접 노출 제외 누락');
 const workflow = read('.github/workflows/pages.yml');
-assert(workflow.includes('npm run test:commercial') && workflow.includes('privacy.html')
+assert(workflow.includes('npm run test:commercial') && workflow.includes('privacy.html') && workflow.includes('notices.html')
     && !workflow.includes('cp -R js fonts icons'), 'Pages 상용 게이트/선별 배포 누락');
 assert(!/uses:\s+[^\s]+@(v\d+|main|master)\b/.test(workflow), 'GitHub Action이 커밋 SHA로 고정되지 않음');
 assert(read('.github/workflows/production-smoke.yml').includes('*/15 * * * *')

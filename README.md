@@ -67,7 +67,7 @@
 
 분석 도구에는 문서 본문, 파일명, 문서 제목, URL, 변환된 HWPX 바이트를 보내지 않습니다. 통계 수집을 거부해도 변환 기능을 사용할 수 있고 지원 환경의 로컬 처리 탭에서 언제든지 변경할 수 있습니다.
 
-정식 운영 정책은 [개인정보처리방침](./privacy.html), [이용약관](./terms.html), [오픈소스·글꼴 고지](./THIRD_PARTY_NOTICES.md)를 확인하세요.
+정식 운영 정책은 [개인정보처리방침](./privacy.html), [이용약관](./terms.html), [오픈소스·글꼴 고지](./notices.html)를 확인하세요.
 
 ---
 
@@ -92,4 +92,4 @@ MIT License — 자유롭게 사용, 수정, 배포할 수 있습니다.
 
 운영·장애 대응 기준은 [OPERATIONS.md](./OPERATIONS.md), 수동 출시 승인은 [qa/manual-release-evidence-template.md](./qa/manual-release-evidence-template.md)를 사용합니다.
 
-© 2026 [BWYF](https://www.bwyf.or.kr) / [sysmetrix](https://github.com/sysmetrix)
+© 2026 BWYF / sysmetrix

@@ -15,7 +15,7 @@ async function get(url) {
     finally { clearTimeout(timer); }
 }
 
-async function checkSite(base, { headers = false } = {}) {
+async function checkSite(base, { headers = false, legacyNoticeRedirect = false } = {}) {
     const response = await get(base);
     if (!response.ok) throw new Error(`${base} HTTP ${response.status}`);
     const html = await response.text();
@@ -25,9 +25,15 @@ async function checkSite(base, { headers = false } = {}) {
             if (!response.headers.get(key)) throw new Error(`${base} 보안 헤더 누락: ${key}`);
         }
     }
-    for (const path of ['privacy.html', 'terms.html', 'sw.js']) {
+    for (const path of ['privacy.html', 'terms.html', 'notices.html', 'sw.js']) {
         const asset = await get(new URL(path, base));
         if (!asset.ok) throw new Error(`${base}${path} HTTP ${asset.status}`);
+    }
+    if (legacyNoticeRedirect) {
+        const legacy = await get(new URL('THIRD_PARTY_NOTICES.md', base));
+        if (!legacy.ok || !legacy.url.endsWith('/notices.html')) {
+            throw new Error(`${base} 기존 고지 URL이 notices.html로 이동하지 않음`);
+        }
     }
 }
 
@@ -41,7 +47,7 @@ async function checkVendor(base) {
 }
 
 (async () => {
-    await checkSite(primary, { headers: true });
+    await checkSite(primary, { headers: true, legacyNoticeRedirect: true });
     await checkVendor(primary);
     await checkSite(mirror);
     await checkVendor(mirror);

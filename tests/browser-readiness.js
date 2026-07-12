@@ -70,6 +70,7 @@ async function accessibility(baseUrl) {
             { url: baseUrl, viewport: { width: 390, height: 844 }, label: 'index-mobile' },
             { url: new URL('privacy.html', baseUrl).href, viewport: { width: 1280, height: 900 }, label: 'privacy' },
             { url: new URL('terms.html', baseUrl).href, viewport: { width: 1280, height: 900 }, label: 'terms' },
+            { url: new URL('notices.html', baseUrl).href, viewport: { width: 1280, height: 900 }, label: 'notices' },
         ];
         for (const { url, viewport, label } of targets) {
             const context = await browser.newContext({ viewport });
