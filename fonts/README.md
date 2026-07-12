@@ -6,6 +6,7 @@
 
 | 폰트 | 기본 경로 | 현재 Font 폴더 호환 경로 |
 |---|---|---|
+| Inter | `fonts/InterVariable.woff2` | - |
 | Noto Sans KR | `fonts/NotoSansKR-Regular.ttf` | `Font/NotoSansKR-Regular.ttf` |
 | 나눔고딕 | `fonts/NanumGothic.ttf` | `Font/NanumGothic.ttf` |
 | KoPub돋움체 | `fonts/KoPubWorldDotum-Medium.ttf` | `Font/KoPubDotumMedium.ttf` |
@@ -15,4 +16,4 @@
 
 Pretendard GOV는 PC와 설치 방식에 따라 한컴에 `Pretendard GOV Variable` 또는 `Pretendard GOV`로 등록될 수 있습니다. 앱은 변환 직전에 실제 설치명을 감지해 그 이름을 HWPX 주 글꼴로 기록하고, 반대 이름을 대체 글꼴로 함께 기록합니다. 감지할 수 없으면 배포 파일의 내부 패밀리명인 `Pretendard GOV Variable`을 사용합니다.
 
-Noto Sans KR, 나눔고딕, Pretendard GOV는 `OFL-1.1.txt`와 루트 `THIRD_PARTY_NOTICES.md`의 고지에 따라 운영 배포합니다. KoPubWorld돋움은 재배포 조건의 최종 운영 확인 전까지 `.vercelignore`와 Pages 배포 allowlist에서 제외하며 앱은 공식 사이트 링크만 안내합니다.
+Inter, Noto Sans KR, 나눔고딕, Pretendard GOV는 `OFL-1.1.txt`와 루트 `THIRD_PARTY_NOTICES.md`의 고지에 따라 운영 배포합니다. KoPubWorld돋움은 재배포 조건의 최종 운영 확인 전까지 `.vercelignore`와 Pages 배포 allowlist에서 제외하며 앱은 공식 사이트 링크만 안내합니다.

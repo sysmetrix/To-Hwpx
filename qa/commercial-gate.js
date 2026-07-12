@@ -14,7 +14,7 @@ const assert = (condition, message) => { if (!condition) throw new Error(message
 for (const file of [
     'LICENSE', 'THIRD_PARTY_NOTICES.md', 'privacy.html', 'terms.html', 'notices.html', 'legal.css',
     'vercel.json', '.vercelignore', 'robots.txt', 'sitemap.xml', '.well-known/security.txt',
-    'fonts/OFL-1.1.txt', 'qa/release-qa.md', 'qa/manual-release-evidence-template.md',
+    'fonts/OFL-1.1.txt', 'fonts/InterVariable.woff2', 'qa/release-qa.md', 'qa/manual-release-evidence-template.md',
     'OPERATIONS.md', '.github/workflows/production-smoke.yml',
 ]) mustExist(file);
 
@@ -26,8 +26,12 @@ for (const [file, expected] of Object.entries(integrity)) {
 }
 
 const index = read('index.html');
+const style = read('style.css');
 assert(!/xlsx\/0\.18\.5|cdnjs\.cloudflare\.com|fonts\.googleapis\.com|_vercel\/(insights|speed-insights)/.test(index),
     '외부/취약 런타임 의존이 index.html에 남아 있음');
+assert(style.includes("font-family: 'Inter'") && style.includes("fonts/InterVariable.woff2")
+    && style.includes('--font-latin') && style.includes('.hero-title-accent'),
+    '영문 전용 Inter 웹폰트 적용 누락');
 for (const file of ['js/vendor/jszip-3.10.1.min.js', 'js/vendor/marked-9.1.6.min.js', 'js/vendor/xlsx-0.20.3.full.min.js']) {
     assert(index.includes(file), `고정 vendor 스크립트 미참조: ${file}`);
 }

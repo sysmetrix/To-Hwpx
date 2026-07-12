@@ -25,7 +25,7 @@ async function checkSite(base, { headers = false, legacyNoticeRedirect = false }
             if (!response.headers.get(key)) throw new Error(`${base} 보안 헤더 누락: ${key}`);
         }
     }
-    for (const path of ['privacy.html', 'terms.html', 'notices.html', 'sw.js']) {
+    for (const path of ['privacy.html', 'terms.html', 'notices.html', 'sw.js', 'fonts/InterVariable.woff2']) {
         const asset = await get(new URL(path, base));
         if (!asset.ok) throw new Error(`${base}${path} HTTP ${asset.status}`);
     }
