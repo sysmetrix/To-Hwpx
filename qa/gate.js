@@ -37,7 +37,7 @@ const PORT = Number(process.env.QA_GATE_PORT || 0);
 const input = process.argv[2] || path.join(ROOT, 'qa/fixtures/md_hwpx_test.md');
 
 const TYPES = { '.html': 'text/html', '.css': 'text/css', '.js': 'text/javascript',
-    '.json': 'application/json', '.svg': 'image/svg+xml', '.md': 'text/markdown' };
+    '.json': 'application/json', '.svg': 'image/svg+xml', '.md': 'text/markdown', '.wasm': 'application/wasm' };
 
 function serve() {
     return new Promise(resolve => {

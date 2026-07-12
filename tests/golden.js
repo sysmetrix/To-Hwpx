@@ -223,6 +223,7 @@ const TYPES = {
   '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   '.ttf': 'font/ttf',
   '.png': 'image/png',
+  '.wasm': 'application/wasm',
 };
 
 function serve() {
@@ -853,6 +854,30 @@ async function validateCommercialUx(page) {
   await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => window.JSZip && window.marked && window.XLSX && window.__appReady, null, { timeout: 30000 });
 
+  const analyticsInitial = await page.evaluate(() => ({
+    consent: window.ToHwpxAnalytics?.consent(),
+    posthogLoaded: !!window.posthog,
+    bannerHidden: document.getElementById('analytics-consent-banner')?.hidden,
+  }));
+  assert(analyticsInitial.consent === null && !analyticsInitial.posthogLoaded && analyticsInitial.bannerHidden === false,
+    'privacy: 선택 전 분석이 로드되었거나 동의 배너가 보이지 않음');
+  const posthogRequests = [];
+  page.on('request', request => {
+    if (request.url().startsWith('https://us.i.posthog.com/')) posthogRequests.push(request.url());
+  });
+  await page.route('https://us.i.posthog.com/**', route => route.abort());
+  await page.locator('#analytics-consent-allow').click();
+  await page.waitForFunction(() => !!window.posthog);
+  assert(posthogRequests.length > 0, 'privacy: 명시 동의 후에도 분석 스크립트 요청이 시작되지 않음');
+  await page.evaluate(() => window.ToHwpxAnalytics.setConsent('denied'));
+  const analyticsDenied = await page.evaluate(() => ({
+    consent: window.ToHwpxAnalytics.consent(),
+    stored: localStorage.getItem('tohwpx_analytics_consent'),
+    bannerHidden: document.getElementById('analytics-consent-banner').hidden,
+  }));
+  assert(analyticsDenied.consent === 'denied' && analyticsDenied.stored === 'denied' && analyticsDenied.bannerHidden,
+    'privacy: 분석 거부/철회 상태가 저장·반영되지 않음');
+
   const heroDropText = await page.locator('#drop-zone .drop-sub').textContent();
   assert(heroDropText.includes('MD · HTML · DOCX · PPTX · CSV · XLSX · JSON · TXT · IPYNB · HWP'),
     'ux: 첫 화면 드롭존 입력 포맷 순서가 안내 기준과 다름');
@@ -1152,6 +1177,7 @@ async function validateRejectedInputs(page) {
     { name: 'malformed IPYNB', file: { name: 'broken.ipynb', mimeType: 'application/json', buffer: Buffer.from('{not notebook') }, expect: 'IPYNB 파싱 오류' },
     { name: 'unclosed CSV quote', file: { name: 'broken.csv', mimeType: 'text/csv', buffer: Buffer.from('a,b\n"open,cell') }, expect: '닫히지 않은 따옴표' },
     { name: 'broken DOCX', file: { name: 'broken.docx', mimeType: 'application/octet-stream', buffer: Buffer.from('not a zip') }, expect: 'DOCX ZIP 열기 실패' },
+    { name: 'broken XLSX worker input', file: { name: 'broken.xlsx', mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', buffer: Buffer.from([0x50, 0x4b, 0x03, 0x04, 0, 0, 0, 0]) }, expect: 'XLSX' },
     { name: 'HWP5 binary (too small)', file: { name: 'legacy.hwp', mimeType: 'application/octet-stream', buffer: Buffer.from([0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1]) }, expect: 'HWP5 바이너리' },
     // 512바이트(CFBF 헤더 섹터 최소 크기) 이상이라 @rhwp/core(WASM) 로딩까지 실제로 진행되지만,
     // magic 뒤가 전부 0이라 유효한 OLE2 구조가 아니므로 열기 단계에서 실패해야 한다.
@@ -1173,7 +1199,24 @@ async function validateRejectedInputs(page) {
     assert(!downloaded, `${testCase.name}: 실패 입력에서 HWPX가 다운로드됨`);
     page.off('download', onDownload);
   }
-  console.log(`PASS FAIL  ${cases.length} malformed/unsupported inputs rejected`);
+
+  await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => window.__appReady, null, { timeout: 30000 });
+  await page.setInputFiles('#file-input', {
+    name: 'oversized.xlsx',
+    mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    buffer: Buffer.alloc(20 * 1024 * 1024 + 1),
+  });
+  await page.waitForTimeout(200);
+  const oversizedState = {
+    toast: await page.locator('#app-toast').textContent(),
+    disabled: await page.locator('#convert-btn').isDisabled(),
+    queueCount: await page.locator('.fq-item').count(),
+  };
+  assert(oversizedState.toast.includes('20MB 초과') && oversizedState.disabled && oversizedState.queueCount === 0,
+    `xlsx security: 20MB 초과 입력 사전 차단 실패 ${JSON.stringify(oversizedState)}`);
+
+  console.log(`PASS FAIL  ${cases.length} malformed inputs + XLSX 20MB limit rejected`);
 }
 
 async function validateBatchKanban(page) {

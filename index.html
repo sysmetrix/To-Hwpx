@@ -13,10 +13,11 @@
       hwpx.js    ← HWPX 빌더 + 검증기
       app.js     ← UI 이벤트 제어
 
-  [CDN 의존성]
+  [자체 호스팅 런타임 의존성]
     JSZip   — HWPX(ZIP+XML) 패키징
     marked  — Markdown → HTML 변환
     XLSX    — CSV/XLSX 파싱 (SheetJS)
+    @rhwp/core — HWP5 입력용 WASM
     Noto Sans KR — 한글 웹 폰트
 
   [수정 가이드]
@@ -39,54 +40,47 @@
          [보안] 정적 사이트(GitHub Pages)라 서버 응답 헤더를 못 다는 대신
                 meta로 선언한다. 문서 파싱 시점부터 적용되므로 어떤 리소스보다
                 먼저 와야 한다(여기 위치 유지).
-         핵심: script-src를 'self' + 고정 CDN으로 제한 → XSS가 실행될 통로 차단.
+         핵심: script-src를 'self' + 동의 후 분석 오리진으로 제한 → XSS 실행 통로 차단.
                이스케이프(escHtml/xmlEsc)가 한 곳 빠져도 막는 2차 방어선.
          [수정 시] 새 CDN/외부 오리진을 추가하면 해당 디렉티브에도 추가해야
                    리소스가 차단되지 않는다.
-           script-src : 앱 JS(self: theme/app/parsers/hwpx/posthog-init) +
-                        JSZip/marked/SheetJS(cdnjs) + @rhwp/core(jsdelivr,
-                        HWP5 바이너리 입력 파싱용 WASM, js/parsers.js에서 동적 import) +
+           script-src : 앱 JS와 자체 호스팅 JSZip/marked/SheetJS(self) +
+                        HWP5 바이너리 입력용 자체 호스팅 @rhwp/core WASM +
                         PostHog array.js(us.i.posthog.com).
                         'wasm-unsafe-eval'은 이 WASM 인스턴스화에 필요(없으면 CSP가
                         WebAssembly.instantiate를 차단함).
-           style-src  : self style.css + Google Fonts CSS. 인라인 style/script는 허용하지 않는다.
+           style-src  : self style.css. 인라인 style/script는 허용하지 않는다.
            img-src    : 'self' data: — 브랜드 아이콘은 icons/brand/에 self-host.
                         원격 MD 이미지는 fetch()→data: URL 변환 후 HWPX에만 임베드;
                         IR 미리보기는 텍스트 플레이스홀더로 표시 → https: 불필요.
-           connect-src: 'self' + 임의 https 오리진. Markdown 원격 이미지 fetch + jsdelivr에서
-                        @rhwp/core의 rhwp_bg.wasm을 fetch (스크립트 자체 URL 기준 상대경로)
-                        + Vercel/PostHog 분석·성능 지표 수집 요청을 포함한다.
+           connect-src: 'self' + 임의 https 오리진. Markdown 원격 이미지 fetch와
+                        사용자가 동의한 경우에만 PostHog 분석 요청을 포함한다.
            frame-src  : 정밀 미리보기 rhwp 뷰어(외부 WASM, 선택 기능)
          ──────────────────────────────────────────────────────────── -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://us.i.posthog.com https://eu.posthog.com https://us.posthog.com; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https:; frame-src https://edwardkim.github.io; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval' https://us.i.posthog.com; style-src 'self'; font-src 'self'; img-src 'self' data:; connect-src 'self' https:; frame-src https://edwardkim.github.io; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
 
     <!-- SEO + SNS 공유용 메타 태그 -->
     <title>To HWPX - 한글로</title>
-    <link rel="canonical" href="https://sysmetrix.github.io/To-Hwpx/">
+    <link rel="canonical" href="https://to-hwpx.vercel.app/">
     <meta name="description" content="Markdown, HTML, DOCX, CSV, JSON 등 다양한 포맷을 한글(HWPX) 파일로 변환합니다. 브라우저에서 직접 처리 — 파일이 서버에 업로드되지 않습니다.">
     <meta property="og:title" content="To HWPX - 한글로">
     <meta property="og:description" content="다양한 문서 포맷을 HWPX로 변환하는 브라우저 도구">
     <meta property="og:type" content="website">
     <meta property="og:locale" content="ko_KR">
-    <meta property="og:url" content="https://sysmetrix.github.io/To-Hwpx/">
-    <meta property="og:image" content="https://sysmetrix.github.io/To-Hwpx/icons/og-image.png">
+    <meta property="og:url" content="https://to-hwpx.vercel.app/">
+    <meta property="og:image" content="https://to-hwpx.vercel.app/icons/og-image.png">
     <meta property="og:image:type" content="image/png">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
     <meta property="og:image:alt" content="To HWPX — 다양한 포맷을 한글(HWPX)로 변환">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:image" content="https://sysmetrix.github.io/To-Hwpx/icons/og-image.png">
+    <meta name="twitter:image" content="https://to-hwpx.vercel.app/icons/og-image.png">
     <meta name="twitter:title" content="To HWPX - 한글로">
     <meta name="twitter:description" content="다양한 문서 포맷을 HWPX로 변환하는 브라우저 도구">
 
     <!-- 파비콘 (텍스트 기반 SVG) -->
     <link rel="icon" type="image/svg+xml" href="icons/app-icon.svg">
     <link rel="apple-touch-icon" href="icons/app-icon.svg">
-
-    <!-- 한글 웹 폰트 (Google Fonts) -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700;800&display=swap" rel="stylesheet">
 
     <!-- ─── 테마(다크/라이트) 선적용 ───────────────────────────────
          [FOUC 방지] 스타일시트보다 먼저, 첫 페인트 전에 동기 실행해야 한다.
@@ -104,41 +98,16 @@
     <!-- [주의] id="theme-color-meta"는 app.js가 다크/라이트에 맞춰 색을 갱신함 -->
     <meta name="theme-color" content="#2252e4" id="theme-color-meta">
 
-    <!-- ─── CDN 라이브러리 ─────────────────────────────────────────
-         [보안] integrity(SRI 해시)와 crossorigin="anonymous" 필수
-               SRI 검증 실패 시 브라우저가 스크립트 실행을 차단함
-         ──────────────────────────────────────────────────────────── -->
+    <!-- 핵심 변환 라이브러리는 버전과 라이선스를 js/vendor에 고정한다. -->
 
     <!-- JSZip 3.10.1 — HWPX(ZIP+XML) 컨테이너 생성 -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"
-            integrity="sha512-XMVd28F1oH/O71fzwBnV7HucLxVwtxf26XV8P4wPk26EDxuGZ91N8bsOttmnomcCD3CS5ZMRL50H0GgOHvegtg=="
-            crossorigin="anonymous"
-            referrerpolicy="no-referrer"
-            defer></script>
+    <script src="js/vendor/jszip-3.10.1.min.js" defer></script>
 
     <!-- marked 9.1.6 — Markdown → HTML 변환 -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"
-            integrity="sha512-pmjEJQ7CveksANaAKdCJZMig7eAcCFFzE1b5XnlnxdB/vU3AOStJ5SF7w4tFuqskuU31ETnAaWTYRQOYg2WHKw=="
-            crossorigin="anonymous"
-            referrerpolicy="no-referrer"
-            defer></script>
+    <script src="js/vendor/marked-9.1.6.min.js" defer></script>
 
-    <!-- SheetJS (XLSX) 0.18.5 — CSV/XLSX 파싱 -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"
-            integrity="sha512-r22gChDnGvBylk90+2e/ycr3RVrDi8DIOkIGNhJlKfuyQM4tIRAI062MaV8sfjQKYVGjOBaZBOA87z+IhZE9DA=="
-            crossorigin="anonymous"
-            referrerpolicy="no-referrer"
-            defer></script>
-
-    <!-- ─── Vercel Analytics & Speed Insights ───────────────────────
-         Web Analytics : 방문자·페이지뷰·국가·디바이스·레퍼러 (쿠키 없음, GDPR 준수)
-         Speed Insights: LCP·CLS·INP Core Web Vitals 실사용자 성능 지표
-         스크립트는 Vercel Edge가 /_vercel/* 경로로 프록시 서빙 → CSP 'self' 범위.
-         로컬/비Vercel 환경에서는 404로 조용히 실패 (defer 블로킹 없음).
-         커스텀 이벤트는 app.js의 track() 함수로 기록된다.
-         ──────────────────────────────────────────────────────────── -->
-    <script defer src="/_vercel/insights/script.js"></script>
-    <script defer src="/_vercel/speed-insights/script.js"></script>
+    <!-- SheetJS 0.20.3 — CVE-2023-30533/CVE-2024-22363 수정 버전 -->
+    <script src="js/vendor/xlsx-0.20.3.full.min.js" defer></script>
 
     <!-- ─── PostHog Product Analytics ───────────────────────────────
          퍼널 분석(포맷별 성공률), 세션 경로, 옵션 사용 분포 등 심층 분석.
@@ -148,6 +117,18 @@
     <script src="js/posthog-init.js" defer></script>
 </head>
 <body>
+
+<section id="analytics-consent-banner" class="consent-banner" aria-label="익명 사용 통계 선택" hidden>
+    <div>
+        <strong>익명 사용 통계</strong>
+        <span>문서 내용과 파일명은 보내지 않습니다. 동의한 경우에만 페이지 이용 통계를 전송합니다.</span>
+    </div>
+    <div class="consent-actions">
+        <button type="button" id="analytics-consent-deny">거부</button>
+        <button type="button" id="analytics-consent-allow" class="consent-primary">동의</button>
+        <a href="privacy.html">자세히</a>
+    </div>
+</section>
 
 <!-- 스킵 링크: 키보드/스크린리더 사용자가 헤더 내비를 건너뛰고 바로 본문
      (파일 선택 드롭존)으로 이동. 평소 화면 밖에 숨었다가 Tab 포커스 시 나타난다. -->
@@ -165,7 +146,7 @@
             <span>｢BWYF｣ AX Challenger 2026</span>
             <!-- [주의] id="open-changelog"는 app.js에서 관리자 모드일 때 업데이트 내역 모달을 여는 연결값 -->
             <button class="util-changelog-btn" id="open-changelog" aria-label="버전 정보">
-                📋 v4.12.1
+                📋 v4.13.0
             </button>
         </div>
     </div>
@@ -1199,6 +1180,9 @@
                 <h4>관련 링크</h4>
                 <ul>
                     <li><a href="https://www.bwyf.or.kr" target="_blank" rel="noopener">부천여성청소년재단</a></li>
+                    <li><a href="privacy.html">개인정보처리방침</a></li>
+                    <li><a href="terms.html">이용약관</a></li>
+                    <li><a href="THIRD_PARTY_NOTICES.md">오픈소스·글꼴 고지</a></li>
                 </ul>
             </div>
 
@@ -1345,7 +1329,13 @@
                     <div class="trust-fact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>브라우저 내 처리</div>
                     <div class="trust-fact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>닫으면 즉시 삭제</div>
                 </div>
-                <p class="trust-modal-note">예외적으로 원격 Markdown 이미지는 이미지 서버에 직접 요청하고, HWP5 입력은 jsDelivr의 WASM 엔진을 불러옵니다.<br>정밀 미리보기(베타)는 확인 후 외부 rhwp iframe에 생성된 HWPX 바이트를 전달합니다.<br>분석 도구는 페이지뷰와 변환 성공/실패 같은 사용 이벤트만 기록하며 문서 내용은 보내지 않습니다.</p>
+                <p class="trust-modal-note">예외적으로 원격 Markdown 이미지는 이미지 서버에 직접 요청합니다. HWP5 엔진은 같은 서비스 도메인에서 불러옵니다.<br>정밀 미리보기(베타)는 확인 후 외부 rhwp iframe에 생성된 HWPX 바이트를 전달합니다.<br>분석 도구는 명시적으로 동의한 경우에만 허용된 사용 이벤트를 기록하며 문서 내용·파일명은 보내지 않습니다.</p>
+                <div class="analytics-consent-controls" aria-live="polite">
+                    <strong>익명 사용 통계: <span id="analytics-consent-status">선택 전</span></strong>
+                    <button type="button" data-analytics-consent="denied">통계 거부</button>
+                    <button type="button" data-analytics-consent="granted">통계 동의</button>
+                    <a href="privacy.html">개인정보처리방침</a>
+                </div>
             </div>
         </div>
     </div>
@@ -1615,8 +1605,8 @@
 
 <!-- ─── JS 로드 ──────────────────────────────────────────────────────
      [B1 ES 모듈] app.js가 type="module"로 parsers.js / hwpx.js를 import.
-     CDN 전역(JSZip/marked/XLSX)은 위 classic <script>로 로드되며,
-     모듈은 always-defer이라 CDN 실행 완료 후 모듈이 시작됨 → 순서 안전.
+     자체 호스팅 전역(JSZip/marked/XLSX)은 위 classic <script>로 로드되며,
+     모듈은 always-defer이라 전역 라이브러리 실행 완료 후 모듈이 시작됨 → 순서 안전.
      ─────────────────────────────────────────────────────────────── -->
 <script type="module" src="js/app.js"></script>
 

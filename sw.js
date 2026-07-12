@@ -1,9 +1,9 @@
 /* ===================================================================
- * [sw.js]  Service Worker — CDN 리소스 캐싱 (오프라인 동작 지원)
+ * [sw.js]  Service Worker — 고정 앱 리소스 캐싱 (오프라인 동작 지원)
  * ===================================================================
  * 캐싱 전략: Cache First → Network Fallback
- *   1. 앱 셸/명시 CDN은 캐시에 있으면 캐시에서 반환 (빠른 응답)
- *   2. 허용된 앱 셸/명시 CDN만 네트워크 응답을 캐시에 저장
+ *   1. 앱 셸/명시 리소스는 캐시에 있으면 캐시에서 반환 (빠른 응답)
+ *   2. 허용된 앱 셸/명시 리소스만 네트워크 응답을 캐시에 저장
  *   3. 원격 Markdown 이미지 등 임의 외부 GET은 캐시하지 않고 네트워크 통과
  *
  * [수정 시] CACHE_VERSION 값을 변경하면 이전 캐시가 자동으로 삭제됨
@@ -11,7 +11,7 @@
 
 'use strict';
 
-const CACHE_VERSION = 'to-hwpx-v4.12.1';
+const CACHE_VERSION = 'to-hwpx-v4.13.0';
 
 // 설치 시 미리 캐시할 파일 목록 (앱 셸)
 // [주의] 절대경로(/)가 아닌 상대경로(./)를 사용해야 함.
@@ -23,6 +23,12 @@ const APP_SHELL = [
     './style.css',
     './js/theme-init.js',
     './js/posthog-init.js',
+    './js/xlsx-worker.js',
+    './js/vendor/jszip-3.10.1.min.js',
+    './js/vendor/marked-9.1.6.min.js',
+    './js/vendor/xlsx-0.20.3.full.min.js',
+    './js/vendor/rhwp-core-0.7.17/rhwp.js',
+    './js/vendor/rhwp-core-0.7.17/rhwp_bg.wasm',
     './js/parsers.js',
     './js/hwpx.js',
     './js/app.js',
@@ -39,13 +45,11 @@ const APP_SHELL = [
     './icons/brand/jupyter.svg',
     './icons/brand/adobeacrobatreader.svg',
     './icons/brand/microsoftpowerpoint.svg',
+    './fonts/NotoSansKR-Regular.ttf',
+    './privacy.html',
+    './terms.html',
+    './legal.css',
     // changelog.json(≈170KB)은 모달 열 때 fetch로 온디맨드 로드 → 선점 캐시 불필요
-    // CDN 라이브러리 (SRI 검증 통과한 것들)
-    'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js',
-    'https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js',
-    'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js',
-    // 한글 웹 폰트
-    'https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700;800&display=swap',
 ];
 
 const CACHEABLE_URLS = new Set(APP_SHELL.map(url => new URL(url, self.location.href).href));
@@ -56,7 +60,7 @@ function isCacheableRequest(request) {
 }
 
 // ── 설치 이벤트: 앱 셸을 캐시에 미리 저장 ────────────────────────
-// Promise.allSettled: 개별 파일 실패(CDN 불가 등)가 전체 SW 설치를 중단시키지 않음.
+// Promise.allSettled: 개별 파일 실패가 전체 SW 설치를 중단시키지 않음.
 self.addEventListener('install', event => {
     event.waitUntil(
         caches.open(CACHE_VERSION)
