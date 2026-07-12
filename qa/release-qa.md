@@ -3,6 +3,30 @@
 Date: 2026-06-25
 Scope: static browser-only conversion flow from file selection to HWPX download.
 
+## 41. v4.13.1 상용화 변경 회귀 수정
+
+재분석에서 확인한 문제:
+- Windows `core.autocrlf=true` 체크아웃에서 vendor JS가 CRLF로 바뀌어 로컬 상용화 해시 게이트가 실패했다.
+- 오픈소스·글꼴 고지가 Markdown 원문 링크라 일반 사용자가 웹 문서처럼 읽기 어려웠다.
+- 사용자 화면과 법적 문서에 GitHub 및 부천여성청소년재단 외부 링크가 남아 있었다.
+
+수정:
+- `.gitattributes`에서 `js/vendor/** -text`를 선언해 OS와 무관하게 원본 바이트를 유지한다.
+- `notices.html`을 추가하고 푸터·개인정보·약관을 전용 HTML 고지로 연결한다.
+- Vercel의 기존 Markdown URL은 HTML 고지로 영구 이동하고 Markdown 파일은 운영 직접 배포에서 제외한다.
+- 사용자 HTML에서 GitHub/BWYF 링크를 제거하고 관련 회귀 검사를 추가한다.
+
+자동 확인:
+- [x] `npm run test:release` PASS
+- [x] Windows `npm run test:commercial` vendor 5개 해시 PASS
+- [ ] `npm run test:browsers` Linux CI Chromium·Firefox·WebKit PASS
+- [x] `node qa/gate.js` 대표 입력 5종 ①~⑨ PASS
+- [x] `node tests/orientation-e2e.js` PASS
+- [ ] 배포 후 기존 `/THIRD_PARTY_NOTICES.md` → `/notices.html` 이동 확인
+- [ ] Vercel/Pages v4.13.1 production smoke PASS
+
+비교 근거: `qa/v4.13.1-regression-comparison.md`
+
 ## 40. v4.13.0 상용화 P0 보안·법적·운영 게이트
 
 수정:

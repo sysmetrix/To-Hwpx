@@ -1,6 +1,21 @@
 {
-  "current": "4.13.0",
+  "current": "4.13.1",
   "versions": [
+    {
+      "version": "4.13.1",
+      "date": "2026-07-12",
+      "user": [
+        "오픈소스·글꼴 고지를 읽기 쉬운 전용 웹 문서로 바꾸고 개인정보처리방침·이용약관·푸터에서 같은 화면으로 연결했습니다.",
+        "서비스 화면에서 GitHub와 부천여성청소년재단으로 이동하는 링크를 제거했습니다."
+      ],
+      "dev": [
+        "[v4.13.1] .gitattributes: Windows core.autocrlf 환경에서도 js/vendor 원본 바이트와 SHA-256이 유지되도록 -text 적용",
+        "[v4.13.1] notices.html/index.html/privacy.html/terms.html: Markdown 직접 링크를 반응형 HTML 고지로 교체하고 GitHub/BWYF 사용자 링크 제거",
+        "[v4.13.1] vercel.json/.vercelignore: 기존 THIRD_PARTY_NOTICES.md URL을 notices.html로 영구 이동하고 Markdown 직접 배포 제외",
+        "[v4.13.1] sw.js/pages.yml/sitemap.xml: notices.html의 오프라인 캐시·Pages 배포·검색 경로 추가",
+        "[v4.13.1] commercial/golden/axe/production smoke: 외부 링크 재유입, 고지 접근성, 기존 URL 이동 회귀 검사 추가"
+      ]
+    },
     {
       "version": "4.13.0",
       "date": "2026-07-12",

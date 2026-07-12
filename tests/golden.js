@@ -917,6 +917,10 @@ async function validateCommercialUx(page) {
     && !footerText.includes('파일은 서버에 전송되지 않으며')
     && !footerText.includes('브라우저 안에서 완전히 처리됩니다'),
     'ux: 하단 관련 링크 또는 중복 로컬 처리 문구가 남아 있음');
+  const footerLinks = await page.locator('footer a').evaluateAll(links => links.map(link => link.getAttribute('href')));
+  assert(footerLinks.includes('notices.html')
+    && !footerLinks.some(href => /github\.com|bwyf\.or\.kr/.test(href || '')),
+    'ux: HTML 고지 링크가 없거나 GitHub/BWYF 외부 링크가 남아 있음');
 
   const helpButton = page.locator('#open-help');
   await page.locator('#open-help').click();

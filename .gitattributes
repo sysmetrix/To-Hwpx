@@ -1,0 +1,3 @@
+# Third-party runtime assets are hash-verified byte-for-byte.
+# Never rewrite line endings on Windows checkout.
+js/vendor/** -text
