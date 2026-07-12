@@ -31,8 +31,8 @@
 - `id="..."`: JavaScript가 화면 요소를 찾는 연결 이름입니다.
 - `class="..."`: CSS 스타일과 일부 JavaScript 동작이 연결됩니다.
 - `data-ext="..."`: 포맷 카드와 파서/팝업 설명을 연결합니다.
-- `<script src="js/parsers.js">`, `<script src="js/hwpx.js">`, `<script src="js/app.js">` 순서: 실행 순서가 중요합니다.
-- `integrity="..."`: CDN 파일 보안 검증값입니다. 라이브러리 버전을 바꿀 때만 같이 바꿉니다.
+- `js/vendor/`의 파일명·내용과 `qa/vendor-integrity.json`: 라이브러리 버전을 바꾸면 고정 해시와 회귀 테스트를 함께 갱신합니다.
+- `<script type="module" src="js/app.js">`: `app.js`가 `parsers.js`와 `hwpx.js`를 import하므로 임의로 classic script로 되돌리지 않습니다.
 
 ### 파일 저장 인코딩
 
@@ -107,15 +107,16 @@ to hwpx/
         └── pages.yml   — GitHub Pages 자동 배포 (미러 용도)
 ```
 
-### 의존성 (CDN, 빌드 불필요)
+### 의존성 (자체 호스팅, 빌드 불필요)
 
 | 라이브러리 | 버전 | 용도 |
 |-----------|------|------|
 | [JSZip](https://stuk.github.io/jszip/) | 3.10.1 | HWPX ZIP 패키징, DOCX/IPYNB 압축 해제 |
 | [marked.js](https://marked.js.org/) | 9.1.6 | Markdown → HTML 파싱 |
-| [SheetJS](https://sheetjs.com/) | 0.18.5 | XLSX 파일 읽기 |
+| [SheetJS](https://sheetjs.com/) | 0.20.3 | Web Worker에서 XLSX 파일 읽기 |
+| [@rhwp/core](https://github.com/edwardkim/rhwp) | 0.7.17 | HWP5 본문 추출용 JS/WASM |
 
-빌드 과정이 없습니다. `index.html`을 브라우저에서 직접 열거나 정적 파일 서버로 서빙하면 동작합니다.
+빌드 과정이 없습니다. ES module·Web Worker·WASM을 사용하므로 `file://`가 아니라 정적 파일 서버로 서빙해 실행합니다.
 
 ---
 

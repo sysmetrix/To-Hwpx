@@ -1,6 +1,27 @@
 {
-  "current": "4.12.1",
+  "current": "4.13.0",
   "versions": [
+    {
+      "version": "4.13.0",
+      "date": "2026-07-12",
+      "user": [
+        "XLSX 변환 엔진을 보안 수정 버전으로 교체하고 별도 작업자에서 실행해, 손상되거나 과도한 파일이 화면을 장시간 멈추게 할 위험을 줄였습니다.",
+        "문서와 파일명을 보내지 않는 익명 사용 통계도 사용자가 동의한 경우에만 활성화되며, 지원 환경의 로컬 처리 탭에서 언제든지 거부할 수 있습니다.",
+        "개인정보처리방침·이용약관·오픈소스 및 글꼴 고지를 추가하고 핵심 변환 라이브러리와 HWP5 엔진을 서비스 도메인에 고정해 오프라인 안정성을 높였습니다."
+      ],
+      "dev": [
+        "[v4.13.0] js/vendor/index.html/sw.js: JSZip 3.10.1, marked 9.1.6, SheetJS 0.20.3, @rhwp/core 0.7.17 JS/WASM 자체 호스팅과 SHA-256 무결성 고정",
+        "[v4.13.0] js/xlsx-worker.js/js/parsers.js: XLS/XLSX Web Worker 격리, 15초·20MB·20,000행·256열·2,000,000셀 제한과 손상 입력 거부",
+        "[v4.13.0] js/posthog-init.js/js/app.js: 분석 기본 미전송, 명시 동의/철회 UI, 이벤트명·속성 allowlist, 메모리 세션 및 녹화 비활성화",
+        "[v4.13.0] vercel.json: 응답 CSP, nosniff, Referrer-Policy, Permissions-Policy, clickjacking/HSTS/COOP 헤더 추가",
+        "[v4.13.0] privacy.html/terms.html/LICENSE/THIRD_PARTY_NOTICES.md: 개인정보·이용조건·MIT·런타임/글꼴 라이선스 문서와 보안 연락처 추가",
+        "[v4.13.0] .vercelignore/pages.yml: 개발 산출물과 재배포 조건 미확인 KoPub 글꼴의 운영 배포 제외, GitHub Actions 커밋 SHA 고정",
+        "[v4.13.0] qa/commercial-gate.js/qa/vendor-integrity.json: 취약 URL 재유입, vendor 해시, 법적 파일, 보안 헤더, 선별 배포를 막는 상용화 게이트 추가",
+        "[v4.13.0] tests/browser-readiness.js: WCAG AA 데스크톱·모바일, Chromium/Firefox/WebKit 변환 smoke, 10MB TXT 10초 성능 게이트 추가",
+        "[v4.13.0] qa/production-smoke.js/production-smoke.yml/OPERATIONS.md: 15분 운영 감시, 정식·미러 버전/보안 헤더/vendor 해시 확인과 10분 롤백 절차 문서화",
+        "[v4.13.0] tests/golden.js: 분석 사전 동의, 손상 XLSX 작업자 실패, 20MB 초과 사전 차단 회귀 검사 추가"
+      ]
+    },
     {
       "version": "4.12.1",
       "date": "2026-07-08",

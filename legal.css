@@ -1,0 +1,18 @@
+@font-face {
+    font-family: 'Noto Sans KR';
+    src: url('fonts/NotoSansKR-Regular.ttf') format('truetype');
+    font-display: swap;
+}
+:root { color-scheme: light; font-family: 'Noto Sans KR', system-ui, sans-serif; color: #1c1d22; background: #faf9f6; }
+body { margin: 0; }
+.legal-shell { width: min(860px, calc(100% - 36px)); margin: 0 auto; padding: 42px 0 72px; }
+.legal-nav { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 30px; }
+.legal-nav a { color: #1640c8; }
+h1 { margin: 0 0 8px; font-size: clamp(1.8rem, 5vw, 2.5rem); }
+h2 { margin-top: 34px; font-size: 1.2rem; }
+p, li { line-height: 1.75; }
+table { width: 100%; border-collapse: collapse; background: #fff; }
+th, td { padding: 10px; border: 1px solid #d6d3ca; text-align: left; vertical-align: top; }
+.legal-note { padding: 14px 16px; border-left: 4px solid #2252e4; background: #e9effc; }
+.legal-date { color: #686c75; }
+@media (max-width: 600px) { table { display: block; overflow-x: auto; } }

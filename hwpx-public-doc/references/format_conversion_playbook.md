@@ -226,7 +226,8 @@
 
 주의:
 
-- XLSX는 SheetJS로 첫 시트를 CSV로 바꾼 뒤 CSV 파서를 재사용한다.
+- XLSX는 CVE-2023-30533/CVE-2024-22363 수정 버전인 SheetJS 0.20.3 고정 파일을 사용한다. `js/xlsx-worker.js`의 Web Worker에서 첫 시트를 CSV로 바꾼 뒤 CSV 파서를 재사용해 악성 입력이 UI 스레드를 장시간 막지 않게 한다.
+- XLS/XLSX 입력은 최대 20MB, 첫 시트 최대 20,000행·256열·2,000,000셀, 작업자 실행 15초로 제한한다. 한도 초과는 일부를 조용히 자르지 않고 오류와 CSV 대안을 안내한다.
 - 직접 입력의 CSV 모드는 쉼표 CSV와 Excel·Google Sheets에서 복사한 탭 구분 표(TSV)를 따옴표 밖 구분자 개수로 자동 판별한다.
 - 행마다 열 수가 다르면 가장 넓은 행에 맞춰 빈 셀을 보충해 HWPX 표 격자 불일치를 막는다.
 - 여러 시트, 차트, 이미지, 셀 병합, 색상, 폰트, 세부 서식은 보존 대상이 아니다.
@@ -241,6 +242,8 @@
 - `tests/fixtures/sample.csv`
 - `tests/fixtures/long-table.csv`
 - `tests/fixtures/sample.xlsx`
+- `tests/golden.js`의 손상 XLSX worker 거부 및 20MB 초과 사전 차단
+- `qa/vendor-integrity.json`의 SheetJS 0.20.3 SHA-256과 `qa/commercial-gate.js`의 취약 URL 재유입 검사
 - `tests/golden.js` 직접 입력 회귀: MD/HTML/TXT/CSV/JSON 파일 입력과 직접 입력 HWPX 본문·표 개수 동등성, TSV 표 생성, 태그 없는 HTML 텍스트 보존
 - 빈 셀, 열 개수, 긴 텍스트, 표 존재 여부를 본다.
 - 일반 표의 `pageBreak="TABLE"`, `repeatHeader="1"`, `treatAsChar="0"`, 단 오른쪽 정렬, `hp:outMargin@bottom="850"`, 첫 행 제목 셀 지정을 XML로 검사한다. 한컴에서는 짧은 표 뒤 3mm 간격과 긴 표의 실제 쪽 나눔·제목 줄 반복을 함께 확인한다.
@@ -385,7 +388,7 @@
 보존:
 
 - HWPX 오업로드 시 내부 XML 본문 텍스트와 일부 표(기존 ZIP 경로, 변경 없음)
-- HWP5(OLE2) 바이너리는 v4.10.27부터 `@rhwp/core`(Rust+WASM, MIT, jsdelivr CDN 동적 import)로
+- HWP5(OLE2) 바이너리는 v4.10.27부터 `@rhwp/core`(Rust+WASM, MIT)를 사용하며, 상용화 게이트 이후 0.7.17 JS/WASM을 `js/vendor/rhwp-core-0.7.17/`에 고정해 같은 서비스 도메인에서 동적 import한다.
   문단 단위 본문 텍스트를 추출한다. 표·이미지·글머리·서식 등 구조 정보는 다루지 않는다
   (TXT 포맷과 동일한 보존 수준 — 텍스트만).
 - CFBF(OLE2) 헤더 섹터는 항상 512바이트이므로, 그보다 작은 버퍼는 WASM을 내려받기 전에

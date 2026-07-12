@@ -134,11 +134,11 @@ function convertWebpToPng(bytes) {
 
 // ─────────────────────────────────────────────────────────────────────────
 // [1] Markdown 파서
-//     방법: marked.js(CDN)로 MD→HTML 변환 후, HTML 파서 재사용
+//     방법: 자체 호스팅 marked.js로 MD→HTML 변환 후, HTML 파서 재사용
 //     장점: marked.js가 CommonMark 표준을 처리하므로 별도 MD 파싱 불필요
 // ─────────────────────────────────────────────────────────────────────────
 export function parseMd(text, docType = 'plain') {
-    // marked.js가 index.html CDN으로 로드되지 않았으면 TXT 파서로 폴백
+    // marked.js 고정 파일이 로드되지 않았으면 TXT 파서로 폴백
     if (typeof marked === 'undefined') {
         console.warn('[parsers] marked.js 미로드 — TXT 파서로 폴백');
         return parseTxt(text, docType);
@@ -828,23 +828,36 @@ function detectDelimitedTextSeparator(text) {
 
 // ─────────────────────────────────────────────────────────────────────────
 // [5] XLSX 파서
-//     방법: SheetJS(CDN) 라이브러리로 첫 번째 시트 → CSV 변환 후 parseCsv() 재사용
-//     [주의] SheetJS가 CDN에서 로드되어 있어야 함 (index.html 스크립트 태그 참조)
+//     방법: 자체 호스팅 SheetJS 0.20.3을 Web Worker에서 실행해 첫 시트 → CSV 변환
+//     악성·과대 입력이 UI를 멈추지 않도록 15초 시간 제한과 행/열/셀 한도를 둔다.
 // ─────────────────────────────────────────────────────────────────────────
-function parseXlsx(arrayBuffer, docType = 'plain') {
-    if (typeof XLSX === 'undefined') {
-        throw new Error('SheetJS 라이브러리 미로드: XLSX 처리 불가. 인터넷 연결을 확인하세요.');
+async function parseXlsx(arrayBuffer, docType = 'plain') {
+    if (typeof Worker === 'undefined') {
+        throw new Error('이 브라우저는 안전한 XLSX 처리(Web Worker)를 지원하지 않습니다. 최신 브라우저를 사용해 주세요.');
     }
 
-    const workbook = XLSX.read(arrayBuffer, { type: 'array' });
-    const firstSheetName = workbook.SheetNames[0];
-    if (!firstSheetName || !workbook.Sheets[firstSheetName]) {
-        throw new Error('XLSX 첫 번째 시트를 찾을 수 없습니다. 비어 있거나 손상된 파일입니다.');
-    }
-    // sheet_to_csv로 CSV 문자열 생성 후 파서 재사용
-    const csvText = XLSX.utils.sheet_to_csv(workbook.Sheets[firstSheetName]);
-    const ir = parseCsv(csvText, docType);
-    ir.title = sanitize(firstSheetName) || 'XLSX 문서';
+    const workerUrl = new URL('js/xlsx-worker.js', document.baseURI);
+    const result = await new Promise((resolve, reject) => {
+        const worker = new Worker(workerUrl);
+        const timer = setTimeout(() => {
+            worker.terminate();
+            reject(new Error('XLSX 처리 시간 초과(15초): 파일을 CSV로 저장하거나 크기를 줄여 주세요.'));
+        }, 15000);
+        worker.addEventListener('message', event => {
+            clearTimeout(timer);
+            worker.terminate();
+            event.data?.ok ? resolve(event.data) : reject(new Error(event.data?.error || 'XLSX 파싱 실패'));
+        }, { once: true });
+        worker.addEventListener('error', () => {
+            clearTimeout(timer);
+            worker.terminate();
+            reject(new Error('XLSX 안전 처리 작업자를 시작하지 못했습니다.'));
+        }, { once: true });
+        worker.postMessage({ buffer: arrayBuffer }, [arrayBuffer]);
+    });
+
+    const ir = parseCsv(result.csvText, docType);
+    ir.title = sanitize(result.sheetName) || 'XLSX 문서';
     return ir;
 }
 
@@ -2136,10 +2149,9 @@ function detectHwpFormat(buffer) {
     return 'unknown';
 }
 
-// @rhwp/core — Rust+WASM HWP5/HWPX 파서(MIT). 버전 고정 CDN URL(정밀 미리보기 iframe과
-// 같은 0.7.17). HWP5 입력 처리에만 필요하므로 정적 import 대신 parseHwp5WithRhwp()에서만
-// 동적 import한다(초기 로드에 5MB+ WASM을 얹지 않기 위함).
-const RHWP_CORE_URL = 'https://cdn.jsdelivr.net/npm/@rhwp/core@0.7.17/rhwp.js';
+// @rhwp/core — Rust+WASM HWP5/HWPX 파서(MIT). 0.7.17 JS/WASM을 vendor에 고정해
+// 같은 서비스 도메인에서 제공한다. HWP5 입력 처리에만 동적 import한다.
+const RHWP_CORE_URL = new URL('./vendor/rhwp-core-0.7.17/rhwp.js', import.meta.url).href;
 
 /**
  * HWP5(OLE2) 바이너리에서 본문 텍스트를 문단 단위로 추출.
@@ -2621,8 +2633,8 @@ const PARSERS = {
     'txt':      { fn: parseTxt,   async: false, label: 'TXT',      accept: 'text'   },
     'text':     { fn: parseTxt,   async: false, label: 'TXT',      accept: 'text'   },
     'csv':      { fn: parseCsv,   async: false, label: 'CSV',      accept: 'text'   },
-    'xlsx':     { fn: parseXlsx,  async: false, label: 'XLSX',     accept: 'buffer' },
-    'xls':      { fn: parseXlsx,  async: false, label: 'XLS',      accept: 'buffer' },
+    'xlsx':     { fn: parseXlsx,  async: true,  label: 'XLSX',     accept: 'buffer', maxMb: 20 },
+    'xls':      { fn: parseXlsx,  async: true,  label: 'XLS',      accept: 'buffer', maxMb: 20 },
     'json':     { fn: parseJson,  async: false, label: 'JSON',     accept: 'text'   },
     'ipynb':    { fn: parseIpynb, async: false, label: 'IPYNB',    accept: 'text'   },
     'docx':     { fn: parseDocx,  async: true,  label: 'DOCX',     accept: 'buffer' },
@@ -2653,7 +2665,7 @@ export async function fileToIR(file, docType = 'plain') {
     }
 
     // 포맷별 파일 크기 제한: 바이너리(buffer) 50MB, 텍스트 100MB
-    const maxMb    = parser.accept === 'buffer' ? 50 : 100;
+    const maxMb    = parser.maxMb || (parser.accept === 'buffer' ? 50 : 100);
     const MAX_BYTES = maxMb * 1024 * 1024;
     if (file.size > MAX_BYTES) {
         throw new Error(`파일 크기 초과: ${(file.size / 1024 / 1024).toFixed(1)}MB (최대 ${maxMb}MB)`);

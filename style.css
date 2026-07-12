@@ -24,6 +24,14 @@
  *   색상/숫자 값만 바꾸고 선택자 이름(.hero, .format-card 등)은 유지하세요.
  * ===================================================================*/
 
+@font-face {
+    font-family: 'Noto Sans KR';
+    src: url('fonts/NotoSansKR-Regular.ttf') format('truetype');
+    font-style: normal;
+    font-weight: 100 900;
+    font-display: swap;
+}
+
 /* ─────────────────────────────────────────────────────────────────
    [CSS 변수] 전체 디자인 토큰 — 여기만 수정하면 색상 테마 전체 변경
    ───────────────────────────────────────────────────────────────── */
@@ -59,7 +67,7 @@
     /* 상태 색상 (성공·오류만 제한적으로 사용) */
     --c-success:        #047857;
     --c-success-light:  #e4f2ec;
-    --c-warning:        #b45309;
+    --c-warning:        #92400e;
     --c-warning-light:  #f8efda;
     --c-error:          #bf362c;
     --c-error-light:    #f9e9e7;
@@ -3015,9 +3023,9 @@ a:hover { text-decoration: underline; }
     flex-wrap: wrap;
     gap: 8px;
     font-size: 0.78rem;
-    color: rgba(255,255,255,0.45);
+    color: rgba(255,255,255,0.72);
 }
-.footer-bottom a { color: rgba(255,255,255,0.55); }
+.footer-bottom a { color: rgba(255,255,255,0.82); }
 .footer-bottom a:hover { color: #fff; }
 
 
@@ -5834,6 +5842,59 @@ a:hover { text-decoration: underline; }
     color: var(--c-text-muted);
     font-size: 0.9rem;
     font-weight: 700;
+}
+
+/* 상용 운영: 분석은 명시적 동의 후에만 활성화 */
+.consent-banner {
+    position: fixed;
+    z-index: 1500;
+    right: 18px;
+    bottom: 18px;
+    left: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 16px 18px;
+    border: 1px solid var(--c-border-strong);
+    border-radius: var(--radius-md);
+    background: var(--c-surface);
+    box-shadow: var(--shadow-lg);
+    color: var(--c-text);
+}
+.consent-banner[hidden] { display: none; }
+.consent-banner > div:first-child { display: grid; gap: 3px; }
+.consent-banner span { color: var(--c-text-sub); font-size: 0.86rem; }
+.consent-actions,
+.analytics-consent-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.consent-actions button,
+.analytics-consent-controls button {
+    min-height: 40px;
+    padding: 8px 13px;
+    border: 1px solid var(--c-border-strong);
+    border-radius: var(--radius-sm);
+    background: var(--c-surface);
+    color: var(--c-text);
+    cursor: pointer;
+}
+.consent-actions .consent-primary,
+.analytics-consent-controls button[data-analytics-consent="granted"] {
+    border-color: var(--c-primary);
+    background: var(--c-primary);
+    color: #fff;
+}
+.analytics-consent-controls {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid var(--c-border);
+}
+
+@media (max-width: 640px) {
+    .consent-banner { align-items: stretch; flex-direction: column; }
+    .consent-actions { display: grid; grid-template-columns: 1fr 1fr; }
+    .consent-actions a { grid-column: 1 / -1; text-align: center; }
 }
 
 @media (max-width: 560px) {

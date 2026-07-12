@@ -2,13 +2,15 @@
 
 ｢BWYF｣ AX Challenger 2026 프로젝트로 제작된 브라우저에서 바로 실행되는 문서 변환기입니다. Markdown, DOCX, HTML 등 다양한 포맷을 한글 오피스(.hwpx) 파일로 변환합니다.
 
-**배포 주소:** https://to-hwpx.vercel.app/
+**정식 운영 주소:** https://to-hwpx.vercel.app/
+
+**재해복구 미러:** https://sysmetrix.github.io/To-Hwpx/
 
 ---
 
 ## 주요 특징
 
-- **로컬 변환** — 원본 파일과 변환된 HWPX는 서버에 업로드되지 않습니다. 단, Markdown 원격 이미지는 해당 이미지 서버에 브라우저가 직접 요청하고, HWP5 입력은 jsDelivr의 WASM 엔진을 불러오며, 정밀 미리보기(베타)를 누르면 외부 rhwp iframe에 생성된 HWPX 바이트를 전달합니다.
+- **로컬 변환** — 원본 파일과 변환된 HWPX는 서버에 업로드되지 않습니다. 단, Markdown 원격 이미지는 해당 이미지 서버에 브라우저가 직접 요청하고, 정밀 미리보기(베타)를 누르면 외부 rhwp iframe에 생성된 HWPX 바이트를 전달합니다. HWP5 엔진은 같은 서비스 도메인에 고정 배포합니다.
 - **설치 불필요** — 한컴 오피스 없이도 .hwpx 파일을 생성합니다.
 - **PC·모바일 지원** — 데스크톱과 모바일 브라우저에서 같은 변환 흐름으로 동작합니다.
 - **드래그앤드롭** — 파일을 끌어다 놓거나 클릭해서 선택합니다.
@@ -29,7 +31,7 @@
 | **DOCX** (Word) | ★★★ | 본문·제목 후보·목록·하이퍼링크·표·이미지·각주·주석(각주 형태)과 주요 인라인 서식 지원. 페이지 배치와 복잡한 Word 개체는 손실 가능. |
 | **HWP** (한글) | ★★☆ | HWP5 바이너리 본문 텍스트를 추출(표·이미지·서식은 제외). HWPX 업로드는 복구/예외용 텍스트 추출 경로이며, 기본적으로 HWPX는 출력 형식입니다. |
 | **TXT** | ★★★ | 빈 줄 기반 문단 구분. EUC-KR 자동 감지. |
-| **CSV / XLSX** | ★★☆ | CSV 전체 또는 XLSX 첫 시트를 표로 변환. 셀 서식·병합은 손실. |
+| **CSV / XLSX** | ★★☆ | CSV 전체 또는 XLSX 첫 시트를 표로 변환. XLSX는 안전한 작업자에서 최대 20MB·20,000행·256열까지 처리하며 셀 서식·병합은 손실. |
 | **JSON** | ★★☆ | 객체·배열 값을 문단·목록·표로 펼침. 보고서형 레이아웃 자동 설계는 하지 않음. |
 
 ### 확장 서비스
@@ -57,12 +59,15 @@
 
 원본 파일과 생성된 HWPX는 서버에 업로드하지 않습니다. 브라우저가 외부로 접속하는 경우는 다음으로 제한됩니다.
 
-- CDN 라이브러리(JSZip, marked, SheetJS), Google Fonts, Vercel Analytics/Speed Insights, PostHog 페이지뷰·사용 이벤트
+- 핵심 라이브러리(JSZip, marked, SheetJS)와 기본 웹폰트는 저장소에 고정해 같은 서비스 도메인에서 제공합니다.
+- 사용자가 익명 통계에 동의한 경우에만 PostHog 페이지뷰·사용 이벤트
 - Markdown 원격 이미지가 있는 경우 해당 이미지 URL 직접 요청
-- HWP5 입력 처리 시 `@rhwp/core` WASM 로드
+- HWP5 입력 처리 시 같은 서비스 도메인의 고정 `@rhwp/core` WASM 로드
 - 사용자가 정밀 미리보기(베타)를 확인한 경우 외부 rhwp iframe 로드와 생성 HWPX 바이트 전달
 
-분석 도구에는 문서 본문, 파일명, 변환된 HWPX 바이트를 보내지 않습니다.
+분석 도구에는 문서 본문, 파일명, 문서 제목, URL, 변환된 HWPX 바이트를 보내지 않습니다. 통계 수집을 거부해도 변환 기능을 사용할 수 있고 지원 환경의 로컬 처리 탭에서 언제든지 변경할 수 있습니다.
+
+정식 운영 정책은 [개인정보처리방침](./privacy.html), [이용약관](./terms.html), [오픈소스·글꼴 고지](./THIRD_PARTY_NOTICES.md)를 확인하세요.
 
 ---
 
@@ -84,5 +89,7 @@
 ## 라이선스
 
 MIT License — 자유롭게 사용, 수정, 배포할 수 있습니다.
+
+운영·장애 대응 기준은 [OPERATIONS.md](./OPERATIONS.md), 수동 출시 승인은 [qa/manual-release-evidence-template.md](./qa/manual-release-evidence-template.md)를 사용합니다.
 
 © 2026 [BWYF](https://www.bwyf.or.kr) / [sysmetrix](https://github.com/sysmetrix)

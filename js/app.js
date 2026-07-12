@@ -12,7 +12,7 @@
  * ===================================================================*/
 
 // [B1 ES 모듈 Phase 1] parsers.js / hwpx.js 공개 API import
-// CDN 전역(JSZip/marked/XLSX)은 classic <script>로 로드된 window 전역을 그대로 사용
+// 자체 호스팅 JSZip/marked/XLSX는 classic <script>로 로드된 window 전역을 사용
 import { fileToIR, parseMd, parseHtml, parseTxt, parseCsv, parseJson } from './parsers.js';
 import { buildHwpx, isNumericCell } from './hwpx.js';
 // validateHwpx는 golden test의 window 재할당 패턴 지원을 위해 window에서 접근
@@ -21,14 +21,23 @@ import { buildHwpx, isNumericCell } from './hwpx.js';
 'use strict';
 
 // ─────────────────────────────────────────────────────────────────────────
-// [Analytics] Vercel Web Analytics 커스텀 이벤트 래퍼
-//   window.va: Vercel Analytics 스크립트가 주입하는 큐 함수
-//   미지원 환경(로컬/비Vercel)에서는 조용히 무시된다.
-//   data 값은 반드시 string — Vercel Analytics 스키마 요건.
+// [Analytics] 이벤트명·속성 allowlist. 파일명/본문/제목/URL은 구조적으로 전송할 수 없다.
 // ─────────────────────────────────────────────────────────────────────────
+const ANALYTICS_SCHEMA = Object.freeze({
+    conversion_start: new Set(['format', 'font', 'paper', 'style', 'doc_type', 'heading', 'table', 'input']),
+    conversion_success: new Set(['format', 'valid', 'dur_s', 'size']),
+    conversion_fail: new Set(['format', 'stage']),
+});
+
 function track(name, data) {
-    try { window.va?.('event', { name, data }); } catch (_) {}
-    try { window.posthog?.capture(name, data); } catch (_) {}
+    const allowed = ANALYTICS_SCHEMA[name];
+    if (!allowed || window.ToHwpxAnalytics?.consent() !== 'granted') return;
+    const safe = {};
+    for (const key of allowed) {
+        if (data?.[key] == null) continue;
+        safe[key] = String(data[key]).slice(0, 48);
+    }
+    try { window.posthog?.capture(name, safe); } catch (_) {}
 }
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -88,6 +97,7 @@ const SUPPORTED_EXTENSIONS = new Set([
     'csv', 'xlsx', 'xls', 'json', 'ipynb', 'docx', 'pptx', 'hwp', 'hwpx',
 ]);
 const BINARY_EXTENSIONS = new Set(['xlsx', 'xls', 'docx', 'pptx', 'hwp', 'hwpx']);
+const FORMAT_MAX_MB = Object.freeze({ xlsx: 20, xls: 20 });
 const SUPPORTED_FORMAT_LABEL = 'MD, DOCX, PPTX, HTML, CSV/XLSX, JSON, TXT, HWP, IPYNB';
 const ONBOARDING_SEEN_KEY = 'tohwpx_onboarding_seen';
 const QUICK_GUIDE_HIDDEN_KEY = 'tohwpx_quick_guide_hidden';
@@ -350,7 +360,7 @@ function addFilesToQueue(files) {
             skipped.push(`${file.name} (미지원 형식)`);
             continue;
         }
-        const MAX_MB = BINARY_EXTENSIONS.has(ext) ? 50 : 100;
+        const MAX_MB = FORMAT_MAX_MB[ext] || (BINARY_EXTENSIONS.has(ext) ? 50 : 100);
         if (file.size > MAX_MB * 1024 * 1024) {
             skipped.push(`${file.name} (${MAX_MB}MB 초과)`);
             continue;
@@ -379,7 +389,10 @@ function addFilesToQueue(files) {
 
     // 제외 안내(토스트)
     const notes = [];
-    if (skipped.length) notes.push(`${skipped.length}개 제외(미지원/용량 초과)`);
+    if (skipped.length) {
+        const preview = skipped.slice(0, 3).join(' · ');
+        notes.push(`${preview}${skipped.length > 3 ? ` 외 ${skipped.length - 3}개` : ''}`);
+    }
     if (overflow)       notes.push(`최대 ${MAX_BATCH_FILES}개 초과로 ${overflow}개 제외`);
     if (notes.length) {
         showToast(`<strong>일부 파일을 제외했습니다</strong> <span>${escHtml(notes.join(' · '))}</span>`, { timeout: 6000 });
@@ -1101,7 +1114,7 @@ const FORMAT_INFO = {
             '빈 셀, 긴 텍스트, 한글·영문·특수문자 처리',
             '일반적으로 스프레드시트 변환은 데이터 표 보존이 우선이고 시각 서식은 보조',
         ],
-        limits: ['XLSX는 첫 번째 시트만 변환', '셀 병합·색상·폰트·차트·이미지 무시', '수식은 계산 결과값 중심으로 변환'],
+        limits: ['XLSX는 첫 번째 시트만 변환(최대 20MB·20,000행·256열)', '셀 병합·색상·폰트·차트·이미지 무시', '수식은 계산 결과값 중심으로 변환'],
     },
     json: {
         icon: '{ }', name: 'JSON 데이터',
@@ -3278,7 +3291,7 @@ function classifyConversionError(err, ext = '') {
             action: `입력 포맷(${SUPPORTED_FORMAT_LABEL})으로 저장한 뒤 다시 선택하세요.`,
         };
     }
-    if (/크기 초과|too large|50MB|100MB|용량|size/i.test(msg)) {
+    if (/크기 초과|처리 한도|too large|20MB|50MB|100MB|용량|size/i.test(msg)) {
         return {
             category: '파일 크기',
             title: '파일이 브라우저에서 처리하기에 너무 큽니다.',

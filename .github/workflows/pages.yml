@@ -40,10 +40,10 @@ jobs:
     steps:
       # 1) 소스 코드 체크아웃
       - name: 소스 코드 체크아웃
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
       - name: Node.js 설정
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 22
           cache: npm
@@ -51,13 +51,25 @@ jobs:
       - name: 테스트 의존성 설치
         run: |
           npm ci
-          npx playwright install --with-deps chromium
+          npx playwright install --with-deps chromium firefox webkit
 
       - name: ESLint 정적 분석
         run: npm run lint
 
+      - name: 상용화 보안·법적·공급망 게이트
+        run: npm run test:commercial
+
       - name: Golden 회귀 검사
         run: npm run test:golden
+
+      - name: 접근성 WCAG AA 게이트
+        run: npm run test:accessibility
+
+      - name: 10MB 문서 성능 게이트
+        run: npm run test:performance
+
+      - name: Chromium·Firefox·WebKit 변환 smoke
+        run: npm run test:browsers
 
       - name: HWPX 패키지 게이트
         run: |
@@ -79,21 +91,24 @@ jobs:
       # 2) GitHub Pages 설정
       #    정적 HTML/CSS/JS 파일만 있으므로 별도 빌드 불필요
       - name: GitHub Pages 설정
-        uses: actions/configure-pages@v4
+        uses: actions/configure-pages@1f0c5cde4bc74cd7e1254d0cb4de8d49e9068c7d # v4
 
       # 3) 운영에 필요한 정적 파일만 구성·업로드
       - name: 배포 파일 구성
         run: |
           mkdir _site
-          cp index.html style.css sw.js manifest.json changelog.json _site/
-          cp -R js fonts icons _site/
+          cp index.html style.css legal.css privacy.html terms.html LICENSE THIRD_PARTY_NOTICES.md robots.txt sitemap.xml sw.js manifest.json changelog.json _site/
+          cp -R js icons _site/
+          mkdir -p _site/fonts _site/.well-known
+          cp fonts/NotoSansKR-Regular.ttf fonts/NanumGothic.ttf fonts/PretendardGOVVariable.ttf fonts/OFL-1.1.txt fonts/README.md _site/fonts/
+          cp .well-known/security.txt _site/.well-known/
 
       - name: 정적 파일 업로드
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3
         with:
           path: "_site"
 
       # 4) Pages에 배포
       - name: GitHub Pages 배포
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4

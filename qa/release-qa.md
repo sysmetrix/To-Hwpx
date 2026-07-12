@@ -3,6 +3,37 @@
 Date: 2026-06-25
 Scope: static browser-only conversion flow from file selection to HWPX download.
 
+## 40. v4.13.0 상용화 P0 보안·법적·운영 게이트
+
+수정:
+- SheetJS 0.18.5를 CVE-2023-30533/CVE-2024-22363 수정 버전 0.20.3으로 교체하고 JSZip/marked/@rhwp/core까지 `js/vendor/`에 고정했다.
+- XLS/XLSX를 Web Worker에서 처리하며 15초, 20MB, 20,000행, 256열, 2,000,000셀 한도를 적용했다.
+- PostHog는 기본 미로드 상태이며 사용자가 명시 동의한 뒤에만 로드한다. 변환 이벤트는 코드 allowlist 속성만 허용한다.
+- Vercel 보안 응답 헤더, 법적 문서, 제3자·글꼴 고지, 배포 제외 목록, vendor SHA-256 게이트를 추가했다.
+- Chromium/Firefox/WebKit smoke, axe WCAG AA, 10MB 성능 게이트와 15분 운영 감시·롤백 절차를 추가했다.
+
+자동 확인:
+- [x] `npm run lint` PASS
+- [x] `npm run test:commercial` PASS — vendor 5개 해시, 법적/개인정보/보안 헤더/배포 allowlist
+- [x] `npm run test:golden` PASS — 12 format cases, 손상 입력 7건, XLSX 20MB 제한 포함
+- [x] `npm run test:accessibility` PASS — 메인 1280×900·390×844와 개인정보/약관 serious/critical 0
+- [x] `npm run test:performance` PASS — 10MB TXT 약 3.0초, UI heartbeat 유지
+- [x] Chromium 변환 smoke PASS
+- [x] WebKit 변환 smoke PASS
+- [ ] Firefox headless smoke — 현재 Windows 세션에서 앱 로드 전 `RenderCompositorSWGL failed mapping default framebuffer`로 Playwright 자체 실행 실패. Linux GitHub Actions 재확인 필요
+- [x] `node qa/gate.js` 대표 입력 5종 ①~⑨ ALL PASS
+- [x] `node tests/orientation-e2e.js` PASS — A3 landscape 3쪽, 잘림 0, 이중 스크롤 없음
+
+수동/외부 승인:
+- [ ] PostHog 프로젝트 보유기간을 90일 이하로 설정하고 Network payload에 문서 내용·파일명·제목·HWPX 바이트가 없음을 확인
+- [ ] 개인정보처리방침과 이용약관의 운영 주체·연락 창구를 담당자가 최종 승인
+- [ ] Vercel 배포 후 CSP/nosniff/Referrer/Permissions 헤더와 v4.13.0 확인
+- [ ] Firefox 실제 브라우저와 iPhone Safari/Android Chrome의 변환·다운로드·회전 확인
+- [ ] 지정 한컴오피스에서 MD/DOCX/XLSX/PPTX/HWP5/A3 landscape 시각 확인
+- [ ] `qa/manual-release-evidence-template.md`를 복사해 확인자·환경·증적 링크 기록
+
+판정: 코드·자동화 범위의 P0는 해소. 외부 서비스 설정, 실제 기기, 한컴 렌더링은 담당자 증적 완료 전까지 제한 출시 상태를 유지한다.
+
 ## 39. v4.12.1 상용화 전 보안·개인정보 경계 강화
 
 수정:

@@ -1,0 +1,11 @@
+node_modules
+.git
+.github
+.agents
+.claude
+qa
+tests
+pitch
+hwpx-public-doc
+debug.log
+fonts/KoPubWorldDotum-Medium.ttf

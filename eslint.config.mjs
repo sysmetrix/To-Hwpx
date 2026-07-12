@@ -14,6 +14,9 @@ const sanitizerOptions = {
 
 export default [
     {
+        ignores: ['js/vendor/**'],
+    },
+    {
         files: ['js/**/*.js'],
         plugins: {
             'no-unsanitized': noUnsanitized,

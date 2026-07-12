@@ -15,6 +15,7 @@ _local/
 
 # 개발 의존성 (CDN 사용 중이라 node_modules 없음)
 node_modules/
+.npm-cache/
 npm-debug.log*
 
 # 환경 변수 (민감 정보)
