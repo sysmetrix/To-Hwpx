@@ -20,6 +20,7 @@ To HWPX 본체는 루트 `LICENSE`의 MIT License로 배포됩니다. 아래 구
 
 | 글꼴 | 권리자/출처 | 라이선스·조건 |
 |---|---|---|
+| Inter | The Inter Project Authors | SIL Open Font License 1.1, `fonts/OFL-1.1.txt` |
 | Noto Sans KR | Google Noto Fonts | SIL Open Font License 1.1, `fonts/OFL-1.1.txt` |
 | NanumGothic | NAVER | SIL Open Font License 1.1, `fonts/OFL-1.1.txt`; Reserved Font Name 조건 유지 |
 | Pretendard GOV | 길형진 및 기여자 | SIL Open Font License 1.1, `fonts/OFL-1.1.txt` |

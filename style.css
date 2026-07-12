@@ -32,6 +32,14 @@
     font-display: swap;
 }
 
+@font-face {
+    font-family: 'Inter';
+    src: url('fonts/InterVariable.woff2') format('woff2');
+    font-style: normal;
+    font-weight: 100 900;
+    font-display: swap;
+}
+
 /* ─────────────────────────────────────────────────────────────────
    [CSS 변수] 전체 디자인 토큰 — 여기만 수정하면 색상 테마 전체 변경
    ───────────────────────────────────────────────────────────────── */
@@ -94,6 +102,7 @@
 
     /* 타이포그래피 */
     --font-main:   'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif;
+    --font-latin:  'Inter', 'Segoe UI', Arial, sans-serif;
     --font-mono:   'JetBrains Mono', 'Consolas', 'Courier New', monospace;
 
     /* 글자 크기 스케일(2026-07 신규 도입) — 기존 선택자 150여 곳은 컴포넌트별
@@ -322,11 +331,12 @@ a:hover { text-decoration: underline; }
     display: flex;
     align-items: center;
     gap: 10px;
+    font-family: var(--font-latin);
     font-size: 1.4rem;
     font-weight: 700;
     color: var(--c-text);
     flex-shrink: 0;
-    letter-spacing: -0.01em;
+    letter-spacing: 0;
 }
 .site-logo:hover { text-decoration: none; color: var(--c-primary); }
 .site-logo-mark { flex-shrink: 0; border-radius: 6px; }
@@ -575,6 +585,8 @@ a:hover { text-decoration: underline; }
 
 .hero-title-accent {
     /* "한글로"와 동일한 글자색으로 통일 (강조색 분리 제거) */
+    font-family: var(--font-latin);
+    letter-spacing: -0.02em;
     color: inherit;
 }
 
@@ -2984,6 +2996,7 @@ a:hover { text-decoration: underline; }
     margin-bottom: 32px;
 }
 .footer-brand .footer-logo {
+    font-family: var(--font-latin);
     font-size: 1.2rem;
     font-weight: 700;
     color: #fff;

@@ -222,6 +222,7 @@ const TYPES = {
   '.ipynb': 'application/x-ipynb+json; charset=utf-8',
   '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   '.ttf': 'font/ttf',
+  '.woff2': 'font/woff2',
   '.png': 'image/png',
   '.wasm': 'application/wasm',
 };

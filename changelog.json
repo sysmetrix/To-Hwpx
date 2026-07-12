@@ -1,6 +1,18 @@
 {
-  "current": "4.13.1",
+  "current": "4.13.2",
   "versions": [
+    {
+      "version": "4.13.2",
+      "date": "2026-07-12",
+      "user": [
+        "상단 로고와 첫 화면의 영문 TO HWPX 표기를 Inter 글꼴로 분리하고, 한글 문구와 본문 UI는 기존 Noto Sans KR을 유지했습니다."
+      ],
+      "dev": [
+        "[v4.13.2] style.css/fonts: Inter Variable 웹폰트를 자체 호스팅하고 영문 워드마크 전용 --font-latin 토큰을 추가",
+        "[v4.13.2] sw.js/pages.yml/notices.html/THIRD_PARTY_NOTICES.md: Inter 폰트의 오프라인 캐시, Pages 배포, 라이선스 고지 반영",
+        "[v4.13.2] qa/commercial-gate.js/qa/production-smoke.js/tests/golden.js: Inter 파일 존재와 배포 자산 확인, woff2 테스트 서버 MIME 추가"
+      ]
+    },
     {
       "version": "4.13.1",
       "date": "2026-07-12",
