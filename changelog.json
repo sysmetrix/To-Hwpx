@@ -1,6 +1,17 @@
 {
-  "current": "4.13.2",
+  "current": "4.14.0",
   "versions": [
+    {
+      "version": "4.14.0",
+      "date": "2026-07-13",
+      "user": [
+        "브라우저 탭 아이콘과 실제 다른 모양으로 보이던 앱 설치 아이콘(192/512px)을 현재 브랜드 마크와 일치하도록 다시 만들었습니다."
+      ],
+      "dev": [
+        "[v4.14.0] icons/app-icon-192.png, icons/app-icon-512.png: 옛 초록 원형 아이콘을 icons/app-icon.svg 브랜드 마크 기준으로 재생성",
+        "[v4.14.0] scripts/gen-icons.js: playwright로 SVG 브랜드 마크를 PNG(192/512)로 렌더링하는 재생성 스크립트 추가"
+      ]
+    },
     {
       "version": "4.13.2",
       "date": "2026-07-12",
