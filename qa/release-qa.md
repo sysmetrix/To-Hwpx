@@ -795,3 +795,18 @@ v4.12.1 출시 승인 판정:
 - 표·행·셀 또는 수동 줄바꿈 수가 감소하거나 원본 페이지 설정이 달라지면 중단한다.
 - 자동 게이트가 통과해도 한컴 PDF 전수 렌더에서 빈 페이지·잘림·누락이 보이면 중단한다.
 - 총 페이지 수는 Word와 한컴의 레이아웃 엔진 차이 때문에 단독 합격 기준으로 사용하지 않는다.
+
+## 40. v4.15.1 중첩 표 패키지 게이트의 DOM 경계 수정
+
+원인: v4.15.0 제품 변환과 실제 KPI 보고서 검증은 통과했지만, GitHub Pages의 기존 `qa/gate.js qa/fixtures/docx_table_test.docx`가 중첩 표를 정규식으로 잘랐다. 외부 표의 범위가 내부 `</hp:tbl>`에서 조기에 끝나면서 내부 셀을 외부 표 셀로 중복 계수해 `(0,0) 덮임=2` 오탐을 냈고 배포가 중단됐다.
+
+수정:
+
+- `qa/gate.js`: DOMParser로 모든 표를 읽고 각 `hp:tc`의 가장 가까운 `hp:tbl` 조상이 현재 표인지 확인해 직계 셀만 격자 검사한다.
+- `package.json`: CI와 동일한 대표 입력 5종의 9단계 패키지 게이트를 `npm run test:package`로 추가하고 로컬 `test:release`에 포함한다. 이후 로컬 전체 게이트가 통과했는데 원격에서 처음 실패하는 드리프트를 막는다.
+
+승인 기준:
+
+- [x] `node qa/gate.js qa/fixtures/docx_table_test.docx` — 외부 병합 표와 중첩 표 3개를 각각 분리해 ⑥ 격자 무결성 PASS
+- [x] `npm run test:release` — v4.15.1 lint·commercial·impact·DOCX·golden·대표 5종 package·accessibility·performance 전체 PASS
+- [ ] GitHub Pages 배포 워크플로 — 순차·병렬 패키지 게이트와 배포 PASS

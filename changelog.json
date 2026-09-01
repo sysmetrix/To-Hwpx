@@ -1,6 +1,18 @@
 {
-  "current": "4.15.0",
+  "current": "4.15.1",
   "versions": [
+    {
+      "version": "4.15.1",
+      "date": "2026-09-01",
+      "user": [
+        "중첩 표가 있는 DOCX도 배포 전에 표별로 정확히 검사하도록 릴리스 검증을 보강했습니다. 변환 결과는 v4.15.0과 동일합니다."
+      ],
+      "dev": [
+        "[v4.15.1] qa/gate.js: 정규식 표 분리 대신 DOM의 가장 가까운 hp:tbl 조상 기준으로 중첩 표 직계 셀만 격자 검사",
+        "[v4.15.1] package.json/ENGINEERING.md/commercial gate: CI 대표 입력 5종 패키지 게이트를 로컬 test:release에 포함해 환경 간 게이트 드리프트 차단",
+        "[v4.15.1] DOCX fidelity fixture ZIP 엔트리 시각을 고정해 테스트 재실행 후 작업 트리가 달라지는 비결정성 제거"
+      ]
+    },
     {
       "version": "4.15.0",
       "date": "2026-09-01",
