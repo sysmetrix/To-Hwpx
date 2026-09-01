@@ -147,7 +147,7 @@
             <span>｢BWYF｣ AX Challenger 2026</span>
             <!-- [주의] id="open-changelog"는 app.js에서 관리자 모드일 때 업데이트 내역 모달을 여는 연결값 -->
             <button class="util-changelog-btn" id="open-changelog" aria-label="버전 정보">
-                📋 v4.16.0
+                📋 v4.16.1
             </button>
         </div>
     </div>
@@ -720,7 +720,10 @@
                     <div class="progress-meta">
                         <!-- [수정 시] 상태 메시지 텍스트는 app.js의 setStatusText에서 업데이트 -->
                         <span id="status-text">대기 중</span>
-                        <span id="progress-pct">0%</span>
+                        <span class="progress-meta-right">
+                            <span id="progress-eta"></span>
+                            <span id="progress-pct">0%</span>
+                        </span>
                     </div>
                 </div>
 

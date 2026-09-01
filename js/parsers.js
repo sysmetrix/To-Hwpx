@@ -26,6 +26,15 @@ import { auditAndNormalizeDocxXml } from './docx-audit.js';
 // [공통 유틸] 파서 전반에서 재사용하는 보조 함수들
 // ─────────────────────────────────────────────────────────────────────────
 
+/**
+ * 이벤트 루프에 제어권을 잠시 넘김(매크로태스크 양보). 큰 DOCX(표·문단 수백 개 이상)를
+ * 파싱하는 무거운 동기 루프 중간에 주기적으로 호출해, 브라우저가 "응답 없음" 대화상자를
+ * 띄우지 않고 진행률 UI를 계속 그릴 수 있게 한다.
+ */
+function uiYield() {
+    return new Promise(resolve => setTimeout(resolve, 0));
+}
+
 /** 텍스트에서 제어 문자(비표시 문자) 제거 — XML 생성 시 오류 방지 */
 function sanitize(s) {
     // \x00-\x08 등 XML에서 허용되지 않는 제어 문자를 공백으로 치환
@@ -1501,7 +1510,9 @@ async function parseDocx(arrayBuffer, docType = 'plain') {
         zip,
         imageCounter,
     };
+    let bodyNodeCount = 0;
     for (const node of body.childNodes) {
+        if (++bodyNodeCount % 40 === 0) await uiYield();
         const localName = node.localName || '';
 
         if (localName === 'p') {
@@ -1545,6 +1556,10 @@ async function parseDocx(arrayBuffer, docType = 'plain') {
     }
     // docTitle 표시는 IR 밖으로 내보내지 않음 (렌더에 불필요)
     for (const b of ir.blocks) if (b && b.docTitle) delete b.docTitle;
+
+    // 표 밖 문단의 흰 글자는 배경을 알 수 없으므로(문단 음영 미보존) 흰 바탕에 흰 글자로
+    // 안 보이는 사고를 막기 위해 강조 표시가 없는 흰 글자를 기본색으로 되돌린다.
+    stripInvisibleWhiteRuns(ir.blocks);
 
     return ir;
 }
@@ -1744,6 +1759,29 @@ async function extractDocxCellBlocks(tc, context = {}) {
     return groupDocxListItems(blocks);
 }
 
+/**
+ * 배경 없는 곳(셀 bg 없음/표 밖 문단)의 흰 글자 run.color를 제거해 흰 바탕에 흰 글자로
+ * 보이지 않는 사고를 막는다. run.highlight(강조 표시)가 있으면 그 자체가 배경이므로 보존한다.
+ */
+function stripInvisibleWhiteRuns(blocks) {
+    for (const block of (blocks || [])) {
+        if (block.type === 'para' && Array.isArray(block.runs)) {
+            for (const run of block.runs) {
+                if (run && run.color === '#FFFFFF' && !run.highlight) run.color = null;
+            }
+        } else if (block.type === 'list') {
+            for (const item of (block.items || [])) {
+                for (const run of (item.runs || [])) {
+                    if (run && run.color === '#FFFFFF' && !run.highlight) run.color = null;
+                }
+                stripInvisibleWhiteRuns(item.codeBlocks || []);
+            }
+        } else if (block.type === 'quote') {
+            stripInvisibleWhiteRuns(block.blocks || []);
+        }
+    }
+}
+
 /** 셀(w:tc) 글자색 — 셀 안 첫 번째 유효 w:color(run) → #RRGGBB | null (흰 글자 등 보존) */
 function docxCellColor(tc) {
     for (const r of tc.getElementsByTagNameNS(DOCX_NS, 'r')) {
@@ -1799,26 +1837,30 @@ async function extractDocxTable(tblNode, context = {}) {
     // 1단계: 물리 행/열 원시 데이터 수집
     const rawRows = [];
     const rowMeta = [];
+    let tableRowCount = 0;
     for (const tr of rowEls) {
+        if (++tableRowCount % 25 === 0) await uiYield();
         const rawCells = [];
         const cells = docxDirectChildren(tr, 'tc');
         for (const tc of cells) {
             const blocks = await extractDocxCellBlocks(tc, context);
             const text = sanitize(blocks.map(docxBlockText).filter(Boolean).join('\n').trim());
-            const color = docxCellColor(tc);
+            let color = docxCellColor(tc);
 
             const tcPr = docxDirectChildren(tc, 'tcPr')[0];
             let bg = null, colSpan = 1, vMergeType = null;
             let widthHwp = null, vertAlign = null, marginsHwp = {};
 
             if (tcPr) {
-                // 배경색 (w:tcPr/w:shd@w:fill)
+                // 배경색 (w:tcPr/w:shd@w:fill). 순검정(000000)도 실제로 쓰이는 배지 배경색이므로
+                // auto/흰색만 "배경 없음"으로 취급한다 — 검정을 배경 없음으로 오판하면 그 위 흰
+                // 글자가 흰 바탕에 흰 글자로 안 보이게 된다.
                 const shd = tcPr.getElementsByTagNameNS(DOCX_NS, 'shd')[0];
                 if (shd) {
                     const fill = shd.getAttributeNS(DOCX_NS, 'fill')
                               || shd.getAttribute('w:fill')
                               || shd.getAttribute('fill') || '';
-                    if (fill && !/^(auto|FFFFFF|ffffff|000000)$/.test(fill)) {
+                    if (fill && !/^(auto|FFFFFF|ffffff)$/.test(fill)) {
                         bg = fill.replace(/^#/, '').toUpperCase().padStart(6, '0');
                     }
                 }
@@ -1842,6 +1884,12 @@ async function extractDocxTable(tblNode, context = {}) {
                 if (['top', 'center', 'bottom'].includes(v)) vertAlign = v;
                 const tcMar = tcPr.getElementsByTagNameNS(DOCX_NS, 'tcMar')[0];
                 marginsHwp = docxBoxMargins(tcMar);
+            }
+            // 셀 배경이 없는데 글자색만 흰색이면 흰 바탕에 흰 글자로 안 보이므로, 배경이 없을 때만
+            // 흰색을 버려 기본(검정)으로 폴백한다(실제 어두운 셀 배경 위 흰 글자는 bg가 있으므로 보존됨).
+            if (!bg) {
+                if (color === '#FFFFFF') color = null;
+                stripInvisibleWhiteRuns(blocks);
             }
             rawCells.push({ text, blocks, bg, color, colSpan, vMergeType, widthHwp, vertAlign, marginsHwp });
         }
