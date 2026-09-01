@@ -1914,6 +1914,9 @@ export async function validateHwpx(blob, expectedMarginsMm = null) {
 
     if (files['Contents/section0.xml']) {
         const xml = await files['Contents/section0.xml'].async('string');
+        // 대형 문서(수 MB의 section0.xml)는 아래 정규식 스캔·DOMParser 파싱이 전부 동기라
+        // 브라우저가 "응답 없음"을 띄울 수 있으므로, 그 앞에서 이벤트 루프에 한 번 양보한다.
+        await new Promise(resolve => setTimeout(resolve, 0));
         metrics.paragraphs = (xml.match(/<hp:p\b/g) || []).length;
         metrics.tables = (xml.match(/<hp:tbl\b/g) || []).length;
         metrics.rows = (xml.match(/<hp:tr>/g) || []).length;
@@ -1921,6 +1924,8 @@ export async function validateHwpx(blob, expectedMarginsMm = null) {
         metrics.lineBreaks = (xml.match(/<hp:lineBreak\/>/g) || []).length;
         if (!xml.includes('hancom.co.kr/hwpml/2011/section'))   issues.push('section0.xml: section 네임스페이스 없음');
         if (!xml.includes('hancom.co.kr/hwpml/2011/paragraph')) issues.push('section0.xml: paragraph 네임스페이스 없음');
+        // DOMParser의 전체 문서 파싱이 대형 XML에서 가장 무거운 단일 동기 작업이므로 직전에 한 번 더 양보한다.
+        await new Promise(resolve => setTimeout(resolve, 0));
         if (typeof DOMParser !== 'undefined') {
             try {
                 const parsed = new DOMParser().parseFromString(xml, 'application/xml');
@@ -1990,6 +1995,8 @@ export async function validateHwpx(blob, expectedMarginsMm = null) {
     if (files['Contents/header.xml'] && files['Contents/section0.xml']) {
         const header  = await files['Contents/header.xml'].async('string');
         const section = await files['Contents/section0.xml'].async('string');
+        // IDRef 교차 검증(matchAll 여러 번)도 대형 문서에서는 무거우므로 한 번 더 양보한다.
+        await new Promise(resolve => setTimeout(resolve, 0));
         const defChar  = new Set([...header.matchAll(/charPr\s+id="(\d+)"/g)].map(m => m[1]));
         const usedChar = new Set([...section.matchAll(/charPrIDRef="(\d+)"/g)].map(m => m[1]));
         for (const id of usedChar) if (!defChar.has(id)) issues.push(`charPrIDRef="${id}" 미정의`);
