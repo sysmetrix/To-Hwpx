@@ -2362,9 +2362,9 @@ function detectHwpFormat(buffer) {
     return 'unknown';
 }
 
-// @rhwp/core — Rust+WASM HWP5/HWPX 파서(MIT). 0.7.17 JS/WASM을 vendor에 고정해
+// @rhwp/core — Rust+WASM HWP5/HWPX 파서(MIT). 0.8.4 JS/WASM을 vendor에 고정해
 // 같은 서비스 도메인에서 제공한다. HWP5 입력 처리에만 동적 import한다.
-const RHWP_CORE_URL = new URL('./vendor/rhwp-core-0.7.17/rhwp.js', import.meta.url).href;
+const RHWP_CORE_URL = new URL('./vendor/rhwp-core-0.8.4/rhwp.js', import.meta.url).href;
 
 /**
  * HWP5(OLE2) 바이너리에서 본문 텍스트를 문단 단위로 추출.

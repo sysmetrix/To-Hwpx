@@ -35,7 +35,7 @@ assert(!/xlsx\/0\.18\.5|cdnjs\.cloudflare\.com|fonts\.googleapis\.com|_vercel\/(
 assert(style.includes("font-family: 'Inter'") && style.includes("fonts/InterVariable.woff2")
     && style.includes('--font-latin') && style.includes('.hero-title-accent'),
     '영문 전용 Inter 웹폰트 적용 누락');
-for (const file of ['js/vendor/jszip-3.10.1.min.js', 'js/vendor/marked-9.1.6.min.js', 'js/vendor/xlsx-0.20.3.full.min.js']) {
+for (const file of ['js/vendor/jszip-3.10.1.min.js', 'js/vendor/marked-18.0.11.min.js', 'js/vendor/xlsx-0.20.3.full.min.js']) {
     assert(index.includes(file), `고정 vendor 스크립트 미참조: ${file}`);
 }
 assert(index.includes('privacy.html') && index.includes('terms.html') && index.includes('notices.html'), '법적 문서 링크 누락');
@@ -58,7 +58,7 @@ assert(worker.includes('xlsx-0.20.3.full.min.js') && worker.includes('MAX_ROWS =
 const parsers = read('js/parsers.js');
 assert(parsers.includes('XLSX 처리 시간 초과(15초)') && parsers.includes("maxMb: 20"),
     'XLSX 시간/용량 제한 누락');
-assert(parsers.includes("./vendor/rhwp-core-0.7.17/rhwp.js") && !parsers.includes('cdn.jsdelivr.net'),
+assert(parsers.includes("./vendor/rhwp-core-0.8.4/rhwp.js") && !parsers.includes('cdn.jsdelivr.net'),
     'HWP5 엔진 자체 호스팅/버전 고정 누락');
 assert(parsers.includes("from './docx-audit.js'") && parsers.includes('pageSetup') && parsers.includes('typography'),
     'DOCX 감사 또는 IR v2 원본 레이아웃 계약 누락');

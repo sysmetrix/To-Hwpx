@@ -11,7 +11,7 @@
 
 'use strict';
 
-const CACHE_VERSION = 'to-hwpx-v4.15.1';
+const CACHE_VERSION = 'to-hwpx-v4.16.0';
 
 // 설치 시 미리 캐시할 파일 목록 (앱 셸)
 // [주의] 절대경로(/)가 아닌 상대경로(./)를 사용해야 함.
@@ -25,10 +25,10 @@ const APP_SHELL = [
     './js/posthog-init.js',
     './js/xlsx-worker.js',
     './js/vendor/jszip-3.10.1.min.js',
-    './js/vendor/marked-9.1.6.min.js',
+    './js/vendor/marked-18.0.11.min.js',
     './js/vendor/xlsx-0.20.3.full.min.js',
-    './js/vendor/rhwp-core-0.7.17/rhwp.js',
-    './js/vendor/rhwp-core-0.7.17/rhwp_bg.wasm',
+    './js/vendor/rhwp-core-0.8.4/rhwp.js',
+    './js/vendor/rhwp-core-0.8.4/rhwp_bg.wasm',
     './js/parsers.js',
     './js/hwpx.js',
     './js/app.js',

@@ -1,7 +1,7 @@
 {
   "js/vendor/jszip-3.10.1.min.js": "acc7e41455a80765b5fd9c7ee1b8078a6d160bbbca455aeae854de65c947d59e",
-  "js/vendor/marked-9.1.6.min.js": "6002af63485b043fa60ddaba1b34363b98d2a8b2c63b607004f3a2405a8a053a",
+  "js/vendor/marked-18.0.11.min.js": "69451c8541c9c1e7a4bf3ffc6f73c4d89633de92bfbe3e484dfe182ef8091f88",
   "js/vendor/xlsx-0.20.3.full.min.js": "cc015130aa8521e7f088f88898eba949ccdcbfb38df0bd129b44b7273c3a6f41",
-  "js/vendor/rhwp-core-0.7.17/rhwp.js": "2285d216c71434310fe96796c5a531b057ff1e9251adcfbc0e0d3d2be626101d",
-  "js/vendor/rhwp-core-0.7.17/rhwp_bg.wasm": "3bcb08db552ab79022168fe2e2c70310abe941cd11192b8e2455806697ca9d9d"
+  "js/vendor/rhwp-core-0.8.4/rhwp.js": "d2d2a33e1d75e122a8772fbdb372dcd547f3de4e5a16bf2e663bfb591f17656f",
+  "js/vendor/rhwp-core-0.8.4/rhwp_bg.wasm": "e09e8463291f3aded87bb8febdd21610e80b5159329666f114329e10195ea229"
 }
