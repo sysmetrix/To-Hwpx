@@ -1475,7 +1475,7 @@ function buildSectionBootstrap(secPrXml, contentWidthHwp) {
  * IR → section0.xml 전체 문자열
  * [v4] 참조 앱(md-to-hwpx)처럼 첫 bootstrap 문단에 secPr를 배치한다.
  */
-function buildSection(ir, marginsHwp, paperKey, landscape = false, customBfMap = new Map(), customCharMap = new Map(), options = {}) {
+async function buildSection(ir, marginsHwp, paperKey, landscape = false, customBfMap = new Map(), customCharMap = new Map(), options = {}) {
     const NS_HS = 'http://www.hancom.co.kr/hwpml/2011/section';
     const NS_HP = 'http://www.hancom.co.kr/hwpml/2011/paragraph';
     const docType = ir.doc_type || 'plain';
@@ -1574,7 +1574,11 @@ function buildSection(ir, marginsHwp, paperKey, landscape = false, customBfMap =
     };
 
     // ── 본문 블록 ──────────────────────────────────────────────────────
+    let _sectionBlockCount = 0;
     for (const block of removeHrSpacerBlanks(ir.blocks)) {
+        // 부록처럼 표·문단이 수백~수천 개인 대형 문서에서 브라우저가 "응답 없음"을 띄우지
+        // 않도록, 순수 문자열 조립 루프 중간중간 이벤트 루프에 제어권을 양보한다.
+        if (++_sectionBlockCount % 15 === 0) await new Promise(resolve => setTimeout(resolve, 0));
         const bt = block.type;
 
         if (bt === 'heading') {
@@ -1813,7 +1817,7 @@ export async function buildHwpx(ir, fontName = '휴먼명조', fontSize = 12, ma
     const docHeaderFooter = { header: ir.header || '', footer: ir.footer || '' };
 
     const headerXml   = buildHeaderXml(fontName, effectiveFontSize, customBfMap, imageBlocks, docHeaderFooter, customCharMap, effectiveLineSpacing, buildOptions);
-    const section0Xml = buildSection(ir, marginsHwp, paperSize, landscape, customBfMap, customCharMap, buildOptions);
+    const section0Xml = await buildSection(ir, marginsHwp, paperSize, landscape, customBfMap, customCharMap, buildOptions);
 
     // 이미지가 있을 때 manifest를 동적으로 생성하여 BinData 파일 선언
     const manifestXml = imageBlocks.length

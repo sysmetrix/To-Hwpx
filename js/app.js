@@ -2767,6 +2767,7 @@ async function runConversionPipeline() {
     updateConvertButton(false);
     revokeAllQueueUrls();          // 이전 변환 결과 URL 정리
     renderQueueList();             // 변환 중에는 제거/비우기 버튼 숨김
+    resetProgressEta();            // 진행률 기준 남은 시간 추정 초기화
 
     // 변환 시작 시 진행 패널이 보이도록 스크롤
     document.querySelector('.progress-panel')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -3626,13 +3627,49 @@ function updateMarginPreview() {
 // [진행률 표시]
 // ─────────────────────────────────────────────────────────────────────────
 
-/** 진행률 바와 퍼센트 텍스트 업데이트 */
+// 진행률 대비 남은 시간 추정 — 변환 시작 시각과 직전 갱신 시각을 기준으로 잡음
+let _progressStartedAt = 0;
+let _progressLastEtaUpdate = 0;
+
+function resetProgressEta() {
+    _progressStartedAt = performance.now();
+    _progressLastEtaUpdate = 0;
+    const eta = document.getElementById('progress-eta');
+    if (eta) eta.textContent = '';
+}
+
+/** 진행률 바와 퍼센트 텍스트 업데이트 + 남은 시간 추정치 갱신 */
 function setProgress(pct) {
+    const clamped = Math.min(100, pct);
     const bar  = document.getElementById('progress-bar');
     const text = document.getElementById('progress-pct');
-    if (bar)  bar.style.width = Math.min(100, pct) + '%';
-    if (text) text.textContent = Math.min(100, pct) + '%';
+    if (bar)  bar.style.width = clamped + '%';
+    if (text) text.textContent = Math.round(clamped) + '%';
     setProgressValue(pct);
+    updateProgressEta(clamped);
+}
+
+/**
+ * 남은 시간을 "경과시간 × (100-진행률)/진행률"로 추정해 표시한다. 초반(진행률이 낮을 때)은
+ * 추정이 부정확하므로 일정 진행률(8%) 이상에서만 보여주고, 완료 직전에는 감춘다.
+ * 표시가 매 프레임 깜빡이지 않도록 200ms 이상 지난 뒤에만 갱신한다.
+ */
+function updateProgressEta(pct) {
+    const eta = document.getElementById('progress-eta');
+    if (!eta || !_progressStartedAt) return;
+    if (pct <= 0 || pct >= 99) { eta.textContent = ''; return; }
+    const now = performance.now();
+    if (now - _progressLastEtaUpdate < 200) return;
+    _progressLastEtaUpdate = now;
+
+    const elapsedSec = (now - _progressStartedAt) / 1000;
+    if (pct < 8 || elapsedSec < 0.4) { eta.textContent = '예상 시간 계산 중...'; return; }
+
+    const remainingSec = Math.max(0, elapsedSec * (100 - pct) / pct);
+    if (remainingSec < 1.5) { eta.textContent = '거의 완료...'; return; }
+    eta.textContent = remainingSec >= 60
+        ? `약 ${Math.ceil(remainingSec / 60)}분 남음`
+        : `약 ${Math.ceil(remainingSec)}초 남음`;
 }
 
 function setProgressValue(pct) {
@@ -3654,6 +3691,11 @@ function setProgressPanelState(stateName) {
     panel.hidden = stateName === 'empty' || stateName === 'ready';
     panel.classList.remove('is-empty', 'is-ready', 'is-converting', 'is-success', 'is-warning', 'is-error');
     panel.classList.add(`is-${stateName}`);
+
+    if (stateName !== 'converting') {
+        const eta = document.getElementById('progress-eta');
+        if (eta) eta.textContent = '';
+    }
 
     const copy = {
         empty: ['파일을 선택하면 변환 준비 상태가 표시됩니다.', '아직 진행 중인 변환이 없습니다.'],
