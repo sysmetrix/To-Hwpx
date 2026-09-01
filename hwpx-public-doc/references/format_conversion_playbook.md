@@ -394,7 +394,7 @@
 보존:
 
 - HWPX 오업로드 시 내부 XML 본문 텍스트와 일부 표(기존 ZIP 경로, 변경 없음)
-- HWP5(OLE2) 바이너리는 v4.10.27부터 `@rhwp/core`(Rust+WASM, MIT)를 사용하며, 상용화 게이트 이후 0.7.17 JS/WASM을 `js/vendor/rhwp-core-0.7.17/`에 고정해 같은 서비스 도메인에서 동적 import한다.
+- HWP5(OLE2) 바이너리는 v4.10.27부터 `@rhwp/core`(Rust+WASM, MIT)를 사용하며, 상용화 게이트 이후 0.8.4 JS/WASM을 `js/vendor/rhwp-core-0.8.4/`에 고정해 같은 서비스 도메인에서 동적 import한다.
   문단 단위 본문 텍스트를 추출한다. 표·이미지·글머리·서식 등 구조 정보는 다루지 않는다
   (TXT 포맷과 동일한 보존 수준 — 텍스트만).
 - CFBF(OLE2) 헤더 섹터는 항상 512바이트이므로, 그보다 작은 버퍼는 WASM을 내려받기 전에

@@ -1,6 +1,6 @@
 # 오픈소스·글꼴 고지
 
-최종 갱신: 2026-07-12
+최종 갱신: 2026-09-02
 
 To HWPX 본체는 루트 `LICENSE`의 MIT License로 배포됩니다. 아래 구성요소의 저작권과 라이선스는 각 원저작자에게 있습니다.
 
@@ -9,9 +9,9 @@ To HWPX 본체는 루트 `LICENSE`의 MIT License로 배포됩니다. 아래 구
 | 구성요소 | 고정 버전 | 라이선스 | 배포 파일 |
 |---|---:|---|---|
 | JSZip | 3.10.1 | MIT | `js/vendor/jszip-3.10.1.min.js`, `js/vendor/JSZIP-LICENSE.txt` |
-| marked | 9.1.6 | MIT | `js/vendor/marked-9.1.6.min.js`, `js/vendor/MARKED-LICENSE.txt` |
+| marked | 18.0.11 | MIT | `js/vendor/marked-18.0.11.min.js`, `js/vendor/MARKED-LICENSE.txt` |
 | SheetJS Community Edition | 0.20.3 | Apache-2.0 | `js/vendor/xlsx-0.20.3.full.min.js`, `js/vendor/SHEETJS-LICENSE.txt` |
-| @rhwp/core | 0.7.17 | MIT | `js/vendor/rhwp-core-0.7.17/`의 JS·WASM·LICENSE, HWP5 입력 때만 실행 |
+| @rhwp/core | 0.8.4 | MIT | `js/vendor/rhwp-core-0.8.4/`의 JS·WASM·LICENSE, HWP5 입력 때만 실행 |
 | rhwp viewer | 외부 서비스 | 원 프로젝트 고지 참조 | 사용자가 정밀 미리보기에 동의할 때만 iframe 로드 |
 
 고정 브라우저 파일의 SHA-256은 `qa/vendor-integrity.json`에 기록하고 CI에서 검증합니다.

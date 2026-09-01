@@ -1,6 +1,18 @@
 {
-  "current": "4.15.1",
+  "current": "4.16.0",
   "versions": [
+    {
+      "version": "4.16.0",
+      "date": "2026-09-02",
+      "user": [
+        "변환에 쓰는 핵심 오픈소스 라이브러리(Markdown 파서, HWP5 읽기 엔진)를 최신 버전으로 갱신했습니다. 변환 결과는 이전과 동일합니다."
+      ],
+      "dev": [
+        "[v4.16.0] js/vendor: marked 9.1.6 → 18.0.11, @rhwp/core 0.7.17 → 0.8.4로 갱신(JSZip 3.10.1·SheetJS 0.20.3은 이미 최신이라 유지). npm 레지스트리/cdn.sheetjs.com 배포본 SHA-256을 qa/vendor-integrity.json에 재고정하고 jsdelivr 공개 해시와 대조해 무결성 확인",
+        "[v4.16.0] js/parsers.js/sw.js/index.html/qa/commercial-gate.js: 새 vendor 경로·버전 문자열 동기화, HwpDocument 메서드 시그니처(getSectionCount/getParagraphCount/getParagraphLength/getTextRange/free) 0.8.4에서 동일함을 확인 후 교체",
+        "[v4.16.0] notices.html/THIRD_PARTY_NOTICES.md/DEV.md/hwpx-public-doc 플레이북: 라이브러리 버전·경로 고지 갱신"
+      ]
+    },
     {
       "version": "4.15.1",
       "date": "2026-09-01",
