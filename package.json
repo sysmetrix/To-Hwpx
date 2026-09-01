@@ -1,6 +1,6 @@
 {
   "name": "to-hwpx",
-  "version": "4.14.0",
+  "version": "4.15.0",
   "private": true,
   "scripts": {
     "test:golden": "node tests/golden.js",
@@ -8,7 +8,9 @@
     "test:accessibility": "node tests/browser-readiness.js accessibility",
     "test:browsers": "node tests/browser-readiness.js browsers",
     "test:performance": "node tests/browser-readiness.js performance",
-    "test:release": "npm run lint && npm run test:commercial && npm run test:golden && npm run test:accessibility && npm run test:performance",
+    "test:impact": "node qa/impact-gate.js",
+    "test:docx": "node tests/make-docx-fidelity-fixture.js && node qa/docx-fidelity-harness.js tests/fixtures/docx-fidelity.docx",
+    "test:release": "npm run lint && npm run test:commercial && npm run test:impact && npm run test:docx && npm run test:golden && npm run test:accessibility && npm run test:performance",
     "version:next": "node qa/bump-version.js",
     "lint": "eslint js/"
   },

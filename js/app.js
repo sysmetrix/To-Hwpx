@@ -744,7 +744,7 @@ function updateFormatExpectation(ext, waiting = false) {
         markdown: { ok: ['제목·문단·목록', '표·코드·링크', '이미지·각주'],  warn: ['접근 차단 이미지', '복잡한 HTML'] },
         html:     { ok: ['제목·문단·목록', '병합 표·인라인 서식'],           warn: ['CSS 레이아웃', '이미지·SVG'] },
         htm:      { ok: ['제목·문단·목록', '표·strong/em'],                  warn: ['CSS 레이아웃', '이미지·SVG'] },
-        docx:     { ok: ['제목·목록·표·링크', '이미지·각주·인라인 서식'],    warn: ['WMF/EMF 그림', 'Word 페이지 배치'] },
+        docx:     { ok: ['OOXML 감사·안전 복구', '원본 용지·표 격자·셀 문단'], warn: ['섹션별 전환·복잡한 개체', 'Word와 한컴의 페이지 나눔 차이'] },
         txt:      { ok: ['전체 텍스트', '문단·줄바꿈'],                       warn: ['제목·표·서식 없음'] },
         text:     { ok: ['전체 텍스트', '문단·줄바꿈'],                       warn: ['제목·표·서식 없음'] },
         csv:      { ok: ['표 행/열·머리글'],                                  warn: ['수식·색상·차트·이미지'] },
@@ -1050,17 +1050,18 @@ const FORMAT_INFO = {
     docx: {
         icon: '📘', svgIcon: 'icons/brand/microsoftword.svg', name: 'Word 문서 (DOCX)',
         quality: '★★★', available: true,
-        desc: 'Word 문서를 본문 구조 중심으로 재구성합니다. 목록·하이퍼링크·이미지를 포함해 주요 내용 구조를 HWPX로 변환하지만, 원본 편집 화면을 그대로 복제하는 용도는 아닙니다.',
-        tech: 'JSZip → document.xml + numbering.xml + rels → IR → HWPX',
+        desc: 'Word 내부 XML을 먼저 감사·정규화한 뒤 원본 용지, 기본 글자 크기·줄 간격, 표 격자·폭, 셀 다중 문단과 수동 줄바꿈을 보존합니다. 한컴과 Word의 배치 엔진 차이 때문에 페이지 수는 달라질 수 있습니다.',
+        tech: 'JSZip → OOXML audit/repair → document.xml + styles/numbering/rels → IR v2 → HWPX',
         features: [
-            '제목 후보, 문단, 번호·글머리 목록(numbering.xml), 기본 표를 추출',
-            '굵게/기울임/밑줄/취소선/글자색, 가운데·오른쪽 정렬 일부 보존',
-            '표의 가로·세로 병합, 셀 배경색, 셀 글자색 일부 보존',
+            '잘못된 자식 순서·소수 twip·undefined 속성·sectPr 위치를 감사하고 안전한 항목 자동 복구',
+            '원본 용지·방향·여백과 기본 글자 크기·줄 간격, 제목·문단·번호·글머리 목록 추출',
+            '굵게/기울임/밑줄/취소선/글자색·강조색, 가운데·오른쪽 정렬 일부 보존',
+            '표 폭·열 비율·정렬·셀 여백·다중 문단·수동 줄바꿈과 가로·세로 병합 보존',
             'PNG/JPG/GIF/BMP/WebP 본문 이미지, 각주, 주석, 첫 머리글/바닥글 텍스트 추출',
             '클릭 가능한 하이퍼링크(http/https/mailto) 보존',
             'WMF/EMF 벡터 이미지 — 대체 텍스트가 있으면 안내 문구로 보존',
         ],
-        limits: ['원본 Word 페이지 배치·섹션·스타일 테마는 단순화', 'WMF/EMF 실제 그림은 HWPX 미지원(대체 텍스트로 보존)', '주석은 각주와 구분 없이 같은 형태로 표시, 변경 추적·복잡한 개체는 손실 가능'],
+        limits: ['Word와 한컴의 줄·표 나눔 엔진 차이로 페이지 수·줄 위치는 달라질 수 있음', '현재 최종 섹션의 페이지 설정과 문서 기본 글자 크기·줄 간격을 사용하며 섹션별 전환·테마는 단순화', 'WMF/EMF 실제 그림, 변경 추적 표시, 텍스트 상자·수식 등 복잡한 개체는 손실 가능'],
     },
     hwp: {
         icon: '🇰🇷', name: '한글 문서 (HWP)',
@@ -1231,7 +1232,7 @@ const QUALITY_FORMATS = ['md', 'html', 'docx', 'pptx', 'txt', 'csv', 'json', 'ip
 const FORMAT_QUALITY_METRICS = {
     md:    { conversion: 94, success: 97, risk: '낮음',     next: '표 셀 run 계약(표 안 링크·이미지)과 상대경로 이미지 묶음 업로드 지원을 추가하면 고급 문서 보존률이 오른다.' },
     html:  { conversion: 68, success: 88, risk: '중간',     next: 'CSS 중 일부(color/background/text-align)만 안전 allowlist로 승격하고, img/src data URL부터 그림 IR로 연결한다.' },
-    docx:  { conversion: 85, success: 90, risk: '중간',     next: '섹션별/첫 페이지 전용 머리글·바닥글을 구분해 IR로 분리하면 보존률이 추가로 오른다(현재는 문서 전체 첫 번째 관계만 사용).' },
+    docx:  { fileDiagnostic: true, risk: '파일별', next: '변환 전에 OOXML 결함을 진단·정규화하고, 결과 카드의 문단·표·행·셀·줄바꿈 수와 한컴 PDF 전수 렌더로 품질을 판정한다.' },
     pptx:  { conversion: 48, success: 83, risk: '높음',     next: '슬라이드 배경색/테마, 도형(텍스트 상자 외)의 순서 보존을 단계적으로 추가하면 보존률이 오른다.' },
     txt:   { conversion: 88, success: 97, risk: '낮음',     next: '표처럼 보이는 탭/공백 열을 선택적으로 표 IR로 승격하는 실험을 관리자 모드에서 검증한다.' },
     csv:   { conversion: 82, success: 94, risk: '낮음',     next: 'XLSX 다중 시트 선택, 셀 병합/색상 일부 보존을 별도 옵션으로 확장한다.' },
@@ -1334,7 +1335,12 @@ function renderQualityPanel() {
                     </div>
                     <em class="quality-risk quality-risk-${metric.risk === '높음' ? 'high' : metric.risk === '중간' ? 'mid' : 'low'}">${escHtml(metric.risk)}</em>
                 </div>
-                <div class="quality-score-grid">
+                ${metric.fileDiagnostic ? `
+                <div class="quality-file-diagnostic">
+                    <strong>고정 점수 대신 파일별 실측</strong>
+                    <span>입력 결함, 구조 개수, 원본 용지, 표 격자, 수동 줄바꿈을 변환할 때마다 검사합니다.</span>
+                </div>
+                ` : `<div class="quality-score-grid">
                     <div>
                         <span>변환률 <i class="quality-est-tag" title="실측이 아닌 추정치">추정</i></span>
                         <b>${metric.conversion}%</b>
@@ -1345,7 +1351,7 @@ function renderQualityPanel() {
                         <b>${metric.success}%</b>
                         ${renderQualityBar(metric.success)}
                     </div>
-                </div>
+                </div>`}
                 <div class="format-quality-columns">
                     <div>
                         <h4>현재 제한사항</h4>
@@ -2913,8 +2919,8 @@ async function convertOneFile(file, statusPrefix = '', outputFontName = state.do
     await tick();
 
     let hwpxBlob;
+    const buildOptions = effectiveBuildOptionsForFile(file);
     try {
-        const buildOptions = effectiveBuildOptionsForFile(file);
         hwpxBlob = await buildHwpx(ir, outputFontName, state.fontSize, state.pageMargins, state.paperSize, (pct) => {
             setProgress(58 + (pct * 0.14)); // 58% ~ 72%
             st(`HWPX 파일을 압축하는 중... ${Math.round(pct)}%`);
@@ -2933,7 +2939,10 @@ async function convertOneFile(file, statusPrefix = '', outputFontName = state.do
 
     let validation;
     try {
-        validation = await window.validateHwpx(hwpxBlob, state.pageMargins);
+        const validationMargins = buildOptions.preserveSourcePageSetup && ir.pageSetup?.marginsHwp
+            ? Object.fromEntries(Object.entries(ir.pageSetup.marginsHwp).map(([key, value]) => [key, Number(value) / 283.465]))
+            : state.pageMargins;
+        validation = await window.validateHwpx(hwpxBlob, validationMargins);
     } catch (e) {
         validation = { pass: false, issues: ['검증 실행 오류: ' + e.message] };
     }
@@ -2997,6 +3006,18 @@ function showResult({ url, fileName, size, validation }) {
     const issues = Array.isArray(validation.issues) ? validation.issues : [];
     const assetWarnings = Array.isArray(validation.assetWarnings) ? validation.assetWarnings : [];
     const issuePreview = issues.slice(0, 3);
+    const sourceAudit = state.ir?.audit?.sourceFormat === 'docx' ? state.ir.audit : null;
+    const auditRepairCount = sourceAudit
+        ? (sourceAudit.repairs || []).reduce((sum, item) => sum + (Number(item.count) || 0), 0)
+        : 0;
+    const auditIssueCount = sourceAudit
+        ? (sourceAudit.issues || []).reduce((sum, item) => sum + (Number(item.count) || 0), 0)
+        : 0;
+    const auditMetrics = sourceAudit?.metrics || {};
+    const outputMetrics = validation.metrics || {};
+    const auditStatusLabel = sourceAudit?.status === 'repaired' ? '입력 결함 자동 복구'
+        : sourceAudit?.status === 'valid' ? '입력 구조 정상'
+            : sourceAudit?.status === 'recoverable-with-loss' ? '일부 손실 가능' : '입력 확인 필요';
     const officeCheckTitle = validation.pass ? '한컴오피스 최종 확인 권장' : '한컴오피스 확인 필수';
     const officeCheckDetail = validation.pass
         ? '글꼴·여백·표 너비는 미리보기와 다를 수 있습니다.'
@@ -3048,6 +3069,22 @@ function showResult({ url, fileName, size, validation }) {
                 <span class="result-validation-mark">${validation.pass ? '✓' : '!'}</span>
                 <span>${escHtml(validText)}</span>
             </div>
+            ${sourceAudit ? `
+            <div class="result-source-audit result-source-audit--${escHtml(sourceAudit.status || 'unknown')}">
+                <div>
+                    <strong>DOCX 사전 감사 · ${escHtml(auditStatusLabel)}</strong>
+                    <span>발견 ${auditIssueCount.toLocaleString()}건 · 자동 정규화 ${auditRepairCount.toLocaleString()}건</span>
+                </div>
+                <dl>
+                    <div><dt>문단 입력→출력</dt><dd>${Number(auditMetrics.paragraphs || 0).toLocaleString()}→${Number(outputMetrics.paragraphs || 0).toLocaleString()}</dd></div>
+                    <div><dt>표 입력→출력</dt><dd>${Number(auditMetrics.tables || 0).toLocaleString()}→${Number(outputMetrics.tables || 0).toLocaleString()}</dd></div>
+                    <div><dt>행 입력→출력</dt><dd>${Number(auditMetrics.rows || 0).toLocaleString()}→${Number(outputMetrics.rows || 0).toLocaleString()}</dd></div>
+                    <div><dt>셀 입력→출력</dt><dd>${Number(auditMetrics.cells || 0).toLocaleString()}→${Number(outputMetrics.cells || 0).toLocaleString()}</dd></div>
+                    <div><dt>줄바꿈 입력→출력</dt><dd>${Number(auditMetrics.lineBreaks || 0).toLocaleString()}→${Number(outputMetrics.lineBreaks || 0).toLocaleString()}</dd></div>
+                </dl>
+                <small>구조 개수 보존과 패키지 검증을 통과해도 Word·한컴의 페이지 나눔 차이는 한컴오피스에서 최종 확인해야 합니다.</small>
+            </div>
+            ` : ''}
             <div class="result-trust-list" aria-label="산출물 신뢰도 요약">
                 <span class="${validation.pass ? 'trust-ok' : 'trust-warn'}"><b>검증</b>${validation.pass ? '패키지 구조 통과' : '구조 확인 필요'}</span>
                 <span class="trust-info"><b>처리</b>브라우저 내부</span>
@@ -3355,8 +3392,8 @@ function getConversionSummaryForExt(ext) {
             lossy: 'CSS 레이아웃, 이미지, SVG, 스크립트, 외부 리소스',
         },
         docx: {
-            preserved: '본문, 제목, 번호·글머리 목록, 기본 표, 하이퍼링크, 인라인 서식·색상·이미지, 각주, 주석(각주 형태), 원본 우선 서식 정책',
-            lossy: 'Word 페이지 배치·테마, WMF/EMF 실제 그림, 변경 추적, 복잡한 개체',
+            preserved: 'OOXML 결함 안전 복구, 원본 용지·여백·기본 글자 크기·줄 간격, 본문·제목·목록, 표 폭·열 비율·셀 다중 문단·병합, 수동 줄바꿈, 링크·인라인 서식·강조색·이미지·각주',
+            lossy: '섹션별 용지 전환·Word 테마·정밀 페이지 배치, WMF/EMF 실제 그림, 변경 추적 표시, 텍스트 상자·수식 등 복잡한 개체',
         },
         pptx: {
             preserved: '슬라이드 순서, 제목·본문 텍스트, 글머리 목록, 슬라이드 안 표(병합 포함), 그림, 그룹 도형 내부 콘텐츠, 발표자 노트',
@@ -3417,6 +3454,9 @@ function hasSourceFormatting(ext) {
 function effectiveBuildOptionsForFile(file) {
     const ext = getFileExtension(file?.name || '');
     const policy = state.stylePolicy || 'balanced';
+    const docxFidelityOptions = ext === 'docx'
+        ? { preserveSourcePageSetup: true, preserveSourceTypography: true, renderDocumentTitle: false }
+        : {};
     if (policy === 'app' || !hasSourceFormatting(ext)) {
         return {
             showHorizontalRules: state.showHorizontalRules,
@@ -3426,6 +3466,7 @@ function effectiveBuildOptionsForFile(file) {
             linkStyle: state.linkStyle,
             imageMaxWidth: state.imageMaxWidth,
             imageAlign: state.imageAlign,
+            ...docxFidelityOptions,
         };
     }
     if (policy === 'balanced') {
@@ -3437,6 +3478,7 @@ function effectiveBuildOptionsForFile(file) {
             linkStyle: state.linkStyle,
             imageMaxWidth: state.imageMaxWidth,
             imageAlign: state.imageAlign,
+            ...docxFidelityOptions,
         };
     }
     // 원본 우선(source): IR에 이미 포함된 단락 정렬·글자색·이미지 위치를 그대로 쓴다.
@@ -3448,6 +3490,7 @@ function effectiveBuildOptionsForFile(file) {
         tableStyle: 'standard',
         linkStyle: 'blue',
         imageMaxWidth: 100,
+        ...docxFidelityOptions,
     };
 }
 

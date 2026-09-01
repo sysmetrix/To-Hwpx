@@ -1,6 +1,22 @@
 {
-  "current": "4.14.0",
+  "current": "4.15.0",
   "versions": [
+    {
+      "version": "4.15.0",
+      "date": "2026-09-01",
+      "user": [
+        "DOCX 변환 전에 문서 구조 결함을 검사하고 안전하게 복구해, Word에서는 보이지만 기존 변환에서 표와 문단이 무너지던 파일도 변환할 수 있게 개선했습니다.",
+        "DOCX의 원본 용지·여백·기본 글자 크기와 줄 간격, 표 폭과 열 비율, 셀 안의 여러 문단, 수동 줄바꿈과 형광펜을 더 충실하게 보존합니다.",
+        "DOCX 품질을 고정 백분율로 표시하는 대신 실제 파일의 감사 상태와 문단·표·행·셀·줄바꿈 입력→출력 수치를 결과에서 확인할 수 있습니다."
+      ],
+      "dev": [
+        "[v4.15.0] js/docx-audit.js/js/parsers.js: OOXML 결함 감사·안전 정규화와 audit/pageSetup/typography/table cell blocks 기반 IR v2 경로 추가",
+        "[v4.15.0] js/hwpx.js: Letter 용지, 원본 여백·10pt/120% 등 기본 타이포그래피, 표 geometry·다중 셀 블록, hp:lineBreak/hp:tab/highlight 렌더링",
+        "[v4.15.0] js/app.js/style.css/DESIGN.md: DOCX 고정 품질 점수를 파일별 감사·구조 보존 진단 카드로 교체하고 보존/제외 가능 안내 정합화",
+        "[v4.15.0] ARCHITECTURE.md/ENGINEERING.md/docs/adr/qa: 영향도 그래프, 고충실도 fixture·하네스, 한컴 PDF 내보내기와 전 페이지 contact sheet 검증 루프 추가",
+        "[v4.15.0] 실제 KPI 보고서 검증: 표 34/34, 행 877/877, 셀 4035/4035, 수동 줄바꿈 89/89, 한컴 PDF 106쪽 전수 렌더"
+      ]
+    },
     {
       "version": "4.14.0",
       "date": "2026-07-13",

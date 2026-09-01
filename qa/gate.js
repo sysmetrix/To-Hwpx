@@ -2,7 +2,7 @@
  * [qa/gate.js]  HWPX 변환 회귀 검증 게이트 (개발자용, 선택)
  * ===================================================================
  * 목적: 입력 파일을 실제 브라우저에서 .hwpx로 변환한 뒤, HWPX 패키지
- *       무결성 ①~⑧을 자동 검사한다. 하나라도 FAIL이면 exit code 1.
+ *       무결성 ①~⑨를 자동 검사한다. 하나라도 FAIL이면 exit code 1.
  *
  *   ① mimetype이 ZIP 첫 항목·무압축(STORED)·내용 application/hwp+zip
  *   ② META-INF 3종(container.xml/manifest.xml/container.rdf) + Preview + Contents 존재

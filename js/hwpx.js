@@ -29,7 +29,8 @@ const PAPER_SIZES = {
     'A4':     { w: 59528, h: 84188 },
     'A3':     { w: 84189, h: 119055 },   // 297 × 420 mm
     'B5':     { w: 51430, h: 72817 },
-    'Letter': { w: 61920, h: 80136 },
+    // OOXML Letter 8.5 × 11in = 12240 × 15840 twip = 61200 × 79200 HWPUNIT.
+    'Letter': { w: 61200, h: 79200 },
 };
 
 const DEFAULT_MARGINS_MM = {
@@ -75,8 +76,8 @@ function marginsMmToHwp(marginsMm = {}) {
 }
 
 function normalizeLineSpacingPercent(value = 160) {
-    const n = parseInt(value, 10);
-    return [130, 150, 160, 180, 200].includes(n) ? n : 160;
+    const n = Number(value);
+    return Number.isFinite(n) && n >= 100 && n <= 300 ? Math.round(n) : 160;
 }
 
 function normalizeParagraphSpacingPreset(value = 'normal') {
@@ -275,11 +276,19 @@ function buildImageRun(imgBlock, imgIndex, contentWidthHwp = 48000, options = {}
         `</hp:p>`;
 }
 
-/** 본문과 인용구에 포함된 최종 image IR을 문서 순서대로 수집한다. */
+/** 본문·인용구·표 셀에 포함된 최종 image IR을 문서 순서대로 수집한다. */
 function collectImageBlocks(blocks, out = []) {
     for (const block of (blocks || [])) {
         if (block?.type === 'image') out.push(block);
         else if (block?.type === 'quote') collectImageBlocks(block.blocks || [], out);
+        else if (block?.type === 'table') {
+            const tableRows = (block.header?.length ? [block.header] : []).concat(block.rows || []);
+            for (const row of tableRows) {
+                for (const cell of (row || [])) collectImageBlocks(cellBlocks(cell), out);
+            }
+        } else if (block?.type === 'list') {
+            for (const item of (block.items || [])) collectImageBlocks(item.codeBlocks || [], out);
+        }
     }
     return out;
 }
@@ -362,6 +371,7 @@ function buildHeaderXml(fontName, basePt, customBfMap = new Map(), imageBlocks =
     const fn = xmlEsc(resolvedFontName);
     const bp = Math.max(6, Math.min(36, parseInt(basePt, 10) || 12));
     const bodyLineSpacing = normalizeLineSpacingPercent(lineSpacingPercent);
+    const tableLineSpacing = Math.min(150, bodyLineSpacing);
     const h1LineSpacing = Math.max(bodyLineSpacing, 180);
     const h2LineSpacing = Math.max(bodyLineSpacing, 170);
     const paragraphSpacing = normalizeParagraphSpacingPreset(options.paragraphSpacing);
@@ -396,12 +406,15 @@ function buildHeaderXml(fontName, basePt, customBfMap = new Map(), imageBlocks =
     const charBase = (id, height, bold = false, italic = false, fontId = null, opts = {}) => {
         const fi = fontId !== null ? String(fontId) : ((bold && boldFn) ? '1' : '0');
         const color = (opts.color && /^#[0-9A-Fa-f]{6}$/.test(opts.color)) ? opts.color.toUpperCase() : '#000000';
+        const shadeColor = (opts.highlight && /^#[0-9A-Fa-f]{6}$/.test(opts.highlight))
+            ? opts.highlight.toUpperCase()
+            : 'none';
         const boldTag   = (bold   && !boldFn) ? '\n        <hh:bold/>'   : '';
         const italicTag = italic ? '\n        <hh:italic/>' : '';
         // OWPML CharShape 순서: ...offset → bold → italic → underline → strikeout
         const underlineTag = opts.underline ? `\n        <hh:underline type="BOTTOM" shape="SOLID" color="${color}"/>` : '';
         const strikeTag    = opts.strike    ? `\n        <hh:strikeout shape="SOLID" color="${color}"/>` : '';
-        return `      <hh:charPr id="${id}" height="${height}" textColor="${color}" shadeColor="none" useFontSpace="0" useKerning="0" symMark="NONE" borderFillIDRef="1">
+        return `      <hh:charPr id="${id}" height="${height}" textColor="${color}" shadeColor="${shadeColor}" useFontSpace="0" useKerning="0" symMark="NONE" borderFillIDRef="1">
         <hh:fontRef hangul="${fi}" latin="${fi}" hanja="${fi}" japanese="${fi}" other="${fi}" symbol="${fi}" user="${fi}"/>
         <hh:ratio hangul="100" latin="100" hanja="100" japanese="100" other="100" symbol="100" user="100"/>
         <hh:spacing hangul="0" latin="0" hanja="0" japanese="0" other="0" symbol="0" user="0"/>
@@ -450,9 +463,9 @@ ${charBase(10, sz.h5,  true,  false)}
 ${charBase(11, sz.h6,  true,  false)}
 ${charBase(12, 100,    false, false)}
 ${[...customCharMap.entries()].map(([key, cid]) => {
-    const [flags, color, height] = String(key).split('|');
+    const [flags, color, height, highlight] = String(key).split('|');
     return charBase(cid, height ? +height : sz.body, flags[0] === '1', flags[1] === '1', null,
-        { underline: flags[2] === '1', strike: flags[3] === '1', color });
+        { underline: flags[2] === '1', strike: flags[3] === '1', color, highlight });
 }).join('\n')}
     </hh:charProperties>
     <hh:paraProperties itemCnt="20">
@@ -465,14 +478,14 @@ ${paraBase(4, 'LEFT',    bodyLineSpacing, Math.max(0, paragraphSpacing.headingPr
 ${paraBase(5, 'LEFT',    bodyLineSpacing,   0,  paragraphSpacing.listNext,  600, '1', -600)}
 ${paraBase(6, 'LEFT',    140, 200,  200,  400)}
       <!-- id=7  표 셀 가운데 정렬 -->
-${paraBase(7, 'CENTER',  150,   0,    0,    0)}
+${paraBase(7, 'CENTER',  tableLineSpacing,   0,    0,    0)}
       <!-- id=8  구분선(HR): 위아래 여백을 넉넉히 둔 하단 테두리 -->
 ${paraBase(8, 'LEFT',    130, 850,  850,    0, '10')}
       <!-- id=9  빈 줄 간격 조절용: 추가 여백 없음 -->
 ${paraBase(9, 'LEFT',    100,   0,    0,    0)}
       <!-- id=10/11  표 일반 셀: 텍스트 왼쪽, 숫자 오른쪽 정렬 -->
-${paraBase(10, 'LEFT',   150,   0,    0,    0)}
-${paraBase(11, 'RIGHT',  150,   0,    0,    0)}
+${paraBase(10, 'LEFT',   tableLineSpacing,   0,    0,    0)}
+${paraBase(11, 'RIGHT',  tableLineSpacing,   0,    0,    0)}
       <!-- id=12/13  DOCX 정렬 보존: 가운데/오른쪽 -->
 ${paraBase(12, 'CENTER', bodyLineSpacing,   0,  850,    0)}
 ${paraBase(13, 'RIGHT',  bodyLineSpacing,   0,  850,    0)}
@@ -710,8 +723,17 @@ function _resetHyperlinkIds() { _hyperlinkIdCounter = 1700000000; }
  * 단락(hp:p) XML 생성
  * replaceEmoji → xmlEsc 순서로 처리하여 이모지 □ 치환 후 XML 안전 처리
  */
+function textToHwpContent(value) {
+    const text = String(value ?? '').replace(/\r\n?/g, '\n');
+    return text.split(/([\n\t])/).map((part) => {
+        if (part === '\n') return '<hp:lineBreak/>';
+        if (part === '\t') return '<hp:tab width="8000" leader="0" type="LEFT"/>';
+        return xmlEsc(replaceEmoji(part));
+    }).join('');
+}
+
 function buildPara(text, charId = '0', paraId = '0') {
-    const safe = xmlEsc(replaceEmoji(text));
+    const safe = textToHwpContent(text);
     const pid  = _nextParaId();
     return `<hp:p id="${pid}" paraPrIDRef="${paraId}" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0">` +
         `<hp:run charPrIDRef="${charId}"><hp:t>${safe}</hp:t></hp:run></hp:p>`;
@@ -724,7 +746,8 @@ function buildPara(text, charId = '0', paraId = '0') {
 function runNeedsExtChar(run) {
     const color = run.href && !run.color ? '#0563C1' : run.color;
     const hasColor = color && /^#[0-9A-Fa-f]{6}$/.test(color) && color.toUpperCase() !== '#000000';
-    return !!(run.href || run.underline || run.strike || hasColor);
+    const hasHighlight = run.highlight && /^#[0-9A-Fa-f]{6}$/.test(run.highlight);
+    return !!(run.href || run.underline || run.strike || hasColor || hasHighlight);
 }
 
 /** 확장 charPr 시그니처 키: "bold italic underline strike | #RRGGBB | height"
@@ -732,8 +755,11 @@ function runNeedsExtChar(run) {
 function extCharKey(run) {
     const rawColor = run.href && !run.color ? '#0563C1' : run.color;
     const color = (rawColor && /^#[0-9A-Fa-f]{6}$/.test(rawColor)) ? rawColor.toUpperCase() : '#000000';
+    const highlight = (run.highlight && /^#[0-9A-Fa-f]{6}$/.test(run.highlight))
+        ? run.highlight.toUpperCase()
+        : '';
     const underline = run.href || run.underline;
-    return `${run.bold ? 1 : 0}${run.italic ? 1 : 0}${underline ? 1 : 0}${run.strike ? 1 : 0}|${color}|${run.height || ''}`;
+    return `${run.bold ? 1 : 0}${run.italic ? 1 : 0}${underline ? 1 : 0}${run.strike ? 1 : 0}|${color}|${run.height || ''}|${highlight}`;
 }
 
 function normalizeSafeHyperlink(raw) {
@@ -792,7 +818,7 @@ function buildParaRuns(runs, paraId = '0', customCharMap = new Map(), options = 
         const visibleText = href && linkStyle === 'url' && !String(run.text).includes(href)
             ? `${run.text} (${href})`
             : run.text;
-        const safe = xmlEsc(replaceEmoji(visibleText));
+        const safe = textToHwpContent(visibleText);
         let cId = '0';
         if (run.code) {
             cId = '6';
@@ -1021,7 +1047,7 @@ function buildFootnoteCtrl(footnoteText) {
     return `<hp:ctrl ctrlID="${fnId}" type="FOOTNOTE">` +
         `<hp:fnote id="${fnId}" autoNum="1">` +
         `<hp:p id="${pid}" paraPrIDRef="0" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0">` +
-        `<hp:run charPrIDRef="0"><hp:t>${xmlEsc(replaceEmoji(footnoteText))}</hp:t></hp:run>` +
+        `<hp:run charPrIDRef="0"><hp:t>${textToHwpContent(footnoteText)}</hp:t></hp:run>` +
         `</hp:p>` +
         `</hp:fnote>` +
         `</hp:ctrl>`;
@@ -1040,12 +1066,47 @@ function headingIds(level) {
  * 한글 글자(2바이트)는 2배, 영문/숫자(1바이트)는 1로 환산
  * 최소 열 너비 3000 HWPUNIT(≈10.6mm) 보장, 최대 40자로 상한
  */
-function cellText(cell)    { return typeof cell === 'object' ? (cell?.text ?? '') : String(cell ?? ''); }
+function blockPlainText(block) {
+    if (!block || typeof block !== 'object') return '';
+    if (block.type === 'table') {
+        const tableRows = (block.header?.length ? [block.header] : []).concat(block.rows || []);
+        return tableRows.map(row => (row || []).map(cellText).join('\t')).join('\n');
+    }
+    if (block.type === 'list') {
+        return (block.items || []).map(item => typeof item === 'object' ? (item.text || '') : String(item || '')).join('\n');
+    }
+    return String(block.text ?? block.alt ?? '');
+}
+
+function cellBlocks(cell) {
+    return typeof cell === 'object' && Array.isArray(cell?.blocks) ? cell.blocks : [];
+}
+
+function cellText(cell) {
+    if (typeof cell !== 'object' || cell === null) return String(cell ?? '');
+    if (cell.text !== undefined && cell.text !== null) return String(cell.text);
+    return cellBlocks(cell).map(blockPlainText).filter(Boolean).join('\n');
+}
 function cellRuns(cell)    { return typeof cell === 'object' && Array.isArray(cell?.runs) ? cell.runs : null; }
 function cellBg(cell)     { return typeof cell === 'object' ? (cell?.bg  || null) : null; }
 function cellColor(cell)   { return typeof cell === 'object' ? (cell?.color || null) : null; }
 function cellColSpan(cell) { return typeof cell === 'object' ? (cell?.colSpan || 1) : 1; }
 function cellRowSpan(cell) { return typeof cell === 'object' ? (cell?.rowSpan || 1) : 1; }
+function cellVertAlign(cell) {
+    const value = typeof cell === 'object' ? String(cell?.vertAlign || '').toUpperCase() : '';
+    return ['TOP', 'CENTER', 'BOTTOM'].includes(value) ? value : 'CENTER';
+}
+
+function cellMargins(cell, tableMargins = null) {
+    const source = (typeof cell === 'object' && cell?.marginsHwp) || tableMargins || {};
+    const numberOr = (value, fallback) => Number.isFinite(Number(value)) ? Math.max(0, Math.round(Number(value))) : fallback;
+    return {
+        left: numberOr(source.left, 650),
+        right: numberOr(source.right, 650),
+        top: numberOr(source.top, 220),
+        bottom: numberOr(source.bottom, 220),
+    };
+}
 
 function tableSideVariant(nCols, logicalC, colSpan) {
     if (nCols === 1) return 'both';
@@ -1110,26 +1171,143 @@ export function isNumericCell(value) {
         || /^[₩$€¥]\s?[-+]?[\d,]+(\.\d+)?$/.test(s);
 }
 
-function getContentWidthHwp(marginsHwp, paperKey, landscape = false) {
-    const paperBase = PAPER_SIZES[paperKey] || PAPER_SIZES['A4'];
+function resolvePaperSize(paperKey, pageSetup = null) {
+    if (pageSetup && Number.isFinite(Number(pageSetup.widthHwp)) && Number.isFinite(Number(pageSetup.heightHwp))) {
+        return {
+            w: Math.round(Number(pageSetup.widthHwp)),
+            h: Math.round(Number(pageSetup.heightHwp)),
+        };
+    }
+    return PAPER_SIZES[paperKey] || PAPER_SIZES['A4'];
+}
+
+function getContentWidthHwp(marginsHwp, paperKey, landscape = false, pageSetup = null) {
+    const paperBase = resolvePaperSize(paperKey, pageSetup);
     const paper = landscape ? { w: paperBase.h, h: paperBase.w } : paperBase;
     const m = Object.assign({}, DEFAULT_MARGINS_HWP, marginsHwp || {});
     return Math.max(12000, paper.w - m.left - m.right);
+}
+
+function scaleColumnWidths(sourceWidths, nCols, tableWidth) {
+    if (!Array.isArray(sourceWidths) || sourceWidths.length !== nCols || sourceWidths.some(width => !(Number(width) > 0))) {
+        return null;
+    }
+    const sourceTotal = sourceWidths.reduce((sum, width) => sum + Number(width), 0);
+    if (!(sourceTotal > 0)) return null;
+    const widths = sourceWidths.map(width => Math.max(1, Math.round(Number(width) * tableWidth / sourceTotal)));
+    widths[widths.length - 1] += tableWidth - widths.reduce((sum, width) => sum + width, 0);
+    return widths;
+}
+
+function buildCellBlockContent(blocks, fallback, context) {
+    const { isHd, color, cId, paraId, cellContentWidth, customBfMap, customCharMap, options, imageBlocks } = context;
+    if (!blocks.length) {
+        const inlineRuns = cellRuns(fallback);
+        if (inlineRuns) {
+            return buildParaRuns(inlineRuns.map(run => ({
+                ...run,
+                ...(isHd ? { bold: true } : {}),
+                ...(color && !run.color ? { color } : {}),
+                // 표 내부 링크는 공용 cell run 계약을 별도로 정할 때까지 활성화하지 않는다.
+                href: undefined,
+                title: undefined,
+            })), paraId, customCharMap, options);
+        }
+        return buildPara(cellText(fallback), cId, paraId);
+    }
+
+    const parts = [];
+    const appendBlocks = (sourceBlocks, quote = false) => {
+        for (const block of (sourceBlocks || [])) {
+            const type = block?.type;
+            const blockParaId = quote ? '19'
+                : block?.align === 'center' ? '7'
+                    : block?.align === 'right' ? '11'
+                        : paraId;
+            if (type === 'para') {
+                if (Array.isArray(block.runs) && block.runs.length) {
+                    parts.push(buildParaRuns(block.runs.map(run => ({
+                        ...run,
+                        ...(isHd ? { bold: true } : {}),
+                        ...(color && !run.color ? { color } : {}),
+                        href: undefined,
+                        title: undefined,
+                    })), blockParaId, customCharMap, options));
+                } else if (block.text) {
+                    parts.push(buildPara(block.text, cId, blockParaId));
+                } else {
+                    parts.push(buildBlankPara());
+                }
+            } else if (type === 'heading') {
+                const { charId } = headingIds(block.level);
+                parts.push(buildPara(block.text || '', block._cId || charId, blockParaId));
+            } else if (type === 'blank') {
+                parts.push(buildBlankPara());
+            } else if (type === 'list') {
+                let autoNum = 0;
+                for (const rawItem of (block.items || [])) {
+                    const item = typeof rawItem === 'object' ? rawItem : { text: rawItem };
+                    const marker = item.task ? (item.checked ? '▣ ' : '□ ')
+                        : (item.ordered ?? block.ordered) ? `${item.marker ?? (++autoNum)}. ` : '· ';
+                    if (item.runs?.length) {
+                        parts.push(buildParaRuns([{ text: marker }, ...item.runs], blockParaId, customCharMap, options));
+                    } else {
+                        parts.push(buildPara(marker + (item.text || ''), cId, blockParaId));
+                    }
+                }
+            } else if (type === 'code') {
+                parts.push(buildCodeBlock(block, '', cellContentWidth));
+            } else if (type === 'table') {
+                parts.push(buildTable(block.header, block.rows, cellContentWidth, customBfMap, customCharMap, {
+                    ...options,
+                    tableBlock: block,
+                    imageBlocks,
+                }));
+            } else if (type === 'image') {
+                const imageIndex = imageBlocks.indexOf(block);
+                if (imageIndex >= 0) parts.push(buildImageRun(block, imageIndex, cellContentWidth, options));
+            } else if (type === 'quote') {
+                appendBlocks(block.blocks || [], true);
+            } else if (type === 'hr') {
+                parts.push(options.showHorizontalRules ? buildHrPara(cellContentWidth) : buildBlankPara());
+            } else if (block?.text) {
+                parts.push(buildPara(block.text, cId, blockParaId));
+            }
+        }
+    };
+    appendBlocks(blocks);
+    return parts.length ? parts.join('') : buildBlankPara();
 }
 
 function buildTable(header, rows, contentWidthHwp = 48000, customBfMap = new Map(), customCharMap = new Map(), options = {}) {
     const allRows = (header && header.length ? [header] : []).concat(rows || []);
     if (!allRows.length) return buildBlankPara();
     const tableStyle = normalizeTableStyle(options.tableStyle);
+    const tableBlock = options.tableBlock || {};
 
     const nRows = allRows.length;
     // 열 수: 각 행의 셀 수 + colSpan - 1 합산으로 실제 논리 열 수 계산
-    const nCols = Math.max(...allRows.map(r =>
+    const nCols = Math.max(Number(tableBlock.columnWidthsHwp?.length) || 0, ...allRows.map(r =>
         (r || []).reduce((sum, cell) => sum + (cellColSpan(cell) || 1), 0)
     ), 1);
-    const tableWidth = Math.max(12000, contentWidthHwp);
-    const colWidths = getColumnWidths(allRows, nCols, tableWidth);
+    const minimumWidth = Math.min(12000, contentWidthHwp);
+    const sourceGridTotal = Array.isArray(tableBlock.columnWidthsHwp)
+        ? tableBlock.columnWidthsHwp.reduce((sum, width) => sum + (Number(width) || 0), 0)
+        : 0;
+    const requestedWidth = Number(tableBlock.widthHwp) > 0
+        ? Number(tableBlock.widthHwp)
+        : (sourceGridTotal > 0 ? sourceGridTotal : contentWidthHwp);
+    const tableWidth = Math.max(minimumWidth, Math.min(contentWidthHwp, Math.round(requestedWidth)));
+    const colWidths = scaleColumnWidths(tableBlock.columnWidthsHwp, nCols, tableWidth)
+        || getColumnWidths(allRows, nCols, tableWidth);
     const pid = _nextParaId();
+    const imageBlocks = options.imageBlocks || [];
+    const rowMeta = Array.isArray(tableBlock.rowMeta) ? tableBlock.rowMeta : [];
+    const hasSourceRowMeta = rowMeta.length > 0;
+    const repeatHeader = hasSourceRowMeta ? !!rowMeta[0]?.repeatHeader : true;
+    const tableAlign = ['left', 'center', 'right'].includes(String(tableBlock.align || '').toLowerCase())
+        ? String(tableBlock.align).toUpperCase()
+        : 'RIGHT';
 
     // 단일 셀(hp:tc) XML 생성 — 실제 셀과 격자 보충용 더미 셀이 공유
     // 자식 순서: subList → cellAddr → cellSpan → cellSz → cellMargin
@@ -1160,26 +1338,32 @@ function buildTable(header, rows, contentWidthHwp = 48000, customBfMap = new Map
             else                      bfId = styledHeader ? '3' : '2';
         }
         const cellWidth = colWidths.slice(c, c + cs).reduce((a, b) => a + b, 0);
-        const inlineRuns = cellRuns(cell);
-        const cellPara = inlineRuns
-            ? buildParaRuns(inlineRuns.map(run => ({
-                ...run,
-                ...(styledHeader ? { bold: true } : {}),
-                ...(color && !run.color ? { color } : {}),
-                // 표 내부 링크는 공용 cell run 계약을 별도로 정할 때까지 활성화하지 않는다.
-                href: undefined,
-                title: undefined,
-            })), paraId, customCharMap, options)
-            : buildPara(val, cId, paraId);
+        const margins = cellMargins(cell, tableBlock.cellMarginsHwp);
+        const cellContentWidth = Math.max(1000, cellWidth - margins.left - margins.right);
+        const cellPara = buildCellBlockContent(cellBlocks(cell), cell, {
+            isHd: styledHeader,
+            color,
+            cId,
+            paraId,
+            cellContentWidth,
+            customBfMap,
+            customCharMap,
+            options,
+            imageBlocks,
+        });
+        const sourceRowHeight = Number(rowMeta[r]?.heightHwp);
+        const cellHeight = Number.isFinite(sourceRowHeight) && sourceRowHeight > 0
+            ? Math.max(1200, Math.round(sourceRowHeight))
+            : 1200;
         return `<hp:tc name="" header="${isHd ? '1' : '0'}" hasMargin="1" protect="0" editable="0" dirty="0" borderFillIDRef="${bfId}">` +
-            `<hp:subList id="" textDirection="HORIZONTAL" lineWrap="BREAK" vertAlign="CENTER" ` +
+            `<hp:subList id="" textDirection="HORIZONTAL" lineWrap="BREAK" vertAlign="${cellVertAlign(cell)}" ` +
                 `linkListIDRef="0" linkListNextIDRef="0" textWidth="0" textHeight="0" hasTextRef="0" hasNumRef="0">` +
             cellPara +
             `</hp:subList>` +
             `<hp:cellAddr colAddr="${c}" rowAddr="${r}"/>` +
             `<hp:cellSpan colSpan="${cs}" rowSpan="${rs}"/>` +
-            `<hp:cellSz width="${cellWidth}" height="1200"/>` +
-            `<hp:cellMargin left="650" right="650" top="220" bottom="220"/>` +
+            `<hp:cellSz width="${cellWidth}" height="${cellHeight}"/>` +
+            `<hp:cellMargin left="${margins.left}" right="${margins.right}" top="${margins.top}" bottom="${margins.bottom}"/>` +
             `</hp:tc>`;
     };
 
@@ -1229,10 +1413,10 @@ function buildTable(header, rows, contentWidthHwp = 48000, customBfMap = new Map
     return `<hp:p id="${pid}" paraPrIDRef="0" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0"><hp:run charPrIDRef="0">` +
         `<hp:tbl id="0" zOrder="0" numberingType="TABLE" textWrap="TOP_AND_BOTTOM" ` +
         `textFlow="BOTH_SIDES" lock="0" dropcapstyle="None" pageBreak="TABLE" ` +
-        `repeatHeader="1" rowCnt="${nRows}" colCnt="${nCols}" cellSpacing="0" borderFillIDRef="1">` +
+        `repeatHeader="${repeatHeader ? '1' : '0'}" rowCnt="${nRows}" colCnt="${nCols}" cellSpacing="0" borderFillIDRef="1">` +
         `<hp:sz width="${tableWidth}" widthRelTo="ABSOLUTE" height="0" heightRelTo="ABSOLUTE" protect="0"/>` +
         `<hp:pos treatAsChar="0" affectLSpacing="0" flowWithText="1" allowOverlap="0" holdAnchorAndSO="0" ` +
-        `vertRelTo="PARA" horzRelTo="COLUMN" vertAlign="TOP" horzAlign="RIGHT" vertOffset="0" horzOffset="0"/>` +
+        `vertRelTo="PARA" horzRelTo="COLUMN" vertAlign="TOP" horzAlign="${tableAlign}" vertOffset="0" horzOffset="0"/>` +
         `<hp:outMargin left="0" right="0" top="0" bottom="${mmToHwp(3)}"/>` +
         `<hp:inMargin left="650" right="650" top="220" bottom="220"/>` +
         `${rowsXml}` +
@@ -1243,8 +1427,8 @@ function buildTable(header, rows, contentWidthHwp = 48000, customBfMap = new Map
  * 페이지 설정(secPr) XML
  * HWPX 스키마 기준 secPr는 paragraph 네임스페이스이며 hp:run 내부에 위치한다.
  */
-function buildSecPr(marginsHwp, paperKey, landscape = false, hasMasterPage = false) {
-    const paperBase = PAPER_SIZES[paperKey] || PAPER_SIZES['A4'];
+function buildSecPr(marginsHwp, paperKey, landscape = false, hasMasterPage = false, pageSetup = null) {
+    const paperBase = resolvePaperSize(paperKey, pageSetup);
     // HWPX는 기본 용지 폭/높이를 유지하고 landscape enum으로 회전한다.
     // 가로에서 폭/높이까지 교환하면 한컴에서 이중 회전되어 페이지는 세로, 콘텐츠만 가로 폭이 된다.
     const paper = paperBase;
@@ -1306,15 +1490,18 @@ function buildSection(ir, marginsHwp, paperKey, landscape = false, customBfMap =
     const imageBlocks = collectImageBlocks(ir.blocks || []);
     const hasMasterPage = !!(ir.header || ir.footer);
 
-    const contentWidthHwp = getContentWidthHwp(marginsHwp, paperKey, landscape);
+    const pageSetup = options.preserveSourcePageSetup ? ir.pageSetup : null;
+    const contentWidthHwp = getContentWidthHwp(marginsHwp, paperKey, landscape, pageSetup);
     const parts = [];
-    parts.push(buildSectionBootstrap(buildSecPr(marginsHwp, paperKey, landscape, hasMasterPage), contentWidthHwp));
+    parts.push(buildSectionBootstrap(buildSecPr(marginsHwp, paperKey, landscape, hasMasterPage, pageSetup), contentWidthHwp));
 
     // ── 상단 제목 블록 / 표지 / 문서 제목 ─────────────────────────────────
     //   basic/unit/annual 은 모두 한 표(buildCoverTable)로: 상단 띠 / 제목 흰칸 /
     //   하단 띠 / (소속·작성자 또는 [팀명·이름]) 흰칸. 작성일은 표 밖 바로 아래 우측.
     //   그 외(없음)   : 제목만 H1
     const titleText = (ir.title && ir.title.trim()) ? ir.title.trim() : '';
+    const titleAlreadyInBody = (ir.blocks || []).some((block) =>
+        ['heading', 'para'].includes(block?.type) && String(block.text || '').trim() === titleText);
     const coverStyle = docType === 'titleblock' ? 'basic'
                      : docType === 'cover-unit' ? 'unit'
                      : docType === 'cover-annual' ? 'annual' : null;
@@ -1324,7 +1511,7 @@ function buildSection(ir, marginsHwp, paperKey, landscape = false, customBfMap =
         const dateStr = `${today.getFullYear()}년 ${today.getMonth() + 1}월 ${today.getDate()}일`;
         parts.push(buildPara(dateStr, '0', '13'));   // 작성일: 표 밖 바로 아래, 우측 정렬(paraPr 13)
         parts.push(buildBlankPara());
-    } else if (titleText) {
+    } else if (titleText && (options.renderDocumentTitle !== false || !titleAlreadyInBody)) {
         parts.push(buildPara(titleText, '1', '12'));   // 제목: H1 + 가운데 정렬(paraPr 12)
         parts.push(buildBlankPara());  // 제목 아래 빈 줄
     }
@@ -1334,7 +1521,7 @@ function buildSection(ir, marginsHwp, paperKey, landscape = false, customBfMap =
             const qType = quoteBlock.type;
             if (qType === 'para') {
                 if (quoteBlock.runs && quoteBlock.runs.length > 0) {
-                    const hasText = quoteBlock.runs.some(r => r.text && r.text.trim());
+                    const hasText = quoteBlock.runs.some(r => r.text && (r.text.trim() || /[\n\t]/.test(r.text)));
                     parts.push(hasText ? buildParaRuns(quoteBlock.runs, '19', customCharMap, options) : buildBlankPara());
                 } else if (quoteBlock.text && quoteBlock.text.trim()) {
                     parts.push(buildPara(quoteBlock.text, '0', '19'));
@@ -1368,7 +1555,11 @@ function buildSection(ir, marginsHwp, paperKey, landscape = false, customBfMap =
             } else if (qType === 'code') {
                 parts.push(buildCodeBlock(quoteBlock, '', contentWidthHwp));
             } else if (qType === 'table') {
-                parts.push(buildTable(quoteBlock.header, quoteBlock.rows, contentWidthHwp, customBfMap, customCharMap, options));
+                parts.push(buildTable(quoteBlock.header, quoteBlock.rows, contentWidthHwp, customBfMap, customCharMap, {
+                    ...options,
+                    tableBlock: quoteBlock,
+                    imageBlocks,
+                }));
             } else if (qType === 'image') {
                 const imgIndex = imageBlocks.indexOf(quoteBlock);
                 if (imgIndex >= 0) parts.push(buildImageRun(quoteBlock, imgIndex, contentWidthHwp, options));
@@ -1395,7 +1586,7 @@ function buildSection(ir, marginsHwp, paperKey, landscape = false, customBfMap =
             const alignParaId = block.align === 'center' ? '12' : block.align === 'right' ? '13' : '0';
             if (block.runs && block.runs.length > 0) {
                 // 인라인 서식(bold/italic/code) 보존 경로
-                const hasText = block.runs.some(r => r.text && r.text.trim());
+                const hasText = block.runs.some(r => r.text && (r.text.trim() || /[\n\t]/.test(r.text)));
                 parts.push(hasText ? buildParaRuns(block.runs, alignParaId, customCharMap, options) : buildBlankPara());
             } else if (!block.text || !block.text.trim()) {
                 parts.push(buildBlankPara());
@@ -1439,7 +1630,11 @@ function buildSection(ir, marginsHwp, paperKey, landscape = false, customBfMap =
             });
 
         } else if (bt === 'table') {
-            parts.push(buildTable(block.header, block.rows, contentWidthHwp, customBfMap, customCharMap, options));
+            parts.push(buildTable(block.header, block.rows, contentWidthHwp, customBfMap, customCharMap, {
+                ...options,
+                tableBlock: block,
+                imageBlocks,
+            }));
 
         } else if (bt === 'code') {
             parts.push(buildCodeBlock(block, '', contentWidthHwp));
@@ -1492,10 +1687,28 @@ export async function buildHwpx(ir, fontName = '휴먼명조', fontSize = 12, ma
         linkStyle: 'blue',
         imageMaxWidth: 100,
         imageAlign: 'left',
+        preserveSourcePageSetup: false,
+        preserveSourceTypography: false,
+        renderDocumentTitle: true,
     }, options || {});
+    const sourceFontSize = Number(ir.typography?.baseFontSizePt);
+    const effectiveFontSize = buildOptions.preserveSourceTypography
+        && Number.isFinite(sourceFontSize) && sourceFontSize >= 6 && sourceFontSize <= 36
+        ? sourceFontSize
+        : fontSize;
+    const sourceLineSpacing = Number(ir.typography?.lineSpacingPercent);
+    const effectiveLineSpacing = buildOptions.preserveSourceTypography
+        && Number.isFinite(sourceLineSpacing)
+        ? sourceLineSpacing
+        : lineSpacingPercent;
 
-    const marginsHwp = marginsMmToHwp(marginsMm || DEFAULT_MARGINS_MM);
-    const landscape  = orientation === 'landscape';
+    const sourcePageSetup = buildOptions.preserveSourcePageSetup ? ir.pageSetup : null;
+    const marginsHwp = sourcePageSetup?.marginsHwp
+        ? Object.assign({}, marginsMmToHwp(marginsMm || DEFAULT_MARGINS_MM), sourcePageSetup.marginsHwp)
+        : marginsMmToHwp(marginsMm || DEFAULT_MARGINS_MM);
+    const landscape = sourcePageSetup?.orientation
+        ? sourcePageSetup.orientation === 'landscape'
+        : orientation === 'landscape';
 
     // 표 셀 배경색 수집 → 동적 borderFill 생성용
     const customBfMap = new Map();
@@ -1513,6 +1726,7 @@ export async function buildHwpx(ir, fontName = '휴먼명조', fontSize = 12, ma
                         if (bg) {
                             nextBfId = addBgBorderFillVariants(customBfMap, bg, nextBfId);
                         }
+                        scanBorderFills(cellBlocks(cell));
                     }
                 }
             } else if (block.type === 'quote') {
@@ -1535,12 +1749,31 @@ export async function buildHwpx(ir, fontName = '휴먼명조', fontSize = 12, ma
         return customCharMap.get(key);
     };
     // 제목 색 보존용 제목 크기(HWPUNIT) — buildHeaderXml sz와 동일 계산
-    const _bp = Math.max(6, Math.min(36, parseInt(fontSize, 10) || 12));
+    const _bp = Math.max(6, Math.min(36, Number(effectiveFontSize) || 12));
     const _headingSizes = headingSizeMap(_bp, buildOptions.headingStyle);
     const headingHeightHwp = (lvl) => ({
         1: _headingSizes.h1, 2: _headingSizes.h2, 3: _headingSizes.h3,
         4: _headingSizes.h4, 5: _headingSizes.h5, 6: _headingSizes.h6,
     }[lvl] || _headingSizes.body);
+    const scanCellCharProps = (blocks, isHeader, fallbackColor) => {
+        for (const block of (blocks || [])) {
+            if (block.type === 'para') {
+                for (const run of (block.runs || [])) {
+                    if (run.text) addExtChar({ ...run, bold: isHeader || run.bold, color: run.color || fallbackColor });
+                }
+            } else if (block.type === 'list') {
+                for (const item of (block.items || [])) {
+                    for (const run of (item.runs || [])) {
+                        if (run.text) addExtChar({ ...run, bold: isHeader || run.bold, color: run.color || fallbackColor });
+                    }
+                }
+            } else if (block.type === 'quote') {
+                scanCellCharProps(block.blocks || [], isHeader, fallbackColor);
+            } else if (block.type === 'table') {
+                scanCharProps([block]);
+            }
+        }
+    };
     const scanCharProps = (blocks) => {
         for (const block of (blocks || [])) {
             if (block.type === 'para' && Array.isArray(block.runs)) {
@@ -1555,11 +1788,13 @@ export async function buildHwpx(ir, fontName = '휴먼명조', fontSize = 12, ma
                     const col = cellColor(c);
                     if (col) addExtChar({ color: col, bold: true });
                     for (const run of (cellRuns(c) || [])) if (run.text) addExtChar({ ...run, bold: true, color: run.color || col });
+                    scanCellCharProps(cellBlocks(c), true, col);
                 });
                 (block.rows || []).forEach(row => (row || []).forEach(c => {
                     const col = cellColor(c);
                     if (col) addExtChar({ color: col, bold: false });
                     for (const run of (cellRuns(c) || [])) if (run.text) addExtChar({ ...run, color: run.color || col });
+                    scanCellCharProps(cellBlocks(c), false, col);
                 }));
             } else if (block.type === 'quote') {
                 scanCharProps(block.blocks || []);
@@ -1577,7 +1812,7 @@ export async function buildHwpx(ir, fontName = '휴먼명조', fontSize = 12, ma
     const imageBlocks = collectImageBlocks(ir.blocks || []);
     const docHeaderFooter = { header: ir.header || '', footer: ir.footer || '' };
 
-    const headerXml   = buildHeaderXml(fontName, fontSize, customBfMap, imageBlocks, docHeaderFooter, customCharMap, lineSpacingPercent, buildOptions);
+    const headerXml   = buildHeaderXml(fontName, effectiveFontSize, customBfMap, imageBlocks, docHeaderFooter, customCharMap, effectiveLineSpacing, buildOptions);
     const section0Xml = buildSection(ir, marginsHwp, paperSize, landscape, customBfMap, customCharMap, buildOptions);
 
     // 이미지가 있을 때 manifest를 동적으로 생성하여 BinData 파일 선언
@@ -1626,6 +1861,7 @@ ${imageBlocks.map(img => `  <odf:file-entry odf:full-path="BinData/${img.binName
 
 export async function validateHwpx(blob, expectedMarginsMm = null) {
     const issues = [];
+    const metrics = {};
     let zip;
     try {
         zip = await JSZip.loadAsync(await blob.arrayBuffer());
@@ -1652,6 +1888,11 @@ export async function validateHwpx(blob, expectedMarginsMm = null) {
 
     if (files['Contents/section0.xml']) {
         const xml = await files['Contents/section0.xml'].async('string');
+        metrics.paragraphs = (xml.match(/<hp:p\b/g) || []).length;
+        metrics.tables = (xml.match(/<hp:tbl\b/g) || []).length;
+        metrics.rows = (xml.match(/<hp:tr>/g) || []).length;
+        metrics.cells = (xml.match(/<hp:tc\b/g) || []).length;
+        metrics.lineBreaks = (xml.match(/<hp:lineBreak\/>/g) || []).length;
         if (!xml.includes('hancom.co.kr/hwpml/2011/section'))   issues.push('section0.xml: section 네임스페이스 없음');
         if (!xml.includes('hancom.co.kr/hwpml/2011/paragraph')) issues.push('section0.xml: paragraph 네임스페이스 없음');
         if (typeof DOMParser !== 'undefined') {
@@ -1737,7 +1978,7 @@ export async function validateHwpx(blob, expectedMarginsMm = null) {
         for (const id of usedBorder) if (!defBorder.has(id)) issues.push(`borderFillIDRef="${id}" 미정의`);
     }
 
-    return { pass: issues.length === 0, issues };
+    return { pass: issues.length === 0, issues, metrics };
 }
 
 // golden test의 window 직접 호출 패턴 지원(과도기 — 모듈 완전 전환 후 제거 예정)
