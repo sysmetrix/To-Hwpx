@@ -21,6 +21,7 @@
 npm run test:impact
 npm run test:docx
 npm run test:golden
+npm run test:package
 npm run test:release
 
 node qa/docx-fidelity-harness.js "C:\path\input.docx" --out "$env:TEMP\candidate.hwpx" --report "$env:TEMP\report.json"

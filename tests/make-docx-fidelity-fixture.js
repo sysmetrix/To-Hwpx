@@ -73,6 +73,10 @@ async function buildDocxFidelityFixture(outPath) {
   </w:body>
 </w:document>`);
 
+  // JSZip 기본값은 실행 시각을 각 ZIP 엔트리에 기록해 테스트만 실행해도 fixture가
+  // 변경된 것처럼 보인다. 고정 시각으로 재현 가능한 바이너리를 만든다.
+  const fixedDate = new Date('2026-01-01T00:00:00Z');
+  for (const entry of Object.values(zip.files)) entry.date = fixedDate;
   const buffer = await zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE' });
   fs.mkdirSync(path.dirname(outPath), { recursive: true });
   fs.writeFileSync(outPath, buffer);

@@ -65,6 +65,9 @@ assert(parsers.includes("from './docx-audit.js'") && parsers.includes('pageSetup
 assert(read('js/docx-audit.js').includes('auditAndNormalizeDocxXml')
     && read('qa/docx-fidelity-harness.js').includes('paragraph-retention'),
     'DOCX 감사/고충실도 하네스 누락');
+assert(read('qa/gate.js').includes("ancestor.localName !== 'tbl'")
+    && pkg.scripts['test:release'].includes('test:package'),
+    '중첩 표 DOM 격자 검사 또는 로컬 릴리스 패키지 게이트 누락');
 
 const analytics = read('js/posthog-init.js');
 assert(analytics.includes("readConsent() !== 'granted'") && analytics.includes('disable_session_recording: true')

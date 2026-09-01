@@ -134,17 +134,50 @@ function childCount(xml, container, child) {
     // ⑥ 표 격자 무결성: 모든 표의 (행,열) 격자가 span 반영 시 정확히 1회 덮임
     //    중첩 표 누수·들쭉날쭉한 행이 만드는 "한컴이 안 열리는 깨진 표"를 차단
     let c6 = true, badTbl = '';
-    const tbls = [...section.matchAll(/<hp:tbl[\s\S]*?<\/hp:tbl>/g)].map(m => m[0]);
-    for (let ti = 0; ti < tbls.length; ti++) {
-        const t = tbls[ti];
-        const rc = +((/rowCnt="(\d+)"/.exec(t) || [])[1]);
-        const cc = +((/colCnt="(\d+)"/.exec(t) || [])[1]);
+    // 정규식으로 <hp:tbl>...</hp:tbl>을 자르면 중첩 표의 닫는 태그에서 외부 표가
+    // 조기에 끝나 내부 셀을 외부 셀로 중복 계수한다. DOM에서 각 tc의 가장 가까운
+    // tbl 조상을 확인해 표별 직계 셀만 검사한다.
+    const tableGrids = await page.evaluate(xml => {
+        const document = new DOMParser().parseFromString(xml, 'application/xml');
+        const paragraphNs = 'http://www.hancom.co.kr/hwpml/2011/paragraph';
+        const tables = Array.from(document.getElementsByTagNameNS(paragraphNs, 'tbl'));
+        return tables.map(table => {
+            const cells = Array.from(table.getElementsByTagNameNS(paragraphNs, 'tc'))
+                .filter(cell => {
+                    let ancestor = cell.parentElement;
+                    while (ancestor && ancestor.localName !== 'tbl') ancestor = ancestor.parentElement;
+                    return ancestor === table;
+                })
+                .map(cell => {
+                    const directChild = localName => Array.from(cell.children)
+                        .find(child => child.localName === localName);
+                    const address = directChild('cellAddr');
+                    const span = directChild('cellSpan');
+                    return {
+                        col: Number(address?.getAttribute('colAddr')),
+                        row: Number(address?.getAttribute('rowAddr')),
+                        colSpan: Number(span?.getAttribute('colSpan')),
+                        rowSpan: Number(span?.getAttribute('rowSpan')),
+                    };
+                });
+            return {
+                rowCnt: Number(table.getAttribute('rowCnt')),
+                colCnt: Number(table.getAttribute('colCnt')),
+                cells,
+            };
+        });
+    }, section);
+    for (let ti = 0; ti < tableGrids.length; ti++) {
+        const table = tableGrids[ti];
+        const rc = table.rowCnt;
+        const cc = table.colCnt;
         if (!rc || !cc) { c6 = false; badTbl = `tbl#${ti} rowCnt/colCnt 없음`; break; }
         const occ = Array.from({ length: rc }, () => new Array(cc).fill(0));
-        const re = /cellAddr colAddr="(\d+)" rowAddr="(\d+)"\/><hp:cellSpan colSpan="(\d+)" rowSpan="(\d+)"/g;
-        let m;
-        while ((m = re.exec(t))) {
-            const c = +m[1], r = +m[2], cs = +m[3], rs = +m[4];
+        for (const cell of table.cells) {
+            const c = cell.col, r = cell.row, cs = cell.colSpan, rs = cell.rowSpan;
+            if (![c, r, cs, rs].every(Number.isFinite) || cs < 1 || rs < 1) {
+                c6 = false; badTbl = `tbl#${ti} cellAddr/cellSpan 없음`; break;
+            }
             for (let rr = r; rr < r + rs; rr++) for (let x = c; x < c + cs; x++) {
                 if (rr >= rc || x >= cc) { c6 = false; badTbl = `tbl#${ti} 범위 초과 (${rr},${x})`; }
                 else occ[rr][x]++;
@@ -219,7 +252,7 @@ function childCount(xml, container, child) {
     console.log(`④ IDRef ⊆ header 정의      : ${c4 ? 'PASS' : 'FAIL'}${c4 ? '' : ` dangling C=${badC} P=${badP} B=${badB}`}`);
     console.log(`⑤ itemCnt == 실제 자식 수  : ${c5 ? 'PASS' : 'FAIL'}  ` +
         itemRows.map(([c, r]) => `${c} ${r.declared}=${r.actual}`).join(' | '));
-    console.log(`⑥ 표 격자 무결성(${tbls.length}개)    : ${c6 ? 'PASS' : 'FAIL'}${c6 ? '' : ' ' + badTbl}`);
+    console.log(`⑥ 표 격자 무결성(${tableGrids.length}개)    : ${c6 ? 'PASS' : 'FAIL'}${c6 ? '' : ' ' + badTbl}`);
     console.log(`⑦ 그림 참조 무결성(${imageRefs.length}개)  : ${c7 ? 'PASS' : 'FAIL'}${c7 ? '' : ' ' + badImages.join(' | ')}`);
     console.log(`⑧ 링크 필드 무결성(${hyperlinkBegins.length}개)  : ${c8 ? 'PASS' : 'FAIL'}${c8 ? '' : ` pair=${badHyperlinks.join(',')} unsafe=${unsafePaths.join(',')}`}`);
     console.log(`⑨ ZIP CRC32 무결성        : ${c9 ? 'PASS' : 'FAIL'}${c9 ? '' : ' ' + crcError}`);
