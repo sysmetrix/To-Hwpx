@@ -1544,7 +1544,7 @@ async function parseDocx(arrayBuffer, docType = 'plain') {
                 }
             }
             const block = extractDocxParagraph(node, stylesMap, footnotesMap, relsMap, numberingInfo, commentsMap, styleColorMap);
-            if (block) ir.blocks.push(block);
+            if (block) ir.blocks.push(wrapDocxCalloutBlock(block, node));
         } else if (localName === 'tbl') {
             const block = await extractDocxTable(node, docxContext);
             if (block) ir.blocks.push(block);
@@ -1782,7 +1782,7 @@ async function extractDocxCellBlocks(tc, context = {}) {
                 context.commentsMap || {},
                 context.styleColorMap || {}
             );
-            if (paragraph) blocks.push(paragraph);
+            if (paragraph) blocks.push(wrapDocxCalloutBlock(paragraph, child));
             else if (!hasDrawing) blocks.push({ type: 'blank' });
         } else if (child.localName === 'tbl') {
             const nested = await extractDocxTable(child, context);
@@ -1813,6 +1813,31 @@ function stripInvisibleWhiteRuns(blocks) {
             stripInvisibleWhiteRuns(block.blocks || []);
         }
     }
+}
+
+/**
+ * 문단 배경이 있는 일반 문단/제목을 인용구(quote) 블록으로 감싸 HWPX에서 왼쪽 강조선+배경
+ * 박스로 렌더되게 한다("쉽게 말하면"류 콜아웃). 목록 항목(_list_item)과 문서 제목(docTitle —
+ * 별도 추출 로직이 type==='heading'을 직접 찾으므로 감싸면 안 됨)은 감싸지 않는다.
+ */
+function wrapDocxCalloutBlock(block, pNode) {
+    if (!block || block.type === '_list_item' || block.docTitle) return block;
+    const bg = docxParagraphShd(pNode);
+    return bg ? { type: 'quote', bg, blocks: [block] } : block;
+}
+
+/**
+ * 문단 배경(w:pPr/w:shd@w:fill) → #RRGGBB | null. "쉽게 말하면"류 콜아웃 박스가 이 방식을 씀
+ * (표 셀이 아니라 문단 자체에 옅은 배경을 준 경우). auto/nil/흰색은 배경 없음으로 취급한다.
+ */
+function docxParagraphShd(pNode) {
+    const pPrEl = pNode.getElementsByTagNameNS(DOCX_NS, 'pPr')[0];
+    if (!pPrEl) return null;
+    const shd = docxDirectChildren(pPrEl, 'shd')[0];
+    if (!shd) return null;
+    const fill = shd.getAttributeNS(DOCX_NS, 'fill') || shd.getAttribute('w:fill') || shd.getAttribute('fill') || '';
+    if (!fill || /^(auto|nil|FFFFFF|ffffff)$/.test(fill)) return null;
+    return fill.replace(/^#/, '').toUpperCase().padStart(6, '0');
 }
 
 /** 셀(w:tc) 글자색 — 셀 안 첫 번째 유효 w:color(run) → #RRGGBB | null (흰 글자 등 보존) */

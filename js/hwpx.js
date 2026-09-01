@@ -366,7 +366,7 @@ function getBoldFontName(name) {
  * [borderFill] 1=테두리없음, 2=실선(표셀), 3=실선+회색음영(표머리)
  *              4~9=표 좌/우 바깥 테두리 제거 변형
  */
-function buildHeaderXml(fontName, basePt, customBfMap = new Map(), imageBlocks = [], docHeaderFooter = {}, customCharMap = new Map(), lineSpacingPercent = 160, options = {}) {
+function buildHeaderXml(fontName, basePt, customBfMap = new Map(), imageBlocks = [], docHeaderFooter = {}, customCharMap = new Map(), lineSpacingPercent = 160, options = {}, customQuoteMap = new Map()) {
     const resolvedFontName = fontName || '휴먼명조';
     const fn = xmlEsc(resolvedFontName);
     const bp = Math.max(6, Math.min(36, parseInt(basePt, 10) || 12));
@@ -468,7 +468,7 @@ ${[...customCharMap.entries()].map(([key, cid]) => {
         { underline: flags[2] === '1', strike: flags[3] === '1', color, highlight });
 }).join('\n')}
     </hh:charProperties>
-    <hh:paraProperties itemCnt="20">
+    <hh:paraProperties itemCnt="${20 + customQuoteMap.size}">
       <!-- id  정렬    행간  전    후   들여  테두리참조 -->
 ${paraBase(0, 'JUSTIFY', bodyLineSpacing, paragraphSpacing.bodyPrev, paragraphSpacing.bodyNext,    0)}
 ${paraBase(1, 'LEFT',    h1LineSpacing, paragraphSpacing.headingPrev, paragraphSpacing.headingNext,    0)}
@@ -499,8 +499,11 @@ ${paraBase(17, 'LEFT',   bodyLineSpacing,   0,  paragraphSpacing.listNext, 1200,
 ${paraBase(18, 'LEFT',   bodyLineSpacing,   0,  paragraphSpacing.listNext, 1800, '1', -600)}
       <!-- id=19  인용구: 왼쪽 선+옅은 배경, 본문보다 조금 들여쓰기, 아래 3mm -->
 ${paraBase(19, 'LEFT',   bodyLineSpacing, 300,  850,  900, '19')}
+${[...customQuoteMap.entries()].map(([bg, { paraId, bfId }]) =>
+    `      <!-- id=${paraId} DOCX 문단 배경(콜아웃) #${bg} 인용구 -->\n${paraBase(paraId, 'LEFT', bodyLineSpacing, 300, 850, 900, bfId)}`
+).join('\n')}
     </hh:paraProperties>
-    <hh:borderFills itemCnt="${19 + customBfMap.size}">
+    <hh:borderFills itemCnt="${19 + customBfMap.size + customQuoteMap.size}">
       <!-- id=1 테두리 없음 -->
       <hh:borderFill id="1" threeD="0" shadow="0" centerLine="NONE" breakCellSeparateLine="0">
         <hh:slash type="NONE" Crooked="0" isCounter="0"/><hh:backSlash type="NONE" Crooked="0" isCounter="0"/>
@@ -686,6 +689,16 @@ ${[...customBfMap.entries()].map(([key, bfId]) => {
         <hc:fillBrush><hc:winBrush faceColor="#${color}" hatchColor="#000000" alpha="0"/></hc:fillBrush>
       </hh:borderFill>`;
 }).join('\n')}
+${[...customQuoteMap.entries()].map(([bg, { bfId }]) => `      <!-- id=${bfId} DOCX 문단 배경(콜아웃) 인용구: 왼쪽 강조선 + #${bg} 배경 -->
+      <hh:borderFill id="${bfId}" threeD="0" shadow="0" centerLine="NONE" breakCellSeparateLine="0">
+        <hh:slash type="NONE" Crooked="0" isCounter="0"/><hh:backSlash type="NONE" Crooked="0" isCounter="0"/>
+        <hh:leftBorder type="SOLID" width="0.5 mm" color="#64748B"/>
+        <hh:rightBorder type="NONE" width="0.1 mm" color="#000000"/>
+        <hh:topBorder type="NONE" width="0.1 mm" color="#000000"/>
+        <hh:bottomBorder type="NONE" width="0.1 mm" color="#000000"/>
+        <hh:diagonal type="NONE" width="0.1 mm" color="#000000"/>
+        <hc:fillBrush><hc:winBrush faceColor="#${bg}" hatchColor="#000000" alpha="0"/></hc:fillBrush>
+      </hh:borderFill>`).join('\n')}
     </hh:borderFills>
   </hh:refList>
 ${(docHeaderFooter.header || docHeaderFooter.footer)
@@ -1475,7 +1488,10 @@ function buildSectionBootstrap(secPrXml, contentWidthHwp) {
  * IR → section0.xml 전체 문자열
  * [v4] 참조 앱(md-to-hwpx)처럼 첫 bootstrap 문단에 secPr를 배치한다.
  */
-async function buildSection(ir, marginsHwp, paperKey, landscape = false, customBfMap = new Map(), customCharMap = new Map(), options = {}) {
+async function buildSection(ir, marginsHwp, paperKey, landscape = false, customBfMap = new Map(), customCharMap = new Map(), options = {}, customQuoteMap = new Map()) {
+    // DOCX 문단 배경(예: "쉽게 말하면" 콜아웃 박스)이 있는 인용구는 색상별 동적 paraPr을 쓰고,
+    // 배경이 없는 일반 인용구(Markdown/HTML blockquote 등)는 기존 고정 paraPr id=19를 그대로 쓴다.
+    const quoteParaId = (bg) => (bg && customQuoteMap.has(bg) ? customQuoteMap.get(bg).paraId : '19');
     const NS_HS = 'http://www.hancom.co.kr/hwpml/2011/section';
     const NS_HP = 'http://www.hancom.co.kr/hwpml/2011/paragraph';
     const docType = ir.doc_type || 'plain';
@@ -1516,21 +1532,21 @@ async function buildSection(ir, marginsHwp, paperKey, landscape = false, customB
         parts.push(buildBlankPara());  // 제목 아래 빈 줄
     }
 
-    const pushQuoteBlocks = (quoteBlocks) => {
+    const pushQuoteBlocks = (quoteBlocks, quotePid = '19') => {
         for (const quoteBlock of removeHrSpacerBlanks(quoteBlocks)) {
             const qType = quoteBlock.type;
             if (qType === 'para') {
                 if (quoteBlock.runs && quoteBlock.runs.length > 0) {
                     const hasText = quoteBlock.runs.some(r => r.text && (r.text.trim() || /[\n\t]/.test(r.text)));
-                    parts.push(hasText ? buildParaRuns(quoteBlock.runs, '19', customCharMap, options) : buildBlankPara());
+                    parts.push(hasText ? buildParaRuns(quoteBlock.runs, quotePid, customCharMap, options) : buildBlankPara());
                 } else if (quoteBlock.text && quoteBlock.text.trim()) {
-                    parts.push(buildPara(quoteBlock.text, '0', '19'));
+                    parts.push(buildPara(quoteBlock.text, '0', quotePid));
                 } else {
                     parts.push(buildBlankPara());
                 }
             } else if (qType === 'heading') {
                 const { charId } = headingIds(quoteBlock.level);
-                parts.push(buildPara(quoteBlock.text || '', quoteBlock._cId || charId, '19'));
+                parts.push(buildPara(quoteBlock.text || '', quoteBlock._cId || charId, quotePid));
             } else if (qType === 'list') {
                 const blockOrdered = !!quoteBlock.ordered;
                 let autoNum = 0;
@@ -1544,9 +1560,9 @@ async function buildSection(ir, marginsHwp, paperKey, landscape = false, customB
                     else if (ordered) marker = `${item.marker != null ? item.marker : (++autoNum)}. `;
                     else marker = bullets[level];
                     if (item.runs && item.runs.length) {
-                        parts.push(buildParaRuns([{ text: marker }, ...item.runs], '19', customCharMap, options));
+                        parts.push(buildParaRuns([{ text: marker }, ...item.runs], quotePid, customCharMap, options));
                     } else if (item.text) {
-                        parts.push(buildPara(marker + item.text, '0', '19'));
+                        parts.push(buildPara(marker + item.text, '0', quotePid));
                     }
                     for (const codeBlock of (item.codeBlocks || [])) {
                         parts.push(buildCodeBlock(codeBlock, '', contentWidthHwp));
@@ -1566,9 +1582,9 @@ async function buildSection(ir, marginsHwp, paperKey, landscape = false, customB
             } else if (qType === 'hr') {
                 parts.push(showHorizontalRules ? buildHrPara(contentWidthHwp) : buildBlankPara());
             } else if (qType === 'quote') {
-                pushQuoteBlocks(quoteBlock.blocks || []);
+                pushQuoteBlocks(quoteBlock.blocks || [], quoteParaId(quoteBlock.bg));
             } else if (quoteBlock.text) {
-                parts.push(buildPara(quoteBlock.text, '0', '19'));
+                parts.push(buildPara(quoteBlock.text, '0', quotePid));
             }
         }
     };
@@ -1644,7 +1660,7 @@ async function buildSection(ir, marginsHwp, paperKey, landscape = false, customB
             parts.push(buildCodeBlock(block, '', contentWidthHwp));
 
         } else if (bt === 'quote') {
-            pushQuoteBlocks(block.blocks || []);
+            pushQuoteBlocks(block.blocks || [], quoteParaId(block.bg));
 
         } else if (bt === 'image') {
             const imgIndex = imageBlocks.indexOf(block);
@@ -1734,12 +1750,18 @@ export async function buildHwpx(ir, fontName = '휴먼명조', fontSize = 12, ma
                     }
                 }
             } else if (block.type === 'quote') {
+                if (block.bg && !customQuoteMap.has(block.bg)) {
+                    customQuoteMap.set(block.bg, { paraId: String(nextQuoteParaId++), bfId: String(nextBfId++) });
+                }
                 scanBorderFills(block.blocks || []);
             } else if (block.type === 'list') {
                 for (const item of (block.items || [])) scanBorderFills(item.codeBlocks || []);
             }
         }
     };
+    // DOCX 문단 배경(w:pPr/w:shd)이 있는 인용구(콜아웃 박스) 색상별 동적 paraPr/borderFill 수집
+    const customQuoteMap = new Map();
+    let nextQuoteParaId = 20;   // 0~19 기본 paraPr 이후부터
     scanBorderFills(ir.blocks || []);
 
     // 인라인 확장 서식(밑줄/취소선/글자색) 수집 → 동적 charPr 생성용
@@ -1816,8 +1838,8 @@ export async function buildHwpx(ir, fontName = '휴먼명조', fontSize = 12, ma
     const imageBlocks = collectImageBlocks(ir.blocks || []);
     const docHeaderFooter = { header: ir.header || '', footer: ir.footer || '' };
 
-    const headerXml   = buildHeaderXml(fontName, effectiveFontSize, customBfMap, imageBlocks, docHeaderFooter, customCharMap, effectiveLineSpacing, buildOptions);
-    const section0Xml = await buildSection(ir, marginsHwp, paperSize, landscape, customBfMap, customCharMap, buildOptions);
+    const headerXml   = buildHeaderXml(fontName, effectiveFontSize, customBfMap, imageBlocks, docHeaderFooter, customCharMap, effectiveLineSpacing, buildOptions, customQuoteMap);
+    const section0Xml = await buildSection(ir, marginsHwp, paperSize, landscape, customBfMap, customCharMap, buildOptions, customQuoteMap);
 
     // 이미지가 있을 때 manifest를 동적으로 생성하여 BinData 파일 선언
     const manifestXml = imageBlocks.length
