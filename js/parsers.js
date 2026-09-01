@@ -1382,6 +1382,10 @@ async function parseDocx(arrayBuffer, docType = 'plain') {
 
     // word/styles.xml 로드 → 스타일 ID → 이름 맵 (제목 감지 정확도 향상)
     const stylesMap = {};
+    // 스타일 ID → 그 스타일 자체의 글자색(#RRGGBB). 제목 스타일은 색을 직접 run에 반복하지 않고
+    // styles.xml의 rPr@color로만 정의하는 경우가 많아(예: "heading 2" → 12326E), 직접 run에
+    // 색이 없을 때 이 맵으로 제목 색을 복원한다(basedOn 상속은 따라가지 않고 스타일 자체 값만 봄).
+    const styleColorMap = {};
     const stylesFile = zip.file('word/styles.xml');
     if (stylesFile) {
         try {
@@ -1406,6 +1410,8 @@ async function parseDocx(arrayBuffer, docType = 'plain') {
                               || nameEl.getAttribute('val') || '';
                     if (sval) stylesMap[sid] = sval;
                 }
+                const styleColor = docxRunColor(style);
+                if (sid && styleColor) styleColorMap[sid] = styleColor;
                 const styleType = docxAttr(style, 'type', '');
                 const isDefault = docxAttr(style, 'default', '') === '1' || sid === 'Normal';
                 if (styleType === 'paragraph' && isDefault) defaultParagraphStyle = style;
@@ -1503,6 +1509,7 @@ async function parseDocx(arrayBuffer, docType = 'plain') {
     const imageCounter = { value: 1 };
     const docxContext = {
         stylesMap,
+        styleColorMap,
         footnotesMap,
         relsMap,
         numberingInfo,
@@ -1536,7 +1543,7 @@ async function parseDocx(arrayBuffer, docType = 'plain') {
                     }
                 }
             }
-            const block = extractDocxParagraph(node, stylesMap, footnotesMap, relsMap, numberingInfo, commentsMap);
+            const block = extractDocxParagraph(node, stylesMap, footnotesMap, relsMap, numberingInfo, commentsMap, styleColorMap);
             if (block) ir.blocks.push(block);
         } else if (localName === 'tbl') {
             const block = await extractDocxTable(node, docxContext);
@@ -1630,7 +1637,7 @@ function docxRunHighlight(r) {
 }
 
 /** w:p 단락 노드 → IR 블록 (텍스트 추출 + 스타일 판별 + 각주 + 목록 + 하이퍼링크) */
-function extractDocxParagraph(pNode, stylesMap = {}, footnotesMap = {}, relsMap = {}, numberingInfo = null, commentsMap = {}) {
+function extractDocxParagraph(pNode, stylesMap = {}, footnotesMap = {}, relsMap = {}, numberingInfo = null, commentsMap = {}, styleColorMap = {}) {
     const pStyles = pNode.getElementsByTagNameNS(DOCX_NS, 'pStyle');
     let styleId = '';
     if (pStyles.length) {
@@ -1676,8 +1683,12 @@ function extractDocxParagraph(pNode, stylesMap = {}, footnotesMap = {}, relsMap 
     const hasStructuralBreak = inlineRuns.some(r => typeof r.text === 'string' && /[\n\t]/.test(r.text));
     if (!text && !hasFootnotes && !hasStructuralBreak) return null;
 
-    // 제목 단락의 글자색(첫 색 있는 런) — 제목으로 렌더해도 색을 보존하기 위해 전달
-    const headColor = (inlineRuns.find(r => r.text && r.color) || {}).color || null;
+    // 제목 단락의 글자색 — 1순위 직접 run의 색, 2순위 문단 스타일 자체에 정의된 색
+    // (Word 제목 스타일은 색을 run마다 반복하지 않고 styles.xml의 rPr@color로만 주는 경우가
+    // 많아, 직접 색이 없을 때 스타일 색으로 폴백해야 제목이 검정으로 보이지 않는다).
+    const headColor = (inlineRuns.find(r => r.text && r.color) || {}).color
+        || (styleId ? styleColorMap[styleId] : null)
+        || null;
     const withColor = (b) => (headColor ? { ...b, color: headColor } : b);
 
     // styles.xml에서 해석한 스타일 이름 사용 (없으면 styleId 원본으로 폴백)
@@ -1763,7 +1774,8 @@ async function extractDocxCellBlocks(tc, context = {}) {
                 context.footnotesMap || {},
                 context.relsMap || {},
                 context.numberingInfo || null,
-                context.commentsMap || {}
+                context.commentsMap || {},
+                context.styleColorMap || {}
             );
             if (paragraph) blocks.push(paragraph);
             else if (!hasDrawing) blocks.push({ type: 'blank' });
