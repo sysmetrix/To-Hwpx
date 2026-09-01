@@ -95,6 +95,7 @@ OWPML은 요소마다 소속 네임스페이스가 정해져 있다. **prefix를
   2. 표 스타일(`w:tblStylePr`) 조건부 서식으로 셀 음영을 주는 DOCX는 직접 `w:tcPr/w:shd`가 없어 여전히 배경을 못 찾는다 — 이 경우는 아직 미지원.
 - **방어책 (완전한 원인 해결이 아니라 안전망):** `js/parsers.js`의 `stripInvisibleWhiteRuns()`가 배경을 못 찾은 셀·표 밖 문단에서 강조 표시(`w:highlight`) 없는 흰 글자만 기본색(검정)으로 되돌린다. 배경이 있거나 강조 표시가 있는 흰 글자는 그대로 보존된다.
 - **한계:** 표 스타일 기반 조건부 셀 음영을 직접 지원하지 않으므로, 그런 셀은 배경 없이 검정 글자로 나온다(안 보이는 것보다는 낫지만 원본 배지 모양은 아님). 표 스타일 음영까지 완전히 재현하려면 `styles.xml`의 `w:tblStylePr`(`firstRow`/`band1Horz` 등)을 조건에 맞춰 파싱해야 한다 — 아직 별도 작업으로 남아 있음.
+- **v4.16.2 추가 발견(실제 사용자 원본으로 재현):** "착수"·"승인" 같은 **문단 안 일부 글자만** 색 배지로 꾸민 경우는 셀 배경이 아니라 **run 속성(`w:rPr/w:shd@w:fill`)**을 쓴다 — `<w:rPr><w:color w:val="FFFFFF"/><w:shd w:val="clear" w:color="auto" w:fill="D97706"/></w:rPr>` 형태. 이전엔 `w:highlight`(고정 형광펜 이름)만 읽고 이 임의 RRGGBB `w:shd`는 완전히 무시해, 흰 글자만 배경 없이 그대로 남았다. `docxRunHighlight()`가 이제 `w:shd@w:fill`도 shadeColor 후보로 읽는다(`js/parsers.js`). HWPX 쪽 `shadeColor`(`hh:charPr`) 배관은 이미 있었으므로 파싱 쪽만 고치면 됐다 — 파일이 아무리 커도(51쪽·수백 개 표 행) 원인은 결국 특정 요소를 못 읽은 파싱 버그였다.
 
 ---
 
