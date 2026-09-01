@@ -1,6 +1,18 @@
 {
-  "current": "4.16.4",
+  "current": "4.16.5",
   "versions": [
+    {
+      "version": "4.16.5",
+      "date": "2026-09-02",
+      "user": [
+        "DOCX의 \"쉽게 말하면\" 같은 옅은 배경 콜아웃 박스를 이제 왼쪽 강조선과 원본 배경색이 있는 박스로 옮깁니다. 이전에는 글자만 보이고 박스 장식은 사라졌습니다."
+      ],
+      "dev": [
+        "[v4.16.5] js/parsers.js: docxParagraphShd()로 문단 자체 배경(w:pPr/w:shd@w:fill, 표 셀 아님)을 감지해 해당 문단(제목·목록 항목·문서 제목 제외)을 quote 블록(bg 필드 포함)으로 감싸는 wrapDocxCalloutBlock() 추가",
+        "[v4.16.5] js/hwpx.js: quote 블록의 bg 색상별로 동적 paraPr/borderFill을 사전 스캔·생성(customQuoteMap)해 왼쪽 강조선(#64748B 고정)+원본 배경색 박스로 렌더 — 배경 없는 기존 Markdown/HTML 인용구는 그대로 고정 paraPr id=19 사용, 회귀 없음",
+        "[v4.16.5] 사용자 제공 실제 51쪽 보고서 원본으로 검증 — 콜아웃 27건(#FFFAF0 14 · #F4F6F9 13) 전부 올바른 배경색의 동적 paraPr/borderFill을 참조. qa/gate.js 9개 게이트 전부 통과(paraProperties 22=22, borderFills 41=41 — IDRef 정합성 포함), qa/docx-fidelity-harness.js 구조 검사(표 49/49·행 891/891·셀 4067/4067)도 그대로 정확"
+      ]
+    },
     {
       "version": "4.16.4",
       "date": "2026-09-02",
