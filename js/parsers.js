@@ -1686,8 +1686,13 @@ function extractDocxParagraph(pNode, stylesMap = {}, footnotesMap = {}, relsMap 
     // 제목 단락의 글자색 — 1순위 직접 run의 색, 2순위 문단 스타일 자체에 정의된 색
     // (Word 제목 스타일은 색을 run마다 반복하지 않고 styles.xml의 rPr@color로만 주는 경우가
     // 많아, 직접 색이 없을 때 스타일 색으로 폴백해야 제목이 검정으로 보이지 않는다).
-    const headColor = (inlineRuns.find(r => r.text && r.color) || {}).color
-        || (styleId ? styleColorMap[styleId] : null)
+    // 흰색은 후보에서 제외한다 — 제목은 항상 한 가지 색으로 렌더되는 한 줄이라 배경을 따로
+    // 그리지 않으므로, 문단 안에 섞인 "신규"류 배지 run(어두운 배경 위 흰 글자 전제)의 색이나
+    // 배지 전용 문단 스타일(예: 커스텀 "badge1" 스타일)의 흰색이 헤딩 전체에 새면 흰 바탕에
+    // 흰 제목이 된다. 실제 헤딩 스타일(heading 2/3/4 등)은 흰색을 쓰지 않으므로 안전하다.
+    const headColorCandidate = inlineRuns.find(r => r.text && r.color && r.color !== '#FFFFFF');
+    const headColor = (headColorCandidate || {}).color
+        || (styleId && styleColorMap[styleId] !== '#FFFFFF' ? styleColorMap[styleId] : null)
         || null;
     const withColor = (b) => (headColor ? { ...b, color: headColor } : b);
 
