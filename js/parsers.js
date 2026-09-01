@@ -1598,19 +1598,35 @@ function docxRunColor(r) {
     return normalizeHexColor(v.startsWith('#') ? v : '#' + v);
 }
 
-/** w:highlight 이름을 HWPX shadeColor에 사용할 #RRGGBB로 정규화한다. */
+/**
+ * run 강조 배경 → HWPX shadeColor용 #RRGGBB. 두 가지 DOCX 표현을 모두 본다:
+ *   1) w:highlight — Word 고정 형광펜 팔레트(이름만 지정)
+ *   2) w:rPr/w:shd@w:fill — 임의 RRGGBB 배경(예: "제1기"·"착수" 같은 인라인 배지에 흔함).
+ *      셀 배경(w:tcPr/w:shd)과 동일한 요소 이름이지만 위치가 run 속성(rPr) 안이라는 점으로
+ *      구분한다. auto/nil/흰색은 배경 없음으로 취급한다.
+ */
 function docxRunHighlight(r) {
     const el = r.getElementsByTagNameNS(DOCX_NS, 'highlight')[0];
-    if (!el) return null;
-    const value = String(docxAttr(el, 'val', '')).toLowerCase();
-    const colors = {
-        yellow: '#FFFF00', green: '#00FF00', cyan: '#00FFFF', magenta: '#FF00FF',
-        blue: '#0000FF', red: '#FF0000', darkblue: '#000080', darkcyan: '#008080',
-        darkgreen: '#008000', darkmagenta: '#800080', darkred: '#800000',
-        darkyellow: '#808000', darkgray: '#808080', lightgray: '#C0C0C0',
-        black: '#000000', white: '#FFFFFF',
-    };
-    return colors[value] || null;
+    if (el) {
+        const value = String(docxAttr(el, 'val', '')).toLowerCase();
+        const colors = {
+            yellow: '#FFFF00', green: '#00FF00', cyan: '#00FFFF', magenta: '#FF00FF',
+            blue: '#0000FF', red: '#FF0000', darkblue: '#000080', darkcyan: '#008080',
+            darkgreen: '#008000', darkmagenta: '#800080', darkred: '#800000',
+            darkyellow: '#808000', darkgray: '#808080', lightgray: '#C0C0C0',
+            black: '#000000', white: '#FFFFFF',
+        };
+        if (colors[value]) return colors[value];
+    }
+    const rPr = r.getElementsByTagNameNS(DOCX_NS, 'rPr')[0];
+    const shd = rPr?.getElementsByTagNameNS(DOCX_NS, 'shd')[0];
+    if (shd) {
+        const fill = shd.getAttributeNS(DOCX_NS, 'fill') || shd.getAttribute('w:fill') || shd.getAttribute('fill') || '';
+        if (fill && !/^(auto|nil|FFFFFF|ffffff)$/.test(fill)) {
+            return '#' + fill.replace(/^#/, '').toUpperCase().padStart(6, '0');
+        }
+    }
+    return null;
 }
 
 /** w:p 단락 노드 → IR 블록 (텍스트 추출 + 스타일 판별 + 각주 + 목록 + 하이퍼링크) */

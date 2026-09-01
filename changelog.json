@@ -1,6 +1,17 @@
 {
-  "current": "4.16.1",
+  "current": "4.16.2",
   "versions": [
+    {
+      "version": "4.16.2",
+      "date": "2026-09-02",
+      "user": [
+        "DOCX에서 문단 안 일부 글자만 색 배지(예: \"착수\", \"승인\" 같은 인라인 강조 라벨)로 꾸민 경우, 그 배경색이 통째로 사라지고 흰 글자만 안 보이던 문제를 실제 보고서 원본 파일로 재현·수정했습니다. 이제 배지 배경과 흰 글자가 함께 보존됩니다."
+      ],
+      "dev": [
+        "[v4.16.2] js/parsers.js: docxRunHighlight()가 w:highlight(고정 형광펜)뿐 아니라 run 속성(w:rPr/w:shd@w:fill)의 임의 RRGGBB 배경도 인식하도록 확장 — 인라인 배지에 흔한 패턴(<w:rPr><w:color w:val=\"FFFFFF\"/><w:shd w:fill=\"D97706\"/></w:rPr>)이 이전엔 완전히 무시돼 흰 글자만 배경 없이 남았음",
+        "[v4.16.2] 사용자가 제공한 실제 51쪽 보고서 원본 DOCX로 playwright를 통해 실제 변환 파이프라인을 검증 — header.xml에 shadeColor(#D97706/#1D4ED8/#15803D/#6B7280) 동적 charPr이 생성되고 section0.xml의 해당 run이 정확히 그 charPrIDRef를 참조함을 확인. 같은 파일 변환에 약 80초 소요(4.3MB section0.xml, 수백 개 표 행) — v4.16.1의 이벤트 루프 양보 덕분에 그 시간 동안 브라우저가 응답 없음 상태에 빠지지 않음을 함께 확인"
+      ]
+    },
     {
       "version": "4.16.1",
       "date": "2026-09-02",
