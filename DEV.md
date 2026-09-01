@@ -68,6 +68,27 @@
 
 이 구조 덕분에 새 포맷 지원은 IR을 생성하는 파서만 추가하면 됩니다. `parsers.js`에서 포맷별 파서를 관리합니다.
 
+#### DOCX 감사와 IR v2 확장
+
+DOCX는 `word/document.xml`을 바로 파싱하지 않는다. `js/docx-audit.js`가 먼저 잘못된 리터럴 속성, 소수 twip, 최종 `sectPr` 위치, 알려진 OOXML 자식 순서를 감사하고 의미를 바꾸지 않는 범위에서 정규화한다. 감사 보고서는 `ir.audit`에 붙어 UI와 QA 하네스가 같은 값을 사용한다.
+
+DOCX가 보존하는 공통 IR v2 필드는 다음과 같다.
+
+```js
+{
+  schemaVersion: 2,
+  audit: { sourceFormat, status, issues, repairs, metrics },
+  pageSetup: { widthHwp, heightHwp, orientation, marginsHwp },
+  typography: { baseFontSizePt, lineSpacingPercent },
+  blocks: [{
+    type: 'table', widthHwp, columnWidthsHwp, align, cellMarginsHwp, rowMeta,
+    header: [{ text, blocks, colSpan, rowSpan, widthHwp, vertAlign, marginsHwp }]
+  }]
+}
+```
+
+표 셀의 `blocks`는 여러 문단·목록·중첩 표·그림의 순서를 보존한다. 수동 줄바꿈과 탭은 run의 `text` 안에 `\n`, `\t`로 유지하고 Renderer가 `hp:lineBreak`, `hp:tab`으로 직렬화한다. 자세한 경계와 검증 불변식은 [ARCHITECTURE.md](./ARCHITECTURE.md), 반복 작업 명령은 [ENGINEERING.md](./ENGINEERING.md)를 따른다.
+
 ### HWPX 포맷
 
 HWPX는 ZIP 컨테이너 안에 XML 파일들이 들어있는 구조입니다:

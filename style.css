@@ -2681,6 +2681,45 @@ a:hover { text-decoration: underline; }
 .result-valid .result-validation-mark { background: var(--c-success); }
 .result-warn .result-validation-mark { background: var(--c-warning); }
 
+.result-source-audit {
+    display: grid;
+    gap: 10px;
+    margin: 0 0 14px;
+    padding: 12px 14px;
+    border: 1px solid var(--c-info-border);
+    border-radius: var(--radius-md);
+    background: var(--c-info-bg);
+}
+.result-source-audit > div:first-child {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 6px 12px;
+}
+.result-source-audit strong { color: var(--c-primary); font-size: 0.84rem; }
+.result-source-audit span,
+.result-source-audit small { color: var(--c-text-sub); font-size: 0.76rem; line-height: 1.5; }
+.result-source-audit dl {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 6px;
+    margin: 0;
+}
+.result-source-audit dl div {
+    min-width: 0;
+    padding: 7px 8px;
+    border: 1px solid var(--c-border);
+    border-radius: var(--radius-sm);
+    background: var(--c-surface);
+}
+.result-source-audit dt { color: var(--c-text-sub); font-size: 0.68rem; }
+.result-source-audit dd { margin: 2px 0 0; color: var(--c-text); font-size: 0.86rem; font-weight: 800; }
+.result-source-audit--recoverable-with-loss {
+    border-color: var(--c-warnwash-border);
+    background: var(--c-warnwash-bg);
+}
+
 .result-trust-list {
     display: flex;
     flex-wrap: wrap;
@@ -3197,6 +3236,7 @@ a:hover { text-decoration: underline; }
         grid-template-columns: 1fr;
         gap: 2px;
     }
+    .result-source-audit dl { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .btn-download,
     .btn-preview {
         justify-content: center;
@@ -4786,6 +4826,17 @@ a:hover { text-decoration: underline; }
     gap: 10px;
     margin-bottom: 12px;
 }
+.quality-file-diagnostic {
+    display: grid;
+    gap: 4px;
+    margin: 12px 0;
+    padding: 11px 12px;
+    border: 1px solid var(--c-info-border);
+    border-radius: var(--radius-md);
+    background: var(--c-info-bg);
+}
+.quality-file-diagnostic strong { color: var(--c-primary); font-size: 0.82rem; }
+.quality-file-diagnostic span { color: var(--c-text-sub); font-size: 0.76rem; line-height: 1.5; }
 .quality-score-grid > div {
     min-width: 0;
     padding: 10px;

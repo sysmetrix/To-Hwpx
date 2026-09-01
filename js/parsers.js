@@ -18,6 +18,8 @@
  *                  맨 아래 PARSERS 맵에 "확장자" → { fn, ... } 항목 추가
  * ===================================================================*/
 
+import { auditAndNormalizeDocxXml } from './docx-audit.js';
+
 'use strict';
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -1034,6 +1036,50 @@ function parseIpynb(text, docType = 'plain') {
 const DOCX_NS = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
 const DOCX_NS_R = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
 
+function docxAttr(element, localName, fallback = '') {
+    if (!element) return fallback;
+    for (const attr of Array.from(element.attributes || [])) {
+        if (attr.localName === localName) return attr.value;
+    }
+    return fallback;
+}
+
+function docxTwipToHwp(raw, fallback = null) {
+    const number = Number(raw);
+    return Number.isFinite(number) ? Math.round(number * 5) : fallback;
+}
+
+/** 최종 w:sectPr의 페이지 크기·방향·여백을 공통 IR pageSetup으로 변환한다. */
+function extractDocxPageSetup(body) {
+    if (!body) return null;
+    const sectionProperties = Array.from(body.getElementsByTagNameNS(DOCX_NS, 'sectPr'));
+    const sectPr = sectionProperties.at(-1);
+    if (!sectPr) return null;
+    const pgSz = sectPr.getElementsByTagNameNS(DOCX_NS, 'pgSz')[0];
+    const pgMar = sectPr.getElementsByTagNameNS(DOCX_NS, 'pgMar')[0];
+    const rawWidth = Number(docxAttr(pgSz, 'w', ''));
+    const rawHeight = Number(docxAttr(pgSz, 'h', ''));
+    const orientAttr = docxAttr(pgSz, 'orient', '').toLowerCase();
+    const landscape = orientAttr === 'landscape'
+        || (Number.isFinite(rawWidth) && Number.isFinite(rawHeight) && rawWidth > rawHeight);
+
+    let widthHwp = docxTwipToHwp(rawWidth);
+    let heightHwp = docxTwipToHwp(rawHeight);
+    if (widthHwp && heightHwp && widthHwp > heightHwp) [widthHwp, heightHwp] = [heightHwp, widthHwp];
+    const marginsHwp = {};
+    for (const side of ['left', 'right', 'top', 'bottom', 'header', 'footer']) {
+        const value = docxTwipToHwp(docxAttr(pgMar, side, ''));
+        if (value != null && value >= 0) marginsHwp[side] = value;
+    }
+    if (!widthHwp || !heightHwp) return null;
+    return {
+        widthHwp,
+        heightHwp,
+        orientation: landscape ? 'landscape' : 'portrait',
+        marginsHwp,
+    };
+}
+
 /**
  * word/numbering.xml 파싱 → numId·abstractNumId 매핑 + 레벨별 순서/글머리 정보.
  * 반환: { numMap: {numId→absId}, abstractMap: {absId→{lvls:{ilvl→{ordered,start}}}} }
@@ -1126,6 +1172,8 @@ function extractDocxInlineRuns(pNode, relsMap = {}, footnotesMap = {}, commentsM
             if (child.nodeType !== 1) continue;
             const local = child.localName;
             if (local === 'pPr' || local === 'rPr') continue;
+            // 기본 계약은 Word의 "최종 문서" 보기: 삽입은 포함하고 삭제는 제외한다.
+            if (local === 'del' || local === 'moveFrom') continue;
             if (local === 'r') {
                 const fnRef = child.getElementsByTagNameNS(DOCX_NS, 'footnoteReference')[0];
                 if (fnRef) {
@@ -1139,8 +1187,16 @@ function extractDocxInlineRuns(pNode, relsMap = {}, footnotesMap = {}, commentsM
                     const cmId = cmRef.getAttributeNS(DOCX_NS, 'id') || cmRef.getAttribute('w:id') || '';
                     if (cmId && commentsMap[cmId]) runs.push({ text: '', footnote: commentsMap[cmId] });
                 }
-                const text = sanitize(Array.from(child.getElementsByTagNameNS(DOCX_NS, 't'))
-                    .map(t => t.textContent).join(''));
+                // w:t뿐 아니라 w:tab, w:br/w:cr을 문서 순서대로 보존한다.
+                // HWPX 렌더러가 \t와 \n을 hp:tab/hp:lineBreak로 직렬화한다.
+                let rawText = '';
+                for (const runChild of child.childNodes) {
+                    if (runChild.nodeType !== 1 || runChild.localName === 'rPr') continue;
+                    if (runChild.localName === 't') rawText += runChild.textContent || '';
+                    else if (runChild.localName === 'tab') rawText += '\t';
+                    else if (runChild.localName === 'br' || runChild.localName === 'cr') rawText += '\n';
+                }
+                const text = sanitize(rawText);
                 if (!text) continue;
                 const run = {
                     text,
@@ -1149,6 +1205,7 @@ function extractDocxInlineRuns(pNode, relsMap = {}, footnotesMap = {}, commentsM
                     underline: docxRunToggle(child, 'u'),
                     strike:    docxRunToggle(child, 'strike') || docxRunToggle(child, 'dstrike'),
                     color:     docxRunColor(child),
+                    highlight: docxRunHighlight(child),
                 };
                 if (href) run.href = href;
                 runs.push(run);
@@ -1278,9 +1335,15 @@ async function parseDocx(arrayBuffer, docType = 'plain') {
     }
 
     const xmlText = await docFile.async('string');
-    const xmlDoc = new DOMParser().parseFromString(xmlText, 'application/xml');
+    const normalizedDocx = auditAndNormalizeDocxXml(xmlText);
+    if (normalizedDocx.report.status === 'blocked') {
+        throw new Error(normalizedDocx.report.issues[0]?.message || 'DOCX 본문 XML을 해석할 수 없습니다.');
+    }
+    const xmlDoc = normalizedDocx.document;
     // 제목은 본문에서 추출(아래 첫 제목 승격). 못 찾으면 빈 제목으로 둔다("DOCX 문서" 같은 자리표시 방지)
     const ir = emptyIR('', docType);
+    ir.schemaVersion = 2;
+    ir.audit = { sourceFormat: 'docx', ...normalizedDocx.report };
 
     // word/_rels/document.xml.rels 로드 → rId → {target, type} 맵
     // 이미지 관계(type ends /image)와 머리글/바닥글 관계(type ends /header, /footer) 모두 수집
@@ -1294,9 +1357,18 @@ async function parseDocx(arrayBuffer, docType = 'plain') {
                 const id     = rel.getAttribute('Id')     || '';
                 const type   = rel.getAttribute('Type')   || '';
                 const target = rel.getAttribute('Target') || '';
-                if (id) relsMap[id] = { target, type };
+                const targetMode = rel.getAttribute('TargetMode') || '';
+                if (id) relsMap[id] = { target, type, targetMode };
             }
         } catch (_) {}
+    }
+    const externalRelationships = Object.values(relsMap).filter(rel => /^external$/i.test(rel.targetMode)).length;
+    if (externalRelationships) {
+        ir.audit.warnings = [{
+            code: 'EXTERNAL_RELATIONSHIP_IGNORED',
+            count: externalRelationships,
+            message: '외부 관계는 개인정보·보안 경계를 위해 가져오지 않았습니다.',
+        }];
     }
 
     // word/styles.xml 로드 → 스타일 ID → 이름 맵 (제목 감지 정확도 향상)
@@ -1306,6 +1378,14 @@ async function parseDocx(arrayBuffer, docType = 'plain') {
         try {
             const stylesXml = await stylesFile.async('string');
             const stylesDoc = new DOMParser().parseFromString(stylesXml, 'application/xml');
+            const halfPointValue = (root) => {
+                const sz = root?.getElementsByTagNameNS(DOCX_NS, 'sz')[0];
+                const value = Number(docxAttr(sz, 'val', ''));
+                return Number.isFinite(value) && value > 0 ? value : null;
+            };
+            const docDefaults = stylesDoc.getElementsByTagNameNS(DOCX_NS, 'docDefaults')[0];
+            let defaultHalfPoints = halfPointValue(docDefaults);
+            let defaultParagraphStyle = null;
             for (const style of stylesDoc.getElementsByTagNameNS(DOCX_NS, 'style')) {
                 const sid = style.getAttributeNS(DOCX_NS, 'styleId')
                          || style.getAttribute('w:styleId')
@@ -1316,6 +1396,25 @@ async function parseDocx(arrayBuffer, docType = 'plain') {
                               || nameEl.getAttribute('w:val')
                               || nameEl.getAttribute('val') || '';
                     if (sval) stylesMap[sid] = sval;
+                }
+                const styleType = docxAttr(style, 'type', '');
+                const isDefault = docxAttr(style, 'default', '') === '1' || sid === 'Normal';
+                if (styleType === 'paragraph' && isDefault) defaultParagraphStyle = style;
+                if (!defaultHalfPoints && styleType === 'paragraph' && isDefault) {
+                    defaultHalfPoints = halfPointValue(style);
+                }
+            }
+            if (defaultHalfPoints) {
+                ir.typography = { baseFontSizePt: defaultHalfPoints / 2 };
+                const spacing = (defaultParagraphStyle || docDefaults)
+                    ?.getElementsByTagNameNS(DOCX_NS, 'spacing')[0];
+                const line = Number(docxAttr(spacing, 'line', ''));
+                const lineRule = docxAttr(spacing, 'lineRule', '').toLowerCase();
+                if (Number.isFinite(line) && line > 0) {
+                    const percent = !lineRule || lineRule === 'auto'
+                        ? line / 2.4
+                        : line / (defaultHalfPoints * 10) * 100;
+                    ir.typography.lineSpacingPercent = Math.max(100, Math.min(300, Math.round(percent)));
                 }
             }
         } catch (_) {}
@@ -1390,8 +1489,18 @@ async function parseDocx(arrayBuffer, docType = 'plain') {
     // w:body 직계 자식 순회 (단락: w:p, 표: w:tbl)
     const body = xmlDoc.getElementsByTagNameNS(DOCX_NS, 'body')[0];
     if (!body) return ir;
+    ir.pageSetup = extractDocxPageSetup(body);
 
-    let imageCounter = 1;
+    const imageCounter = { value: 1 };
+    const docxContext = {
+        stylesMap,
+        footnotesMap,
+        relsMap,
+        numberingInfo,
+        commentsMap,
+        zip,
+        imageCounter,
+    };
     for (const node of body.childNodes) {
         const localName = node.localName || '';
 
@@ -1400,7 +1509,7 @@ async function parseDocx(arrayBuffer, docType = 'plain') {
             const hasDrawing = Array.from(node.getElementsByTagName('*'))
                 .some(el => el.localName === 'drawing');
             if (hasDrawing) {
-                const imgOrFallback = await extractDocxImage(node, relsMap, zip, imageCounter);
+                const imgOrFallback = await extractDocxImage(node, relsMap, zip, imageCounter.value);
                 if (imgOrFallback) {
                     if (imgOrFallback.type === 'image') {
                         // 이미지가 든 단락의 정렬(가운데/오른쪽/왼쪽)을 이미지 블록에 보존한다.
@@ -1409,18 +1518,17 @@ async function parseDocx(arrayBuffer, docType = 'plain') {
                             imgOrFallback.align = imgAlign;
                         }
                         ir.blocks.push(imgOrFallback);
-                        imageCounter++;
+                        imageCounter.value++;
                     } else {
                         // WMF/EMF alt-text fallback 또는 기타 비이미지 블록
                         ir.blocks.push(imgOrFallback);
                     }
-                    continue;
                 }
             }
             const block = extractDocxParagraph(node, stylesMap, footnotesMap, relsMap, numberingInfo, commentsMap);
             if (block) ir.blocks.push(block);
         } else if (localName === 'tbl') {
-            const block = extractDocxTable(node);
+            const block = await extractDocxTable(node, docxContext);
             if (block) ir.blocks.push(block);
         }
     }
@@ -1475,6 +1583,21 @@ function docxRunColor(r) {
     return normalizeHexColor(v.startsWith('#') ? v : '#' + v);
 }
 
+/** w:highlight 이름을 HWPX shadeColor에 사용할 #RRGGBB로 정규화한다. */
+function docxRunHighlight(r) {
+    const el = r.getElementsByTagNameNS(DOCX_NS, 'highlight')[0];
+    if (!el) return null;
+    const value = String(docxAttr(el, 'val', '')).toLowerCase();
+    const colors = {
+        yellow: '#FFFF00', green: '#00FF00', cyan: '#00FFFF', magenta: '#FF00FF',
+        blue: '#0000FF', red: '#FF0000', darkblue: '#000080', darkcyan: '#008080',
+        darkgreen: '#008000', darkmagenta: '#800080', darkred: '#800000',
+        darkyellow: '#808000', darkgray: '#808080', lightgray: '#C0C0C0',
+        black: '#000000', white: '#FFFFFF',
+    };
+    return colors[value] || null;
+}
+
 /** w:p 단락 노드 → IR 블록 (텍스트 추출 + 스타일 판별 + 각주 + 목록 + 하이퍼링크) */
 function extractDocxParagraph(pNode, stylesMap = {}, footnotesMap = {}, relsMap = {}, numberingInfo = null, commentsMap = {}) {
     const pStyles = pNode.getElementsByTagNameNS(DOCX_NS, 'pStyle');
@@ -1519,7 +1642,8 @@ function extractDocxParagraph(pNode, stylesMap = {}, footnotesMap = {}, relsMap 
     const text = sanitize(inlineRuns.filter(r => r.text).map(r => r.text).join('').trim());
     // 각주만 있고 텍스트가 없는 경우도 각주 런이 있으면 null 반환 안 함
     const hasFootnotes = inlineRuns.some(r => r.footnote);
-    if (!text && !hasFootnotes) return null;
+    const hasStructuralBreak = inlineRuns.some(r => typeof r.text === 'string' && /[\n\t]/.test(r.text));
+    if (!text && !hasFootnotes && !hasStructuralBreak) return null;
 
     // 제목 단락의 글자색(첫 색 있는 런) — 제목으로 렌더해도 색을 보존하기 위해 전달
     const headColor = (inlineRuns.find(r => r.text && r.color) || {}).color || null;
@@ -1569,20 +1693,55 @@ function extractDocxParagraph(pNode, stylesMap = {}, footnotesMap = {}, relsMap 
 function docxDirectChildren(el, localName) {
     const out = [];
     for (const c of el.childNodes) {
-        if (c.nodeType === 1 && c.localName === localName) out.push(c);
+        if (c.nodeType === 1 && (!localName || c.localName === localName)) out.push(c);
     }
     return out;
 }
 
-/** 셀(w:tc) 텍스트 추출 — 중첩 표 내용은 평탄화해 보존하되 단락 경계는 공백으로 구분 */
-function docxCellText(tc) {
-    const parts = [];
-    for (const p of tc.getElementsByTagNameNS(DOCX_NS, 'p')) {
-        const t = Array.from(p.getElementsByTagNameNS(DOCX_NS, 't'))
-            .map(el => el.textContent || '').join('');
-        if (t) parts.push(t);
+function docxBlockText(block) {
+    if (!block) return '';
+    if (typeof block.text === 'string') return block.text;
+    if (Array.isArray(block.runs)) return block.runs.map(run => run?.text || '').join('');
+    if (block.type === 'list') return (block.items || []).map(item => item?.text || '').join(' ');
+    if (block.type === 'table') {
+        return (block.header || []).concat(...(block.rows || [])).map(cell => cell?.text || cell || '').join(' ');
     }
-    return sanitize(parts.join(' ').trim());
+    return '';
+}
+
+/** 셀의 직계 문단·중첩 표를 IR blocks로 보존한다. */
+async function extractDocxCellBlocks(tc, context = {}) {
+    const blocks = [];
+    for (const child of docxDirectChildren(tc)) {
+        if (child.localName === 'p') {
+            const hasDrawing = Array.from(child.getElementsByTagName('*')).some(el => el.localName === 'drawing');
+            if (hasDrawing && context.zip && context.imageCounter) {
+                const image = await extractDocxImage(child, context.relsMap || {}, context.zip, context.imageCounter.value);
+                if (image) {
+                    const align = docxParagraphAlign(child);
+                    if (image.type === 'image') {
+                        if (align) image.align = align;
+                        context.imageCounter.value++;
+                    }
+                    blocks.push(image);
+                }
+            }
+            const paragraph = extractDocxParagraph(
+                child,
+                context.stylesMap || {},
+                context.footnotesMap || {},
+                context.relsMap || {},
+                context.numberingInfo || null,
+                context.commentsMap || {}
+            );
+            if (paragraph) blocks.push(paragraph);
+            else if (!hasDrawing) blocks.push({ type: 'blank' });
+        } else if (child.localName === 'tbl') {
+            const nested = await extractDocxTable(child, context);
+            if (nested) blocks.push(nested);
+        }
+    }
+    return groupDocxListItems(blocks);
 }
 
 /** 셀(w:tc) 글자색 — 셀 안 첫 번째 유효 w:color(run) → #RRGGBB | null (흰 글자 등 보존) */
@@ -1594,24 +1753,63 @@ function docxCellColor(tc) {
     return null;
 }
 
-/** w:tbl 표 노드 → IR table 블록 (셀 병합 지원, 중첩 표 무시) */
-function extractDocxTable(tblNode) {
-    // 직계 자식 행/셀만 사용 — 중첩 표의 w:tr/w:tc가 그리드에 섞여 들어가
-    // rowCnt/colCnt 불일치(한글이 거부하는 깨진 표)가 생기는 것을 방지
+function docxBoxMargins(parent) {
+    const result = {};
+    if (!parent) return result;
+    for (const side of ['left', 'right', 'top', 'bottom']) {
+        const el = docxDirectChildren(parent, side)[0];
+        const value = docxTwipToHwp(docxAttr(el, 'w', ''));
+        if (value != null && value >= 0) result[side] = value;
+    }
+    return result;
+}
+
+function extractDocxTableGeometry(tblNode) {
+    const tblGrid = docxDirectChildren(tblNode, 'tblGrid')[0];
+    const columnWidthsHwp = tblGrid
+        ? docxDirectChildren(tblGrid, 'gridCol')
+            .map(col => docxTwipToHwp(docxAttr(col, 'w', '')))
+            .filter(width => width != null && width > 0)
+        : [];
+    const tblPr = docxDirectChildren(tblNode, 'tblPr')[0];
+    const jc = tblPr?.getElementsByTagNameNS(DOCX_NS, 'jc')[0];
+    const alignValue = docxAttr(jc, 'val', '').toLowerCase();
+    const align = alignValue === 'center' ? 'center' : alignValue === 'right' || alignValue === 'end' ? 'right' : 'left';
+    const tblW = tblPr?.getElementsByTagNameNS(DOCX_NS, 'tblW')[0];
+    const widthHwp = /^dxa$/i.test(docxAttr(tblW, 'type', ''))
+        ? docxTwipToHwp(docxAttr(tblW, 'w', ''))
+        : null;
+    const tblCellMar = tblPr?.getElementsByTagNameNS(DOCX_NS, 'tblCellMar')[0];
+    return {
+        columnWidthsHwp,
+        widthHwp: widthHwp && widthHwp > 0 ? widthHwp : (columnWidthsHwp.reduce((sum, width) => sum + width, 0) || null),
+        align,
+        cellMarginsHwp: docxBoxMargins(tblCellMar),
+    };
+}
+
+/** w:tbl 표 노드 → IR table 블록. 셀 문단·원본 격자·병합을 보존한다. */
+async function extractDocxTable(tblNode, context = {}) {
+    // 직계 자식 행/셀만 사용해 중첩 표가 바깥 격자에 누수되지 않게 한다.
     const rowEls = docxDirectChildren(tblNode, 'tr');
     if (!rowEls.length) return null;
 
+    const geometry = extractDocxTableGeometry(tblNode);
+
     // 1단계: 물리 행/열 원시 데이터 수집
     const rawRows = [];
+    const rowMeta = [];
     for (const tr of rowEls) {
         const rawCells = [];
         const cells = docxDirectChildren(tr, 'tc');
         for (const tc of cells) {
-            const text = docxCellText(tc);
+            const blocks = await extractDocxCellBlocks(tc, context);
+            const text = sanitize(blocks.map(docxBlockText).filter(Boolean).join('\n').trim());
             const color = docxCellColor(tc);
 
             const tcPr = docxDirectChildren(tc, 'tcPr')[0];
             let bg = null, colSpan = 1, vMergeType = null;
+            let widthHwp = null, vertAlign = null, marginsHwp = {};
 
             if (tcPr) {
                 // 배경색 (w:tcPr/w:shd@w:fill)
@@ -1635,62 +1833,77 @@ function extractDocxTable(tblNode) {
                     const vmVal = vm.getAttributeNS(DOCX_NS, 'val') || vm.getAttribute('w:val') || '';
                     vMergeType = (vmVal === 'restart') ? 'restart' : 'continue';
                 }
+                const tcW = tcPr.getElementsByTagNameNS(DOCX_NS, 'tcW')[0];
+                if (tcW && /^dxa$/i.test(docxAttr(tcW, 'type', ''))) {
+                    widthHwp = docxTwipToHwp(docxAttr(tcW, 'w', ''));
+                }
+                const vAlign = tcPr.getElementsByTagNameNS(DOCX_NS, 'vAlign')[0];
+                const v = docxAttr(vAlign, 'val', '').toLowerCase();
+                if (['top', 'center', 'bottom'].includes(v)) vertAlign = v;
+                const tcMar = tcPr.getElementsByTagNameNS(DOCX_NS, 'tcMar')[0];
+                marginsHwp = docxBoxMargins(tcMar);
             }
-            rawCells.push({ text, bg, color, colSpan, vMergeType });
+            rawCells.push({ text, blocks, bg, color, colSpan, vMergeType, widthHwp, vertAlign, marginsHwp });
         }
         rawRows.push(rawCells);
+        const trPr = docxDirectChildren(tr, 'trPr')[0];
+        const trHeight = trPr?.getElementsByTagNameNS(DOCX_NS, 'trHeight')[0];
+        rowMeta.push({
+            heightHwp: docxTwipToHwp(docxAttr(trHeight, 'val', '')),
+            heightRule: docxAttr(trHeight, 'hRule', '') || 'auto',
+            repeatHeader: !!trPr?.getElementsByTagNameNS(DOCX_NS, 'tblHeader').length,
+            cantSplit: !!trPr?.getElementsByTagNameNS(DOCX_NS, 'cantSplit').length,
+        });
     }
 
-    // 2단계: 논리 그리드 구성 — 세로 병합 연속 셀 처리
-    // vMergeStart[논리열] = 병합 시작 행 인덱스 (진행 중인 병합 추적)
-    // mergeStartCells["행_열"] = 병합 시작 셀 객체 (rowSpan을 나중에 증가시킴)
-    const vMergeStart = {};
-    const mergeStartCells = {};
+    // 2단계: 논리 그리드 구성 — vMerge 연속 셀은 시작 셀 rowSpan으로 합친다.
+    const activeVerticalMerges = new Map();
     const outputRows = [];
 
     for (let r = 0; r < rawRows.length; r++) {
         const outRow = [];
         let logicalCol = 0;
+        const extendedThisRow = new Set();
 
         for (const raw of rawRows[r]) {
-            // 위 행에서 내려오는 세로 병합이 점유 중인 논리 열 건너뜀
-            while (vMergeStart[logicalCol] !== undefined) logicalCol++;
-
             if (raw.vMergeType === 'continue') {
-                // 세로 병합 연속 셀 → 병합 시작 셀의 rowSpan 증가 후 스킵
-                const startKey = `${vMergeStart[logicalCol]}_${logicalCol}`;
-                if (mergeStartCells[startKey]) mergeStartCells[startKey].rowSpan++;
-                // 이 열은 다음 행에도 병합이 계속될 수 있으므로 vMergeStart 유지
+                const startCell = activeVerticalMerges.get(logicalCol);
+                if (startCell && !extendedThisRow.has(startCell)) {
+                    startCell.rowSpan++;
+                    extendedThisRow.add(startCell);
+                }
             } else {
-                // 일반 셀 또는 병합 시작 셀
-                const cell = { text: raw.text, colSpan: raw.colSpan, rowSpan: 1 };
+                for (let c = logicalCol; c < logicalCol + raw.colSpan; c++) activeVerticalMerges.delete(c);
+                const cell = {
+                    text: raw.text,
+                    blocks: raw.blocks,
+                    colSpan: raw.colSpan,
+                    rowSpan: 1,
+                };
                 if (raw.bg) cell.bg = raw.bg;
                 if (raw.color) cell.color = raw.color;
+                if (raw.widthHwp) cell.widthHwp = raw.widthHwp;
+                if (raw.vertAlign) cell.vertAlign = raw.vertAlign;
+                if (Object.keys(raw.marginsHwp || {}).length) cell.marginsHwp = raw.marginsHwp;
 
                 if (raw.vMergeType === 'restart') {
-                    vMergeStart[logicalCol] = r;
-                    mergeStartCells[`${r}_${logicalCol}`] = cell;
-                } else {
-                    // 일반 셀: 이 열의 세로 병합 추적 제거
-                    delete vMergeStart[logicalCol];
+                    for (let c = logicalCol; c < logicalCol + raw.colSpan; c++) activeVerticalMerges.set(c, cell);
                 }
                 outRow.push(cell);
             }
 
             logicalCol += raw.colSpan;
         }
-
-        // 현재 행에서 vMerge continue가 없는 논리 열의 병합 추적 정리
-        // (다음 행에서 해당 열에 일반 셀이 오면 자동으로 delete됨)
         outputRows.push(outRow);
     }
 
-    // 3단계: 세로 병합 연속 셀을 rowSpan=0 sentinel로 삽입
-    // outputRows의 각 행에 건너뛴 셀(세로 병합 연속) 위치에 sentinel 추가
-    // 현재 구현에서는 연속 셀을 행에서 제외하므로 rowSpan=0은 별도 처리 없이
-    // hwpx.js에서 outRow 그대로 사용 (연속 셀은 이미 제외됨)
-
-    return { type: 'table', header: outputRows[0] || [], rows: outputRows.slice(1) };
+    return {
+        type: 'table',
+        header: outputRows[0] || [],
+        rows: outputRows.slice(1),
+        rowMeta,
+        ...geometry,
+    };
 }
 
 

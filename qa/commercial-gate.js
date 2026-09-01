@@ -16,6 +16,9 @@ for (const file of [
     'vercel.json', '.vercelignore', 'robots.txt', 'sitemap.xml', '.well-known/security.txt',
     'fonts/OFL-1.1.txt', 'fonts/InterVariable.woff2', 'qa/release-qa.md', 'qa/manual-release-evidence-template.md',
     'OPERATIONS.md', '.github/workflows/production-smoke.yml',
+    'ARCHITECTURE.md', 'ENGINEERING.md', 'DESIGN.md', 'js/docx-audit.js',
+    'qa/impact-graph.json', 'qa/impact-gate.js', 'qa/docx-fidelity-harness.js',
+    'qa/hwp-export-pdf.ps1', 'qa/render-pdf-contact-sheets.py',
 ]) mustExist(file);
 
 const integrity = JSON.parse(read('qa/vendor-integrity.json'));
@@ -57,6 +60,11 @@ assert(parsers.includes('XLSX 처리 시간 초과(15초)') && parsers.includes(
     'XLSX 시간/용량 제한 누락');
 assert(parsers.includes("./vendor/rhwp-core-0.7.17/rhwp.js") && !parsers.includes('cdn.jsdelivr.net'),
     'HWP5 엔진 자체 호스팅/버전 고정 누락');
+assert(parsers.includes("from './docx-audit.js'") && parsers.includes('pageSetup') && parsers.includes('typography'),
+    'DOCX 감사 또는 IR v2 원본 레이아웃 계약 누락');
+assert(read('js/docx-audit.js').includes('auditAndNormalizeDocxXml')
+    && read('qa/docx-fidelity-harness.js').includes('paragraph-retention'),
+    'DOCX 감사/고충실도 하네스 누락');
 
 const analytics = read('js/posthog-init.js');
 assert(analytics.includes("readConsent() !== 'granted'") && analytics.includes('disable_session_recording: true')

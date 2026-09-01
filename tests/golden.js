@@ -7,6 +7,7 @@ const path = require('path');
 const JSZip = require('jszip');
 const { chromium } = require('playwright');
 const { buildDocx } = require('./make-docx-fixture');
+const { buildDocxFidelityFixture } = require('./make-docx-fidelity-fixture');
 const { buildXlsx } = require('./make-xlsx-fixture');
 
 const ROOT = path.resolve(__dirname, '..');
@@ -187,6 +188,21 @@ const CASES = [
     ],
   },
   {
+    name: 'docx-fidelity',
+    file: 'docx-fidelity.docx',
+    format: 'DOCX',
+    minTables: 1,
+    mustContain: [
+      'DOCX 충실도 회귀 제목',
+      '표 앞 본문',
+      '첫 셀 첫 문단',
+      '수동 줄바꿈 뒤',
+      '첫 셀 둘째 문단',
+      '가운데 셀',
+      '표 뒤 본문',
+    ],
+  },
+  {
     name: 'pptx',
     file: 'sample.pptx',
     format: 'PPTX',
@@ -298,8 +314,14 @@ async function validateHwpxPackage(page, zip, testCase) {
   assert(sectionXml.includes('hancom.co.kr/hwpml/2011/paragraph'), `${testCase.name}: paragraph namespace 누락`);
   assert(headerXml.includes('hancom.co.kr/hwpml/2011/head'), `${testCase.name}: header namespace 누락`);
   const bodyParaPr = (/<hh:paraPr\b[^>]*\bid="0"[\s\S]*?<\/hh:paraPr>/.exec(headerXml) || [])[0] || '';
-  assert(bodyParaPr.includes('<hh:lineSpacing type="PERCENT" value="160" unit="HWPUNIT"/>'),
-    `${testCase.name}: 기본 본문 줄 간격 160% 누락`);
+  const expectedBodyLineSpacing = testCase.name === 'docx-fidelity' ? 120 : 160;
+  assert(bodyParaPr.includes(`<hh:lineSpacing type="PERCENT" value="${expectedBodyLineSpacing}" unit="HWPUNIT"/>`),
+    `${testCase.name}: 기본 본문 줄 간격 ${expectedBodyLineSpacing}% 누락`);
+  if (testCase.name === 'docx-fidelity') {
+    const bodyCharPr = (/<hh:charPr\b[^>]*\bid="0"[^>]*>/.exec(headerXml) || [])[0] || '';
+    assert(bodyCharPr.includes('height="1000"'),
+      `${testCase.name}: 원본 기본 글자 크기 10pt가 HWPX 글자 모양에 보존되지 않음`);
+  }
 
   const sectionWellFormed = await page.evaluate(xml => {
     const doc = new DOMParser().parseFromString(xml, 'application/xml');
@@ -383,6 +405,36 @@ async function validateHwpxPackage(page, zip, testCase) {
   const pageWidth = +((/\bwidth="(\d+)"/.exec(pagePr) || [])[1]);
   const pageHeight = +((/\bheight="(\d+)"/.exec(pagePr) || [])[1]);
   assert(pageWidth < pageHeight, `${testCase.name}: HWPX 기본 용지 폭/높이를 회전 전에 유지하지 않음`);
+  if (testCase.name === 'docx-fidelity') {
+    assert(pageWidth === 61200 && pageHeight === 79200,
+      `${testCase.name}: 원본 Letter 용지 크기가 보존되지 않음 (${pageWidth}×${pageHeight})`);
+    assert(/<hp:margin\b[^>]*\bleft="4250"[^>]*\bright="4250"[^>]*\btop="4800"[^>]*\bbottom="4800"/.test(sectionXml),
+      `${testCase.name}: 원본 DOCX 페이지 여백이 HWPUNIT으로 보존되지 않음`);
+    assert(sectionXml.includes('<hp:lineBreak/>'),
+      `${testCase.name}: DOCX 수동 줄바꿈이 hp:lineBreak로 보존되지 않음`);
+    const sourceTable = [...sectionXml.matchAll(/<hp:tbl\b[\s\S]*?<\/hp:tbl>/g)]
+      .map(match => match[0])
+      .find(table => table.includes('첫 셀 첫 문단')) || '';
+    assert(/<hp:sz\b[^>]*\bwidth="36000"/.test(sourceTable)
+      && /<hp:pos\b[^>]*\bhorzAlign="CENTER"/.test(sourceTable),
+    `${testCase.name}: 원본 표 폭 또는 가운데 정렬이 보존되지 않음`);
+    assert(sourceTable.includes('<hp:cellSz width="12000"')
+      && sourceTable.includes('<hp:cellSz width="16000"')
+      && sourceTable.includes('<hp:cellSz width="8000"'),
+    `${testCase.name}: decimal gridCol 정규화 뒤 원본 열 비율이 보존되지 않음`);
+    const firstCell = (/<hp:tc\b[\s\S]*?첫 셀 둘째 문단[\s\S]*?<\/hp:tc>/.exec(sourceTable) || [])[0] || '';
+    assert((firstCell.match(/<hp:p\b/g) || []).length >= 2,
+      `${testCase.name}: 한 셀의 다중 문단이 단일 문단으로 축약됨`);
+    assert((sectionXml.match(/DOCX 충실도 회귀 제목/g) || []).length === 1,
+      `${testCase.name}: 문서 제목이 합성 제목과 본문으로 중복 출력됨`);
+    const highlightRun = [...sectionXml.matchAll(/<hp:run\b[^>]*\bcharPrIDRef="(\d+)"[^>]*>[\s\S]*?<\/hp:run>/g)]
+      .find(match => match[0].includes('첫 셀 둘째 문단'));
+    const highlightChar = highlightRun
+      ? ((new RegExp(`<hh:charPr\\b[^>]*\\bid="${highlightRun[1]}"[\\s\\S]*?</hh:charPr>`).exec(headerXml) || [])[0] || '')
+      : '';
+    assert(highlightChar.includes('shadeColor="#FFFF00"'),
+      `${testCase.name}: Word highlight가 HWPX 글자 음영으로 보존되지 않음`);
+  }
   if (testCase.name === 'ipynb') {
     assert((sectionXml.match(/type="HYPERLINK"/g) || []).length === 1,
       `${testCase.name}: Markdown 셀 링크가 HYPERLINK 필드로 생성되지 않음`);
@@ -445,7 +497,7 @@ async function validateHwpxPackage(page, zip, testCase) {
   }
   const dataTables = [...sectionXml.matchAll(/<hp:tbl\b[\s\S]*?<\/hp:tbl>/g)]
     .map(match => match[0])
-    .filter(table => /<hp:tbl\b[^>]*\brepeatHeader="1"/.test(table));
+    .filter(table => /<hp:tbl\b[^>]*\bpageBreak="TABLE"/.test(table));
   if (testCase.minTables > 0) {
     assert(dataTables.length >= 1, `${testCase.name}: 일반 데이터 표를 찾지 못함`);
   }
@@ -456,11 +508,11 @@ async function validateHwpxPackage(page, zip, testCase) {
     const firstRow = (/<hp:tr>[\s\S]*?<\/hp:tr>/.exec(table) || [])[0] || '';
     const headerFlags = [...firstRow.matchAll(/<hp:tc\b[^>]*\bheader="([^"]+)"/g)].map(match => match[1]);
     assert(/\bpageBreak="TABLE"/.test(tableOpen), `${testCase.name}: 일반 표 여러 쪽 지원이 '나눔(TABLE)'이 아님`);
-    assert(/\brepeatHeader="1"/.test(tableOpen), `${testCase.name}: 일반 표 제목 줄 자동 반복이 꺼져 있음`);
+    assert(/\brepeatHeader="[01]"/.test(tableOpen), `${testCase.name}: 일반 표 제목 줄 반복 값이 유효하지 않음`);
     assert(/\btreatAsChar="0"/.test(posOpen), `${testCase.name}: 일반 표가 글자처럼 취급됨`);
     assert(/\bflowWithText="1"/.test(posOpen), `${testCase.name}: 일반 표가 본문 흐름을 따르지 않음`);
     assert(/\bhorzRelTo="COLUMN"/.test(posOpen), `${testCase.name}: 일반 표 가로 기준이 단(COLUMN)이 아님`);
-    assert(/\bhorzAlign="RIGHT"/.test(posOpen), `${testCase.name}: 일반 표가 단 오른쪽 정렬이 아님`);
+    assert(/\bhorzAlign="(?:LEFT|CENTER|RIGHT)"/.test(posOpen), `${testCase.name}: 일반 표 가로 정렬 값이 유효하지 않음`);
     assert(/\bbottom="850"/.test(outMarginOpen), `${testCase.name}: 일반 표 아래쪽 바깥 여백이 3mm가 아님`);
     assert(headerFlags.length > 0 && headerFlags.every(flag => flag === '1'),
       `${testCase.name}: 일반 표 첫 행이 제목 셀로 지정되지 않음`);
@@ -533,6 +585,19 @@ async function runCase(page, testCase) {
   const buf = fs.readFileSync(outPath);
   const zip = await JSZip.loadAsync(buf);
   await validateHwpxPackage(page, zip, testCase);
+  if (testCase.name === 'docx-fidelity') {
+    const ir = JSON.parse(await page.locator('#ir-content').textContent());
+    assert(ir.audit?.sourceFormat === 'docx' && ir.audit.status === 'repaired',
+      `${testCase.name}: DOCX 사전 감사가 결함을 repaired 상태로 보고하지 않음`);
+    assert((ir.audit.repairs || []).length >= 3,
+      `${testCase.name}: 알려진 OOXML 결함 정규화 내역이 충분히 기록되지 않음`);
+    assert(ir.pageSetup?.widthHwp === 61200 && ir.pageSetup?.heightHwp === 79200,
+      `${testCase.name}: DOCX 페이지 설정이 공통 IR에 기록되지 않음`);
+    assert(ir.typography?.baseFontSizePt === 10 && ir.typography?.lineSpacingPercent === 120,
+      `${testCase.name}: styles.xml 기본 10pt/120% 타이포그래피가 IR에 보존되지 않음`);
+    assert(ir.blocks?.find(block => block.type === 'table')?.header?.[0]?.blocks?.length >= 2,
+      `${testCase.name}: DOCX 셀 다중 문단이 IR blocks에 보존되지 않음`);
+  }
   if (testCase.name === 'markdown') {
     const nestedImageSource = await page.evaluate(() => normalizeMarkdownImageSource(
       '[https://example.com/image.jpg](https://example.com/image.jpg)'
@@ -1269,7 +1334,7 @@ async function validatePaperMatrix(page) {
     A3: [84189, 119055],
     A4: [59528, 84188],
     B5: [51430, 72817],
-    Letter: [61920, 80136],
+    Letter: [61200, 79200],
   };
   const previewWidths = {};
   await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
@@ -1717,6 +1782,8 @@ async function validatePretendardCompatibility(page) {
   if (!fs.existsSync(docxPath)) {
     await buildDocx(docxPath);
   }
+  const docxFidelityPath = path.join(FIXTURES, 'docx-fidelity.docx');
+  await buildDocxFidelityFixture(docxFidelityPath);
   const xlsxPath = path.join(FIXTURES, 'sample.xlsx');
   if (!fs.existsSync(xlsxPath)) {
     await buildXlsx(xlsxPath);

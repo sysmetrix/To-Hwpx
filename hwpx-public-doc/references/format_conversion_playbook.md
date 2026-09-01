@@ -307,18 +307,21 @@
 
 ## DOCX
 
-관련 코드: `parseDocx()`, `extractDocxParagraph()`, `extractDocxTable()`, `extractDocxImage()` in `js/parsers.js`; image/table/footnote paths in `js/hwpx.js`
+관련 코드: `auditAndNormalizeDocxXml()` in `js/docx-audit.js`; `parseDocx()`, `extractDocxParagraph()`, `extractDocxTable()`, `extractDocxImage()` in `js/parsers.js`; image/table/footnote paths in `js/hwpx.js`
 
 목표:
 
-- Word 화면을 픽셀 단위로 복제하지 않고, 본문 구조 중심으로 HWPX 문서를 재구성한다.
+- Word 화면을 픽셀 단위로 복제하지 않고, 입력 결함을 설명하면서 페이지·타이포그래피·본문 구조를 계수 가능한 형태로 HWPX에 재구성한다.
 
 보존:
 
 - 문서 순서 기준 heading/paragraph 후보
 - 문단, 일부 정렬(center/right/justify)
-- bold, italic, underline, strike, text color
+- bold, italic, underline, strike, text color, highlight, 탭, 수동 줄바꿈
+- 원본 페이지 크기·방향·여백과 styles.xml의 기본 글자 크기·줄 간격
+- 표 전체 폭·열 비율·정렬·셀 여백·행 높이·머리행 반복·수직 정렬
 - 기본 표, 가로/세로 병합, 셀 배경색, 셀 글자색 일부
+- 셀 안의 여러 문단, 목록, 중첩 표, 그림 순서
 - PNG/JPG/GIF/BMP 본문 이미지
 - 각주 텍스트
 - 주석(`word/comments.xml`, v4.10.28~) — `w:commentReference`를 만나면 `run.footnote`와 같은 필드에 `[주석] 작성자: 내용`으로 삽입해 기존 각주 렌더 경로를 그대로 재사용한다. `commentRangeStart/End`(하이라이트 범위)는 다루지 않고 앵커 위치만 사용한다.
@@ -326,8 +329,10 @@
 
 주의:
 
-- DOCX는 ZIP + OOXML이다. `word/document.xml`, 관계 파일, `word/media`, footnotes, comments, header/footer를 함께 본다.
-- WMF/EMF, 복잡한 drawing, 변경 추적, style theme, 섹션별 레이아웃은 손실 가능으로 안내한다.
+- DOCX는 ZIP + OOXML이다. `word/document.xml`, 관계 파일, `word/media`, styles, footnotes, comments, header/footer를 함께 본다.
+- 파싱 전 감사는 `undefined`/`null`/`NaN` 리터럴 속성, 소수 twip, 최종 `sectPr` 위치, 알려진 자식 순서를 계수한다. 텍스트 삭제나 임의 레이아웃 추론은 자동 복구하지 않는다.
+- 변경 추적의 삭제·이동 전 텍스트는 제외한다. 외부 관계는 안전한 URL 정책을 통과한 링크만 활성화한다.
+- WMF/EMF, 복잡한 drawing, style theme, 섹션별 레이아웃 전환은 손실 가능으로 안내한다. Word와 한컴의 줄·표 나눔 엔진이 다르므로 총 페이지 수는 동일성을 보증하지 않는다.
 - 목록 번호는 문서마다 XML 차이가 커서 변경 시 반드시 fixture를 추가한다.
 - 이미지 추가/수정은 `content.hpf` item id, manifest, `BinData` 파일, `hc:img@binaryItemIDRef`가 모두 맞아야 한다.
 - 표 병합은 HWPX에서 조용히 깨질 수 있다. row/col span 무결성과 borderFill ID를 검사한다.
@@ -335,9 +340,10 @@
 
 검증:
 
-- `tests/fixtures/sample.docx`, `qa/fixtures/docx_table_test.docx`, `qa/fixtures/docx_image_test.docx`
-- `npm run test:golden`
-- 이미지/색/병합/머리글/각주(주석 포함)는 자동 검증만으로 부족할 수 있으므로 한컴 확인을 요청한다.
+- `tests/fixtures/sample.docx`, `qa/fixtures/docx_table_test.docx`, `qa/fixtures/docx_image_test.docx`, `tests/fixtures/docx-fidelity.docx`
+- `npm run test:impact`, `npm run test:docx`, `npm run test:golden`
+- 고충실도 하네스는 표·행·셀 exact, 문단 97% 이상, 줄바꿈 입력 이상, 페이지 크기·방향·여백 exact, 잘못된 리터럴 부재를 검사한다.
+- 릴리스 후보는 `qa/hwp-export-pdf.ps1`로 한컴 PDF를 만들고 `qa/render-pdf-contact-sheets.py`로 모든 페이지를 렌더한다. 이미지/색/병합/머리글/각주(주석 포함), 빈 페이지·잘림·누락은 contact sheet와 한컴에서 수동 확인한다.
 
 ## PPTX
 
