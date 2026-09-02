@@ -1148,9 +1148,14 @@ async function validateCommercialUx(page) {
     && await page.locator('#format-more-panels').count() === 1
     && await page.locator('#format-more-toggle').count() === 0,
     'ux: 포맷 안내 버튼 라인이 기본 표시 상태가 아님');
-  assert(await page.locator('.service-info-label').textContent() === '더 알아보기'
+  // 라벨은 제목 텍스트 노드 + 무엇을 볼 수 있는지 알려주는 <small> 부제로 이뤄진다.
+  // 부제가 없으면 탭 줄만 맥락 없이 떠 있게 되므로 둘 다 확인한다.
+  const moreLabelHead = await page.locator('.service-info-label').evaluate(
+    el => el.firstChild?.textContent.trim());
+  assert(moreLabelHead === '더 알아보기'
+    && (await page.locator('.service-info-label small').textContent()).trim().length > 0
     && await page.locator('.service-info .format-panel.active').count() === 0,
-    'ux: 더 알아보기 라벨이 없거나 기본 열린 포맷 패널이 남아 있음');
+    'ux: 더 알아보기 라벨/부제가 없거나 기본 열린 포맷 패널이 남아 있음');
   const basicTab = page.locator('.service-info .format-tab[data-target="panel-basic"]');
   await basicTab.click();
   assert(await page.locator('#panel-basic').isVisible()
@@ -1790,6 +1795,25 @@ async function validateMobileFormFontSize(page) {
   assert(sizes.pasteTextarea >= 16,
     `mobile: 직접 입력 textarea font-size가 16px 미만이라 iOS 자동 확대 위험 (${sizes.pasteTextarea}px)`);
   console.log('PASS MOBILE 768px 이하 폼 컨트롤 font-size >= 16px (iOS 자동 확대 방지)');
+
+  // 글자 크기 하한 — 한글은 획이 많아 11px 아래에서는 실질적으로 읽을 수 없다.
+  // 여백 미니맵 라벨이 8.64px, 단계 라벨이 9.6px까지 내려가 있었다.
+  // 읽으라고 넣은 글자가 읽히지 않으면 자리만 차지하는 것이다.
+  const tiny = await page.evaluate(() => {
+    const out = [];
+    for (const el of document.querySelectorAll('body *')) {
+      if (el.children.length || !el.textContent.trim()) continue;   // leaf 텍스트만
+      // 가시성으로 거르지 않는다. 변환 진행 단계 라벨처럼 평소 숨어 있다가
+      // 나중에 보이는 UI가 검사에서 빠지면 거기서만 글자가 다시 작아진다.
+      // font-size는 숨은 요소에서도 계산되므로 그대로 읽으면 된다.
+      const size = parseFloat(getComputedStyle(el).fontSize);
+      if (size < 11) out.push(`${el.className || el.tagName}=${size.toFixed(2)}px`);
+    }
+    return [...new Set(out)];
+  });
+  assert(tiny.length === 0,
+    `타이포 하한: 11px 미만 글자 ${tiny.length}종 — ${tiny.slice(0, 6).join(', ')}`);
+  console.log('PASS TYPO  본문 글자 크기 하한 11px (한글 가독)');
 }
 
 async function validatePretendardCompatibility(page) {

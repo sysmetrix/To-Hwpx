@@ -814,7 +814,7 @@ function clearSelectedFile() {
     const cda = document.getElementById('converter-drop-area');
     const cdaLabel = document.getElementById('cda-label');
     if (cda) cda.classList.remove('has-file');
-    if (cdaLabel) cdaLabel.textContent = '파일을 드래그하거나 클릭하여 선택';
+    if (cdaLabel) cdaLabel.textContent = '여기에 놓거나 클릭해 선택';
 
     showFormatHintPlaceholder();   // 파일 전: 빈칸 대신 안내 placeholder로 레이아웃 유지
 
@@ -2974,6 +2974,9 @@ function updateConvertButton(enabled) {
     const becameReady = enabled && btn.disabled;
     btn.disabled = !enabled;
 
+    // 파일을 골랐으면 도구를 쓸 줄 아는 것이므로 첫 방문 안내점을 거둔다.
+    if (becameReady) clearOnboardingNudge();
+
     // 변환이 도는 동안은 버튼이 정지 상태가 아니라는 것을 계속 알린다.
     // 진행 막대만 움직이면 "숫자가 올라간다"로만 읽힌다.
     btn.classList.toggle('is-converting', !!state.isConverting);
@@ -4589,17 +4592,34 @@ function markOnboardingSeen() {
     }
 }
 
+/**
+ * 첫 방문 안내.
+ *
+ * 예전에는 700ms 뒤에 안내 모달을 자동으로 띄웠다. 그러면 처음 온 사람이
+ * 히어로도 드롭존도 보기 전에 모달부터 치우게 된다. 이 저장소의 UX 불변식은
+ * "첫 화면의 주 행동은 드롭존이고, 보조 안내가 그보다 먼저 시선을 빼앗지
+ * 않는다"인데, 모달은 버튼보다 더 강하게 시선을 빼앗으므로 그 규칙을 정면으로
+ * 어긴다. 게다가 히어로가 무엇을 하는 도구인지 이미 설명하고, 3단계 안내도
+ * 페이지 안에 그대로 있어서 모달이 하던 말은 중복이다.
+ *
+ * 그래서 막지 않고 가리키기만 한다 — 도움말 버튼에 점을 하나 붙인다.
+ * 필요한 사람은 누르고, 바로 변환하려는 사람은 방해받지 않는다.
+ */
 function maybeShowOnboardingGuide() {
     try {
         if (localStorage.getItem(ONBOARDING_SEEN_KEY) === '1') return;
     } catch (e) {
         return;
     }
-    window.setTimeout(() => {
-        if (document.querySelector('.modal-overlay.open')) return;
-        if (state.files?.length || state.file) return;
-        showOnboardingGuide();
-    }, 700);
+    document.getElementById('open-help')?.classList.add('has-nudge');
+}
+
+/** 도움말을 봤거나 변환을 시작하면 첫 방문 표시를 거둔다. */
+function clearOnboardingNudge() {
+    const btn = document.getElementById('open-help');
+    if (!btn?.classList.contains('has-nudge')) return; // 매번 localStorage를 쓰지 않는다
+    btn.classList.remove('has-nudge');
+    markOnboardingSeen();
 }
 
 function activateHelpTab(name = 'usage') {
@@ -4649,6 +4669,7 @@ function initHelpDetailDemo() {
 }
 
 function showOnboardingGuide() {
+    clearOnboardingNudge();
     activateHelpTab('usage');
     openModal(document.getElementById('onboarding-guide-modal'));
 }
