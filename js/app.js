@@ -1163,6 +1163,17 @@ function initFormatTabs() {
 // HWP → HWPX 일괄 변환 공식 도구 (한컴 HwpxConverter)
 const HWPX_CONVERTER_DOWNLOAD_URL = 'https://www.hancom.com/support/downloadCenter/download';
 
+/** 공문 구성요소 표시 이름 — gov-doc.js의 role 값과 짝이다. */
+const GOV_ELEMENT_LABELS = Object.freeze({
+    recipient: '수신',
+    via: '경유',
+    subject: '제목',
+    sender: '발신명의',
+    issued: '시행',
+    received: '접수',
+    disclosure: '공개 구분',
+});
+
 const FORMAT_INFO = {
     pdf: {
         icon: '📕', name: 'PDF',
@@ -3313,6 +3324,12 @@ function showResult({ url, fileName, size, validation }) {
                     ${govReport.attachments ? ` · 붙임 ${escHtml(String(govReport.attachments))}건` : ''}
                     ${govReport.hasEndMark ? ' · 끝. 표시 확인' : ''}
                 </span>
+                ${Object.keys(govReport.elements || {}).length ? `
+                <span class="gov-note-detail">
+                    인식한 구성요소: ${escHtml(Object.keys(govReport.elements).map(k => GOV_ELEMENT_LABELS[k] || k).join(' · '))}
+                </span>` : ''}
+                ${govReport.subject ? `
+                <span>제목을 문서 제목으로 반영했습니다 — ${escHtml(govReport.subject)}</span>` : ''}
             </div>
             ` : ''}
             ${pdfAudit ? `

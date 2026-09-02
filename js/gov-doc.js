@@ -51,6 +51,31 @@ const SECTION_MARKS = Object.freeze({
 });
 
 /**
+ * 공문서 구성요소 — 「행정업무의 운영 및 혁신에 관한 규정」 시행규칙 기준.
+ *
+ *   두문: 행정기관명, 수신, 경유
+ *   본문: 제목, 내용, 붙임
+ *   결문: 발신명의, 시행·접수 등록번호와 날짜, 기관 정보, 공개 구분
+ *
+ * 각 요소는 줄 맨 앞의 표지로만 판단한다. 본문 가운데 "제목"이라는 낱말이
+ * 나온다고 제목 줄로 보면 안 되기 때문이다.
+ */
+const DOC_ELEMENTS = Object.freeze([
+    { role: 'recipient', zone: 'head', re: /^수\s*신\s*(자)?\s*[:：]?\s*/ },
+    { role: 'via',       zone: 'head', re: /^경\s*유\s*[:：]?\s*/ },
+    { role: 'subject',   zone: 'body', re: /^제\s*목\s*[:：]?\s*/ },
+    { role: 'issued',    zone: 'foot', re: /^시\s*행\s*[:：]?\s*/ },
+    { role: 'received',  zone: 'foot', re: /^접\s*수\s*[:：]?\s*/ },
+    { role: 'disclosure', zone: 'foot', re: /^공개\s*구분\s*[:：]?\s*/ },
+]);
+
+/**
+ * 발신명의 — "○○부장관", "△△시장", "□□청장" 처럼 직위로 끝나는 짧은 줄.
+ * 결문에서만 찾는다. 본문에도 기관장 이름은 흔히 나오기 때문이다.
+ */
+const SENDER_TITLE = /(장관|차관|시장|도지사|군수|구청장|청장|원장|이사장|회장|총장|교육감|위원장|본부장|단장|소장)$/;
+
+/**
  * 한 줄이 어떤 항목 기호로 시작하는지 찾는다.
  * @returns {{level:number, marker:string, rest:string, name:string}|null}
  */
@@ -117,6 +142,8 @@ export function applyGovDocStructure(ir) {
         attachments: 0,
         hasEndMark: false,
         splitParagraphs: 0,
+        elements: {},
+        subject: null,
     };
 
     if (!ir || !Array.isArray(ir.blocks)) return { ir, report };
@@ -143,9 +170,9 @@ export function applyGovDocStructure(ir) {
             continue;
         }
 
-        // 여러 줄 — 기호가 하나라도 있어야 나눈다. 없으면 원래 문단을 유지한다
-        // (일반 문단을 줄 단위로 쪼개면 원문보다 나빠진다).
-        if (!lines.some(l => l.trim() && (matchMarker(l.trim()) || isSectionMark(l.trim())))) {
+        // 여러 줄 — 항목 기호나 공문 표지가 하나라도 있어야 나눈다.
+        // 없으면 원래 문단을 유지한다(일반 문단을 줄 단위로 쪼개면 원문보다 나빠진다).
+        if (!lines.some(l => l.trim() && isLineBoundary(l.trim()))) {
             out.push(block);
             continue;
         }
@@ -157,7 +184,7 @@ export function applyGovDocStructure(ir) {
         for (const raw of lines) {
             const line = raw.trim();
             if (!line) continue;
-            if (matchMarker(line) || isSectionMark(line) || !groups.length) {
+            if (isLineBoundary(line) || !groups.length) {
                 groups.push(line);
             } else {
                 groups[groups.length - 1] += ' ' + line;
@@ -170,11 +197,100 @@ export function applyGovDocStructure(ir) {
     }
 
     ir.blocks = out;
+
+    // 항목 깊이를 매긴 뒤에 구성요소를 본다. 순서가 반대면 제목 줄이
+    // 항목으로 먼저 잡혀 들여쓰기가 들어간다.
+    applyElementRoles(out, report);
+
+    // 제목을 찾았으면 문서 제목으로 승격한다. 파서가 첫 줄(기관명)을
+    // 제목으로 잡아 두는 경우가 많은데, 공문에서 문서를 대표하는 것은
+    // 기관명이 아니라 제목이다.
+    if (report.subject) ir.title = report.subject;
+
     return { ir, report };
 }
 
 function isSectionMark(line) {
     return SECTION_MARKS.attachment.test(line) || SECTION_MARKS.end.test(line);
+}
+
+/**
+ * 이 줄에서 새 문단이 시작되는가.
+ *
+ * 항목 기호뿐 아니라 **공문 구성요소 표지**(수신·경유·제목·시행·접수·공개 구분)와
+ * 붙임·끝.에서도 끊어야 한다. 항목 기호만 보면 두문(기관명·수신·경유·제목)이
+ * 통째로 한 문단이 되어 제목을 찾지 못한다 — 실제로 그랬다.
+ *
+ * 발신명의도 경계다. 결문에서 홀로 서는 줄이라 앞 줄에 붙으면 사라진다.
+ */
+function isLineBoundary(line) {
+    return !!matchMarker(line)
+        || isSectionMark(line)
+        || !!matchElement(line)
+        || SENDER_TITLE.test(line);
+}
+
+/**
+ * 줄이 어떤 공문 구성요소인지 본다.
+ * 표지가 줄 맨 앞에 있을 때만 인정한다 — 본문 가운데 "제목"이라는 낱말이
+ * 나온다고 제목 줄로 보면 안 된다.
+ */
+function matchElement(line) {
+    for (const e of DOC_ELEMENTS) {
+        const hit = e.re.exec(line);
+        if (hit) return { role: e.role, zone: e.zone, value: line.slice(hit[0].length).trim() };
+    }
+    return null;
+}
+
+/**
+ * 인식한 구성요소를 IR에 반영한다.
+ *
+ * 실제로 바꾸는 것은 최소한으로 한다.
+ *   - 제목 → 문서 제목으로 승격하고 본문에서는 제목 문단으로 만든다.
+ *     공문에서 제목은 문서 전체를 대표하는 유일한 줄이므로 이건 안전하다.
+ *   - 발신명의 → 가운데 정렬. 규정 서식에서 결문의 발신명의는 가운데에 온다.
+ *   - 나머지(수신·경유·시행·접수·공개 구분) → 역할만 표시하고 모양은 두지 않는다.
+ *     이 줄들의 배치는 기관 서식마다 다르고, 추측해서 옮기면 원문보다 나빠진다.
+ */
+function applyElementRoles(blocks, report) {
+    let sawBody = false;      // 제목 이후를 본문으로 본다
+    let sawEnd = false;       // "끝." 이후는 결문 구역
+
+    for (const block of blocks) {
+        if (!block || block.type !== 'para') continue;
+        const text = (typeof block.text === 'string' ? block.text : '').trim();
+        if (!text) continue;
+
+        if (block.govRole === 'end') { sawEnd = true; continue; }
+        if (block.govRole === 'attachment') continue;
+
+        const el = matchElement(text);
+        if (el) {
+            block.govRole = el.role;
+            report.elements[el.role] = (report.elements[el.role] || 0) + 1;
+
+            if (el.role === 'subject') {
+                sawBody = true;
+                // 제목 표지를 떼고 제목 문단으로 만든다.
+                block.type = 'heading';
+                block.level = 1;
+                block.text = el.value || text;
+                delete block.runs;
+                report.subject = block.text;
+            }
+            continue;
+        }
+
+        // 발신명의는 결문에서만 찾는다. 본문에도 기관장 이름은 흔히 나온다.
+        if (sawEnd && !block.govRole && text.length <= 30 && SENDER_TITLE.test(text)) {
+            block.govRole = 'sender';
+            block.align = 'center';
+            report.elements.sender = (report.elements.sender || 0) + 1;
+        }
+
+        if (sawBody) block.govZone = 'body';
+    }
 }
 
 /** 한 줄(또는 한 문단)을 분류해 깊이·역할을 붙인다. */
