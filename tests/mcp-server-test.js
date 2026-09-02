@@ -88,7 +88,8 @@ function startServer() {
         const names = (list.result?.tools || []).map(t => t.name);
         note(names.includes('markdown_to_hwpx') && names.includes('ir_to_hwpx')
             && names.includes('get_ir_schema') && names.includes('read_hwpx')
-            && names.includes('make_comparison_table'),
+            && names.includes('make_comparison_table')
+            && names.includes('draft_official_document'),
             '② tools/list', names.join(', '));
         const mdTool = list.result.tools.find(t => t.name === 'markdown_to_hwpx');
         note(mdTool?.inputSchema?.required?.includes('markdown'), '② 입력 스키마에 required 명시');
@@ -240,6 +241,30 @@ function startServer() {
             name: 'make_comparison_table', arguments: { current: '', revised: '' },
         });
         note(cmpBad.result?.isError === true, '⑦ 빈 입력 거절');
+
+        // ⑦-d draft_official_document — 공식 서식이 아님을 반드시 말해야 한다
+        const skOut = path.join(TMP, 'skeleton.hwpx');
+        const sk = await s.request('tools/call', {
+            name: 'draft_official_document',
+            arguments: {
+                agency: '행정안전부', recipient: '수신자 참조',
+                subject: '개방형 문서 전환 알림',
+                body: ['1. 관련: 근거 문서', '가. 세부 사항'],
+                attachments: ['계획서 1부.'],
+                sender: '행정안전부장관',
+                outputPath: skOut,
+            },
+        });
+        const skText = sk.result?.content?.[0]?.text || '';
+        note(sk.result?.isError === false && fs.existsSync(skOut), '⑦ draft_official_document 성공');
+        note(/복제가 아닙니다/.test(skText) && /공식 서식 파일/.test(skText),
+            '⑦ 공식 별지 서식이 아님을 안내 — 에이전트가 발송본으로 오해하면 안 된다');
+        if (fs.existsSync(skOut)) {
+            const zip = await JSZip.loadAsync(fs.readFileSync(skOut));
+            const sec = await zip.file('Contents/section0.xml').async('string');
+            note(/수신/.test(sec) && /붙임/.test(sec) && /공개 구분/.test(sec),
+                '⑦ 두문·본문·결문 요소가 산출물에 포함');
+        }
 
         // ⑧ 알 수 없는 메서드는 JSON-RPC 오류로
         const unknown = await s.request('nope/method', {});

@@ -39,6 +39,7 @@ const { hwpxToIr, coalesceBlocks } = await import('./hwpx-to-ir.js');
 const { TEXT_EXPORTERS } = await import('./ir-to-text.js');
 const { parsePdf } = await import('../pdf-parser.js');
 const { buildComparisonTable } = await import('../diff-table.js');
+const { buildOfficialSkeleton } = await import('../gov-doc.js');
 
 const VERSION = require('../../package.json').version;
 const PROTOCOL_VERSION = '2024-11-05';
@@ -162,6 +163,36 @@ const TOOLS = [
                 ...RENDER_OPTION_SCHEMA,
             },
             required: ['current', 'revised'],
+        },
+    },
+    {
+        name: 'draft_official_document',
+        description:
+            '공문 초안 골격을 HWPX로 만든다. 시행규칙이 정한 두문(기관명·수신·경유), '
+            + '본문(제목·내용·붙임), 결문(발신명의·시행·접수·공개 구분)을 순서대로 놓고 '
+            + '본문 항목에는 규정 2타 들여쓰기를 적용한다. '
+            + '⚠ 공식 별지 서식의 복제가 아니다 — 기관명 로고 위치, 결재란, 선 굵기 등은 담기지 않는다. '
+            + '최종 발송본은 소속 기관의 공식 서식 파일에 옮겨 담아야 한다.',
+        inputSchema: {
+            type: 'object',
+            properties: {
+                agency: { type: 'string', description: '행정기관명' },
+                recipient: { type: 'string', description: '수신자' },
+                via: { type: 'string', description: '경유 (없으면 생략)' },
+                subject: { type: 'string', description: '제목' },
+                body: {
+                    type: 'array',
+                    items: { type: 'string' },
+                    description: '본문 줄 배열. 항목 기호(1. 가. 1) …)를 쓰면 규정 들여쓰기가 적용된다.',
+                },
+                attachments: { type: 'array', items: { type: 'string' }, description: '붙임 목록' },
+                sender: { type: 'string', description: '발신명의 (예: ○○부장관)' },
+                issued: { type: 'string', description: '시행 등록번호와 날짜' },
+                received: { type: 'string', description: '접수 등록번호와 날짜' },
+                disclosure: { type: 'string', description: '공개 구분' },
+                outputPath: { type: 'string', description: '저장할 .hwpx 경로. 생략하면 요약만 반환한다.' },
+                ...RENDER_OPTION_SCHEMA,
+            },
         },
     },
     {
@@ -425,6 +456,15 @@ async function callTool(name, args = {}) {
                     lines.push('※ 문서가 커서 정밀 대조를 생략하고 순서대로 짝지었습니다. 결과를 확인하세요.');
                 }
                 r.text += lines.join('\n');
+            }
+            return r;
+        }
+
+        case 'draft_official_document': {
+            const { ir, notes } = buildOfficialSkeleton(args);
+            const r = await renderAndReport(ir, { ...args, title: undefined }, '공문 초안 골격');
+            if (!r.isError) {
+                r.text += ['', '[안내]', ...notes.map(n => `※ ${n}`)].join('\n');
             }
             return r;
         }
