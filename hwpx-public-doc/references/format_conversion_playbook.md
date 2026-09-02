@@ -2,6 +2,24 @@
 
 이 문서는 To-Hwpx의 포맷별 변환 기술과 작업 노하우를 모은다. 목적은 새 에이전트가 `js/parsers.js`, `js/hwpx.js`, `js/app.js`를 매번 처음부터 추측하지 않고 같은 품질 기준으로 수정하게 하는 것이다.
 
+## 재현도 채점 (전 포맷)
+
+원본과 생성 HWPX를 항목별로 대조해 포맷마다 100점 만점으로 채점하고 미달 근거를 출력한다. 회귀를 "무언가 바뀌었다"가 아니라 **"무엇이 얼마나 사라졌다"**로 보게 하는 것이 목적이다.
+
+```
+node tests/format-fidelity-score.js [md html txt csv xlsx json ipynb pptx]   # 픽스처: tests/fixtures/fidelity/rich.*
+node tests/docx-real-convert.js "원본.docx" && node tests/docx-fidelity-score.js "원본.docx"   # DOCX는 실제 원본 기준
+```
+
+채점 기준을 고칠 때는 **코드 버그와 채점 기준 오류를 구분한다.** 실제로 있었던 예:
+
+- 첫 H1은 기본 제목 정책(`heading`)에 따라 **문서 제목 문단(`paraPr 12`)으로 승격**된다 → 본문 제목만 세면 항상 1개 모자라 보인다.
+- `> a` / `> b` 두 줄은 Markdown 상 **한 문단**이다 → 인용 문단 수가 아니라 두 줄이 `hp:lineBreak`로 함께 남았는지를 본다.
+- 코드 블록은 **표로 렌더**된다 → 데이터 표를 세려면 코드 줄(`paraPr 14`)을 포함한 표를 빼야 한다.
+- TXT의 `- 항목`은 목록으로 인식돼 마커가 `·`로 바뀐다(의도된 동작) → 원문 글자가 아니라 낱말 보존을 본다.
+
+> ⚠️ **채점 100점은 구조·값 대조 결과일 뿐 한컴 육안 확인을 대체하지 않는다.** v4.16.8의 borderFill 순서 버그는 자동 게이트 ①~⑨를 전부 통과하고도 한컴에서 틀리게 그려졌다(`hwpx_rendering_gotchas.md` 2-1절).
+
 ## 공통 원칙
 
 - 입력 파일은 파서에서 IR(`{ title, doc_type, blocks }`)로 정규화하고, `js/hwpx.js`가 IR을 HWPX ZIP/XML로 만든다.
@@ -168,6 +186,7 @@
 - `blockquote`(Markdown 인용구와 같은 HWPX 인용 문단)
 - `strong`, `em`, `code`, `u`, `ins`, `s`, `strike`, `del`
 - 일부 글자색(`style="color:"`, `<font color>`)
+- (v4.16.10) `<a href>` 링크 — Markdown `link` 토큰과 같은 공통 run 계약(`href`/`title`)으로 보존해 HWPX 하이퍼링크 필드로 나간다. 허용 스킴은 `http:`, `https:`, `mailto:`, `#`이고 그 외는 표시 문자열만 남는다(IR 레벨 차단 + `hwpx.js`·preview 각자 재검증). 이전엔 `extractInlineRuns()`가 `<a>`를 일반 인라인 요소로만 훑어 **링크가 죽은 텍스트로만 남았다.**
 
 주의:
 
@@ -199,8 +218,8 @@
 
 주의:
 
-- 제목, 표, bold 같은 서식 정보는 원본에 없으므로 추정하지 않는다.
-- 표처럼 보이는 텍스트도 기본적으로 일반 문단으로 처리될 수 있다.
+- 표, bold처럼 원본에 근거가 없는 서식은 추정하지 않는다. 표처럼 보이는 텍스트도 일반 문단으로 처리될 수 있다.
+- 다만 `parseTxt()`는 **원문에 표기가 있는 것만** 가볍게 인식한다: `#`~`######` 제목(첫 H1은 문서 제목으로 승격), `- `/`* `/`+ `/`1. `로 시작하는 줄의 목록, ```` ``` ```` 코드 블록. 목록으로 인식된 줄은 마커가 `·`(또는 번호)로 바뀌므로 원문의 `-` 문자 자체는 남지 않는다 — 낱말은 전부 보존된다. `tests/golden.js`의 `txt-utf8`/`txt-euckr`가 이 동작을 고정한다.
 - 인코딩 감지는 앱 로딩 경로와 함께 확인한다.
 
 검증:
@@ -290,7 +309,7 @@
 
 - markdown cell: Markdown 파서 재사용
 - code cell: 일반 문단이 아닌 등폭 코드블록 표
-- text output: 문서 본문으로 포함
+- text output: 문서 본문으로 포함. `stream`은 `out.text`, `execute_result`·`display_data`는 `out.data['text/plain']`(없으면 `text/html`)에 값이 들어간다 — v4.16.10 이전엔 `out.text`만 읽어 **셀 결과값(노트북에서 가장 흔한 출력)이 통째로 사라졌다.**
 - image output(`image/png`, `image/jpeg`): base64 디코드 → `sniffRasterImage()`로 픽셀 크기 확인 → `imageSizeHwp()`로 HWP 단위 변환 → 공통 image IR 블록으로 변환(v4.10.7~)
 
 주의:
