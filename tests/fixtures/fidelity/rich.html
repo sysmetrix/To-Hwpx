@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <title>HTML 재현도 검증</title>
+  <style>body { color: red; }</style>
+  <script>var ignored = 1;</script>
+</head>
+<body>
+  <nav>내비게이션은 제외되어야 합니다</nav>
+  <h1>HTML 재현도 검증</h1>
+  <h2>2단계 제목</h2>
+  <h3>3단계 제목</h3>
+  <h4>4단계 제목</h4>
+  <h5>5단계 제목</h5>
+  <h6>6단계 제목</h6>
+
+  <p>일반 문단입니다. 한글과 English가 섞여 있습니다.</p>
+  <p>서식 검증: <strong>굵게</strong>, <em>기울임</em>, <code>코드</code>,
+     <u>밑줄</u>, <ins>삽입</ins>, <s>취소</s>, <strike>취소2</strike>, <del>삭제</del>.</p>
+  <p>글자색 검증: <span style="color:#C0392B">빨강 글자</span>와
+     <font color="#1D4ED8">파랑 글자</font>입니다.</p>
+
+  <ul>
+    <li>비순서 항목 하나</li>
+    <li>비순서 항목 둘
+      <ul>
+        <li>중첩 항목 1단계
+          <ul><li>중첩 항목 2단계</li></ul>
+        </li>
+      </ul>
+    </li>
+  </ul>
+
+  <ol>
+    <li>순서 항목 하나</li>
+    <li>순서 항목 둘</li>
+  </ol>
+
+  <table>
+    <tr><th>머리 A</th><th>머리 B</th><th>머리 C</th></tr>
+    <tr><td colspan="2">가로 병합 셀</td><td>보통 셀</td></tr>
+    <tr><td rowspan="2">세로 병합 셀</td><td>본문 1</td><td>본문 2</td></tr>
+    <tr><td>본문 3</td><td>본문 4</td></tr>
+  </table>
+
+  <blockquote>인용문 문단입니다.</blockquote>
+
+  <hr>
+
+  <p>링크 검증: <a href="https://example.com/page?a=1&amp;b=2">예제 사이트</a>와
+     <a href="mailto:test@example.com">메일 링크</a>입니다.</p>
+
+  <footer>푸터는 제외되어야 합니다</footer>
+</body>
+</html>

@@ -551,9 +551,18 @@ function extractInlineRuns(el) {
         if (node.nodeType === 3) {
             const text = sanitize(node.textContent || '');
             if (text) runs.push({ text, bold: st.bold, italic: st.italic, code: st.code,
-                underline: st.underline, strike: st.strike, color: st.color || null });
+                underline: st.underline, strike: st.strike, color: st.color || null,
+                href: st.href || undefined, title: st.title || undefined });
         } else if (node.nodeType === 1) {
             const t = (node.tagName || '').toLowerCase();
+            // <a href>는 Markdown link 토큰과 같은 공통 run 계약(href/title)으로 보존한다.
+            // IR 레벨에서 위험 스킴을 차단한다(defense-in-depth) — hwpx.js와 preview도 각자 검증.
+            let href = st.href, title = st.title;
+            if (t === 'a') {
+                const rawHref = sanitize(node.getAttribute('href') || '');
+                href = /^(https?:|mailto:|#)/i.test(rawHref) ? rawHref : st.href;
+                title = sanitize(node.getAttribute('title') || '') || st.title;
+            }
             const next = {
                 bold:      st.bold      || t === 'strong' || t === 'b',
                 italic:    st.italic    || t === 'em'     || t === 'i',
@@ -561,11 +570,12 @@ function extractInlineRuns(el) {
                 underline: st.underline || t === 'u'      || t === 'ins',
                 strike:    st.strike    || t === 's'      || t === 'strike' || t === 'del',
                 color:     extractNodeColor(node) || st.color,
+                href, title,
             };
             for (const ch of node.childNodes) walk(ch, next);
         }
     }
-    for (const ch of el.childNodes) walk(ch, { bold: false, italic: false, code: false, underline: false, strike: false, color: null });
+    for (const ch of el.childNodes) walk(ch, { bold: false, italic: false, code: false, underline: false, strike: false, color: null, href: '', title: '' });
     return runs;
 }
 
@@ -992,8 +1002,12 @@ function parseIpynb(text, docType = 'plain') {
             for (const out of (cell.outputs || [])) {
                 const otype = out.output_type;
                 if (otype === 'stream' || otype === 'execute_result' || otype === 'display_data') {
-                    // text 출력만 처리
-                    const txt = Array.isArray(out.text) ? out.text.join('') : (out.text || '');
+                    // text 출력만 처리. stream은 out.text를 쓰지만 execute_result와
+                    // display_data는 out.data['text/plain']에 값을 둔다 — 이걸 안 보면
+                    // 셀 결과값(노트북에서 가장 흔한 출력)이 통째로 사라진다.
+                    const rawText = out.text
+                        ?? (out.data && (out.data['text/plain'] ?? out.data['text/html']));
+                    const txt = Array.isArray(rawText) ? rawText.join('') : (rawText || '');
                     if (txt.trim()) {
                         ir.blocks.push({ type: 'para', text: '[출력] ' + sanitize(txt) });
                     }

@@ -1,6 +1,23 @@
 {
-  "current": "4.16.9",
+  "current": "4.16.10",
   "versions": [
+    {
+      "version": "4.16.10",
+      "date": "2026-09-02",
+      "user": [
+        "HTML 문서의 링크가 눌리지 않는 텍스트로만 남던 문제를 고쳤습니다. 이제 HWPX에서 클릭되는 링크로 들어갑니다.",
+        "주피터 노트북(IPYNB)의 셀 결과값이 변환 결과에서 빠지던 문제를 고쳤습니다.",
+        "MD·HTML·TXT·CSV·XLSX·JSON·IPYNB·PPTX 8개 포맷의 변환 품질을 항목별로 점검해 모두 만점을 확인했습니다."
+      ],
+      "dev": [
+        "[v4.16.10] js/parsers.js extractInlineRuns(): HTML <a href>를 공통 run 계약(href/title)으로 보존. Markdown link 토큰과 동일하게 http:/https:/mailto:/# 만 허용하고 그 외는 표시 문자열만 남긴다. 기존엔 <a>를 일반 인라인 요소로만 훑어 HTML 링크가 전부 죽은 텍스트였음(채점 링크 0/2)",
+        "[v4.16.10] js/parsers.js parseIpynb(): execute_result·display_data의 텍스트는 out.text가 아니라 out.data['text/plain'](없으면 text/html)에 들어간다. out.text만 읽고 있어 셀 결과값(노트북에서 가장 흔한 출력)이 통째로 사라졌음",
+        "[v4.16.10] tests/format-fidelity-score.js + tests/fixtures/fidelity/rich.* 신설: 8개 포맷의 리치 픽스처를 실제 브라우저로 변환해 원본과 항목별 대조 → 포맷별 100점 만점 채점. 초기 측정 MD 94.3 / HTML 92.3 / TXT 91.9 / IPYNB 91.7 → 전부 100.0",
+        "[v4.16.10] 채점 기준 오류와 코드 버그를 구분해 기록: 첫 H1은 제목 정책상 문서 제목 문단(paraPr 12)으로 승격되고, '> a\\n> b'는 Markdown 상 한 문단이며(hp:lineBreak로 두 줄 보존), 코드 블록은 표로 렌더되므로 데이터 표 계수에서 빼야 한다. TXT의 '- 항목' 목록 인식(마커 → ·)은 golden이 고정한 의도된 동작이라 낱말 보존으로 판정한다",
+        "[v4.16.10] format_conversion_playbook.md: 재현도 채점 절 신설(실행법 + 채점 기준 함정 4가지), HTML 링크·IPYNB 출력 보존 항목 추가, TXT의 실제 경량 인식 동작을 문서와 일치시킴(기존 '추정하지 않는다' 서술이 코드·golden과 어긋나 있었음)",
+        "[v4.16.10] lint·golden 13케이스·test:docx·test:package·impact-gate·commercial-gate 통과, DOCX 재현도 100.0점 유지 확인"
+      ]
+    },
     {
       "version": "4.16.9",
       "date": "2026-09-02",
