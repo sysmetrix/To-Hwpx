@@ -175,6 +175,67 @@ function govParaGeometry(headerXml) {
     check(markReport.attachments === 1 && markReport.hasEndMark,
         '⑧ 붙임·끝. 표지 인식', `붙임 ${markReport.attachments} · 끝 ${markReport.hasEndMark}`);
 
+    // ⑨ 공문 구성요소 인식 — 두문/본문/결문
+    const full = {
+        title: '행정안전부', doc_type: 'plain',
+        blocks: [{
+            type: 'para',
+            text: [
+                '행정안전부',
+                '수신  수신자 참조',
+                '경유',
+                '제목  개방형 문서 형식 전환 추진 계획 알림',
+                '1. 관련: 「행정업무의 운영 및 혁신에 관한 규정」 제7조',
+                '가. 전환 대상: 온나라 문서시스템 첨부 문서',
+                '붙임  1. 추진계획서 1부.',
+                '끝.',
+                '행정안전부장관',
+                '시행  정보기반보호정책과-1234 (2026. 9. 2.)',
+                '접수  기획조정실-5678 (2026. 9. 3.)',
+                '공개 구분  공개',
+            ].join('\n'),
+        }],
+    };
+    const fullReport = applyGovDocStructure(full).report;
+    const el = fullReport.elements;
+
+    check(['recipient', 'via', 'subject', 'issued', 'received', 'disclosure', 'sender']
+        .every(k => el[k] === 1),
+        '⑨ 두문·본문·결문 구성요소 인식', JSON.stringify(el));
+
+    // 제목은 문서를 대표하는 유일한 줄이다. 파서가 첫 줄(기관명)을 제목으로
+    // 잡아 두는 경우가 많으므로 승격해야 한다.
+    check(full.title === '개방형 문서 형식 전환 추진 계획 알림',
+        '⑨ 제목을 문서 제목으로 승격', full.title);
+    const subjectBlock = full.blocks.find(b => b.govRole === 'subject');
+    check(subjectBlock && subjectBlock.type === 'heading' && !/^제\s*목/.test(subjectBlock.text),
+        '⑨ 제목 문단은 제목 스타일 + 표지 제거', subjectBlock ? subjectBlock.text : '못 찾음');
+
+    // 발신명의는 규정 서식에서 결문 가운데에 온다.
+    const sender = full.blocks.find(b => b.govRole === 'sender');
+    check(sender && sender.align === 'center', '⑨ 발신명의 가운데 정렬',
+        sender ? `${sender.text} align=${sender.align}` : '못 찾음');
+
+    // 두문·결문 줄이 앞 줄에 삼켜지지 않아야 한다. 항목 기호만 경계로 삼으면
+    // 기관명·수신·경유·제목이 통째로 한 문단이 되어 제목을 찾지 못한다.
+    const heads = full.blocks.filter(b => ['recipient', 'via', 'subject'].includes(b.govRole));
+    check(heads.length === 3, '⑨ 두문 줄이 각각 분리됨', `${heads.length}개`);
+
+    // 본문 안의 "제7조"를 조문/구성요소로 오인하지 않는다.
+    const relatedLine = full.blocks.find(b => /관련:/.test(b.text || ''));
+    check(relatedLine && relatedLine.indentLevel === 0 && !relatedLine.govRole,
+        '⑨ 본문 안 조문 인용을 구성요소로 오인하지 않음',
+        relatedLine ? `깊이=${relatedLine.indentLevel} 역할=${relatedLine.govRole || '없음'}` : '못 찾음');
+
+    // ⑩ 구성요소 표지가 없는 문서는 역할을 붙이지 않는다
+    const noElem = {
+        title: 'T', doc_type: 'plain',
+        blocks: [{ type: 'para', text: ['1. 첫째', '가. 둘째'].join('\n') }],
+    };
+    const noElemReport = applyGovDocStructure(noElem).report;
+    check(Object.keys(noElemReport.elements).length === 0 && noElemReport.subject === null,
+        '⑩ 표지 없는 문서에는 역할을 붙이지 않음', JSON.stringify(noElemReport.elements));
+
     console.log('');
     if (failures.length) {
         console.error(`공문서 게이트 실패 ${failures.length}건: ${failures.join(', ')}`);
