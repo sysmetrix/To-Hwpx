@@ -37,6 +37,7 @@ const FIXTURES = [
     'qa/fixtures/docx_image_test.docx',
     'qa/fixtures/sample.pptx',
     'qa/fixtures/sample.ipynb',
+    'qa/fixtures/sample.pdf',
 ];
 
 /** 페이지에서 base64로 감싸 넘긴 바이트를 Uint8Array로 되돌린다. */

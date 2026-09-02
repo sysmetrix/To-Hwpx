@@ -37,6 +37,7 @@ const { irToHwpx, ensureNodeRuntime } = await import('./index.js');
 const { parseMd, parseCsv, parseJson, parseTxt } = await import('../parsers.js');
 const { hwpxToIr, coalesceBlocks } = await import('./hwpx-to-ir.js');
 const { TEXT_EXPORTERS } = await import('./ir-to-text.js');
+const { parsePdf } = await import('../pdf-parser.js');
 
 const VERSION = require('../../package.json').version;
 const PROTOCOL_VERSION = '2024-11-05';
@@ -101,6 +102,23 @@ const TOOLS = [
                 ...RENDER_OPTION_SCHEMA,
             },
             required: ['ir'],
+        },
+    },
+    {
+        name: 'pdf_to_hwpx',
+        description:
+            'PDF를 HWPX로 변환한다. PDF는 글자 좌표만 담는 레이아웃 형식이라 문단·제목·표를 '
+            + '글자 크기와 좌표로 **추론**한다. 원본 복제가 아니며, 추론에 쓴 근거를 결과에 함께 돌려준다. '
+            + '그림·셀 병합·글자 서식은 가져오지 않는다. 원본 문서 파일이 있으면 그쪽이 항상 더 정확하다.',
+        inputSchema: {
+            type: 'object',
+            properties: {
+                path: { type: 'string', description: '변환할 .pdf 파일 경로' },
+                outputPath: { type: 'string', description: '저장할 .hwpx 경로. 생략하면 요약만 반환한다.' },
+                title: { type: 'string', description: '문서 제목' },
+                ...RENDER_OPTION_SCHEMA,
+            },
+            required: ['path'],
         },
     },
     {
@@ -338,6 +356,29 @@ async function callTool(name, args = {}) {
             }
             return await renderAndReport(reviveImageData(args.ir), args, 'IR');
         }
+        case 'pdf_to_hwpx': {
+            if (typeof args.path !== 'string' || !args.path.trim()) throw new Error('path가 필요합니다.');
+            const abs = path.resolve(args.path);
+            if (!/\.pdf$/i.test(abs)) throw new Error(`.pdf 파일이 아닙니다: ${args.path}`);
+            if (!fs.existsSync(abs)) throw new Error(`파일이 없습니다: ${abs}`);
+            const ir = await parsePdf(new Uint8Array(fs.readFileSync(abs)));
+            const r = await renderAndReport(ir, args, 'PDF(구조 추론)');
+            if (!r.isError && ir.audit) {
+                const a = ir.audit;
+                // 추론 근거를 함께 돌려준다. 에이전트가 "원본 복제"로 오해하면
+                // 그 결과를 그대로 사람에게 전달하게 된다.
+                const evidence = [
+                    '',
+                    '[추론 근거]',
+                    `본문 ${a.bodyFontSizePt}pt · 제목 크기 [${a.headingSizesPt.join(', ')}] · ${a.pages}쪽`,
+                    `추론 결과: 제목 ${a.counts.headings} · 문단 ${a.counts.paragraphs} · 표 ${a.counts.tables} · 목록 ${a.counts.listItems}`,
+                    ...a.notes.map(n => `※ ${n}`),
+                ];
+                r.text += evidence.join('\n');
+            }
+            return r;
+        }
+
         case 'read_hwpx':
             return await readHwpxTool(args);
 

@@ -99,11 +99,11 @@ const PIPELINE_STEPS = [
 
 const SUPPORTED_EXTENSIONS = new Set([
     'md', 'markdown', 'html', 'htm', 'txt', 'text',
-    'csv', 'xlsx', 'xls', 'json', 'ipynb', 'docx', 'pptx', 'hwp', 'hwpx',
+    'csv', 'xlsx', 'xls', 'json', 'ipynb', 'docx', 'pptx', 'hwp', 'hwpx', 'pdf',
 ]);
-const BINARY_EXTENSIONS = new Set(['xlsx', 'xls', 'docx', 'pptx', 'hwp', 'hwpx']);
-const FORMAT_MAX_MB = Object.freeze({ xlsx: 20, xls: 20 });
-const SUPPORTED_FORMAT_LABEL = 'MD, DOCX, PPTX, HTML, CSV/XLSX, JSON, TXT, HWP, IPYNB';
+const BINARY_EXTENSIONS = new Set(['xlsx', 'xls', 'docx', 'pptx', 'hwp', 'hwpx', 'pdf']);
+const FORMAT_MAX_MB = Object.freeze({ xlsx: 20, xls: 20, pdf: 50 });
+const SUPPORTED_FORMAT_LABEL = 'PDF, MD, DOCX, PPTX, HTML, CSV/XLSX, JSON, TXT, HWP, IPYNB';
 const ONBOARDING_SEEN_KEY = 'tohwpx_onboarding_seen';
 const QUICK_GUIDE_HIDDEN_KEY = 'tohwpx_quick_guide_hidden';
 
@@ -1023,6 +1023,28 @@ function initFormatTabs() {
 const HWPX_CONVERTER_DOWNLOAD_URL = 'https://www.hancom.com/support/downloadCenter/download';
 
 const FORMAT_INFO = {
+    pdf: {
+        icon: '📕', name: 'PDF',
+        quality: '★★☆', available: true, badge: '베타',
+        desc: 'PDF는 글자를 어느 좌표에 그릴지만 담는 레이아웃 형식이라, 문단·제목·표를 좌표와 글자 크기로 추론합니다. 원본 그대로의 복제가 아닙니다.',
+        tech: 'pdf.js로 글자와 좌표 추출 → 줄·열 조립 → 구조 추론 → IR → HWPX',
+        features: [
+            '글자 크기로 제목 단계를 추론(본문보다 15% 이상 큰 줄을 크기순으로 H1~H6)',
+            '줄바꿈으로 잘린 문장을 한 문단으로 다시 이어붙임',
+            '열 경계가 맞는 줄이 2줄 이상 연속하면 표로 복원',
+            '머리행은 글자가 더 크거나 글꼴이 다를 때만 머리행으로 지정(근거 없으면 일반 행)',
+            '들여쓴 줄은 목록으로 복원하고 들여쓰기 폭에서 중첩 단계를 계산',
+            '추론에 쓴 근거(본문 크기·제목 크기·들여쓰기 폭)를 결과 카드에 표시',
+        ],
+        limits: [
+            '그림은 가져오지 않습니다',
+            '셀 병합·중첩 표는 좌표만으로 판단할 수 없어 제외',
+            '글꼴·글자색·굵게 등 문자 서식은 제외',
+            '스캔 이미지 PDF는 글자 레이어가 없어 변환할 수 없습니다(글자 인식 미지원)',
+            '단 나눔·머리말/꼬리말·각주는 본문 흐름에 섞일 수 있습니다',
+        ],
+        tip: '원본 문서 파일(DOCX·HWP 등)이 있다면 그쪽을 넣는 편이 항상 더 정확합니다. PDF는 원본이 없을 때 쓰는 경로입니다.',
+    },
     md: {
         icon: '📝', svgIcon: 'icons/brand/markdown.svg', name: 'Markdown',
         quality: '★★★', available: true,
@@ -3032,6 +3054,9 @@ function showResult({ url, fileName, size, validation }) {
     const assetWarnings = Array.isArray(validation.assetWarnings) ? validation.assetWarnings : [];
     const issuePreview = issues.slice(0, 3);
     const sourceAudit = state.ir?.audit?.sourceFormat === 'docx' ? state.ir.audit : null;
+    // PDF는 구조를 추론하므로, 추론에 쓴 근거를 사용자에게 그대로 보여준다.
+    // 고정 백분율로 품질을 주장하지 않는다(AGENTS.md).
+    const pdfAudit = state.ir?.audit?.sourceFormat === 'pdf' ? state.ir.audit : null;
     const auditRepairCount = sourceAudit
         ? (sourceAudit.repairs || []).reduce((sum, item) => sum + (Number(item.count) || 0), 0)
         : 0;
@@ -3103,6 +3128,19 @@ function showResult({ url, fileName, size, validation }) {
                 <span class="result-validation-mark">${validation.pass ? '✓' : '!'}</span>
                 <span>${escHtml(validText)}</span>
             </div>
+            ${pdfAudit ? `
+            <div class="result-inference-note">
+                <strong>📕 PDF 구조는 추론한 결과입니다</strong>
+                <span>PDF는 글자 좌표만 담는 형식이라 문단·제목·표를 아래 근거로 추론했습니다.</span>
+                <dl class="inference-grid">
+                    <div><dt>본문 글자 크기</dt><dd>${escHtml(String(pdfAudit.bodyFontSizePt))}pt</dd></div>
+                    <div><dt>제목으로 본 크기</dt><dd>${escHtml(pdfAudit.headingSizesPt.length ? pdfAudit.headingSizesPt.join(', ') + 'pt' : '없음')}</dd></div>
+                    <div><dt>쪽수</dt><dd>${escHtml(String(pdfAudit.pages))}쪽</dd></div>
+                    <div><dt>추론 결과</dt><dd>제목 ${escHtml(String(pdfAudit.counts.headings))} · 문단 ${escHtml(String(pdfAudit.counts.paragraphs))} · 표 ${escHtml(String(pdfAudit.counts.tables))} · 목록 ${escHtml(String(pdfAudit.counts.listItems))}</dd></div>
+                </dl>
+                <span class="inference-warn">그림·셀 병합·글자 서식은 가져오지 않습니다. 원본 문서 파일이 있다면 그쪽이 항상 더 정확합니다.</span>
+            </div>
+            ` : ''}
             ${sourceAudit ? `
             <div class="result-source-audit result-source-audit--${escHtml(sourceAudit.status || 'unknown')}">
                 <div>
@@ -3536,6 +3574,10 @@ function getInputFormatLabel(ext) {
 
 function getConversionSummaryForExt(ext) {
     const summaries = {
+        pdf: {
+            preserved: '본문 글자와 문단(줄바꿈으로 잘린 문장을 다시 이어붙임), 글자 크기로 추론한 제목 단계, 열이 맞는 표, 들여쓴 목록과 중첩 단계',
+            lossy: '그림, 셀 병합·중첩 표, 글꼴·글자색·굵게, 단 나눔·머리말/꼬리말, 페이지 배치. 스캔 이미지 PDF는 글자 레이어가 없어 변환 불가',
+        },
         md: {
             preserved: '제목, 문단, 목록, 표, 코드블록, 클릭 가능한 본문 링크, PNG/JPEG/GIF/BMP/WebP 이미지, GFM 각주, YAML frontmatter 제목',
             lossy: '상대경로·접근 차단 이미지의 실제 그림, 표 안 링크 기능, 복잡한 HTML, 사용자 정의 스타일, 페이지 배치',

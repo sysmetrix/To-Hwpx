@@ -225,12 +225,31 @@ const CASES = [
       '[발표자 노트] 골든 발표자 노트 확인용',
     ],
   },
+  {
+    // PDF는 좌표에서 구조를 추론한다. 여기서는 그 추론이 실제 앱 경로에서
+    // 살아 있는지만 본다 — 추론 규칙 자체의 회귀는 qa/pdf-gate.js가 맡는다.
+    name: 'pdf',
+    file: 'sample.pdf',
+    format: 'PDF',
+    minTables: 1,
+    mustContain: [
+      'PDF 추출 검증 문서',
+      // 줄바꿈으로 잘린 문장이 한 문단으로 다시 이어붙는지
+      '자동으로 줄바꿈이 일어나도록 충분히 긴 내용을 담고 있습니다',
+      '2단계 제목',
+      '홍길동',
+      '표 다음 문단입니다',
+    ],
+  },
 ];
 
 const TYPES = {
   '.html': 'text/html; charset=utf-8',
   '.css': 'text/css; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8',
+  '.mjs': 'text/javascript; charset=utf-8',
+  '.pdf': 'application/pdf',
+  '.wasm': 'application/wasm',
   '.json': 'application/json; charset=utf-8',
   '.svg': 'image/svg+xml',
   '.md': 'text/markdown; charset=utf-8',

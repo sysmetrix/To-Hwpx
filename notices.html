@@ -20,6 +20,7 @@
         <tr><td>marked</td><td>18.0.11</td><td>MIT</td><td>Markdown 구문 분석</td></tr>
         <tr><td>SheetJS Community Edition</td><td>0.20.3</td><td>Apache-2.0</td><td>XLS/XLSX 첫 시트 읽기</td></tr>
         <tr><td>@rhwp/core</td><td>0.8.4</td><td>MIT</td><td>HWP5 본문 추출용 JS·WASM</td></tr>
+        <tr><td>pdf.js (pdfjs-dist)</td><td>6.3.289</td><td>Apache-2.0</td><td>PDF 입력의 글자·좌표 추출</td></tr>
         <tr><td>rhwp viewer</td><td>외부 서비스</td><td>원저작자 조건 적용</td><td>사용자가 동의한 경우의 정밀 미리보기</td></tr>
     </tbody></table>
     <p>자체 호스팅 파일은 버전과 SHA-256을 고정하고 출시 CI에서 바이트 무결성을 확인합니다. 각 라이선스 전문은 배포 패키지의 <code>js/vendor/</code> 및 루트 <code>LICENSE</code>에 포함됩니다.</p>
@@ -38,6 +39,7 @@
     <ul>
         <li>Markdown 원격 이미지는 사용자가 입력한 이미지 서버로 브라우저가 직접 요청합니다.</li>
         <li>HWP5 엔진은 같은 서비스 도메인에 고정된 파일을 불러옵니다.</li>
+        <li>PDF 읽기 엔진도 같은 서비스 도메인에 고정된 파일을 불러오며, PDF를 변환할 때만 내려받습니다.</li>
         <li>정밀 미리보기는 별도 확인 후 외부 rhwp iframe에 생성 HWPX 바이트를 전달합니다.</li>
         <li>익명 사용 통계는 사용자가 동의한 경우에만 로드합니다.</li>
     </ul>

@@ -100,6 +100,19 @@
         "js/core/hwpx-to-ir.js",
         "qa/roundtrip-gate.js"
       ]
+    },
+    {
+      "id": "pdf-parser",
+      "paths": [
+        "js/pdf-parser.js"
+      ]
+    },
+    {
+      "id": "pdf-gate",
+      "paths": [
+        "qa/pdf-gate.js",
+        "tests/make-pdf-fixtures.js"
+      ]
     }
   ],
   "edges": [
@@ -182,6 +195,21 @@
       "from": "roundtrip",
       "to": "release-docs",
       "reason": "품질 주장의 재현 가능한 근거"
+    },
+    {
+      "from": "pdf-parser",
+      "to": "ir-v2",
+      "reason": "좌표에서 추론한 구조를 공통 IR로 정규화"
+    },
+    {
+      "from": "pdf-parser",
+      "to": "pdf-gate",
+      "reason": "정답을 아는 픽스처로 추론 회귀 검사"
+    },
+    {
+      "from": "pdf-parser",
+      "to": "quality-ui",
+      "reason": "추론 근거를 결과 카드에 표시"
     }
   ],
   "rules": [
@@ -264,6 +292,18 @@
       ],
       "tests": [
         "npm run test:roundtrip"
+      ]
+    },
+    {
+      "whenChanged": [
+        "js/pdf-parser.js"
+      ],
+      "requiresChanged": [
+        "hwpx-public-doc/references/format_conversion_playbook.md"
+      ],
+      "tests": [
+        "npm run test:pdf",
+        "npm run test:core"
       ]
     }
   ]

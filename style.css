@@ -6102,3 +6102,55 @@ a:hover { text-decoration: underline; }
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
+
+/* ─────────────────────────────────────────────────────────────────
+   [PDF 추론 근거] PDF는 구조를 좌표에서 추론하므로 그 근거를 보여준다.
+   고정 백분율로 품질을 주장하지 않는다.
+   ───────────────────────────────────────────────────────────────── */
+.result-inference-note {
+    display: grid;
+    gap: 6px;
+    margin: 10px 0 12px;
+    padding: 11px 13px;
+    border: 1px solid var(--c-warning-light);
+    border-left: 3px solid var(--c-warning);
+    border-radius: var(--radius-md);
+    background: var(--c-warnwash-bg);
+}
+.result-inference-note strong {
+    color: var(--c-warning);
+    font-size: 0.84rem;
+}
+.result-inference-note > span {
+    color: var(--c-text-sub);
+    font-size: 0.8rem;
+    line-height: 1.55;
+}
+.inference-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+    gap: 6px 14px;
+    margin: 2px 0;
+}
+.inference-grid > div {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px 8px;
+    align-items: baseline;
+}
+.inference-grid dt {
+    font-size: 0.75rem;
+    color: var(--c-text-muted);
+    margin: 0;
+}
+.inference-grid dd {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--c-text);
+    margin: 0;
+}
+.result-inference-note .inference-warn {
+    font-size: 0.76rem;
+    color: var(--c-text-muted);
+    line-height: 1.5;
+}

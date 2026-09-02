@@ -36,3 +36,11 @@ To HWPX 본체는 루트 `LICENSE`의 MIT License로 배포됩니다. 아래 구
 - PostHog: 사용자가 익명 통계에 동의한 경우에만 로드합니다.
 
 세부 내용은 `privacy.html`과 `terms.html`을 참조하세요.
+
+## pdf.js (pdfjs-dist)
+
+- 버전: 6.3.289 (legacy 빌드)
+- 라이선스: Apache License 2.0
+- 저작권: Mozilla Foundation and contributors
+- 전문: [js/vendor/PDFJS-LICENSE.txt](js/vendor/PDFJS-LICENSE.txt)
+- 사용 범위: PDF 입력의 글자·좌표 추출. PDF 파일을 변환할 때만 지연 로드하며, 같은 서비스 도메인에서 제공합니다.

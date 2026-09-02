@@ -3,5 +3,7 @@
   "js/vendor/marked-18.0.11.min.js": "69451c8541c9c1e7a4bf3ffc6f73c4d89633de92bfbe3e484dfe182ef8091f88",
   "js/vendor/xlsx-0.20.3.full.min.js": "cc015130aa8521e7f088f88898eba949ccdcbfb38df0bd129b44b7273c3a6f41",
   "js/vendor/rhwp-core-0.8.4/rhwp.js": "d2d2a33e1d75e122a8772fbdb372dcd547f3de4e5a16bf2e663bfb591f17656f",
-  "js/vendor/rhwp-core-0.8.4/rhwp_bg.wasm": "e09e8463291f3aded87bb8febdd21610e80b5159329666f114329e10195ea229"
+  "js/vendor/rhwp-core-0.8.4/rhwp_bg.wasm": "e09e8463291f3aded87bb8febdd21610e80b5159329666f114329e10195ea229",
+  "js/vendor/pdfjs-6.3.289/pdf.min.mjs": "f401927e692efc7735e0cd528c490d0dd31b7f0972c122b7040df805be45cce4",
+  "js/vendor/pdfjs-6.3.289/pdf.worker.min.mjs": "a33cfe728c584fdba4fcc1fd54bcdc2f9f2f13889ddbb5b2bd1d0f8cbe49b84e"
 }
