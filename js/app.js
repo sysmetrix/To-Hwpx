@@ -318,25 +318,148 @@ function initDropZone() {
         }
     });
 
-    // 파일 드롭
+    // 파일·폴더 드롭
     dropZone.addEventListener('drop', (e) => {
         e.preventDefault();
         e.stopPropagation();
         dropZone.classList.remove('drag-over');
-        handleFileList(e.dataTransfer.files);
+        handleDropTransfer(e.dataTransfer);
     });
 
     // 페이지 전체 드롭 방지 (드롭존 외부에 놓으면 브라우저가 파일을 열어버리는 것 방지)
     document.addEventListener('dragover',  (e) => e.preventDefault());
     document.addEventListener('drop', (e) => {
         e.preventDefault();
-        const file = e.dataTransfer.files[0];
         // 드롭존 영역이 아닌 곳에 드롭해도 처리
-        if (file) handleFileList(e.dataTransfer.files);
+        if (e.dataTransfer?.files?.length || e.dataTransfer?.items?.length) {
+            handleDropTransfer(e.dataTransfer);
+        }
     });
 }
 
-const MAX_BATCH_FILES = 20;
+/** 폴더를 훑을 때의 안전 한계 — 깊은 트리에서 브라우저가 멈추지 않게 한다. */
+const FOLDER_SCAN_LIMITS = Object.freeze({ maxDepth: 8, maxEntries: 2000 });
+
+/**
+ * 드롭된 항목을 파일 목록으로 편다.
+ *
+ * 전환기의 실제 작업 단위는 "파일 하나"가 아니라 "폴더 하나"다. 폴더를
+ * 떨어뜨리면 dataTransfer.files는 비어 있으므로 items의 FileSystemEntry를
+ * 재귀로 훑어야 한다.
+ *
+ * 지원하지 않는 확장자는 여기서 조용히 거른다 — 폴더에는 변환 대상이 아닌
+ * 파일이 섞여 있는 게 정상이고, 그것 하나하나에 경고를 띄우면 쓸 수 없다.
+ * (파일을 직접 고른 경우에는 handleFileList가 개별 안내를 계속 한다.)
+ */
+async function handleDropTransfer(dataTransfer) {
+    const items = Array.from(dataTransfer?.items || []);
+    const hasEntryApi = items.some(i => typeof i.webkitGetAsEntry === 'function');
+
+    if (!hasEntryApi) {
+        handleFileList(dataTransfer?.files);
+        return;
+    }
+
+    // getAsEntry는 이벤트 처리 직후에만 유효하므로 먼저 전부 꺼내 둔다.
+    const entries = items
+        .map(i => (i.kind === 'file' ? i.webkitGetAsEntry() : null))
+        .filter(Boolean);
+
+    if (!entries.some(en => en.isDirectory)) {
+        handleFileList(dataTransfer.files);
+        return;
+    }
+
+    setStatusText('폴더를 살펴보는 중...');
+    let collected;
+    try {
+        collected = await collectEntries(entries);
+    } catch (err) {
+        console.error('[폴더 읽기]', err);
+        showToast('<strong>폴더를 읽지 못했습니다</strong> <span>파일을 직접 선택해 주세요.</span>', { timeout: 5000 });
+        setStatusText('대기 중');
+        return;
+    }
+    setStatusText('대기 중');
+
+    const supported = collected.files.filter(f => SUPPORTED_EXTENSIONS.has(getFileExtension(f.name)));
+    if (!supported.length) {
+        showToast(
+            `<strong>변환할 파일이 없습니다</strong> <span>폴더에서 ${escHtml(String(collected.files.length))}개를 찾았지만 지원하는 형식이 없습니다.</span>`,
+            { timeout: 6000 }
+        );
+        return;
+    }
+
+    const skipped = collected.files.length - supported.length;
+    const notes = [];
+    if (skipped > 0) notes.push(`지원하지 않는 ${skipped}개 제외`);
+    if (collected.truncated) notes.push('항목이 많아 일부만 읽음');
+    if (notes.length) {
+        showToast(
+            `<strong>폴더에서 ${escHtml(String(supported.length))}개를 담았습니다</strong> <span>${escHtml(notes.join(' · '))}</span>`,
+            { timeout: 6000 }
+        );
+    }
+
+    handleFileList(supported);
+}
+
+/** FileSystemEntry 트리를 넓이 우선으로 훑어 파일을 모은다. */
+async function collectEntries(rootEntries) {
+    const files = [];
+    let truncated = false;
+    let queue = rootEntries.map(entry => ({ entry, depth: 0 }));
+
+    while (queue.length) {
+        if (files.length >= FOLDER_SCAN_LIMITS.maxEntries) { truncated = true; break; }
+        const { entry, depth } = queue.shift();
+
+        if (entry.isFile) {
+            const file = await new Promise(resolve => entry.file(resolve, () => resolve(null)));
+            if (file) files.push(file);
+            continue;
+        }
+
+        if (entry.isDirectory) {
+            if (depth >= FOLDER_SCAN_LIMITS.maxDepth) { truncated = true; continue; }
+            const children = await readDirectory(entry);
+            queue = queue.concat(children.map(c => ({ entry: c, depth: depth + 1 })));
+        }
+    }
+
+    return { files, truncated };
+}
+
+/**
+ * 디렉터리의 항목을 전부 읽는다.
+ * readEntries()는 한 번에 일부만 돌려주므로 빈 배열이 올 때까지 반복해야 한다.
+ * 한 번만 부르면 항목이 100개 넘는 폴더에서 조용히 잘린다.
+ */
+function readDirectory(dirEntry) {
+    return new Promise((resolve) => {
+        const reader = dirEntry.createReader();
+        const all = [];
+        const readBatch = () => {
+            reader.readEntries(
+                (batch) => {
+                    if (!batch.length) { resolve(all); return; }
+                    all.push(...batch);
+                    readBatch();
+                },
+                () => resolve(all),
+            );
+        };
+        readBatch();
+    });
+}
+
+// 전환기의 실제 작업 단위는 폴더 하나다. 20개로는 폴더를 담지 못한다.
+// 변환 루프가 파일마다 await로 이벤트 루프에 양보하므로 개수를 늘려도
+// UI가 멈추지 않는다. 대신 총 용량으로 메모리를 지킨다 — 결과 Blob을
+// 전부 들고 있기 때문이다.
+const MAX_BATCH_FILES = 100;
+const MAX_BATCH_TOTAL_MB = 200;
 
 /**
  * 파일 입력/드롭 진입점 — 선택된 파일들을 검증해 변환 큐에 추가한다.
@@ -382,6 +505,22 @@ function addFilesToQueue(files) {
         toAdd = accepted.slice(0, Math.max(0, room));
     }
 
+    // 총 용량 제한 — 결과 Blob을 전부 메모리에 들고 있으므로 개수만으로는
+    // 부족하다. 큰 파일 몇 개가 탭을 죽이는 것을 막는다.
+    const MAX_TOTAL_BYTES = MAX_BATCH_TOTAL_MB * 1024 * 1024;
+    let running = state.queue.reduce((n, q) => n + (q.file?.size || 0), 0);
+    let sizeOverflow = 0;
+    const withinSize = [];
+    for (const item of toAdd) {
+        if (running + item.file.size > MAX_TOTAL_BYTES && withinSize.length) {
+            sizeOverflow++;
+            continue;
+        }
+        running += item.file.size;
+        withinSize.push(item);
+    }
+    toAdd = withinSize;
+
     for (const { file, ext } of toAdd) {
         state.queue.push({
             id: `q_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
@@ -399,6 +538,7 @@ function addFilesToQueue(files) {
         notes.push(`${preview}${skipped.length > 3 ? ` 외 ${skipped.length - 3}개` : ''}`);
     }
     if (overflow)       notes.push(`최대 ${MAX_BATCH_FILES}개 초과로 ${overflow}개 제외`);
+    if (sizeOverflow)   notes.push(`총 ${MAX_BATCH_TOTAL_MB}MB 초과로 ${sizeOverflow}개 제외`);
     if (notes.length) {
         showToast(`<strong>일부 파일을 제외했습니다</strong> <span>${escHtml(notes.join(' · '))}</span>`, { timeout: 6000 });
     }
@@ -3388,6 +3528,7 @@ function showBatchResults({ okCount, warnCount, errCount, total }) {
                     <span>각 파일은 개별 HWPX로 변환되었습니다. 한컴오피스에서 최종 확인을 권장합니다.</span>
                 </div>
                 ${successCount ? `<button type="button" id="batch-zip-btn" class="btn-download btn-download-primary">⬇ 전체 ZIP 다운로드 (${successCount})</button>` : ''}
+                <button type="button" id="batch-report-btn" class="btn-secondary-export" title="변환 결과를 CSV 파일로 저장합니다">📋 변환 리포트</button>
             </div>
             <ul class="batch-result-list">${rows}</ul>
             <div class="result-download-location">
@@ -3399,6 +3540,7 @@ function showBatchResults({ okCount, warnCount, errCount, total }) {
     area.style.display = 'block';
 
     area.querySelector('#batch-zip-btn')?.addEventListener('click', downloadAllAsZip);
+    area.querySelector('#batch-report-btn')?.addEventListener('click', downloadBatchReport);
     area.querySelectorAll('.batch-preview').forEach(btn => {
         btn.addEventListener('click', () => {
             const item = state.queue.find(q => q.id === btn.dataset.id);
@@ -3420,6 +3562,70 @@ function showBatchResults({ okCount, warnCount, errCount, total }) {
 }
 
 /** 성공/경고 결과 blob들을 JSZip으로 묶어 한 번에 다운로드 */
+/**
+ * 변환 결과를 CSV 리포트로 저장한다.
+ *
+ * 기관에서 문서를 일괄 전환할 때 필요한 것은 파일만이 아니라 **무엇이
+ * 어떻게 처리됐는지의 기록**이다. 실패한 파일, 구조 경고가 난 파일,
+ * 제외된 항목을 남겨야 다음 사람이 이어받을 수 있다.
+ *
+ * 실패를 감추지 않는다 — 성공 행만 담으면 리포트가 거짓말이 된다.
+ */
+function downloadBatchReport() {
+    const esc = (v) => {
+        const t = String(v ?? '');
+        return /[",\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t;
+    };
+
+    const rows = [[
+        '원본 파일', '입력 형식', '결과', '출력 파일', '출력 크기(B)',
+        '문단', '표', '행', '셀', '경고/오류',
+    ]];
+
+    // ZIP 안에서 실제로 쓰이는 이름을 그대로 적는다. 확장자만 다른 동명 파일이
+    // 섞이면(sample.csv·sample.json → 둘 다 sample.hwpx) ZIP은 이름을 바꿔 담는데,
+    // 리포트가 바뀌기 전 이름을 적으면 둘이 어긋나 대조가 안 된다.
+    const usedNames = new Set();
+
+    for (const item of state.queue) {
+        const m = item.validation?.metrics || {};
+        let status, note = '';
+        if (item.status === 'error') {
+            status = '실패';
+            note = classifyConversionError(item.error, item.ext).action;
+        } else if (item.status === 'warn' || (item.validation && !item.validation.pass)) {
+            status = '구조 경고';
+            note = (item.validation?.issues || []).join(' / ');
+        } else {
+            status = '성공';
+        }
+
+        const outName = item.blob && item.fileName ? uniqueZipName(item.fileName, usedNames) : '';
+
+        rows.push([
+            item.file?.name || '',
+            (item.ext || '').toUpperCase(),
+            status,
+            outName,
+            item.blob ? item.blob.size : '',
+            m.paragraphs ?? '', m.tables ?? '', m.rows ?? '', m.cells ?? '',
+            note,
+        ]);
+    }
+
+    // Excel이 UTF-8 CSV를 한글 깨짐 없이 열려면 BOM이 필요하다.
+    const csv = '﻿' + rows.map(r => r.map(esc).join(',')).join('\r\n') + '\r\n';
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `변환리포트_${ymdStamp()}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 10_000);
+}
+
 async function downloadAllAsZip() {
     if (typeof JSZip === 'undefined') {
         showToast('<strong>ZIP 라이브러리를 불러오지 못했습니다</strong> <span>파일별 받기 버튼을 이용해 주세요.</span>', { timeout: 6000 });
@@ -5179,6 +5385,13 @@ if (typeof window !== 'undefined') {
     window.applyDocumentTitlePolicy = applyDocumentTitlePolicy;
     window.resolveOutputFontName = resolveOutputFontName;
     window.FONT_DOWNLOADS = FONT_DOWNLOADS;
+
+    // 폴더 드롭 검사용. 브라우저 자동화로는 DataTransfer에 실제 디렉터리
+    // 엔트리를 넣을 수 없어, 드롭 처리 진입점을 직접 호출해 검증한다.
+    window.__tohwpxTest = {
+        handleDropTransfer,
+        queueLength: () => state.queue.length,
+    };
 }
 
 // [B1] 모든 const/let 선언 이후에 실행 — 모듈 TDZ(FORMAT_INFO 등) 회피

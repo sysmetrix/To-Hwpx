@@ -1344,7 +1344,24 @@ async function validateBatchKanban(page) {
   assert(await page.locator('.fq-column[data-status="error"] .file-queue-item.is-error').count() === 1,
     'batch: 실패 카드에 is-error 클래스가 반영되지 않음');
 
-  console.log('PASS BATCH 칸반 보드(대기→완료/실패 실시간 이동)');
+  // 변환 리포트 — 기관 일괄 전환에서는 파일만이 아니라 "무엇이 어떻게
+  // 처리됐는지의 기록"이 필요하다. 실패 행이 빠지면 리포트가 거짓말이 된다.
+  assert(await page.locator('#batch-report-btn').count() === 1, 'batch: 변환 리포트 버튼이 없음');
+  const reportPromise = page.waitForEvent('download', { timeout: 20000 });
+  await page.locator('#batch-report-btn').click();
+  const report = await reportPromise;
+  const reportPath = path.join(os.tmpdir(), `to-hwpx-golden-report-${process.pid}.csv`);
+  await report.saveAs(reportPath);
+  const csv = fs.readFileSync(reportPath, 'utf8');
+  fs.unlinkSync(reportPath);
+
+  assert(csv.charCodeAt(0) === 0xFEFF, 'batch: 리포트 CSV에 BOM이 없어 Excel에서 한글이 깨진다');
+  const reportLines = csv.trim().split(/\r?\n/);
+  assert(reportLines.length === 5, `batch: 리포트 행이 머리행+4개여야 함 (${reportLines.length}줄)`);
+  assert(/실패/.test(csv), 'batch: 리포트에 실패 행이 빠짐 — 성공만 담으면 리포트가 거짓말이 된다');
+  assert((csv.match(/성공/g) || []).length === 3, 'batch: 리포트 성공 건수 불일치');
+
+  console.log('PASS BATCH 칸반 보드 + 변환 리포트(실패 행 포함)');
 }
 
 async function validatePaperMatrix(page) {
@@ -1836,6 +1853,67 @@ async function validateCoreParityHook(page) {
   console.log('PASS CORE  parity hook (IR + 렌더 옵션 스냅샷)');
 }
 
+
+/**
+ * 폴더 드롭 — 전환기의 실제 작업 단위는 "파일 하나"가 아니라 "폴더 하나"다.
+ *
+ * 브라우저 자동화로는 DataTransfer에 실제 디렉터리 엔트리를 넣을 수 없으므로,
+ * 브라우저가 폴더 드롭 시 주는 것과 같은 모양의 FileSystemEntry 트리를 만들어
+ * 드롭 처리 진입점을 직접 호출한다.
+ */
+async function validateFolderDrop(page) {
+  await page.goto(`http://127.0.0.1:${PORT}/index.html`, { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => window.JSZip && window.marked && window.XLSX && window.__appReady, null, { timeout: 30000 });
+
+  const queued = await page.evaluate(async () => {
+    const mkFile = (name, content) => ({
+      isFile: true, isDirectory: false, name,
+      file: (cb) => cb(new File([content], name)),
+    });
+    // readEntries()는 한 번에 일부만 주고 빈 배열로 끝을 알린다.
+    // 앱이 반복 호출하지 않으면 항목이 조용히 잘리므로 그 계약을 그대로 흉내낸다.
+    const mkDir = (name, children) => {
+      let served = false;
+      return {
+        isFile: false, isDirectory: true, name,
+        createReader: () => ({
+          readEntries: (cb) => { if (served) { cb([]); } else { served = true; cb(children); } },
+        }),
+      };
+    };
+
+    const tree = mkDir('root', [
+      mkFile('a.md', '# 문서 A'),
+      mkFile('b.csv', '이름,값'),
+      mkFile('readme.xyz', '지원하지 않는 형식'),
+      mkDir('sub', [
+        mkFile('c.md', '# 문서 C'),
+        mkFile('d.txt', '하위 폴더 텍스트.'),
+      ]),
+    ]);
+
+    await window.__tohwpxTest.handleDropTransfer({
+      items: [{ kind: 'file', webkitGetAsEntry: () => tree }],
+      files: [],
+    });
+    return window.__tohwpxTest.queueLength();
+  });
+
+  // 하위 폴더까지 4개(a.md, b.csv, sub/c.md, sub/d.txt).
+  // 지원하지 않는 readme.xyz는 폴더 안 잡동사니이므로 조용히 걸러야 한다 —
+  // 파일마다 경고를 띄우면 폴더 드롭을 쓸 수 없다.
+  assert(queued === 4, `folder: 하위 폴더 포함 4개가 큐에 담겨야 함 (${queued}개)`);
+
+  const names = await page.$$eval('.file-queue-item .fq-name, .file-queue-item strong',
+    els => els.map(e => e.textContent.trim()));
+  const joined = names.join(' ');
+  assert(/c\.md/.test(joined) && /d\.txt/.test(joined),
+    `folder: 하위 폴더 파일이 큐에 없음 (${joined})`);
+  assert(!/readme\.xyz/.test(joined), 'folder: 지원하지 않는 파일이 큐에 들어감');
+
+  console.log('PASS FOLDER 폴더 드롭(하위 폴더 재귀 + 미지원 확장자 제외)');
+}
+
 (async () => {
   const docxPath = path.join(FIXTURES, 'sample.docx');
   if (!fs.existsSync(docxPath)) {
@@ -1886,6 +1964,7 @@ async function validateCoreParityHook(page) {
     await validateMobileFormFontSize(page);
     await validatePretendardCompatibility(page);
     await validateCoreParityHook(page);
+    await validateFolderDrop(page);
     assert(pageErrors.length === 0, `브라우저 오류 발생: ${pageErrors.join(' | ')}`);
     console.log(`\nGOLDEN: ${CASES.length} cases passed`);
   } finally {

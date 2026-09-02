@@ -117,6 +117,52 @@ async function performanceSmoke(baseUrl) {
         if (heartbeat < 2) throw new Error('변환 중 UI heartbeat가 장시간 정지됨');
         console.log(`PASS PERF 10MB TXT ${elapsed}ms heartbeat=${heartbeat}`);
         await context.close();
+
+        // 폴더 단위 일괄 변환 — 전환기의 실제 작업 단위다.
+        // 파일 수가 많을 때 메인스레드가 살아 있는지가 핵심이다. 변환 루프가
+        // 파일마다 await로 양보하지 않으면 탭이 "응답 없음"이 된다.
+        const batchCtx = await browser.newContext({ acceptDownloads: true });
+        await batchCtx.addInitScript(() => {
+            localStorage.setItem('tohwpx_analytics_consent', 'denied');
+            localStorage.setItem('tohwpx_autoDownload', 'false');
+            localStorage.setItem('tohwpx_onboarding_seen', '1');
+        });
+        const batchPage = await batchCtx.newPage();
+        await batchPage.goto(baseUrl, { waitUntil: 'domcontentloaded' });
+        await batchPage.waitForFunction(() => window.__appReady && window.JSZip);
+
+        const BATCH_N = 100;
+        const doc = ['# 문서 제목', '', '본문 문단입니다.', '', '| 항목 | 값 |', '|---|---|', '| 가 | 1 |', '', '- 목록 하나'].join(String.fromCharCode(10));
+        const batchFiles = Array.from({ length: BATCH_N }, (_, i) => ({
+            name: `doc${String(i + 1).padStart(3, '0')}.md`,
+            mimeType: 'text/markdown; charset=utf-8',
+            buffer: Buffer.from(doc),
+        }));
+        await batchPage.setInputFiles('#file-input', batchFiles);
+        await batchPage.waitForTimeout(800);
+
+        const queued = await batchPage.evaluate(() => window.__tohwpxTest.queueLength());
+        if (queued !== BATCH_N) throw new Error(`배치 큐에 ${BATCH_N}개가 담기지 않음 (${queued}개)`);
+
+        await batchPage.evaluate(() => { window.__bh = 0; window.__bhT = setInterval(() => window.__bh++, 100); });
+        const batchStart = Date.now();
+        await batchPage.locator('#convert-btn').click();
+        await batchPage.locator('#batch-report-btn').waitFor({ state: 'visible', timeout: 300000 });
+        const batchMs = Date.now() - batchStart;
+        const beats = await batchPage.evaluate(() => { clearInterval(window.__bhT); return window.__bh; });
+
+        const expectedBeats = Math.max(1, Math.round(batchMs / 100));
+        const ratio = beats / expectedBeats;
+        const summary = await batchPage.locator('.result-card').textContent();
+        if (!/실패 0/.test(summary.replace(/\s+/g, ' '))) {
+            throw new Error(`배치 ${BATCH_N}개 중 실패가 발생함`);
+        }
+        // 심박이 기대치의 절반 아래면 메인스레드가 오래 잠긴 것이다.
+        if (ratio < 0.5) {
+            throw new Error(`배치 중 UI 정지 — 심박 ${beats}/${expectedBeats} (${Math.round(ratio * 100)}%)`);
+        }
+        console.log(`PASS PERF 배치 ${BATCH_N}개 ${batchMs}ms heartbeat=${beats}/${expectedBeats} (${Math.round(ratio * 100)}%)`);
+        await batchCtx.close();
     } finally { await browser.close(); }
 }
 

@@ -21,6 +21,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const ROOT = path.resolve(__dirname, '..');
+const FORCE = process.argv.includes('--force');
 
 const BASE_CSS = `
   body{font-family:'Malgun Gothic',sans-serif;margin:25mm;line-height:1.7}
@@ -85,7 +86,17 @@ const BLANK_HTML = `<!doctype html><html><head><meta charset="utf-8"><style>
   .box{width:180mm;height:240mm;margin:15mm;background:linear-gradient(120deg,#e8e8e8,#cfcfcf)}
 </style></head><body><div class="box"></div></body></html>`;
 
+/**
+ * PDF는 생성 시각을 내부에 담아 실행할 때마다 바이트가 달라진다. 매번 새로
+ * 만들면 게이트를 돌릴 때마다 작업 트리가 더러워진다(픽스처는 커밋되어 있다).
+ * 그래서 기존 파일이 있으면 건너뛴다 — 저장소의 다른 픽스처 생성기와 같은 규약이다.
+ * 의도적으로 다시 만들려면 --force를 쓴다.
+ */
 async function render(page, html, outPath) {
+    if (!FORCE && fs.existsSync(outPath)) {
+        console.log(`  ${path.relative(ROOT, outPath)} (있음 — 건너뜀)`);
+        return;
+    }
     await page.setContent(html, { waitUntil: 'networkidle' });
     const pdf = await page.pdf({ format: 'A4', printBackground: true });
     fs.mkdirSync(path.dirname(outPath), { recursive: true });
@@ -102,7 +113,7 @@ async function render(page, html, outPath) {
         process.exit(1);
     }
 
-    console.log('PDF 픽스처 생성 중…');
+    console.log(FORCE ? 'PDF 픽스처 강제 재생성 중…' : 'PDF 픽스처 확인 중…');
     const browser = await chromium.launch();
     const page = await browser.newPage();
     try {
