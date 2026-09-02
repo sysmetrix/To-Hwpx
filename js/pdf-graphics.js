@@ -359,18 +359,58 @@ function collectLines(args, ctm, hLines, vLines, OPS) {
     const MAX_THICK = 2.5;   // 이보다 두꺼우면 괘선이 아니라 덩어리다
     const MIN_LEN = 8;       // 이보다 짧으면 격자 근거로 쓰지 않는다
 
-    // bbox 두 꼭짓점에 CTM을 먹여 페이지 좌표로 옮긴다.
     const pt = (x, y) => [ctm[0] * x + ctm[2] * y + ctm[4], ctm[1] * x + ctm[3] * y + ctm[5]];
+    const addSeg = (ax, ay, bx, by) => {
+        const x0 = Math.min(ax, bx), x1 = Math.max(ax, bx);
+        const y0 = Math.min(ay, by), y1 = Math.max(ay, by);
+        const w = x1 - x0, h = y1 - y0;
+        if (h <= MAX_THICK && w >= MIN_LEN) hLines.push({ y: (y0 + y1) / 2, x1: x0, x2: x1 });
+        else if (w <= MAX_THICK && h >= MIN_LEN) vLines.push({ x: (x0 + x1) / 2, y1: y0, y2: y1 });
+    };
+
+    const stroked = paintOp === OPS.stroke || paintOp === OPS.closeStroke
+        || paintOp === OPS.fillStroke || paintOp === OPS.eoFillStroke;
+
+    if (stroked) {
+        // ── 획으로 그린 표는 bbox로 보면 안 된다 ──
+        // 사각형을 획으로 그리면 `constructPath` 하나에 네 변이 다 들어가고
+        // bbox는 **상자 전체**가 된다. 얇지 않으니 통째로 버려져 **괘선이
+        // 하나도 안 잡힌다.** 그래서 좌표를 직접 훑어 변마다 따로 낸다.
+        //
+        // DrawOPS(v6에서 실측): 0=moveTo(2) 1=lineTo(2) 2=curveTo(6)
+        //                      3=quadraticCurveTo(4) 4=closePath(0)
+        // 이 상수는 pdf.js가 내보내지 않아 숫자로 적을 수밖에 없다.
+        const stream = Array.isArray(args[1]) ? args[1][0] : args[1];
+        if (!stream) return;
+        let cx = 0, cy = 0, sx = 0, sy = 0;
+        for (let i = 0; i < stream.length;) {
+            const op = stream[i++];
+            if (op === 0) {                       // moveTo
+                cx = stream[i++]; cy = stream[i++]; sx = cx; sy = cy;
+            } else if (op === 1) {                // lineTo
+                const nx = stream[i++], ny = stream[i++];
+                const [ax, ay] = pt(cx, cy);
+                const [bx, by] = pt(nx, ny);
+                addSeg(ax, ay, bx, by);
+                cx = nx; cy = ny;
+            } else if (op === 2) {                // curveTo — 곡선은 표가 아니다
+                i += 6; cx = stream[i - 2]; cy = stream[i - 1];
+            } else if (op === 3) {                // quadraticCurveTo
+                i += 4; cx = stream[i - 2]; cy = stream[i - 1];
+            } else if (op === 4) {                // closePath
+                const [ax, ay] = pt(cx, cy);
+                const [bx, by] = pt(sx, sy);
+                addSeg(ax, ay, bx, by);
+                cx = sx; cy = sy;
+            } else {
+                break;                            // 모르는 연산자 — 더 읽지 않는다
+            }
+        }
+        return;
+    }
+
+    // 채우기로 그린 괘선은 **얇고 긴 사각형**이라 bbox만으로 충분하다.
     const [ax, ay] = pt(bbox[0], bbox[1]);
     const [bx, by] = pt(bbox[2], bbox[3]);
-
-    const x0 = Math.min(ax, bx), x1 = Math.max(ax, bx);
-    const y0 = Math.min(ay, by), y1 = Math.max(ay, by);
-    const w = x1 - x0, h = y1 - y0;
-
-    if (h <= MAX_THICK && w >= MIN_LEN) {
-        hLines.push({ y: (y0 + y1) / 2, x1: x0, x2: x1 });
-    } else if (w <= MAX_THICK && h >= MIN_LEN) {
-        vLines.push({ x: (x0 + x1) / 2, y1: y0, y2: y1 });
-    }
+    addSeg(ax, ay, bx, by);
 }
