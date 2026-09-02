@@ -1,6 +1,25 @@
 {
-  "current": "4.16.12",
+  "current": "4.16.13",
   "versions": [
+    {
+      "version": "4.16.13",
+      "date": "2026-09-02",
+      "user": [
+        "변환 결과를 HWP 파일로도 받을 수 있습니다. 구버전 한/글을 쓰는 상대가 HWPX를 열지 못할 때 쓰세요.",
+        "HWP로 받기 버튼은 변환이 끝난 결과 카드에 나옵니다. 누르면 변환 엔진을 그때 내려받고(최초 1회), 쪽수 유지 여부와 손실 항목을 함께 보여줍니다.",
+        "공공기관 제출용은 계속 HWPX입니다. HWP는 파일을 열지 못하는 수신자를 위한 보조 파일로만 안내합니다."
+      ],
+      "dev": [
+        "[v4.16.13] js/reverse-export.js 신설 — HWPX → HWP 5.0 바이너리 내보내기. vendor에 이미 고정돼 있으나 HWP5 읽기에만 쓰이던 @rhwp/core 0.8.4의 exportHwpWithReport()/exportHwpVerify()를 가동한다. 생성 경로(js/hwpx.js, 한컴 공개 OWPML/KS X 6101 근거)와 계통을 분리하고 동적 import로만 불러 초기 로딩에 8MB WASM을 얹지 않는다. 역방향 실패는 HWPX 다운로드에 영향을 주지 않는다",
+        "[v4.16.13] qa/reverse-export-gate.js 신설 — ①CFB 시그니처 ②엔진 content-loss ③자기 재로드 쪽수 유지 ④본문 텍스트 문단 단위 왕복 동일성 ⑤렌더된 <image>·페이지 수 유지와 <text> 급감 검사. ④⑤가 우리가 독립적으로 재는 값이다. --fixtures로 10개 픽스처를 실제 브라우저 변환 후 검사하며 전부 통과(문단·그림·쪽수 유지, 손실 0건)",
+        "[v4.16.13] ⑤(렌더 비교)를 넣은 이유 — 개발 중 그림 문서의 HWP 산출물이 빈 문서와 같은 크기로 나오는데 contentLoss는 0을 보고했다. 실제로는 보존돼 있었고 크기 차이는 CFB/ZIP 압축 효율 차이였지만, 그 판정을 엔진 자기 보고로는 내릴 수 없었다. 진위를 가른 것은 렌더된 SVG의 <image> 개수 비교뿐이었다. 엔진이 놓친 손실은 손실 보고서에 나타나지 않는다",
+        "[v4.16.13] rhwp 사용 함정 3종을 hwpx_rendering_gotchas.md 3-1절에 기록 — HwpViewer가 HwpDocument 소유권을 가져가므로 viewer.free() 뒤 doc.free()는 이중 해제로 프로세스 사망(null pointer passed to rust), getSourceImageBytes()는 인덱스 불일치 시 memory access out of bounds로 죽어 그림 존재 확인에 쓰면 안 됨, exportHml()은 HML 원본에서만 동작(HWPX 출처는 HML_SOURCE_REQUIRED 거부)",
+        "[v4.16.13] qa/lib/browser-convert.js 신설 — gate.js·docx-real-convert.js 등이 각자 복제하던 playwright 구동 코드를 공용화. 파일 큐가 누적되는 설계라 연속 변환 시 앱의 초기화 버튼을 실제로 눌러 비운다(input.value만 지우면 두 번째부터 배치 ZIP이 내려온다)",
+        "[v4.16.13] tests/hwp-export-e2e.js 신설 — 결과 카드 버튼 노출, 파일명 .hwp 변환, 실제 다운로드 바이너리의 CFB 시그니처, 요약 문구의 손실 상태 명시, 페이지 오류 없음을 종단 검사",
+        "[v4.16.13] 결과 카드 UI — 주 다운로드(HWPX)는 채워진 버튼, HWP는 점선 보조 버튼으로 위계 분리. 요약 문구는 엔진이 실제로 보고한 사실만 쓴다(보고서 미수신 시 '손실 없음'이 아니라 '확인할 수 없습니다'). DESIGN.md에 보조 산출물 표시 기준 명문화",
+        "[v4.16.13] impact-graph에 reverse-export·reverse-gate 노드와 3개 간선 추가, test:reverse를 test:release에 편입. lint·golden 13케이스·test:package·impact·commercial 전부 통과"
+      ]
+    },
     {
       "version": "4.16.12",
       "date": "2026-09-02",
