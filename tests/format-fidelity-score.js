@@ -88,6 +88,12 @@ function readHwpx(section, header) {
                 level: m[1],
                 text: all(m[2], /<hp:t[^>]*>([\s\S]*?)<\/hp:t>/g).map(t => t[1]).join(''),
             })),
+        // 표 셀 문단 정렬(10=왼쪽, 7=가운데, 11=오른쪽) — Markdown 열 정렬 보존 여부를 본다.
+        cellAligns: uniq(all(section, /<hp:tc\b[\s\S]*?<\/hp:tc>/g)
+            .map(m => (m[0].match(/paraPrIDRef="(7|10|11)"/) || [])[1]).filter(Boolean)),
+        // 링크 필드 안의 표시 문자열(fieldBegin ~ fieldEnd 사이 run 텍스트)
+        linkTexts: all(section, /<hp:fieldBegin\b[^>]*type="HYPERLINK"[\s\S]*?<\/hp:fieldBegin>([\s\S]*?)<hp:fieldEnd\b/g)
+            .map(m => all(m[1], /<hp:t[^>]*>([\s\S]*?)<\/hp:t>/g).map(t => t[1]).join('')),
         boldChars: count(charPrs.join(''), /<hh:bold\b/g),
         italicChars: count(charPrs.join(''), /<hh:italic\b/g),
         underlineChars: count(charPrs.join(''), /<hh:underline\b[^>]*type="(?!NONE)/g),
@@ -131,7 +137,7 @@ function scoreMd(src, x) {
     ], x);
     const badEntities = /&apos;|&#39;|&amp;#39;/.test(x.section);
     return [
-        ['텍스트 완전성', 18, cov.ratio, cov.missing.length ? `누락: ${cov.missing.join(' | ')}` : '전체 일치'],
+        ['텍스트 완전성', 16, cov.ratio, cov.missing.length ? `누락: ${cov.missing.join(' | ')}` : '전체 일치'],
         ['제목 H1~H6', 10, atLeast(x.headingParas + x.titleParas, 6),
             `본문 제목 ${x.headingParas} + 문서 제목 ${x.titleParas} = ${x.headingParas + x.titleParas}/6`],
         ['표(머리행 지정 + 3행)', 10,
@@ -157,16 +163,25 @@ function scoreMd(src, x) {
                 && x.quoteText.includes('인용문 둘째 줄입니다.') ? 1 : 0)) / 2,
             `인용 문단 ${x.quoteParas}/1, 두 줄 보존 ${x.quoteText.includes('인용문 둘째 줄입니다.')}`],
         ['코드(블록+인라인, charPr 6)', 8, atLeast(x.codeRuns, 2), `코드 run ${x.codeRuns}`],
-        ['인라인 서식(굵게/기울임/취소선)', 10,
+        ['인라인 서식(굵게/기울임/취소선)', 8,
             (x.boldChars ? 1 : 0) * 0.4 + (x.italicChars ? 1 : 0) * 0.3 + (x.strikeChars ? 1 : 0) * 0.3,
             `charPr B${x.boldChars}/I${x.italicChars}/S${x.strikeChars}`],
-        ['하이퍼링크(field 쌍 + Path)', 12,
+        ['하이퍼링크(field 쌍 + Path)', 10,
             (atLeast(x.links, 4) + (x.links === x.linkEnds ? 1 : 0)
                 + (x.linkPaths.some(p => p.includes('a=1&b=2')) ? 1 : 0)) / 3,
             `링크 ${x.links}/4, begin=end ${x.links === x.linkEnds}, Path 예: ${x.linkPaths[0] || '없음'}`],
         ['작은따옴표/엔티티 회귀', 7, badEntities ? 0 : 1,
             badEntities ? 'section0.xml에 &apos;/&#39; 잔존' : "원문 ' 로 정상 출력"],
-        ['구분선(hr)', 5, /paraPrIDRef="8"|paraPrIDRef="9"/.test(x.section) ? 1 : 0, 'hr 문단 존재'],
+        ['구분선(hr)', 3, /paraPrIDRef="8"|paraPrIDRef="9"/.test(x.section) ? 1 : 0, 'hr 문단 존재'],
+        // 표 열 정렬(:--- / :---: / ---:)은 셀 문단 정렬 paraPr(10/7/11)로 나가야 한다.
+        ['표 열 정렬(왼쪽/가운데/오른쪽)', 4,
+            (['10', '7', '11'].filter(a => x.cellAligns.includes(a)).length) / 3,
+            `셀 정렬 paraPr: ${x.cellAligns.join(', ') || '없음'} (10/7/11 기대)`],
+        // 링크 표시 문자열이 URL로 대체되거나, 중첩 강조 링크가 링크를 잃으면 안 된다.
+        ['링크 표시 문자열 + 중첩 강조', 4,
+            ((x.linkTexts.includes('설명 있는 링크') ? 1 : 0)
+                + (x.linkTexts.includes('굵은 링크') ? 1 : 0)) / 2,
+            `링크 표시 문자열: ${x.linkTexts.join(' | ') || '없음'}`],
     ];
 }
 
@@ -198,7 +213,7 @@ function scoreHtml(src, x) {
             (['1.', '2.'].filter(n => x.listItems.some(i => i.text.startsWith(n))).length) / 2,
             `번호 항목: ${x.listItems.filter(i => /^\d+\./.test(i.text)).length}/2`],
         ['인용구(blockquote)', 8, atLeast(x.quoteParas, 1), `인용 문단 ${x.quoteParas}/1`],
-        ['서식(굵게/기울임/코드/밑줄/취소)', 14,
+        ['서식(굵게/기울임/코드/밑줄/취소)', 12,
             (x.boldChars ? 1 : 0) * 0.25 + (x.italicChars ? 1 : 0) * 0.2
             + (x.codeRuns ? 1 : 0) * 0.2 + (x.underlineChars ? 1 : 0) * 0.2
             + (x.strikeChars ? 1 : 0) * 0.15,
@@ -210,7 +225,14 @@ function scoreHtml(src, x) {
             (atLeast(x.links, 2) + (x.links === x.linkEnds ? 1 : 0)
                 + (x.linkPaths.some(p => p.includes('a=1&b=2')) ? 1 : 0)) / 3,
             `링크 ${x.links}/2, Path 예: ${x.linkPaths[0] || '없음'}`],
-        ['비본문 요소 제외(nav/footer/script/style)', 5, excluded ? 1 : 0,
+        // 표 셀 안 링크는 공용 cell run 계약을 정할 때까지 의도적으로 비활성이다
+        // (hwpx.js buildCellBlockContent의 href: undefined). 계약 밖 동작이라 감점하지 않고,
+        // 계약 안인 목록 항목 링크·인라인 서식만 요구한다.
+        ['목록 항목 안 링크/서식', 4,
+            x.linkTexts.includes('목록 안 링크') ? 1 : 0,
+            `링크 표시 문자열: ${x.linkTexts.join(' | ') || '없음'}`
+            + ` / 표 셀 링크는 계약상 미지원(셀 안 링크 활성화 ${x.linkTexts.includes('셀 안 링크')})`],
+        ['비본문 요소 제외(nav/footer/script/style)', 3, excluded ? 1 : 0,
             excluded ? 'nav/footer/script 제외됨' : '비본문 텍스트가 본문에 섞임'],
     ];
 }
@@ -321,11 +343,23 @@ function scorePptx(src, x) {
         .filter(t => t.trim());
     const cov = textCoverage(texts, x);
     const slides = Number(src.__slideCount || 0);
+    const body = x.texts.join('');
     return [
-        ['슬라이드 텍스트 완전성', 60, cov.ratio,
+        ['슬라이드 텍스트 완전성', 30, cov.ratio,
             cov.missing.length ? `누락: ${cov.missing.join(' | ')}` : `${texts.length}개 텍스트 전부 일치`],
-        ['슬라이드별 구분(제목 문단)', 25, atLeast(x.headingParas, slides), `제목 문단 ${x.headingParas}/${slides}슬라이드`],
-        ['본문 문단 생성', 15, x.paragraphs > slides ? 1 : 0, `HWPX 문단 ${x.paragraphs}`],
+        ['슬라이드별 구분(제목 문단)', 12, atLeast(x.headingParas, slides), `제목 문단 ${x.headingParas}/${slides}슬라이드`],
+        // 그룹 도형(p:grpSp) 안의 텍스트는 spTree 직계만 보면 조용히 사라진다 — 실제 발표자료에서 흔한 구조.
+        ['그룹 도형 안 텍스트', 12, body.includes('그룹 도형 안 텍스트 Gamma') ? 1 : 0,
+            `p:grpSp 내부 텍스트 보존 ${body.includes('그룹 도형 안 텍스트 Gamma')}`],
+        // PPTX 표는 병합 칸도 hMerge/vMerge placeholder로 남아 DOCX와 표현이 다르다.
+        ['표 + 병합(가로/세로)', 16,
+            ((x.dataTables >= 1 ? 1 : 0) + (x.colSpan >= 1 ? 1 : 0) + (x.rowSpan >= 1 ? 1 : 0)) / 3,
+            `데이터 표 ${x.dataTables}, colSpan ${x.colSpan}, rowSpan ${x.rowSpan}`],
+        ['그림(p:pic → hc:img)', 12, atLeast(x.images, 1), `hc:img ${x.images}/1`],
+        ['발표자 노트', 10,
+            (body.includes('골든 발표자 노트 확인용') ? 0.5 : 0) + (body.includes('[발표자 노트]') ? 0.5 : 0),
+            `노트 텍스트 ${body.includes('골든 발표자 노트 확인용')}, 접두사 ${body.includes('[발표자 노트]')}`],
+        ['글머리 기호 문단 → 목록', 8, atLeast(x.listItems.length, 2), `목록 항목 ${x.listItems.length}/2`],
     ];
 }
 

@@ -662,7 +662,15 @@ function extractHtmlList(listEl, level = 0, out = []) {
         const clone = li.cloneNode(true);
         clone.querySelectorAll('ul, ol').forEach(nested => nested.remove());
         const text = sanitize(clone.textContent.trim());
-        if (text) out.push({ text, level, ordered, marker: ordered ? start + index : null });
+        // 항목 텍스트만 담으면 <li> 안의 굵게·기울임·글자색과 <a href> 링크가 통째로
+        // 사라진다. Markdown 목록과 같은 공통 run 계약({text, runs})으로 함께 보존한다.
+        const runs = extractInlineRuns(clone).filter(r => r.text && r.text.trim());
+        if (text) {
+            out.push({
+                text, level, ordered, marker: ordered ? start + index : null,
+                ...(runs.length ? { runs } : {}),
+            });
+        }
         Array.from(li.children || [])
             .filter(el => ['ul', 'ol'].includes((el.tagName || '').toLowerCase()))
             .forEach(nested => extractHtmlList(nested, level + 1, out));
