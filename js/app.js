@@ -2926,6 +2926,25 @@ async function convertOneFile(file, statusPrefix = '', outputFontName = state.do
 
     let hwpxBlob;
     const buildOptions = effectiveBuildOptionsForFile(file);
+
+    // [코어 동등성 게이트용] 이번 렌더에 실제로 쓰인 IR과 옵션을 그대로 남긴다.
+    // qa/core-parity-gate.js가 이 값을 Node 코어에 그대로 넣어 웹앱과 같은
+    // HWPX가 나오는지 검사한다. 옵션을 게이트에서 손으로 다시 적으면 그 순간
+    // 비교가 무의미해지므로 반드시 여기서 꺼내 간다.
+    window.__tohwpxDebug = window.__tohwpxDebug || {};
+    window.__tohwpxDebug.lastRender = {
+        ir,
+        options: {
+            fontName: outputFontName,
+            fontSize: state.fontSize,
+            marginsMm: state.pageMargins,
+            paperSize: state.paperSize,
+            orientation: state.orientation,
+            lineSpacingPercent: state.lineSpacing,
+            options: { ...buildOptions },
+        },
+    };
+
     try {
         hwpxBlob = await buildHwpx(ir, outputFontName, state.fontSize, state.pageMargins, state.paperSize, (pct) => {
             setProgress(58 + (pct * 0.14)); // 58% ~ 72%

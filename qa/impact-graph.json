@@ -1,44 +1,241 @@
 {
   "schemaVersion": 1,
   "nodes": [
-    { "id": "docx-audit", "paths": ["js/docx-audit.js"] },
-    { "id": "docx-parser", "paths": ["js/parsers.js"] },
-    { "id": "ir-v2", "paths": ["ARCHITECTURE.md", "DEV.md"] },
-    { "id": "hwpx-renderer", "paths": ["js/hwpx.js"] },
-    { "id": "quality-ui", "paths": ["js/app.js", "style.css", "DESIGN.md"] },
-    { "id": "fidelity-fixture", "paths": ["tests/make-docx-fidelity-fixture.js", "tests/fixtures/docx-fidelity.docx", "tests/golden.js"] },
-    { "id": "fidelity-harness", "paths": ["qa/docx-fidelity-harness.js", "qa/hwp-export-pdf.ps1", "qa/render-pdf-contact-sheets.py"] },
-    { "id": "release-docs", "paths": ["ENGINEERING.md", "qa/release-qa.md", "hwpx-public-doc/references/format_conversion_playbook.md"] },
-    { "id": "reverse-export", "paths": ["js/reverse-export.js"] },
-    { "id": "reverse-gate", "paths": ["qa/reverse-export-gate.js", "tests/hwp-export-e2e.js", "qa/lib/browser-convert.js"] }
+    {
+      "id": "docx-audit",
+      "paths": [
+        "js/docx-audit.js"
+      ]
+    },
+    {
+      "id": "docx-parser",
+      "paths": [
+        "js/parsers.js"
+      ]
+    },
+    {
+      "id": "ir-v2",
+      "paths": [
+        "ARCHITECTURE.md",
+        "DEV.md"
+      ]
+    },
+    {
+      "id": "hwpx-renderer",
+      "paths": [
+        "js/hwpx.js"
+      ]
+    },
+    {
+      "id": "quality-ui",
+      "paths": [
+        "js/app.js",
+        "style.css",
+        "DESIGN.md"
+      ]
+    },
+    {
+      "id": "fidelity-fixture",
+      "paths": [
+        "tests/make-docx-fidelity-fixture.js",
+        "tests/fixtures/docx-fidelity.docx",
+        "tests/golden.js"
+      ]
+    },
+    {
+      "id": "fidelity-harness",
+      "paths": [
+        "qa/docx-fidelity-harness.js",
+        "qa/hwp-export-pdf.ps1",
+        "qa/render-pdf-contact-sheets.py"
+      ]
+    },
+    {
+      "id": "release-docs",
+      "paths": [
+        "ENGINEERING.md",
+        "qa/release-qa.md",
+        "hwpx-public-doc/references/format_conversion_playbook.md"
+      ]
+    },
+    {
+      "id": "reverse-export",
+      "paths": [
+        "js/reverse-export.js"
+      ]
+    },
+    {
+      "id": "reverse-gate",
+      "paths": [
+        "qa/reverse-export-gate.js",
+        "tests/hwp-export-e2e.js",
+        "qa/lib/browser-convert.js"
+      ]
+    },
+    {
+      "id": "core-runtime",
+      "paths": [
+        "js/core/runtime.js",
+        "js/core/index.js"
+      ]
+    },
+    {
+      "id": "core-surfaces",
+      "paths": [
+        "js/core/cli.js",
+        "js/core/mcp-server.js"
+      ]
+    },
+    {
+      "id": "core-gates",
+      "paths": [
+        "qa/core-parity-gate.js",
+        "tests/cli-test.js",
+        "tests/mcp-server-test.js"
+      ]
+    }
   ],
   "edges": [
-    { "from": "docx-audit", "to": "docx-parser", "reason": "정규화된 document.xml과 감사 보고서를 전달" },
-    { "from": "docx-parser", "to": "ir-v2", "reason": "페이지·타이포그래피·표 셀 블록 계약 생성" },
-    { "from": "ir-v2", "to": "hwpx-renderer", "reason": "입력 포맷 비의존 렌더링" },
-    { "from": "hwpx-renderer", "to": "quality-ui", "reason": "출력 구조 계수와 보존/손실 기대치 표시" },
-    { "from": "docx-audit", "to": "fidelity-fixture", "reason": "알려진 손상 패턴 회귀 고정" },
-    { "from": "hwpx-renderer", "to": "fidelity-harness", "reason": "실문서 구조·한컴 렌더 검증" },
-    { "from": "fidelity-harness", "to": "release-docs", "reason": "릴리스 증거와 수동 판정 기준" },
-    { "from": "hwpx-renderer", "to": "reverse-export", "reason": "생성된 HWPX 바이트를 역방향 내보내기의 입력으로 사용" },
-    { "from": "reverse-export", "to": "reverse-gate", "reason": "HWP 산출물의 구조·왕복 텍스트·렌더 요소 검증" },
-    { "from": "reverse-export", "to": "quality-ui", "reason": "손실 보고와 쪽수 검증 결과를 결과 카드에 표시" }
+    {
+      "from": "docx-audit",
+      "to": "docx-parser",
+      "reason": "정규화된 document.xml과 감사 보고서를 전달"
+    },
+    {
+      "from": "docx-parser",
+      "to": "ir-v2",
+      "reason": "페이지·타이포그래피·표 셀 블록 계약 생성"
+    },
+    {
+      "from": "ir-v2",
+      "to": "hwpx-renderer",
+      "reason": "입력 포맷 비의존 렌더링"
+    },
+    {
+      "from": "hwpx-renderer",
+      "to": "quality-ui",
+      "reason": "출력 구조 계수와 보존/손실 기대치 표시"
+    },
+    {
+      "from": "docx-audit",
+      "to": "fidelity-fixture",
+      "reason": "알려진 손상 패턴 회귀 고정"
+    },
+    {
+      "from": "hwpx-renderer",
+      "to": "fidelity-harness",
+      "reason": "실문서 구조·한컴 렌더 검증"
+    },
+    {
+      "from": "fidelity-harness",
+      "to": "release-docs",
+      "reason": "릴리스 증거와 수동 판정 기준"
+    },
+    {
+      "from": "hwpx-renderer",
+      "to": "reverse-export",
+      "reason": "생성된 HWPX 바이트를 역방향 내보내기의 입력으로 사용"
+    },
+    {
+      "from": "reverse-export",
+      "to": "reverse-gate",
+      "reason": "HWP 산출물의 구조·왕복 텍스트·렌더 요소 검증"
+    },
+    {
+      "from": "reverse-export",
+      "to": "quality-ui",
+      "reason": "손실 보고와 쪽수 검증 결과를 결과 카드에 표시"
+    },
+    {
+      "from": "hwpx-renderer",
+      "to": "core-runtime",
+      "reason": "호스트 어댑터를 통해 브라우저·Node 양쪽에서 같은 렌더러를 실행"
+    },
+    {
+      "from": "core-runtime",
+      "to": "core-surfaces",
+      "reason": "CLI·MCP가 같은 코어를 소비"
+    },
+    {
+      "from": "core-runtime",
+      "to": "core-gates",
+      "reason": "웹앱과 코어 산출물의 엔트리 단위 동등성 검증"
+    },
+    {
+      "from": "docx-parser",
+      "to": "core-surfaces",
+      "reason": "CLI·MCP가 공용 파서를 재사용(DOM 비의존 포맷 한정)"
+    }
   ],
   "rules": [
     {
-      "whenChanged": ["js/docx-audit.js", "js/parsers.js", "js/hwpx.js"],
-      "requiresChanged": ["tests/golden.js", "hwpx-public-doc/references/format_conversion_playbook.md", "qa/release-qa.md"],
-      "tests": ["npm run test:docx", "npm run test:golden"]
+      "whenChanged": [
+        "js/docx-audit.js",
+        "js/parsers.js",
+        "js/hwpx.js"
+      ],
+      "requiresChanged": [
+        "tests/golden.js",
+        "hwpx-public-doc/references/format_conversion_playbook.md",
+        "qa/release-qa.md"
+      ],
+      "tests": [
+        "npm run test:docx",
+        "npm run test:golden"
+      ]
     },
     {
-      "whenChanged": ["js/app.js", "style.css"],
-      "requiresChanged": ["DESIGN.md"],
-      "tests": ["npm run test:accessibility", "npm run test:golden"]
+      "whenChanged": [
+        "js/app.js",
+        "style.css"
+      ],
+      "requiresChanged": [
+        "DESIGN.md"
+      ],
+      "tests": [
+        "npm run test:accessibility",
+        "npm run test:golden"
+      ]
     },
     {
-      "whenChanged": ["js/reverse-export.js"],
-      "requiresChanged": ["hwpx-public-doc/references/format_conversion_playbook.md"],
-      "tests": ["npm run test:reverse", "node tests/hwp-export-e2e.js"]
+      "whenChanged": [
+        "js/reverse-export.js"
+      ],
+      "requiresChanged": [
+        "hwpx-public-doc/references/format_conversion_playbook.md"
+      ],
+      "tests": [
+        "npm run test:reverse",
+        "node tests/hwp-export-e2e.js"
+      ]
+    },
+    {
+      "whenChanged": [
+        "js/core/runtime.js",
+        "js/core/index.js",
+        "js/hwpx.js"
+      ],
+      "requiresChanged": [
+        "hwpx-public-doc/references/format_conversion_playbook.md"
+      ],
+      "tests": [
+        "npm run test:core",
+        "npm run test:cli",
+        "npm run test:mcp"
+      ]
+    },
+    {
+      "whenChanged": [
+        "js/core/cli.js",
+        "js/core/mcp-server.js"
+      ],
+      "requiresChanged": [
+        "README.md"
+      ],
+      "tests": [
+        "npm run test:cli",
+        "npm run test:mcp"
+      ]
     }
   ]
 }

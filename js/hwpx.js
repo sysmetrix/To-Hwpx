@@ -19,6 +19,10 @@
 
 'use strict';
 
+// 호스트 기능 어댑터 — 이 렌더러를 브라우저와 Node에서 같은 코드로 돌리기 위한 층.
+// 렌더러를 두 벌로 두면 웹앱과 CLI/MCP 산출물이 언젠가 갈라지므로 한 벌로 유지한다.
+import { requireZip, zipOutputType, toZipInput, checkXmlWellFormed } from './core/runtime.js';
+
 // ─────────────────────────────────────────────────────────────────────────
 // [단위 상수]
 // ─────────────────────────────────────────────────────────────────────────
@@ -1780,7 +1784,7 @@ async function buildSection(ir, marginsHwp, paperKey, landscape = false, customB
  * @param {number} lineSpacingPercent 본문 줄 간격 퍼센트
  */
 export async function buildHwpx(ir, fontName = '휴먼명조', fontSize = 12, marginsMm = null, paperSize = 'A4', onProgress = null, orientation = 'portrait', lineSpacingPercent = 160, options = {}) {
-    if (typeof JSZip === 'undefined') throw new Error('JSZip 미로드: 인터넷 연결을 확인하세요.');
+    const JSZipImpl = requireZip();
 
     validateCodeAudit(ir);
     const buildOptions = Object.assign({
@@ -1951,7 +1955,7 @@ ${imageBlocks.map(img => `  <odf:file-entry odf:full-path="BinData/${img.binName
 </odf:manifest>`
         : MANIFEST_XML;
 
-    const zip = new JSZip();
+    const zip = new JSZipImpl();
     zip.file('mimetype',              MIMETYPE,      { compression: 'STORE' });
     zip.file('version.xml',           VERSION_XML);
     zip.file('settings.xml',          SETTINGS_XML);
@@ -1969,8 +1973,10 @@ ${imageBlocks.map(img => `  <odf:file-entry odf:full-path="BinData/${img.binName
         zip.file(`BinData/${img.binName}`, img.data);
     });
 
+    // 브라우저는 Blob(다운로드에 바로 사용), Node는 Uint8Array(파일로 바로 기록).
+    // ZIP 내용 자체는 같다 — 담는 그릇만 호스트에 맞춘다.
     return zip.generateAsync(
-        { type: 'blob', mimeType: MIMETYPE, compression: 'DEFLATE', compressionOptions: { level: 6 } },
+        { type: zipOutputType(), mimeType: MIMETYPE, compression: 'DEFLATE', compressionOptions: { level: 6 } },
         function updateCallback(metadata) {
             if (onProgress) {
                 onProgress(metadata.percent);
@@ -1984,12 +1990,16 @@ ${imageBlocks.map(img => `  <odf:file-entry odf:full-path="BinData/${img.binName
 // [검증기]
 // ─────────────────────────────────────────────────────────────────────────
 
-export async function validateHwpx(blob, expectedMarginsMm = null) {
+/**
+ * HWPX 패키지 구조 검증.
+ * @param {Blob|ArrayBuffer|Uint8Array} input 브라우저는 Blob, Node는 바이트를 넘긴다.
+ */
+export async function validateHwpx(input, expectedMarginsMm = null) {
     const issues = [];
     const metrics = {};
     let zip;
     try {
-        zip = await JSZip.loadAsync(await blob.arrayBuffer());
+        zip = await requireZip().loadAsync(await toZipInput(input));
     } catch (e) {
         return { pass: false, issues: ['ZIP 로드 실패: ' + e.message] };
     }
@@ -2025,14 +2035,15 @@ export async function validateHwpx(blob, expectedMarginsMm = null) {
         if (!xml.includes('hancom.co.kr/hwpml/2011/paragraph')) issues.push('section0.xml: paragraph 네임스페이스 없음');
         // DOMParser의 전체 문서 파싱이 대형 XML에서 가장 무거운 단일 동기 작업이므로 직전에 한 번 더 양보한다.
         await new Promise(resolve => setTimeout(resolve, 0));
-        if (typeof DOMParser !== 'undefined') {
-            try {
-                const parsed = new DOMParser().parseFromString(xml, 'application/xml');
-                const err = parsed.querySelector('parsererror');
-                if (err) issues.push('section0.xml XML 파싱 오류: ' + err.textContent.slice(0, 100).trim());
-            } catch (e) {
-                issues.push('section0.xml XML 파싱 예외: ' + e.message);
+        // XML 파서가 없는 호스트에서는 이 검사를 건너뛴다. 파서가 없다는 이유로
+        // "통과"라고 말하지 않는다(checkXmlWellFormed는 그럴 때 null을 준다).
+        try {
+            const xmlCheck = checkXmlWellFormed(xml);
+            if (xmlCheck && !xmlCheck.wellFormed) {
+                issues.push('section0.xml XML 파싱 오류');
             }
+        } catch (e) {
+            issues.push('section0.xml XML 파싱 예외: ' + e.message);
         }
 
         const expected = marginsMmToHwp(expectedMarginsMm || DEFAULT_MARGINS_MM);

@@ -3,6 +3,36 @@
 Date: 2026-06-25
 Scope: static browser-only conversion flow from file selection to HWPX download.
 
+## 42. v4.16.15 코어 추출 — 브라우저 ≡ Node
+
+### 무엇이 바뀌었나
+
+`js/hwpx.js`(렌더러)를 복제하지 않고 Node에서도 실행할 수 있게 했다. 호스트마다 다른 것(ZIP 구현·출력 컨테이너·XML 파서)만 `js/core/runtime.js`에서 갈아 끼운다. 그 위에 CLI(`js/core/cli.js`)와 MCP 서버(`js/core/mcp-server.js`)를 올렸다.
+
+### 새 게이트 3종
+
+| 명령 | 검사 대상 | 합격 기준 |
+|---|---|---|
+| `npm run test:core` | 웹앱 산출물 ≡ Node 코어 산출물 | 9개 픽스처, 모든 ZIP 엔트리 내용 동일 |
+| `npm run test:cli` | CLI 종료 코드·오류 문구 계약 | 22개 검사 |
+| `npm run test:mcp` | MCP 프로토콜 + 생성 품질 | 20개 검사 |
+
+`test:core`가 이 릴리스의 핵심이다. 코어를 꺼내는 흔한 실패 방식은 "코어를 만들고 웹앱은 예전 경로를 계속 쓰는 것"이고, 그러면 두 산출물이 조용히 갈라진다. 이 게이트는 브라우저가 **실제로 쓴** IR·옵션을 `window.__tohwpxDebug.lastRender`에서 꺼내 Node 코어에 넣고 비교한다.
+
+### 릴리스 전 확인
+
+- [ ] `npm run test:core` 9/9 — 하나라도 엔트리 불일치면 릴리스하지 않는다.
+- [ ] `npm run test:cli` 22개, `npm run test:mcp` 20개 전부 통과.
+- [ ] `window.__tohwpxDebug.lastRender`가 채워지는지 golden에서 확인 — 이게 비면 `test:core`가 조용히 무의미해진다.
+- [ ] 모듈 타입 스코프가 맞는지: `js/`(module) · `js/vendor/`(commonjs) · `js/vendor/rhwp-core-0.8.4/`(module). 하나만 틀려도 특정 게이트만 깨진다.
+- [ ] CLI 산출물을 한컴에서 열어 확인. 구조 게이트 통과는 시각 통과가 아니다.
+
+### 이 작업에서 실제로 밟은 함정
+
+1. **일괄 변환 데이터 손실** — `notes.csv`와 `notes.json`이 둘 다 `notes.hwpx`가 되어 뒤 파일이 앞 파일을 조용히 덮어썼다. 변환 시작 전에 출력 경로 충돌을 검사해 종료 코드 2로 거절하도록 고쳤다.
+2. **vendor 모듈 타입 혼재** — `js/vendor/`에 UMD(marked·jszip·xlsx)와 ESM(rhwp)이 섞여 있다. `js/vendor/package.json`을 commonjs로만 두면 rhwp가 `Unexpected token 'export'`로 깨지고, **역방향 게이트에서만** 드러난다.
+3. **IR 이미지 직렬화** — `image.data`(`Uint8Array`)를 `JSON.stringify`로 옮기면 `{0:..,1:..}`가 되어 JSZip이 거절한다. base64로 감싸 넘긴다.
+
 ## 41. v4.13.1 상용화 변경 회귀 수정
 
 재분석에서 확인한 문제:
