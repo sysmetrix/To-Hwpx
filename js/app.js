@@ -5389,6 +5389,24 @@ function renderChangelogContent(tab) {
         applyIrStyles(el);
         return;
     }
+    if (tab === 'roadmap') {
+        // 계획 데이터는 roadmap.json에서 온다. 화면에 내용을 적어두면
+        // 데이터와 갈라져 잘못된 판단의 근거가 된다.
+        el.textContent = '고도화 계획을 불러오는 중...';
+        (async () => {
+            try {
+                const mod = await import('./roadmap-panel.js');
+                const data = await mod.loadRoadmap();
+                if (_changelogTab !== 'roadmap') return;   // 그 사이 탭이 바뀜
+                // eslint-disable-next-line no-unsanitized/property -- renderRoadmapPanel escapes every dynamic value via the escHtml passed in
+                el.innerHTML = mod.renderRoadmapPanel(data, escHtml);
+            } catch (err) {
+                console.error('[고도화 계획]', err);
+                el.textContent = '고도화 계획을 불러오지 못했습니다.';
+            }
+        })();
+        return;
+    }
 
     const groups = [];
     for (const version of _changelogData.versions || []) {

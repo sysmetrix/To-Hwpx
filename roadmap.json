@@ -1,0 +1,341 @@
+{
+  "schemaVersion": 1,
+  "updated": "2026-09-03",
+  "note": "관리자 모드 '고도화 계획' 탭의 단일 출처. qa/roadmap-gate.js가 여기 적힌 버전·PR·게이트가 실제로 존재하는지 검사한다. 손으로 적은 계획이 저장소와 어긋나면 게이트가 실패한다.",
+  "thesis": {
+    "from": "파일을 HWPX로 바꿔주는 웹사이트",
+    "to": "검증 가능한 HWPX 저작 엔진 — 웹사이트는 그 엔진의 첫 번째 배포 채널",
+    "why": "시장에 HWPX 리더는 넘치지만(rhwp, hwpxlib, hwp.js, kordoc, MCP 6종) 라이터는 없다. 대표 격 hwp-mcp조차 새 문서의 표를 텍스트 행으로 평탄화한다. 한컴이 조용히 무시하는 것을 아는 축적된 지식이 이 저장소의 유일 자산이고, 그것이 페이지 안에 갇혀 있었다.",
+    "marketWindow": "2026-05-18 지방정부 온나라까지 HWPX 의무화, 2026-10 hwp 첨부 제한. 유료 경쟁자 텍스트림 AI(hwp.ai.kr)는 서비스 종료."
+  },
+  "phases": [
+    {
+      "id": "phase-0",
+      "name": "10월 마감 대응 — 역방향 출구",
+      "status": "done",
+      "versions": [
+        "4.16.13",
+        "4.16.14"
+      ],
+      "prs": [
+        141,
+        142
+      ],
+      "goal": "전환기 통증의 나머지 절반(\"HWPX를 보냈더니 상대가 못 연다\")에 답한다. 시장 창이 열려 있는 동안만 유효한 작업이라 먼저 처리했다.",
+      "items": [
+        {
+          "title": "HWPX → HWP 5.0 내보내기",
+          "status": "done",
+          "note": "vendor에 이미 있었지만 읽기에만 쓰던 @rhwp/core의 exportHwp()를 가동. 계획서에는 '사실상 불가'로 적었으나 실제로는 가능했다."
+        },
+        {
+          "title": "HWPX → PDF (인쇄 경로)",
+          "status": "done",
+          "note": "PDF 라이브러리를 vendor에 추가하지 않았다. 인쇄 대화상자의 'PDF로 저장'이 이미 있고 공급망을 늘리지 않는 편이 기존 결정과 맞다."
+        },
+        {
+          "title": "첫 화면 입력/출력 표기 분리",
+          "status": "done",
+          "note": "AGENTS.md UI 불변식이 요구하는데 한 줄에 섞여 HWPX가 입력 포맷처럼 읽혔다."
+        },
+        {
+          "title": "업로드 없음 전면 배치",
+          "status": "done",
+          "note": "공문서를 다루는 사용자에게 가장 강한 논거인데 안내 모달 안에만 있었다."
+        },
+        {
+          "title": "다중 파일 큐",
+          "status": "already",
+          "note": "계획서에는 '없음'으로 적었으나 ZIP 다운로드까지 이미 구현돼 있었다. 그 시간을 Phase 3의 폴더 드롭에 썼다."
+        }
+      ]
+    },
+    {
+      "id": "phase-1",
+      "name": "엔진 추출 — 웹사이트에서 엔진으로",
+      "status": "done",
+      "versions": [
+        "4.16.15"
+      ],
+      "prs": [
+        143
+      ],
+      "goal": "렌더러를 복제하지 않고 Node에서 돌린다. 복제하면 웹앱과 CLI·MCP 산출물이 언젠가 반드시 갈라진다.",
+      "items": [
+        {
+          "title": "js/core/runtime.js — 호스트 어댑터",
+          "status": "done",
+          "note": "ZIP 구현·출력 컨테이너·XML 파서만 갈아 끼운다. 포맷 지식을 넣지 않는다 — 들어가는 순간 두 번째 렌더러가 된다."
+        },
+        {
+          "title": "tohwpx CLI",
+          "status": "done",
+          "note": "MD·CSV/TSV·TXT·JSON. 미지원 확장자는 조용히 다르게 처리하지 않고 이유와 대안을 말하며 거절한다."
+        },
+        {
+          "title": "MCP 서버",
+          "status": "done",
+          "note": "외부 SDK 없이 JSON-RPC 직접 구현. 도구 개수 경쟁 대신 생성 품질만 보증한다."
+        },
+        {
+          "title": "웹앱 ≡ Node 동등성 게이트",
+          "status": "done",
+          "note": "브라우저가 실제로 렌더에 넘긴 IR·옵션을 꺼내 코어에 넣고 ZIP 엔트리 단위로 비교. 10개 픽스처 전부 내용 동일."
+        }
+      ]
+    },
+    {
+      "id": "phase-2",
+      "name": "왕복 불변식 — 품질 주장의 근거 교체",
+      "status": "done",
+      "versions": [
+        "4.16.16",
+        "4.16.17"
+      ],
+      "prs": [
+        144,
+        145
+      ],
+      "goal": "'자기 픽스처를 자기 채점기로 잰 점수'를 제3자가 재현할 수 있는 기계 불변식으로 바꾼다.",
+      "items": [
+        {
+          "title": "HWPX → IR 역파서",
+          "status": "done",
+          "note": "우리가 만든 HWPX의 paraPr/charPr 규약을 되짚는다. 범용 리더가 아니다."
+        },
+        {
+          "title": "왕복 게이트 (7 불변식)",
+          "status": "done",
+          "note": "본문 텍스트 / 표 행·열·셀·머리행 / 링크 URL / 목록 항목·중첩·순서·체크 / 제목 레벨 / 그림 / 코드 블록. 점수를 매기지 않고 세고 비교하고 다르면 실패한다."
+        },
+        {
+          "title": "HWPX → Markdown · HTML",
+          "status": "done",
+          "note": "레이아웃 복제가 아니라 구조 추출. 그림은 파일명만 참조하며 그 사실을 결과에 적는다."
+        },
+        {
+          "title": "MCP read_hwpx",
+          "status": "done",
+          "note": "as=ir이 파싱 가능한 IR을 줘서 에이전트가 읽고 고쳐 다시 쓰는 왕복이 가능해졌다."
+        }
+      ]
+    },
+    {
+      "id": "phase-3",
+      "name": "실제 원본과 실제 물량",
+      "status": "done",
+      "versions": [
+        "4.16.18",
+        "4.16.19"
+      ],
+      "prs": [
+        146,
+        147
+      ],
+      "goal": "전환기의 입력은 깔끔한 Markdown이 아니라 PDF 폴더다. 작업 단위를 파일에서 폴더로 옮긴다.",
+      "items": [
+        {
+          "title": "PDF 입력 (pdf.js vendor)",
+          "status": "done",
+          "note": "PDF는 좌표만 담는 형식이라 구조가 추론이다. 추론 근거를 결과 카드에 그대로 보여주고 고정 백분율을 쓰지 않는다."
+        },
+        {
+          "title": "스캔 PDF 거절",
+          "status": "done",
+          "note": "글자 레이어가 없으면 빈 HWPX를 성공으로 주지 않는다. 빈 문서를 성공으로 주면 사용자는 변환된 줄 안다."
+        },
+        {
+          "title": "폴더 드롭 (하위 폴더 재귀)",
+          "status": "done",
+          "note": "readEntries()는 한 번에 일부만 준다. 반복하지 않으면 항목이 많은 폴더에서 조용히 잘린다."
+        },
+        {
+          "title": "변환 리포트 CSV",
+          "status": "done",
+          "note": "실패 행을 반드시 포함한다. 성공만 담으면 리포트가 거짓말이 된다."
+        },
+        {
+          "title": "배치 100개 · 200MB",
+          "status": "done",
+          "note": "개수만 제한하면 큰 파일 몇 개가 탭을 죽인다. 성능 게이트가 UI 심박을 잰다."
+        }
+      ]
+    },
+    {
+      "id": "phase-4",
+      "name": "공문서 지능 — 변환기에서 저작 도구로",
+      "status": "done",
+      "versions": [
+        "4.16.20",
+        "4.16.21",
+        "4.16.22",
+        "4.16.23"
+      ],
+      "prs": [
+        148,
+        149,
+        150,
+        151
+      ],
+      "goal": "포맷 변환은 커머디티가 된다. 문서 구조 이해는 아니다. 추측이 아니라 「행정업무의 운영 및 혁신에 관한 규정」에 근거한다.",
+      "items": [
+        {
+          "title": "공문서 항목 들여쓰기 (규정 2타)",
+          "status": "done",
+          "note": "기호 8종(1. 가. 1) 가) (1) (가) ① ㉮), 기호와 내용 사이 1타, 둘째 줄부터 내용 첫 글자 정렬. 기본값은 꺼짐 — 일반 문서에 켜면 원문보다 나빠진다."
+        },
+        {
+          "title": "공문 구성요소 인식",
+          "status": "done",
+          "note": "두문(수신·경유) · 본문(제목·붙임) · 결문(발신명의·시행·접수·공개 구분). 제목만 승격하고 발신명의만 가운데 정렬한다. 나머지는 역할만 표시 — 배치는 기관 서식마다 다르다."
+        },
+        {
+          "title": "신구조문대비표",
+          "status": "done",
+          "note": "현행 기준 정렬, 신설/삭제 표기, 바뀐 쪽만 강조. 조문 번호와 문장 유사도로 짝짓는다."
+        },
+        {
+          "title": "공문 초안 골격 생성",
+          "status": "done",
+          "note": "공식 별지 서식의 복제가 아니다. 그 사실을 결과에 항상 적고 MCP 테스트가 안내의 존재를 검사한다."
+        },
+        {
+          "title": "IR 확장 (각주·미주·다단·구역별 머리말/꼬리말)",
+          "status": "planned",
+          "note": "각주는 이미 지원(GFM 각주 → HWPX 각주 컨트롤). 미주·다단·구역별 머리말/꼬리말은 미착수."
+        }
+      ]
+    }
+  ],
+  "gates": [
+    {
+      "script": "test:reverse",
+      "label": "역방향 내보내기",
+      "since": "4.16.13",
+      "checks": "CFB 시그니처 · content-loss · 쪽수 유지 · 왕복 텍스트 · 렌더 요소 유지"
+    },
+    {
+      "script": "test:core",
+      "label": "웹앱 ≡ Node 코어",
+      "since": "4.16.15",
+      "checks": "10개 픽스처 ZIP 엔트리 내용 동일"
+    },
+    {
+      "script": "test:cli",
+      "label": "CLI 계약",
+      "since": "4.16.15",
+      "checks": "종료 코드 · 오류 문구 · 출력 충돌 거절 · 옵션 반영"
+    },
+    {
+      "script": "test:mcp",
+      "label": "MCP 프로토콜·생성 품질",
+      "since": "4.16.15",
+      "checks": "stdio JSON-RPC · 표 미평탄화 · 한계 안내 존재"
+    },
+    {
+      "script": "test:roundtrip",
+      "label": "왕복 불변식",
+      "since": "4.16.16",
+      "checks": "텍스트 · 표(머리행 포함) · 링크 · 목록 · 제목 · 그림 · 코드"
+    },
+    {
+      "script": "test:pdf",
+      "label": "PDF 구조 추론",
+      "since": "4.16.18",
+      "checks": "제목 레벨 · 표 행열 · 근거 없는 머리행 미주장 · 스캔 PDF 거절"
+    },
+    {
+      "script": "test:gov",
+      "label": "공문서 규정 준수",
+      "since": "4.16.20",
+      "checks": "기호 8종 · 기호 위치 = 단계×2타 · 내어쓰기 · 오작동 방지"
+    },
+    {
+      "script": "test:diff",
+      "label": "신구조문대비표",
+      "since": "4.16.21",
+      "checks": "연쇄 오염 없음 · 관계없는 조문 미짝짓기 · 신설/삭제 표기"
+    },
+    {
+      "script": "test:roadmap",
+      "label": "고도화 계획 정합성",
+      "since": "4.17.0",
+      "checks": "버전·PR 실재 · 게이트 존재 · test:release 편입 · 참조 문서 실재"
+    }
+  ],
+  "manualVerification": [
+    {
+      "title": "HWP 내보내기 산출물",
+      "why": "구버전 한/글에서 실제로 열리는지. 표·그림이 제자리인지.",
+      "where": "qa/release-qa.md 42절"
+    },
+    {
+      "title": "PDF 입력 변환 결과",
+      "why": "추론은 문서마다 다르게 맞는다. 실제 공문서 PDF 몇 건으로 확인해야 한다.",
+      "where": "qa/release-qa.md 43절"
+    },
+    {
+      "title": "공문서 항목 들여쓰기",
+      "why": "항목이 규정대로 계단을 이루는지, 두 줄 이상 항목의 둘째 줄이 내용 첫 글자에 맞는지.",
+      "where": "qa/release-qa.md 44절"
+    }
+  ],
+  "candidates": [
+    {
+      "title": "조·항·호 단위 신구조문대비표",
+      "value": "high",
+      "effort": "high",
+      "note": "현재는 문단 단위다. 조·항·호 대비는 법령 구조 파싱이 따로 필요하고, 문단 비교로 흉내내면 조문 번호가 어긋난 표가 나온다.",
+      "blockedBy": "법령 구조(조/항/호/목) 파서"
+    },
+    {
+      "title": "CLI에서 HTML · DOCX · PPTX · XLSX 지원",
+      "value": "high",
+      "effort": "mid",
+      "note": "지금은 웹앱에서만 변환된다. Node에 DOM(linkedom 등)과 SheetJS를 들이면 가능하지만 공급망이 늘어난다. 반쯤 지원해서 조용히 다른 결과를 내는 것보다 지금처럼 거절하는 편이 낫다는 판단이 아직 유효한지 재검토 필요.",
+      "blockedBy": "Node용 DOM 선택과 vendor 정책 결정"
+    },
+    {
+      "title": "왕복 게이트를 DOCX · HTML · PPTX까지 확장",
+      "value": "high",
+      "effort": "mid",
+      "note": "현재 왕복 검사는 DOM 비의존 포맷(MD·CSV·JSON·TXT)만 돈다. 가장 복잡한 DOCX가 왕복 검증 밖에 있다. 위 항목이 풀리면 자동으로 가능해진다.",
+      "blockedBy": "CLI 포맷 확장"
+    },
+    {
+      "title": "표 안 링크",
+      "value": "mid",
+      "effort": "mid",
+      "note": "현재 buildCellBlockContent()가 href를 명시적으로 끄는 계약상 미지원 항목이다. 공용 cell run 계약을 먼저 설계해야 한다.",
+      "blockedBy": "공용 cell run 계약 설계"
+    },
+    {
+      "title": "PDF 그림 추출",
+      "value": "mid",
+      "effort": "high",
+      "note": "현재 PDF에서 글자만 가져온다. getOperatorList로 이미지를 꺼낼 수 있으나 좌표·크기·중복 판정이 까다롭고, 잘못하면 배경 도형까지 그림으로 넣는다.",
+      "blockedBy": null
+    },
+    {
+      "title": "npm 공개 배포 (@tohwpx/core)",
+      "value": "mid",
+      "effort": "low",
+      "note": "코어는 이미 분리됐고 CLI·MCP가 그것을 쓴다. 공개하면 유지보수 의무가 생기므로 왕복 게이트를 DOCX까지 넓힌 뒤가 적절하다.",
+      "blockedBy": "왕복 게이트 확장"
+    },
+    {
+      "title": "IR 확장 — 미주 · 다단 · 구역별 머리말/꼬리말",
+      "value": "mid",
+      "effort": "high",
+      "note": "Phase 4 계획에 있었으나 미착수. 공문서에서 실제로 쓰이지만 hwpxlib 대조가 많이 필요하다.",
+      "blockedBy": null
+    },
+    {
+      "title": "OCR (스캔 PDF)",
+      "value": "low",
+      "effort": "high",
+      "note": "현재 스캔 PDF는 명시적으로 거절한다. 브라우저에서 한국어 OCR은 모델 크기와 정확도 모두 부담이고, 틀린 글자를 공문서에 넣는 위험이 크다. 당분간 거절 유지가 맞다고 본다.",
+      "blockedBy": null
+    }
+  ]
+}
