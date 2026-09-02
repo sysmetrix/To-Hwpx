@@ -674,11 +674,21 @@ ${[...customQuoteMap.entries()].map(([bg, { paraId, bfId }]) =>
         <hh:diagonal type="NONE" width="0.1 mm" color="#000000"/>
         <hc:fillBrush><hc:winBrush faceColor="#F8FAFC" hatchColor="#000000" alpha="0"/></hc:fillBrush>
       </hh:borderFill>
-${[...customBfMap.entries()].map(([key, bfId]) => {
-    const [color, variant = 'full'] = String(key).split(':');
-    const noLeft = variant === 'left' || variant === 'both';
-    const noRight = variant === 'right' || variant === 'both';
-    return `      <!-- id=${bfId} DOCX 셀 배경색 #${color}${variant === 'full' ? '' : ` (${variant})`} -->
+${(() => {
+    // customBfMap(표 셀 배경, 색상당 4변형)과 customQuoteMap(콜아웃 인용구, 색상당 1개)은
+    // 둘 다 같은 nextBfId 카운터를 공유하지만 서로 다른 Map이라, 문서 안에서 어느 쪽이 먼저
+    // 발견되느냐에 따라 번호가 서로 끼어들 수 있다(예: 표 20~31 → 인용구 32~33 → 표 34~41).
+    // 두 Map을 따로따로 이어 붙이면 실제 id 오름차순과 다른 순서로 출력돼, id 속성이 아니라
+    // 등장 위치로 borderFill을 찾는 것처럼 동작하는 한컴에서 엉뚱한 색이 적용된다(실제 확인:
+    // 콜아웃 배경이 표 셀 배경 색으로 잘못 나옴). id 오름차순으로 정렬해 출력해 방지한다.
+    const entries = [];
+    for (const [key, bfId] of customBfMap.entries()) {
+        const [color, variant = 'full'] = String(key).split(':');
+        const noLeft = variant === 'left' || variant === 'both';
+        const noRight = variant === 'right' || variant === 'both';
+        entries.push({
+            id: Number(bfId),
+            xml: `      <!-- id=${bfId} DOCX 셀 배경색 #${color}${variant === 'full' ? '' : ` (${variant})`} -->
       <hh:borderFill id="${bfId}" threeD="0" shadow="0" centerLine="NONE" breakCellSeparateLine="0">
         <hh:slash type="NONE" Crooked="0" isCounter="0"/><hh:backSlash type="NONE" Crooked="0" isCounter="0"/>
         <hh:leftBorder type="${noLeft ? 'NONE' : 'SOLID'}" width="${noLeft ? '0.1' : '0.12'} mm" color="#000000"/>
@@ -687,9 +697,13 @@ ${[...customBfMap.entries()].map(([key, bfId]) => {
         <hh:bottomBorder type="SOLID" width="0.12 mm" color="#000000"/>
         <hh:diagonal type="SOLID" width="0.1 mm" color="#000000"/>
         <hc:fillBrush><hc:winBrush faceColor="#${color}" hatchColor="#000000" alpha="0"/></hc:fillBrush>
-      </hh:borderFill>`;
-}).join('\n')}
-${[...customQuoteMap.entries()].map(([bg, { bfId }]) => `      <!-- id=${bfId} DOCX 문단 배경(콜아웃) 인용구: 왼쪽 강조선 + #${bg} 배경 -->
+      </hh:borderFill>`,
+        });
+    }
+    for (const [bg, { bfId }] of customQuoteMap.entries()) {
+        entries.push({
+            id: Number(bfId),
+            xml: `      <!-- id=${bfId} DOCX 문단 배경(콜아웃) 인용구: 왼쪽 강조선 + #${bg} 배경 -->
       <hh:borderFill id="${bfId}" threeD="0" shadow="0" centerLine="NONE" breakCellSeparateLine="0">
         <hh:slash type="NONE" Crooked="0" isCounter="0"/><hh:backSlash type="NONE" Crooked="0" isCounter="0"/>
         <hh:leftBorder type="SOLID" width="0.5 mm" color="#64748B"/>
@@ -698,7 +712,12 @@ ${[...customQuoteMap.entries()].map(([bg, { bfId }]) => `      <!-- id=${bfId} D
         <hh:bottomBorder type="NONE" width="0.1 mm" color="#000000"/>
         <hh:diagonal type="NONE" width="0.1 mm" color="#000000"/>
         <hc:fillBrush><hc:winBrush faceColor="#${bg}" hatchColor="#000000" alpha="0"/></hc:fillBrush>
-      </hh:borderFill>`).join('\n')}
+      </hh:borderFill>`,
+        });
+    }
+    entries.sort((a, b) => a.id - b.id);
+    return entries.map(e => e.xml).join('\n');
+})()}
     </hh:borderFills>
   </hh:refList>
 ${(docHeaderFooter.header || docHeaderFooter.footer)

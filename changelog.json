@@ -1,6 +1,19 @@
 {
-  "current": "4.16.7",
+  "current": "4.16.8",
   "versions": [
+    {
+      "version": "4.16.8",
+      "date": "2026-09-02",
+      "user": [
+        "DOCX의 설명 상자(\"쉽게 말하면\" 같은 배경색 문단)가 한글에서 엉뚱한 파란 배경으로 나와 글씨를 알아보기 힘들던 문제를 고쳤습니다. 캐시 문제가 아니라 실제 변환 버그였습니다."
+      ],
+      "dev": [
+        "[v4.16.8] js/hwpx.js buildHeaderXml(): <hh:borderFills> 안에서 customBfMap(표 셀 배경)과 customQuoteMap(문단 배경 콜아웃)을 각각 통째로 이어 붙여 출력하던 것을 id 오름차순 단일 정렬 출력으로 변경. 두 Map은 같은 nextBfId 카운터를 공유하지만 scanBorderFills가 문서 순서대로 훑기 때문에 번호가 서로 끼어들 수 있고(실측: 표 20~31 → 인용구 32~33 → 표 34~41), Map별로 묶어 내보내면 파일상 등장 순서가 ...31,34,...,41,32,33이 되어 id 오름차순과 어긋났음",
+        "[v4.16.8] 이 파일은 well-formed, id 중복 없음, itemCnt 일치, borderFillIDRef 대상 색상값까지 전부 정확했고 자동 게이트 ①~⑨를 모두 통과했지만, 실제 한컴에서는 콜아웃 배경이 표 셀 배경 색으로 렌더링됨 — 한컴이 borderFill을 id 속성이 아니라 등장 위치로 참조하는 것처럼 동작하는 사례. AGENTS.md의 '자동은 well-formed/구조만 본다, 렌더링은 못 본다' 원칙의 실제 증거",
+        "[v4.16.8] 사용자가 새 파일명으로 재변환해도 동일 재현된다고 제보 → 이전에 캐시 문제로 오판했던 진단을 철회하고 생성된 header-real.xml의 borderFill 등장 순서를 직접 훑어 원인 확정. 수정 후 실제 원본 DOCX(51쪽)로 재생성해 1~41 오름차순 확인, paraPr 20→borderFill 32(#F4F6F9)·paraPr 21→borderFill 33(#FFFAF0) 매핑 정상 확인",
+        "[v4.16.8] lint·golden 13케이스·test:docx·test:package·impact-gate 전부 통과"
+      ]
+    },
     {
       "version": "4.16.7",
       "date": "2026-09-02",
