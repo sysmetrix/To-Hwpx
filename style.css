@@ -126,8 +126,67 @@
     --radius-md:    10px;
     --radius-lg:    14px;
 
+    /* ── 간격 스케일 ───────────────────────────────────────────────
+       4px 기준 배수. 지금까지 간격은 전부 리터럴이라 같은 위계의 요소가
+       10px·11px·12px로 제각각이었다. 새 컴포넌트는 이 토큰만 쓰고,
+       기존 코드는 손대는 김에 기회적으로 옮긴다(일괄 치환 금지 — DESIGN.md). */
+    --sp-1:  4px;
+    --sp-2:  8px;
+    --sp-3:  12px;
+    --sp-4:  16px;
+    --sp-5:  20px;
+    --sp-6:  24px;
+    --sp-8:  32px;
+    --sp-10: 40px;
+    --sp-12: 48px;
+    --sp-16: 64px;
+
+    /* ── 모션 ─────────────────────────────────────────────────────
+       감쇠 스프링 x(t)=1-e^(-ζωt)(cos ωd·t + (ζω/ωd)sin ωd·t)를 풀어
+       linear() 정지점으로 구운 것이다. Framer Motion의 스프링과 같은 식이며
+       JS도 외부 의존성도 없다(이 앱의 CSP는 script-src 'self'라 CDN 불가).
+
+       snap   k=900 c=38  → 304ms, 오버슈트 7.6%   버튼·칩 같은 직접 조작
+       soft   k=230 c=30  → 494ms, 오버슈트 0%     등장·퇴장(넘김이 거슬리는 곳)
+       bounce k=640 c=26  → 368ms, 오버슈트 15%    모달·토스트처럼 존재를 알릴 때
+
+       ※ 값을 손으로 고치지 말 것. 곡선은 물리 파라미터에서 계산된 것이라
+         중간 정지점만 바꾸면 물리적으로 불가능한 움직임이 된다. */
+    --spring-snap: linear(0 0%, 0.0612 4%, 0.2053 8%, 0.3843 13%, 0.5647 17%, 0.7255 21%, 0.8559 25%, 0.9528 29%, 1.0181 33%, 1.0563 38%, 1.0736 42%, 1.0759 46%, 1.0688 50%, 1.0566 54%, 1.0426 58%, 1.0292 63%, 1.0176 67%, 1.0084 71%, 1.0018 75%, 0.9975 79%, 0.9951 83%, 0.9942 88%, 0.9943 92%, 0.995 96%, 1 100%);
+    --spring-soft: linear(0 0%, 0.0398 4%, 0.1305 8%, 0.2421 13%, 0.3569 17%, 0.4652 21%, 0.5622 25%, 0.6461 29%, 0.7168 33%, 0.7754 38%, 0.8232 42%, 0.8617 46%, 0.8925 50%, 0.9168 54%, 0.9359 58%, 0.9509 63%, 0.9625 67%, 0.9714 71%, 0.9783 75%, 0.9836 79%, 0.9876 83%, 0.9907 88%, 0.993 92%, 0.9948 96%, 1 100%);
+    --spring-bounce: linear(0 0%, 0.0654 4%, 0.2238 8%, 0.4252 13%, 0.6309 17%, 0.8142 21%, 0.96 25%, 1.0627 29%, 1.124 33%, 1.15 38%, 1.149 42%, 1.1301 46%, 1.1015 50%, 1.0698 54%, 1.04 58%, 1.0151 63%, 0.9965 67%, 0.9845 71%, 0.9783 75%, 0.9768 79%, 0.9787 83%, 0.9825 88%, 0.9872 92%, 0.992 96%, 1 100%);
+
+    --dur-snap:   304ms;
+    --dur-soft:   494ms;
+    --dur-bounce: 368ms;
+
+    /* 스프링 미지원 브라우저용 근사 곡선. @supports로 위 토큰을 덮어쓴다. */
+    --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+
+    /* 폼 컨트롤 공통 높이.
+       select·세그먼트·토글은 각자 padding으로 높이를 만들고 있어서 실제 렌더
+       높이가 폰트 메트릭에 좌우됐다(폴백 39px, Noto Sans KR 41px). 같은 행에
+       놓이는 컨트롤이 폰트 로딩 타이밍에 따라 어긋나면 안 되므로 높이를
+       명시적으로 고정한다. */
+    --control-h: 40px;
+    /* 세부 설정의 작은 세그먼트. 기본 컨트롤과 같은 위계가 아니므로
+       일부러 낮게 둔다(높이를 고정하기 전 렌더값 35px을 유지). */
+    --control-h-sm: 35px;
+
     /* 트랜지션 (호버·포커스 — 160~220ms 부드러운 전환) */
     --trans:        0.18s ease;
+    /* 직접 조작 피드백의 기본값. --trans보다 이쪽을 먼저 고려한다. */
+    --trans-snap:   var(--dur-snap) var(--spring-snap);
+}
+
+/* linear() 미지원(구형 Safari·Firefox) — 스프링 토큰을 근사 베지어로 대체한다.
+   느낌은 덜하지만 움직임이 사라지거나 튀지 않는다. */
+@supports not (animation-timing-function: linear(0, 1)) {
+    :root {
+        --spring-snap:   var(--ease-out);
+        --spring-soft:   var(--ease-out);
+        --spring-bounce: var(--ease-out);
+    }
 }
 
 /* ─────────────────────────────────────────────────────────────────
@@ -263,7 +322,7 @@ a:hover { text-decoration: underline; }
     border-radius: var(--radius-sm);
     box-shadow: var(--shadow-md);
     transform: translateY(-150%);
-    transition: transform var(--trans);
+    transition: transform var(--dur-snap) var(--spring-snap);
 }
 .skip-link:focus,
 .skip-link:focus-visible {
@@ -461,7 +520,7 @@ a:hover { text-decoration: underline; }
     position: fixed;
     bottom: 32px;
     left: 50%;
-    transform: translateX(-50%) translateY(20px);
+    transform: translateX(-50%) translateY(20px) scale(0.96);
     background: var(--c-inverse-surface);
     color: #fff;
     padding: 12px 20px;
@@ -473,7 +532,10 @@ a:hover { text-decoration: underline; }
     box-shadow: var(--shadow-lg);
     z-index: 9999;
     opacity: 0;
-    transition: opacity 0.25s, transform 0.25s;
+    /* 토스트는 시야 밖에서 들어오므로 존재를 알리는 넘김이 도움이 된다. */
+    transition:
+        opacity var(--dur-snap) var(--spring-snap),
+        transform var(--dur-bounce) var(--spring-bounce);
     /* 모바일에서 글자가 잘리지 않도록: 화면 폭 이내로 제한하고 줄바꿈 허용 */
     flex-wrap: wrap;
     max-width: min(92vw, 440px);
@@ -482,7 +544,7 @@ a:hover { text-decoration: underline; }
 }
 .app-toast--show {
     opacity: 1;
-    transform: translateX(-50%) translateY(0);
+    transform: translateX(-50%) translateY(0) scale(1);
 }
 .app-toast strong { color: #93c5fd; }
 .app-toast span {
@@ -670,7 +732,7 @@ a:hover { text-decoration: underline; }
     margin: 0 auto;
     cursor: pointer;
     box-shadow: 0 2px 12px color-mix(in srgb, var(--c-primary) 6%, transparent), var(--shadow-sm);
-    transition: background var(--trans), border-color var(--trans), box-shadow var(--trans), transform var(--trans);
+    transition: background var(--trans), border-color var(--trans), box-shadow var(--trans), transform var(--dur-snap) var(--spring-snap);
     user-select: none;
 }
 .drop-zone:hover, .drop-zone.drag-over {
@@ -712,7 +774,7 @@ a:hover { text-decoration: underline; }
     height: 22px;
     object-fit: contain;
     opacity: 0.6;
-    transition: opacity var(--trans), transform var(--trans);
+    transition: opacity var(--trans), transform var(--dur-snap) var(--spring-snap);
 }
 .drop-zone:hover .drop-fmt-icons img,
 .drop-zone.drag-over .drop-fmt-icons img { opacity: 1; }
@@ -1113,7 +1175,7 @@ a:hover { text-decoration: underline; }
     padding: 22px 16px;
     text-align: center;
     cursor: pointer;
-    transition: border-color var(--trans), box-shadow var(--trans), background var(--trans), transform var(--trans);
+    transition: border-color var(--trans), box-shadow var(--trans), background var(--trans), transform var(--dur-snap) var(--spring-snap);
     position: relative;
     min-width: 0;
     min-height: 174px;
@@ -1350,11 +1412,15 @@ a:hover { text-decoration: underline; }
 .document-shape-grid select,
 .document-shape-grid .seg-control,
 .auto-download-control {
-    min-height: 38px;
+    min-height: var(--control-h);
+    height: var(--control-h);
 }
 .document-shape-grid select {
-    padding-top: 7px;
-    padding-bottom: 7px;
+    /* 높이를 padding이 아니라 명시값으로 정한다. line-height:normal + 한글
+       웹폰트 조합은 폰트가 적용되기 전후로 콘텐츠 높이가 2px 달라진다. */
+    height: var(--control-h);
+    padding-top: 0;
+    padding-bottom: 0;
 }
 .auto-download-control {
     display: flex !important;
@@ -2088,9 +2154,15 @@ a:hover { text-decoration: underline; }
 .seg-control {
     display: inline-flex;
     width: 100%;
+    height: var(--control-h);
     border: 1.5px solid var(--c-border);
     border-radius: var(--radius-sm);
     overflow: hidden;
+}
+/* 작은 변형은 기본 컨트롤과 같은 위계가 아니다.
+   .seg-control이 소스에서 뒤에 오므로 클래스를 겹쳐 특정성을 올린다. */
+.seg-control.seg-control--sm {
+    height: var(--control-h-sm);
 }
 .seg-btn {
     flex: 1;
@@ -2106,7 +2178,16 @@ a:hover { text-decoration: underline; }
 }
 .seg-btn + .seg-btn { border-left: 1.5px solid var(--c-border); }
 .seg-btn:hover { background: var(--c-primary-light); color: var(--c-primary-dark); }
-.seg-btn.is-active { background: var(--c-primary); color: #fff; }
+/* 선택된 옵션은 '선택됨'이지 '주 행동'이 아니다.
+   예전에는 solid 브랜드색이라 세로/가로 같은 설정 버튼이 실행 버튼과 같은
+   무게로 보였고, 정작 CTA는 비활성 상태라 더 흐렸다. 화면에서 가장 진한
+   덩어리가 네다섯 개면 어디를 눌러야 할지 알 수 없다.
+   solid 브랜드 채움은 이 화면에서 변환 버튼 하나만 쓴다. */
+.seg-btn.is-active {
+    background: var(--c-primary-light);
+    color: var(--c-primary-dark);
+    box-shadow: inset 0 0 0 1.5px var(--c-primary);
+}
 .seg-btn:focus-visible { outline: 2px solid var(--c-primary); outline-offset: -2px; }
 
 .checkbox-row {
@@ -2412,18 +2493,37 @@ a:hover { text-decoration: underline; }
     font-weight: 700;
     letter-spacing: 0.01em;
     cursor: pointer;
-    transition: background var(--trans), transform var(--trans), opacity var(--trans), box-shadow var(--trans);
-    margin-top: 8px;
+    /* 이 화면의 단일 핵심 행동. 스프링으로 눌림과 되돌아옴이 손에 잡히게 한다.
+       색은 즉시(--trans), 형태는 스프링으로 — 색까지 튕기면 산만해진다. */
+    transition:
+        background var(--trans),
+        opacity var(--trans),
+        transform var(--dur-snap) var(--spring-snap),
+        box-shadow var(--dur-snap) var(--spring-snap);
+    /* CTA 위 여백을 넉넉히. 옵션 더미와 붙어 있으면 '설정의 일부'로 읽힌다. */
+    margin-top: var(--sp-5);
     box-shadow: 0 2px 14px color-mix(in srgb, var(--c-primary) 42%, transparent);
 }
 .btn-convert:hover:not(:disabled) {
     background: var(--c-primary-dark);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 22px color-mix(in srgb, var(--c-primary) 52%, transparent);
+    transform: translateY(-2px) scale(1.012);
+    box-shadow: 0 8px 26px color-mix(in srgb, var(--c-primary) 52%, transparent);
 }
 .btn-convert:active:not(:disabled) {
-    transform: translateY(0);
+    /* 누르는 순간은 스프링 없이 즉시 반응해야 '눌렸다'고 느낀다.
+       되돌아올 때만 스프링이 걸린다(위 규칙). */
+    transition-duration: 60ms;
+    transform: translateY(1px) scale(0.985);
     box-shadow: 0 1px 5px color-mix(in srgb, var(--c-primary) 22%, transparent);
+}
+/* 변환 준비 완료 — 활성화되는 순간 한 번 튕겨 시선을 끌어온다.
+   파일을 고른 직후가 이 화면에서 가장 중요한 전환 지점이다. */
+.btn-convert.is-ready {
+    animation: cta-ready var(--dur-bounce) var(--spring-bounce) both;
+}
+@keyframes cta-ready {
+    from { transform: scale(0.96); }
+    to   { transform: scale(1); }
 }
 .btn-convert:disabled {
     opacity: 0.45;
@@ -2443,11 +2543,11 @@ a:hover { text-decoration: underline; }
     background: var(--c-surface);
     border: 1px solid var(--c-border);
     border-radius: var(--radius-lg);
-    padding: 24px;
-    animation: panel-appear 0.28s ease;
+    padding: var(--sp-6);
+    animation: panel-appear var(--dur-soft) var(--spring-soft) both;
 }
 @keyframes panel-appear {
-    from { opacity: 0; transform: translateY(6px); }
+    from { opacity: 0; transform: translateY(10px); }
     to   { opacity: 1; transform: translateY(0); }
 }
 
@@ -2917,7 +3017,7 @@ a:hover { text-decoration: underline; }
     border-radius: var(--radius-md);
     font-weight: 700;
     font-size: 0.95rem;
-    transition: background var(--trans), transform var(--trans);
+    transition: background var(--trans), transform var(--dur-snap) var(--spring-snap);
 }
 .btn-download:hover {
     background: #047857;
@@ -3395,7 +3495,7 @@ a:hover { text-decoration: underline; }
     font-size: 0.88rem;
     font-weight: 700;
     cursor: pointer;
-    transition: background var(--trans), border-color var(--trans), color var(--trans), transform var(--trans);
+    transition: background var(--trans), border-color var(--trans), color var(--trans), transform var(--dur-snap) var(--spring-snap);
 }
 .btn-preview:hover {
     background: var(--c-primary-light);
@@ -3518,11 +3618,12 @@ a:hover { text-decoration: underline; }
     max-height: min(90vh, 90dvh);
     width: 100%;
     overflow: hidden;
-    animation: slideUpModal 0.22s ease;
+    /* 모달은 '나타났다'가 분명해야 한다. 스프링의 살짝 넘김이 그 역할을 한다. */
+    animation: slideUpModal var(--dur-bounce) var(--spring-bounce) both;
 }
 @keyframes slideUpModal {
-    from { transform: translateY(20px); opacity: 0; }
-    to   { transform: translateY(0);    opacity: 1; }
+    from { transform: translateY(24px) scale(0.97); opacity: 0; }
+    to   { transform: translateY(0) scale(1);       opacity: 1; }
 }
 .modal-box--md { max-width: 640px; }
 .modal-box--xl { max-width: 960px; }
@@ -4606,7 +4707,7 @@ a:hover { text-decoration: underline; }
     border-radius: 50%;
     background: #fff;
     box-shadow: 0 1px 3px rgba(20, 21, 26, 0.22);
-    transition: transform var(--trans);
+    transition: transform var(--dur-snap) var(--spring-snap);
 }
 .changelog-lab-toggle[aria-pressed="true"] .changelog-lab-toggle-track {
     border-color: var(--c-primary);
@@ -4737,7 +4838,7 @@ a:hover { text-decoration: underline; }
     border-radius: 50%;
     background: #fff;
     box-shadow: 0 1px 3px rgba(20, 21, 26, 0.22);
-    transition: transform var(--trans);
+    transition: transform var(--dur-snap) var(--spring-snap);
 }
 .admin-feature-toggle[aria-pressed="true"] .admin-feature-toggle-track {
     background: var(--c-primary);
@@ -5383,7 +5484,7 @@ a:hover { text-decoration: underline; }
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
-    transition: background var(--trans), transform var(--trans), box-shadow var(--trans);
+    transition: background var(--trans), transform var(--dur-snap) var(--spring-snap), box-shadow var(--trans);
 }
 .btn-primary:hover {
     background: var(--c-primary-dark, #1d4ed8);
@@ -5400,43 +5501,55 @@ a:hover { text-decoration: underline; }
      블록 컨테이너 단위로만 적용해 호버 애니메이션과 충돌하지 않게 합니다.
    - prefers-reduced-motion 환경에서는 적용하지 않습니다.
    ───────────────────────────────────────────────────────────────── */
-@keyframes reveal-up {
-    from { opacity: 0; transform: translateY(16px); }
-    to   { opacity: 1; transform: translateY(0); }
-}
-@media (prefers-reduced-motion: no-preference) {
-    @supports (animation-timeline: view()) {
-        /* 변환기(핵심 도구)는 첫 로드에 항상 선명하도록 제외.
-           명확히 접히는 포맷 이하 섹션에만 진입 모션 적용 */
-        .formats-section .section-title,
-        .formats-section .section-sub,
-        .format-grid,
-        .steps-grid,
-        .support-table-wrap,
-        .footer-inner {
-            opacity: 0;
-            animation: reveal-up 0.7s ease both;
-            animation-timeline: view();
-            animation-range: entry 0% entry 50%;
-        }
-    }
-}
+/* 진입 모션은 IntersectionObserver 한 경로로만 처리한다(.anim-target).
+   예전에는 animation-timeline: view()와 IntersectionObserver 두 갈래가
+   공존해 브라우저마다 다르게 움직였고, view()는 아직 지원이 고르지 않다.
+   두 갈래를 두면 어느 쪽이 실제로 도는지 알 수 없어 회귀도 잡히지 않는다. */
 
 /* 모션 최소화 사용자 — 장식용 반복 애니메이션·부드러운 스크롤 비활성 */
 /* ─────────────────────────────────────────────────────────────────
    [스크롤 페이드-인]  IntersectionObserver가 .anim-visible을 토글
    ───────────────────────────────────────────────────────────────── */
-.anim-target {
-    opacity: 0;
-    transform: translateY(22px);
-    transition:
-        opacity  0.6s ease calc(var(--anim-delay, 0s)),
-        transform 0.6s ease calc(var(--anim-delay, 0s));
+/* ⚠ 진입 모션은 **투명도를 건드리지 않는다.**
+   opacity:0인 글자는 글자가 없는 것과 같다. 화면 아래에 있어 아직 드러나지
+   않은 본문이 접근성 검사에서 대비 0으로 잡히고(axe color-contrast), 그건
+   오탐이 아니라 사실이다 — 그 순간 그 글자는 읽을 수 없다.
+   그래서 이동·축소만으로 등장을 표현한다. 스프링의 감속이 충분히 강해서
+   페이드 없이도 '자리를 잡는' 인상이 난다.
+
+   숨김 상태(변형)는 JS가 '내가 되돌리겠다'고 표시한 뒤에만 적용한다.
+   html.js-reveal은 initScrollAnimations()가 붙인다. 스크립트가 실패하거나
+   IntersectionObserver가 없으면 클래스가 없으므로 내용은 제자리에 있다. */
+.js-reveal .anim-target {
+    transform: translateY(20px) scale(0.988);
+    transition: transform var(--dur-soft) var(--spring-soft) var(--anim-delay, 0ms);
+    /* 애니메이션 동안만 합성 레이어로 올린다(끝나면 브라우저가 회수). */
+    will-change: transform;
 }
-.anim-target.anim-visible {
-    opacity: 1;
+.js-reveal .anim-target.anim-visible {
+    transform: none;
+    will-change: auto;
+}
+
+/* 자식들을 순차 등장시킨다. JS가 --anim-delay를 직접 넣는 대신
+   CSS가 순번을 계산하게 두면 DOM이 바뀌어도 지연이 자동으로 맞는다. */
+.js-reveal .anim-stagger > * {
+    transform: translateY(16px) scale(0.99);
+    transition: transform var(--dur-soft) var(--spring-soft);
+}
+.js-reveal .anim-stagger.anim-visible > * {
     transform: none;
 }
+/* 60ms 간격 — 이보다 길면 마지막 항목을 기다리게 되고,
+   짧으면 순차라는 인상이 사라진다. 최대 8개까지만 늦춘다. */
+.js-reveal .anim-stagger.anim-visible > *:nth-child(1) { transition-delay: 0ms; }
+.js-reveal .anim-stagger.anim-visible > *:nth-child(2) { transition-delay: 60ms; }
+.js-reveal .anim-stagger.anim-visible > *:nth-child(3) { transition-delay: 120ms; }
+.js-reveal .anim-stagger.anim-visible > *:nth-child(4) { transition-delay: 180ms; }
+.js-reveal .anim-stagger.anim-visible > *:nth-child(5) { transition-delay: 240ms; }
+.js-reveal .anim-stagger.anim-visible > *:nth-child(6) { transition-delay: 300ms; }
+.js-reveal .anim-stagger.anim-visible > *:nth-child(7) { transition-delay: 360ms; }
+.js-reveal .anim-stagger.anim-visible > *:nth-child(n+8) { transition-delay: 420ms; }
 
 @media (prefers-reduced-motion: reduce) {
     html { scroll-behavior: auto; }
@@ -5445,7 +5558,11 @@ a:hover { text-decoration: underline; }
     .drop-zone:hover,
     .drop-zone.drag-over,
     .format-card:hover:not(.coming-soon) { transform: none; }
-    .anim-target { opacity: 1; transform: none; transition: none; }
+    .anim-target,
+    .anim-stagger > *,
+    .js-reveal .anim-target,
+    .js-reveal .anim-stagger > * { transform: none; transition: none; }
+    .btn-convert.is-ready { animation: none; }
     .drop-zone .drop-icon svg { animation: none; }
     .value-demo-arrow svg { animation: none; }
 }

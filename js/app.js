@@ -117,8 +117,22 @@ if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
 
 // [B1] 모듈은 항상 defer 실행 → DOMContentLoaded가 이미 발화했을 수 있음.
 // 안전 패턴: readyState 확인 후 직접 실행하거나 이벤트 대기.
+/** 모션 최소화 설정 여부. 장식 모션을 넣기 전에 항상 이걸 먼저 묻는다. */
+function prefersReducedMotion() {
+    return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+}
+
 function initScrollAnimations() {
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    // 모션 최소화나 IntersectionObserver 부재 시에는 아무것도 숨기지 않는다.
+    // html.js-reveal이 없으면 CSS의 숨김 규칙 자체가 적용되지 않으므로
+    // 내용은 처음부터 보인다(진입 모션 때문에 본문이 사라지는 것이 최악이다).
+    if (prefersReducedMotion() || typeof IntersectionObserver === 'undefined') return;
+
+    const targets = document.querySelectorAll('.anim-target');
+    if (!targets.length) return;
+
+    document.documentElement.classList.add('js-reveal');
+
     const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
@@ -127,7 +141,27 @@ function initScrollAnimations() {
             }
         });
     }, { threshold: 0.08, rootMargin: '0px 0px -32px 0px' });
-    document.querySelectorAll('.anim-target').forEach(el => observer.observe(el));
+
+    targets.forEach(el => observer.observe(el));
+
+    // 첫 화면에 이미 들어와 있는 요소는 IntersectionObserver가 다음 프레임에
+    // 알려준다. 그 사이 한 프레임이라도 비어 보이지 않게 즉시 한 번 확인한다.
+    requestAnimationFrame(() => {
+        for (const el of targets) {
+            if (el.classList.contains('anim-visible')) continue;
+            const r = el.getBoundingClientRect();
+            if (r.top < window.innerHeight && r.bottom > 0) {
+                el.classList.add('anim-visible');
+                observer.unobserve(el);
+            }
+        }
+    });
+
+    // 안전망: 무슨 이유로든 관찰이 동작하지 않아도 내용은 반드시 드러나야 한다.
+    // (탭 안에 숨겨진 요소가 끝내 표시되지 않는 경우 등)
+    setTimeout(() => {
+        for (const el of targets) el.classList.add('anim-visible');
+    }, 6000);
 }
 
 function initApp() {
@@ -2932,7 +2966,20 @@ function initKeyboardShortcuts() {
 function updateConvertButton(enabled) {
     const btn = document.getElementById('convert-btn');
     if (!btn) return;
+
+    // 비활성 → 활성으로 넘어가는 그 순간에만 한 번 튕긴다.
+    // 파일을 고른 직후가 이 화면에서 가장 중요한 전환 지점이라, 시선을
+    // 옵션 더미에서 실행 버튼으로 옮겨준다. 이미 활성인 상태에서 라벨만
+    // 바뀔 때(파일 개수 변경 등)는 튕기지 않는다 — 반복되면 잡음이 된다.
+    const becameReady = enabled && btn.disabled;
     btn.disabled = !enabled;
+    if (becameReady && !prefersReducedMotion()) {
+        btn.classList.remove('is-ready');
+        void btn.offsetWidth;                 // 애니메이션 재시작을 위한 리플로우
+        btn.classList.add('is-ready');
+    } else if (!enabled) {
+        btn.classList.remove('is-ready');
+    }
     const n = state.queue.length;
     let label;
     if (state.inputMode === 'paste') {

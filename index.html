@@ -147,7 +147,7 @@
             <span>｢BWYF｣ AX Challenger 2026</span>
             <!-- [주의] id="open-changelog"는 app.js에서 관리자 모드일 때 업데이트 내역 모달을 여는 연결값 -->
             <button class="util-changelog-btn" id="open-changelog" aria-label="버전 정보">
-                📋 v4.17.0
+                📋 v4.17.1
             </button>
         </div>
     </div>
@@ -877,8 +877,8 @@
              비개발자는 카드 안의 표시 문구(card-ext/card-name/card-quality/badge)만 바꾸는 것이 안전합니다.
              ─────────────────────────────────────────────────────── -->
         <div class="format-panel" id="panel-basic" role="tabpanel">
-            <p class="section-sub">카드를 선택하면 포맷별 보존 범위와 제한사항을 확인할 수 있습니다</p>
-            <div class="format-grid">
+            <p class="section-sub anim-target">카드를 선택하면 포맷별 보존 범위와 제한사항을 확인할 수 있습니다</p>
+            <div class="format-grid anim-target anim-stagger">
 
                 <!-- Markdown -->
                 <div class="format-card" data-ext="md" role="button" tabindex="0">
@@ -968,8 +968,8 @@
                  변환 품질 검증 후 열 예정인 포맷 목록(향후 백엔드 연동 예정 포함)
                  ─────────────────────────────────────────────────────── -->
             <div class="format-panel" id="panel-ext" role="tabpanel">
-                <p class="section-sub">변환 품질 검증 후 열 예정인 포맷입니다</p>
-                <div class="format-grid">
+                <p class="section-sub anim-target">변환 품질 검증 후 열 예정인 포맷입니다</p>
+                <div class="format-grid anim-target anim-stagger">
 
                     <!-- PDF (Coming Soon) -->
                     <div class="format-card coming-soon" data-ext="pdf" aria-disabled="true">
@@ -1005,7 +1005,7 @@
             <div class="format-panel" id="panel-how" role="tabpanel">
             <span id="how-it-works" aria-hidden="true"></span>
             <p class="section-sub section-sub--wide">PC와 모바일 브라우저 안에서 7단계로 완전히 처리됩니다</p>
-            <div class="steps-grid">
+            <div class="steps-grid anim-target anim-stagger">
 
                 <div class="how-step">
                     <div class="how-step-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
@@ -1043,8 +1043,8 @@
         <!-- ── 지원 현황 패널 ────────────────────────────────────── -->
             <div class="format-panel" id="panel-support" role="tabpanel">
             <span id="support" aria-hidden="true"></span>
-            <p class="section-sub">입력 포맷별 현재 변환 상태입니다. ★★★: 구조 보존 양호 / ★★☆: 기본 구조 변환 / ★☆☆: 내용 추출 중심</p>
-            <div class="support-table-wrap">
+            <p class="section-sub anim-target">입력 포맷별 현재 변환 상태입니다. ★★★: 구조 보존 양호 / ★★☆: 기본 구조 변환 / ★☆☆: 내용 추출 중심</p>
+            <div class="support-table-wrap anim-target">
                 <table class="support-table">
                     <thead>
                         <tr>
@@ -1171,7 +1171,7 @@
      ════════════════════════════════════════════════════════════════ -->
 <footer class="site-footer">
     <div class="container">
-        <div class="footer-inner">
+        <div class="footer-inner anim-target">
 
             <!-- 브랜드 소개 -->
             <div class="footer-brand">

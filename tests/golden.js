@@ -1532,6 +1532,7 @@ async function validateDetailSettingsUx(page) {
       ids,
       downloadAfterOrientation: !!orientation && !!download && download.left > orientation.left,
       sameRow: !!orientation && !!download && Math.abs(download.top - orientation.top) <= 1,
+      heights,
       heightSpread: Math.max(...heights) - Math.min(...heights),
     };
   });
@@ -1540,7 +1541,7 @@ async function validateDetailSettingsUx(page) {
   assert(basicControlLayout.downloadAfterOrientation && basicControlLayout.sameRow,
     'detail settings: 자동 다운로드가 용지 방향 오른쪽 같은 행에 배치되지 않음');
   assert(basicControlLayout.heightSpread <= 2,
-    'detail settings: 기본 설정 컨트롤 높이가 서로 맞지 않음');
+    `detail settings: 기본 설정 컨트롤 높이가 서로 맞지 않음 (${basicControlLayout.heights.join('/')} → 편차 ${basicControlLayout.heightSpread}px)`);
   const autoDownloadOn = await page.locator('.auto-download-control').evaluate(control => ({
     enabled: control.dataset.enabled,
     text: control.textContent.replace(/\s+/g, ' ').trim(),
