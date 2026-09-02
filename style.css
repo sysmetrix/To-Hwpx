@@ -723,13 +723,48 @@ a:hover { text-decoration: underline; }
 .drop-zone:hover .drop-fmt-icons img:nth-child(5) { transition-delay: 160ms; }
 .drop-zone .drop-title   { font-size: 1.15rem; font-weight: 700; margin-bottom: 6px; color: var(--c-text); }
 .drop-zone .drop-sub {
-    display: inline-block;
+    display: inline-flex;
+    flex-direction: column;
+    gap: 2px;
     font-size: 0.86rem;
     color: var(--c-text-muted);
     letter-spacing: 0.01em;
     line-height: 1.65;
     text-align: left;
 }
+/* 입력/출력을 같은 줄에서 라벨로 구분 — HWPX가 입력 포맷처럼 보이지 않게 한다 */
+.drop-zone .drop-io b {
+    display: inline-block;
+    min-width: 2.4em;
+    margin-right: 6px;
+    font-weight: 700;
+    color: var(--c-text-sub);
+}
+/* 보조 문구지만 opacity로 흐리면 대비가 기준 미달이 된다(axe color-contrast).
+   무게는 상위 색 토큰을 그대로 쓰되 굵기로만 낮춘다. */
+.drop-zone .drop-io-aux {
+    color: var(--c-text-sub);
+    font-weight: 400;
+}
+
+/* 업로드 없음 — 공문서를 다루는 사용자에게 가장 강한 판매 논거라 드롭존 바로 아래 둔다 */
+.drop-trust {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 7px;
+    width: min(620px, 100%);
+    margin: 10px auto 0;
+    font-size: 0.84rem;
+    color: var(--c-text-sub);
+    line-height: 1.55;
+    text-align: center;
+}
+.drop-trust b { font-weight: 700; color: var(--c-text); }
+.drop-trust-mark { flex: none; font-size: 0.95rem; }
+/* 문장은 하나의 flex 아이템으로 묶는다. 텍스트 노드와 <b>를 직접 flex 아이템으로
+   두면 좁은 폭에서 어절마다 열로 쪼개진다(390px에서 확인). */
+.drop-trust-text { flex: 0 1 auto; }
 .quick-guide {
     display: flex;
     align-items: center;
@@ -3398,6 +3433,22 @@ a:hover { text-decoration: underline; }
 .btn-secondary-export:disabled {
     cursor: default;
     opacity: 0.75;
+}
+
+/* 보조 산출물 다운로드 — 주 다운로드(HWPX)와 같은 무게로 그리지 않는다.
+   DESIGN.md "보조 산출물(HWP) 표시 기준" 참조. */
+.btn-download--secondary {
+    background: transparent;
+    color: var(--c-primary);
+    border: 1.5px solid var(--c-primary);
+    box-shadow: none;
+    padding: 8px 16px;
+    font-size: 0.88rem;
+}
+.btn-download--secondary:hover {
+    background: var(--c-primary-light);
+    color: var(--c-primary);
+    transform: none;
 }
 
 .result-hwp-export {
