@@ -1,6 +1,6 @@
 {
   "name": "to-hwpx",
-  "version": "4.16.22",
+  "version": "4.16.23",
   "private": true,
   "bin": {
     "tohwpx": "js/core/cli.js",

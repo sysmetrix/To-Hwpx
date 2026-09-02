@@ -236,6 +236,48 @@ function govParaGeometry(headerXml) {
     check(Object.keys(noElemReport.elements).length === 0 && noElemReport.subject === null,
         '⑩ 표지 없는 문서에는 역할을 붙이지 않음', JSON.stringify(noElemReport.elements));
 
+    // ⑪ 공문 골격 생성
+    const { buildOfficialSkeleton } = await import('../js/gov-doc.js');
+    const sk = buildOfficialSkeleton({
+        agency: '행정안전부',
+        recipient: '수신자 참조',
+        subject: '개방형 문서 형식 전환 알림',
+        body: ['1. 관련: 근거 문서', '가. 세부 사항'],
+        attachments: ['계획서 1부.', '목록 1부.'],
+        sender: '행정안전부장관',
+    });
+    const roles = sk.ir.blocks.map(b => b.govRole).filter(Boolean);
+    check(['agency', 'recipient', 'via', 'subject', 'attachment', 'end', 'sender', 'issued', 'received', 'disclosure']
+        .every(r => roles.includes(r)),
+        '⑪ 골격에 두문·본문·결문 요소가 모두 있음', roles.join(' '));
+
+    // 규정 순서: 두문 → 본문 → 결문
+    const idx = (r) => roles.indexOf(r);
+    check(idx('recipient') < idx('subject') && idx('subject') < idx('end') && idx('end') < idx('sender')
+        && idx('sender') < idx('issued'),
+        '⑪ 구성요소 순서가 규정대로', roles.join(' → '));
+
+    // 본문 항목에는 규정 들여쓰기가 적용된다
+    const skDepths = sk.ir.blocks.filter(b => Number.isInteger(b.indentLevel)).map(b => b.indentLevel);
+    check(JSON.stringify(skDepths) === JSON.stringify([0, 1]), '⑪ 골격 본문에 규정 들여쓰기 적용',
+        `[${skDepths.join(',')}]`);
+
+    // 붙임 둘째 줄이 본문 항목으로 떨어져 나오지 않는다
+    const attachItems = sk.ir.blocks.filter(b => b.govRole === 'attachment-item');
+    check(attachItems.length === 1 && attachItems.every(b => !Number.isInteger(b.indentLevel)),
+        '⑪ 붙임 둘째 줄이 본문 항목으로 재분류되지 않음',
+        `${attachItems.length}개, 깊이 없음=${attachItems.every(b => !Number.isInteger(b.indentLevel))}`);
+
+    // 공식 서식이 아니라는 사실을 반드시 말한다
+    check(sk.notes.some(n => /복제가 아닙니다/.test(n)) && sk.notes.some(n => /공식 서식 파일/.test(n)),
+        '⑪ 공식 별지 서식이 아님을 안내', `${sk.notes.length}개 안내`);
+
+    // 값을 안 주면 자리 표시로 남는다(빈 문서가 나오면 안 된다)
+    const empty = buildOfficialSkeleton({});
+    check(empty.ir.blocks.some(b => /\(제목\)/.test(b.text || ''))
+        && empty.ir.blocks.some(b => /\(수신자\)/.test(b.text || '')),
+        '⑪ 값이 없으면 자리 표시를 남김');
+
     console.log('');
     if (failures.length) {
         console.error(`공문서 게이트 실패 ${failures.length}건: ${failures.join(', ')}`);

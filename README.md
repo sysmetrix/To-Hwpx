@@ -113,6 +113,7 @@ AI 에이전트가 한/글 설치 없이 HWPX를 만들 수 있습니다.
 | `ir_to_hwpx` | 공통 IR(JSON)을 직접 렌더 — 정밀 제어용 |
 | `pdf_to_hwpx` | PDF → HWPX. 구조를 좌표에서 추론하며 근거를 함께 반환 |
 | `make_comparison_table` | 현행·개정안 → 신구조문대비표 HWPX |
+| `draft_official_document` | 공문 초안 골격(두문·본문·결문) HWPX. 공식 별지 서식의 복제는 아님 |
 | `read_hwpx` | HWPX를 읽어 Markdown·HTML·IR로 반환 — 읽고 고쳐 다시 쓰기의 첫 단계 |
 | `get_ir_schema` | IR 스키마와 블록별 예시 반환 |
 

@@ -298,6 +298,12 @@ function classifyLine(block, rawText, depthOf, state, report) {
     const trimmed = String(rawText || '').trim();
     if (!trimmed) return block;
 
+    // 역할이 이미 정해진 줄은 다시 분류하지 않는다.
+    // 붙임 목록의 둘째 줄("2. 대상 목록 1부.")은 항목 기호처럼 생겼지만
+    // 본문 항목이 아니다. 다시 분류하면 붙임에서 떨어져 나와 본문 0단계로
+    // 올라간다 — 골격 생성에서 실제로 그랬다.
+    if (block.govRole) return block;
+
     // 붙임 구역 시작 — 여기부터는 본문 항목 깊이를 이어받지 않는다.
     if (SECTION_MARKS.attachment.test(trimmed)) {
         state.inAttachment = true;
@@ -363,3 +369,84 @@ export function hangingIndentHwp(markerName, fontSizePt) {
 
 /** 지원하는 항목 기호 목록 — UI 안내와 테스트가 같은 출처를 쓰게 한다. */
 export const GOV_MARKER_ORDER = MARKERS.map(m => m.name);
+
+// ─────────────────────────────────────────────────────────────────────────
+// [공문 골격 생성]
+// ─────────────────────────────────────────────────────────────────────────
+
+/**
+ * 공문 골격을 만든다.
+ *
+ * ⚠ **공식 별지 서식의 복제가 아니다.** 규정의 별지 서식은 기관명 로고 위치,
+ *   선 굵기, 결재란 칸 배치까지 정해져 있고 그것을 추측으로 그리면 "공문서처럼
+ *   생겼지만 규격이 아닌 문서"가 나온다 — 원문보다 나쁘다.
+ *
+ *   이 함수가 만드는 것은 **구성요소 골격**이다. 시행규칙이 정한 두문·본문·결문의
+ *   요소를 순서대로 놓아 초안의 출발점을 준다. 최종 서식은 기관의 공식 서식
+ *   파일에 옮겨 담아야 한다는 안내를 함께 반환한다.
+ *
+ * @param {object} [fields] 채울 값. 비우면 자리 표시로 남는다.
+ * @returns {{ir:object, notes:string[]}}
+ */
+export function buildOfficialSkeleton(fields = {}) {
+    const v = (key, placeholder) => {
+        const raw = fields[key];
+        return (typeof raw === 'string' && raw.trim()) ? raw.trim() : placeholder;
+    };
+
+    const bodyLines = Array.isArray(fields.body) && fields.body.length
+        ? fields.body.map(String)
+        : ['1. 관련: (근거 문서·법령)', '2. (본문 내용을 적습니다.)'];
+
+    const attachments = Array.isArray(fields.attachments) ? fields.attachments.filter(Boolean) : [];
+
+    const blocks = [
+        // 두문
+        { type: 'para', text: v('agency', '(행정기관명)'), align: 'center', govRole: 'agency' },
+        { type: 'blank' },
+        { type: 'para', text: `수신  ${v('recipient', '(수신자)')}`, govRole: 'recipient' },
+        { type: 'para', text: `경유  ${v('via', '')}`.trimEnd(), govRole: 'via' },
+        { type: 'blank' },
+        // 본문
+        { type: 'heading', level: 1, text: v('subject', '(제목)'), govRole: 'subject' },
+        ...bodyLines.map(text => ({ type: 'para', text })),
+        { type: 'blank' },
+    ];
+
+    if (attachments.length) {
+        attachments.forEach((a, i) => {
+            blocks.push({
+                type: 'para',
+                text: i === 0 ? `붙임  ${i + 1}. ${a}` : `      ${i + 1}. ${a}`,
+                // 둘째 줄부터도 역할을 준다. 없으면 "2. …"가 본문 항목으로
+                // 다시 분류돼 붙임에서 떨어져 나온다.
+                govRole: i === 0 ? 'attachment' : 'attachment-item',
+            });
+        });
+        blocks.push({ type: 'blank' });
+    }
+
+    blocks.push(
+        { type: 'para', text: '끝.', govRole: 'end' },
+        { type: 'blank' },
+        // 결문
+        { type: 'para', text: v('sender', '(발신명의)'), align: 'center', govRole: 'sender' },
+        { type: 'blank' },
+        { type: 'para', text: `시행  ${v('issued', '(생산등록번호) (시행일)')}`, govRole: 'issued' },
+        { type: 'para', text: `접수  ${v('received', '(접수등록번호) (접수일)')}`, govRole: 'received' },
+        { type: 'para', text: `공개 구분  ${v('disclosure', '(공개/부분공개/비공개)')}`, govRole: 'disclosure' },
+    );
+
+    // 본문 항목에 규정 들여쓰기를 적용한다(골격도 규정을 따라야 한다).
+    const ir = { title: v('subject', '공문 초안'), doc_type: 'plain', blocks };
+    applyGovDocStructure(ir);
+
+    return {
+        ir,
+        notes: [
+            '이 문서는 시행규칙이 정한 두문·본문·결문 구성요소를 순서대로 놓은 초안 골격입니다.',
+            '공식 별지 서식(기관명 로고 위치, 결재란, 선 굵기 등)의 복제가 아닙니다.',
+            '최종 발송본은 소속 기관의 공식 서식 파일에 내용을 옮겨 담아 작성하세요.',
+        ],
+    };
+}
