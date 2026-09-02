@@ -1,6 +1,18 @@
 {
-  "current": "4.16.6",
+  "current": "4.16.7",
   "versions": [
+    {
+      "version": "4.16.7",
+      "date": "2026-09-02",
+      "user": [
+        "대형 문서 변환 시 \"구조를 검증하는 중\" 단계가 몇 초가 아니라 실제로는 1분 넘게 걸리던 진짜 원인을 찾아 없앴습니다 — 검증 단계가 300배 이상 빨라졌습니다."
+      ],
+      "dev": [
+        "[v4.16.7] js/hwpx.js: validateHwpx()의 hp:secPr 중첩 확인 정규식이 탐욕적(greedy) [\\s\\S]*를 두 번 연달아 써서 문단이 수천 개인 대형 문서에서 파국적 역추적(catastrophic backtracking)을 일으키던 것을 발견·제거. 실측(문단 4522개, section0.xml 4.3MB)으로 이 정규식 하나가 83초를 잡아먹고 있었음이 확인됨 — v4.16.6까지의 이벤트 루프 양보만으로는 이 한 줄의 실제 실행 시간 자체를 줄이지 못해 응답 없음이 재현됐던 것",
+        "[v4.16.7] hp:secPr 위치를 기준으로 lastIndexOf/indexOf 선형 탐색으로 대체(역추적 없음) + hp:lineseg 탐색도 secPr 이후 구간으로만 잘라서 검사. 같은 실제 파일로 재측정한 결과 window.validateHwpx() 실행 시간이 84,063ms → 257ms로 단축됨을 확인",
+        "[v4.16.7] 검증 로직(통과/실패 조건, 오류 메시지)은 동일하게 유지 — golden.js 13케이스·test:docx·test:package·commercial-gate·impact-gate 전부 재확인 통과"
+      ]
+    },
     {
       "version": "4.16.6",
       "date": "2026-09-02",
