@@ -56,7 +56,17 @@ export const REVERSE_FORMATS = Object.freeze({
         // 사용자에게 보여줄 한 줄 — 왜 이 형식이 필요한지
         reason: '구버전 한/글에서도 열립니다',
     },
+    pdf: {
+        id: 'pdf',
+        label: 'PDF',
+        ext: '.pdf',
+        mimeType: 'application/pdf',
+        reason: '한/글이 없어도 누구나 열 수 있습니다',
+    },
 });
+
+/** CSS px(96dpi) → mm. @page 크기를 SVG 실측 치수에 맞추는 데 쓴다. */
+const PX_TO_MM = 25.4 / 96;
 
 /** 파일명 확장자를 바꾼다. 원본 확장자가 없으면 덧붙인다. */
 export function swapExtension(fileName, ext) {
@@ -226,4 +236,85 @@ export async function renderHwpxPagesToSvg(hwpxBytes, options = {}) {
     } finally {
         viewer.free();
     }
+}
+
+/** SVG 루트의 width/height(px)를 읽는다. 없으면 A4 세로로 가정한다. */
+function readSvgSizePx(svg) {
+    const m = /<svg[^>]*\bwidth="([\d.]+)"[^>]*\bheight="([\d.]+)"/.exec(svg || '');
+    if (!m) return { widthPx: 793.7, heightPx: 1122.5 };
+    return { widthPx: parseFloat(m[1]), heightPx: parseFloat(m[2]) };
+}
+
+/**
+ * 렌더된 페이지들을 인쇄용 문서로 조립한다.
+ *
+ * 별도 PDF 라이브러리를 vendor에 추가하지 않는다. 브라우저 인쇄 대화상자의
+ * "PDF로 저장"이 모든 대상 브라우저에 이미 있고, 공급망을 늘리지 않는 편이
+ * 이 저장소의 기존 결정(vendor 최소화, SRI 고정)과 일치한다.
+ *
+ * @page 크기를 SVG 실측 치수에서 계산하므로 용지·방향이 원본과 어긋나지 않는다.
+ */
+export function buildPrintDocument(pages, docTitle = '문서') {
+    const { widthPx, heightPx } = readSvgSizePx(pages[0]);
+    const wMm = (widthPx * PX_TO_MM).toFixed(2);
+    const hMm = (heightPx * PX_TO_MM).toFixed(2);
+
+    // 페이지 SVG는 rhwp가 만든 신뢰 가능한 문자열이지만, 제목은 파일명에서
+    // 오므로 이스케이프한다.
+    const safeTitle = String(docTitle).replace(/[<>&"']/g, ch => (
+        { '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&#39;' }[ch]
+    ));
+
+    const body = pages.map(svg => `<div class="pg">${svg}</div>`).join('\n');
+
+    return `<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><title>${safeTitle}</title>
+<style>
+  @page { size: ${wMm}mm ${hMm}mm; margin: 0; }
+  html, body { margin: 0; padding: 0; background: #fff; }
+  .pg { width: ${wMm}mm; height: ${hMm}mm; overflow: hidden; page-break-after: always; break-after: page; }
+  .pg:last-child { page-break-after: auto; break-after: auto; }
+  .pg svg { display: block; width: 100%; height: 100%; }
+  @media print { .pg { box-shadow: none; } }
+</style></head>
+<body>${body}</body></html>`;
+}
+
+/**
+ * HWPX를 인쇄 대화상자로 넘긴다(사용자가 "PDF로 저장"을 선택).
+ *
+ * 팝업 차단을 피하려고 새 창 대신 숨은 iframe을 쓴다. 호출은 반드시
+ * 사용자 제스처(클릭) 안에서 일어나야 한다.
+ *
+ * @returns {Promise<{pageCount:number, truncated:boolean}>}
+ */
+export async function printHwpxAsPdf(hwpxBytes, docTitle = '문서', options = {}) {
+    const { pages, pageCount, truncated } = await renderHwpxPagesToSvg(hwpxBytes, options);
+    if (!pages.length) throw new Error('인쇄할 페이지를 만들지 못했습니다.');
+
+    const html = buildPrintDocument(pages, docTitle);
+
+    const frame = document.createElement('iframe');
+    frame.setAttribute('aria-hidden', 'true');
+    frame.style.cssText = 'position:fixed;right:0;bottom:0;width:1px;height:1px;opacity:0;border:0;';
+    document.body.appendChild(frame);
+
+    await new Promise((resolve, reject) => {
+        const timer = setTimeout(() => reject(new Error('인쇄 문서를 준비하지 못했습니다(시간 초과).')), 20000);
+        frame.onload = () => { clearTimeout(timer); resolve(); };
+        frame.onerror = () => { clearTimeout(timer); reject(new Error('인쇄 문서를 준비하지 못했습니다.')); };
+        frame.srcdoc = html;
+    });
+
+    try {
+        // 폰트가 자리를 잡은 뒤에 인쇄해야 글자가 잘리지 않는다
+        await frame.contentDocument?.fonts?.ready?.catch?.(() => {});
+        frame.contentWindow.focus();
+        frame.contentWindow.print();
+    } finally {
+        // 인쇄 대화상자가 닫힐 시간을 준 뒤 정리한다.
+        setTimeout(() => frame.remove(), 60000);
+    }
+
+    return { pageCount, truncated };
 }

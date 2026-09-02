@@ -1,6 +1,26 @@
 {
-  "current": "4.16.13",
+  "current": "4.16.14",
   "versions": [
+    {
+      "version": "4.16.14",
+      "date": "2026-09-02",
+      "user": [
+        "변환 결과를 PDF로도 저장할 수 있습니다. \"PDF로 저장\" 버튼을 누르면 인쇄 창이 열리고, 거기서 \"PDF로 저장\"을 고르면 됩니다. 한/글이 없는 상대에게 보낼 때 쓰세요.",
+        "첫 화면에 입력 형식과 출력 형식을 나눠 표시했습니다. HWPX가 입력 형식처럼 보이던 문제를 정리했습니다.",
+        "\"파일은 브라우저 안에서만 변환됩니다\"를 첫 화면에 바로 보이게 옮겼습니다. 이전에는 안내 창을 열어야 확인할 수 있었습니다."
+      ],
+      "dev": [
+        "[v4.16.14] js/reverse-export.js printHwpxAsPdf()/buildPrintDocument() 추가 — renderPageSvg()로 각 쪽을 렌더해 인쇄용 문서로 조립하고 숨은 iframe(srcdoc)에서 print()를 호출한다. PDF 라이브러리를 vendor에 추가하지 않는다: 인쇄 대화상자의 PDF 저장이 모든 대상 브라우저에 이미 있고 공급망을 늘리지 않는 편이 기존 결정(vendor 최소화·SRI 고정)과 맞다",
+        "[v4.16.14] @page 크기는 첫 쪽 SVG의 실측 px를 96dpi 기준 mm로 환산해 정한다. HWPX는 회전 전 치수 + landscape enum으로 방향을 기록하므로 엔진이 enum을 무시하면 가로 문서가 세로로 인쇄된다 — A3 가로에서 420×297mm(폭>높이)가 나오는지 회귀 검사에 포함",
+        "[v4.16.14] 팝업 차단을 피하려 새 창 대신 iframe을 쓰고, print() 전에 document.fonts.ready를 기다린다(폰트 미적재 상태로 인쇄하면 글자가 잘린다)",
+        "[v4.16.14] tests/hwp-export-e2e.js ⑥⑦ 추가 — A4 세로 @page 210×297mm·글자 211개, A3 가로 @page 420×297mm·2쪽 분할·글자 788개 보존. 총 15개 검사 통과",
+        "[v4.16.14] index.html 드롭존 부제를 입력/출력 두 줄로 분리(AGENTS.md UI 불변식). 출력은 HWPX를 먼저 쓰고 보조 산출물을 괄호로 덧붙인다",
+        "[v4.16.14] 업로드 없음 문구를 모달에서 드롭존 바로 아래로 승격. 공문서를 다루는 사용자에게 가장 강한 판매 논거인데 안내 창 안에만 있었다",
+        "[v4.16.14] UI 회귀 2건을 자동/시각 검사로 잡음 — (1) .drop-io-aux의 opacity 저하가 axe color-contrast 실패를 냈고 색 토큰+굵기로 교체, (2) .drop-trust에서 텍스트 노드와 <b>가 직접 flex 아이템이 돼 390px에서 어절마다 열로 쪼개져 문장 전체를 한 요소로 감쌈. 둘 다 DESIGN.md에 기록",
+        "[v4.16.14] 슬롯 안 HWP 다운로드를 btn-download--secondary로 낮춤 — 주 다운로드(HWPX)만 채워진 버튼이라는 DESIGN.md 위계 규칙 준수",
+        "[v4.16.14] lint·golden 13케이스·test:package 5건·impact·commercial·accessibility·reverse 10/10·e2e 15검사 전부 통과"
+      ]
+    },
     {
       "version": "4.16.13",
       "date": "2026-09-02",

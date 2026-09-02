@@ -147,7 +147,7 @@
             <span>｢BWYF｣ AX Challenger 2026</span>
             <!-- [주의] id="open-changelog"는 app.js에서 관리자 모드일 때 업데이트 내역 모달을 여는 연결값 -->
             <button class="util-changelog-btn" id="open-changelog" aria-label="버전 정보">
-                📋 v4.16.13
+                📋 v4.16.14
             </button>
         </div>
     </div>
@@ -230,8 +230,16 @@
                 <img src="icons/brand/jupyter.svg" alt="IPYNB">
             </div>
             <div class="drop-title">여러 파일을 드래그하거나 클릭하세요</div>
-            <div class="drop-sub">MD · HTML · DOCX · PPTX · CSV · XLSX · JSON · TXT · IPYNB · HWP</div>
+            <!-- [AGENTS.md UI 불변식] 입력과 출력을 분리해 적는다. HWPX를 입력 포맷처럼 쓰지 않는다. -->
+            <div class="drop-sub">
+                <span class="drop-io"><b>입력</b> MD · HTML · DOCX · PPTX · CSV · XLSX · JSON · TXT · IPYNB · HWP</span>
+                <span class="drop-io"><b>출력</b> HWPX <span class="drop-io-aux">(HWP · PDF로도 저장 가능)</span></span>
+            </div>
         </div>
+        <p class="drop-trust">
+            <span class="drop-trust-mark" aria-hidden="true">🔒</span>
+            <span class="drop-trust-text">파일은 <b>브라우저 안에서만</b> 변환됩니다. 서버에 업로드되지 않습니다.</span>
+        </p>
         <!-- 숨겨진 파일 인풋 (드롭존 클릭 시 트리거됨) -->
         <!-- [포맷 추가 시] accept에 새 확장자를 추가해야 파일 선택창에서 보입니다. -->
         <!-- multiple: 여러 파일을 한 번에 선택해 배치 변환 -->

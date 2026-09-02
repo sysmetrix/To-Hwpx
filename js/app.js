@@ -30,6 +30,8 @@ const ANALYTICS_SCHEMA = Object.freeze({
     // 역방향(HWP) 내보내기 — 손실 건수만 수집한다(문서 내용은 수집하지 않는다)
     hwp_export_success: new Set(['loss']),
     hwp_export_fail: new Set([]),
+    pdf_print_success: new Set(['pages']),
+    pdf_print_fail: new Set([]),
 });
 
 function track(name, data) {
@@ -3071,6 +3073,10 @@ function showResult({ url, fileName, size, validation }) {
                             title="구버전 한/글에서도 열리는 HWP 파일로 변환합니다">
                         ⬇ HWP로도 받기
                     </button>
+                    <button class="btn-secondary-export" id="export-pdf-btn"
+                            title="인쇄 대화상자에서 'PDF로 저장'을 선택하세요">
+                        🖨 PDF로 저장
+                    </button>
                 </div>
             </div>
             <div class="result-hwp-export" id="hwp-export-slot" hidden></div>
@@ -3148,6 +3154,9 @@ function showResult({ url, fileName, size, validation }) {
     area.querySelector('#export-hwp-btn')?.addEventListener('click', ev => {
         runHwpExport(ev.currentTarget, fileName);
     });
+    area.querySelector('#export-pdf-btn')?.addEventListener('click', ev => {
+        runPdfPrint(ev.currentTarget, fileName);
+    });
     area.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
@@ -3198,7 +3207,7 @@ async function runHwpExport(btn, hwpxFileName) {
         // eslint-disable-next-line no-unsanitized/property -- url is a blob: URL we created; all text wrapped in escHtml()
         slot.innerHTML = `
             <div class="hwp-export-done">
-                <a class="btn-download" href="${url}" download="${escHtml(hwpName)}"
+                <a class="btn-download btn-download--secondary" href="${url}" download="${escHtml(hwpName)}"
                    type="${escHtml(REVERSE_FORMATS.hwp.mimeType)}">⬇ ${escHtml(hwpName)}</a>
                 <span class="hwp-export-meta">${escHtml(pageNote)} · ${escHtml(lossNote)}</span>
                 <span class="hwp-export-hint">
@@ -3219,6 +3228,56 @@ async function runHwpExport(btn, hwpxFileName) {
         btn.disabled = false;
         btn.textContent = originalLabel;
         track('hwp_export_fail', {});
+    }
+}
+
+/**
+ * HWPX를 인쇄 대화상자로 넘겨 사용자가 PDF로 저장하게 한다.
+ *
+ * PDF 라이브러리를 vendor에 추가하지 않는다. 브라우저 인쇄의 "PDF로 저장"이
+ * 이미 모든 대상 브라우저에 있고, 공급망을 늘리지 않는 편이 이 저장소의
+ * 기존 결정(vendor 최소화·SRI 고정)과 맞다.
+ *
+ * ⚠ print()는 사용자 제스처 안에서 호출돼야 하므로 클릭 핸들러에서 직접 부른다.
+ */
+async function runPdfPrint(btn, hwpxFileName) {
+    const slot = document.getElementById('hwp-export-slot');
+    if (!state.hwpxBlob) return;
+
+    const originalLabel = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = '⏳ 페이지 준비 중…';
+    if (slot) {
+        slot.hidden = false;
+        slot.textContent = '문서를 페이지로 렌더링하는 중입니다… (최초 1회 엔진 약 8MB)';
+    }
+
+    try {
+        const { printHwpxAsPdf } = await import('./reverse-export.js');
+        const buffer = await state.hwpxBlob.arrayBuffer();
+        const docTitle = String(hwpxFileName || '문서').replace(/\.hwpx?$/i, '');
+        const { pageCount, truncated } = await printHwpxAsPdf(buffer, docTitle);
+
+        if (slot) {
+            slot.textContent = truncated
+                ? `${pageCount}쪽 중 앞부분만 인쇄 문서로 만들었습니다. 인쇄 대화상자에서 "PDF로 저장"을 선택하세요.`
+                : `${pageCount}쪽을 인쇄 문서로 만들었습니다. 인쇄 대화상자에서 "PDF로 저장"을 선택하세요.`;
+        }
+        btn.textContent = '🖨 다시 인쇄';
+        btn.disabled = false;
+        track('pdf_print_success', { pages: String(pageCount) });
+    } catch (err) {
+        console.error('[PDF 인쇄]', err);
+        if (slot) {
+            slot.textContent = '';
+            const p = document.createElement('p');
+            p.className = 'hwp-export-error';
+            p.textContent = `인쇄 문서를 만들지 못했습니다: ${err.message || err}`;
+            slot.appendChild(p);
+        }
+        btn.disabled = false;
+        btn.textContent = originalLabel;
+        track('pdf_print_fail', {});
     }
 }
 
