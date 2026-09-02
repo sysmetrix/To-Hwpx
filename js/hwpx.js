@@ -206,6 +206,16 @@ function xmlEsc(s) {
  * - BMP 이모지 심볼 블록(U+2600-U+2B55): 기호·날씨·다이스 등
  * - Variation Selector(U+FE00-FE0F), ZWJ(U+200D): 수정자 문자 → 제거
  */
+// 이모지 구간(보조 평면 + BMP 기호 블록, 뒤따르는 Variation Selector/ZWJ 포함).
+// 이 구간만 이모지 폰트를 참조하는 별도 run으로 떼어내 실제 글자를 보존한다.
+const EMOJI_SEGMENT_RE = /(?:[\uD800-\uDBFF][\uDC00-\uDFFF]|[☀-⭕])[︀-️‍]*/g;
+
+/** 이 문자열에 이모지 폰트로 돌려야 할 글자가 있는가 */
+function hasEmoji(text) {
+    EMOJI_SEGMENT_RE.lastIndex = 0;
+    return EMOJI_SEGMENT_RE.test(String(text || ''));
+}
+
 function replaceEmoji(s) {
     return String(s || '')
         // 보조 평면 이모지 (surrogate pair)
@@ -387,7 +397,10 @@ function buildHeaderXml(fontName, basePt, customBfMap = new Map(), imageBlocks =
     // KoPubWorld Dotum Medium처럼 Bold가 별도 폰트 파일인 경우
     const boldFontName = getBoldFontName(resolvedFontName);
     const boldFn = boldFontName ? xmlEsc(boldFontName) : null;
-    const totalFontCnt = boldFn ? 2 : 1;
+    // 이모지 전용 폰트. 본문 글꼴(함초롬/Pretendard 등)에는 이모지 글리프가 없어
+    // 그대로 두면 두부(tofu)가 된다. 이모지 run만 이 face로 돌려 실제 글자를 살린다.
+    const emojiFontId = boldFn ? 2 : 1;
+    const totalFontCnt = (boldFn ? 2 : 1) + 1;
 
     // 글자 크기 HWPUNIT (1pt = 100)
     const sz = headingSizeMap(bp, options.headingStyle);
@@ -400,6 +413,10 @@ function buildHeaderXml(fontName, basePt, customBfMap = new Map(), imageBlocks =
         <hh:font id="1" face="${boldFn}" type="TTF" isEmbedded="0">
           <hh:typeInfo familyType="FCAT_GOTHIC" weight="8" proportion="4" contrast="0" strokeVariation="1" armStyle="1" letterform="1" midline="1" xHeight="1"/>
         </hh:font>` : ''}
+        <hh:font id="${emojiFontId}" face="Segoe UI Emoji" type="TTF" isEmbedded="0">
+          <hh:substFont face="Segoe UI Symbol" type="TTF" isEmbedded="0"/>
+          <hh:typeInfo familyType="FCAT_GOTHIC" weight="5" proportion="4" contrast="0" strokeVariation="1" armStyle="1" letterform="1" midline="1" xHeight="1"/>
+        </hh:font>
       </hh:fontface>`;
 
     // bold=true 시: boldFn이 있으면 font face 1 참조(별도 Bold 폰트), 없으면 <hh:bold/> 태그
@@ -463,8 +480,9 @@ ${charBase(10, sz.h5,  true,  false)}
 ${charBase(11, sz.h6,  true,  false)}
 ${charBase(12, 100,    false, false)}
 ${[...customCharMap.entries()].map(([key, cid]) => {
-    const [flags, color, height, highlight] = String(key).split('|');
-    return charBase(cid, height ? +height : sz.body, flags[0] === '1', flags[1] === '1', null,
+    const [flags, color, height, highlight, emoji] = String(key).split('|');
+    return charBase(cid, height ? +height : sz.body, flags[0] === '1', flags[1] === '1',
+        emoji === 'E' ? emojiFontId : null,
         { underline: flags[2] === '1', strike: flags[3] === '1', color, highlight });
 }).join('\n')}
     </hh:charProperties>
@@ -764,6 +782,25 @@ function textToHwpContent(value) {
     }).join('');
 }
 
+/** 이모지 구간만 emojiId charPr로 떼어내 run XML 나열을 만든다. */
+function splitEmojiRuns(value, charId, emojiId) {
+    const text = String(value ?? '');
+    const parts = [];
+    let last = 0, m;
+    EMOJI_SEGMENT_RE.lastIndex = 0;
+    while ((m = EMOJI_SEGMENT_RE.exec(text)) !== null) {
+        if (m.index > last) parts.push([charId, text.slice(last, m.index)]);
+        // Variation Selector/ZWJ는 한컴이 별도 글자로 그리므로 떼어낸다.
+        parts.push([emojiId, m[0].replace(/[︀-️‍]/g, '')]);
+        last = m.index + m[0].length;
+    }
+    if (last < text.length) parts.push([charId, text.slice(last)]);
+    return parts
+        .filter(([, t]) => t !== '')
+        .map(([id, t]) => `<hp:run charPrIDRef="${id}"><hp:t>${id === emojiId ? xmlEsc(t) : textToHwpContent(t)}</hp:t></hp:run>`)
+        .join('');
+}
+
 function buildPara(text, charId = '0', paraId = '0') {
     const safe = textToHwpContent(text);
     const pid  = _nextParaId();
@@ -775,11 +812,24 @@ function buildPara(text, charId = '0', paraId = '0') {
  * run이 기본 charPr(0/6~9)로 표현 불가한 확장 서식(밑줄/취소선/유효한 글자색)을
  * 가지는지 판정. 동적 charPr(customCharMap) 대상 여부를 결정한다.
  */
+// 본문 기준 글자 크기(HWPUNIT). buildHwpx가 실제 값으로 채운다.
+// run이 이 크기와 다른 크기를 요구할 때만 동적 charPr을 만든다.
+let _runBaseHeightHwp = 1100;
+
+/** run이 요구하는 글자 높이(HWPUNIT). 명시 height > DOCX w:sz(sizePt) > 본문 기준 */
+function runHeightHwp(run) {
+    if (run.height) return Number(run.height);
+    if (run.sizePt) return Math.round(Number(run.sizePt) * 100);
+    return 0;
+}
+
 function runNeedsExtChar(run) {
     const color = run.href && !run.color ? '#0563C1' : run.color;
     const hasColor = color && /^#[0-9A-Fa-f]{6}$/.test(color) && color.toUpperCase() !== '#000000';
     const hasHighlight = run.highlight && /^#[0-9A-Fa-f]{6}$/.test(run.highlight);
-    return !!(run.href || run.underline || run.strike || hasColor || hasHighlight);
+    const h = runHeightHwp(run);
+    const hasSize = h > 0 && h !== _runBaseHeightHwp;
+    return !!(run.emoji || run.href || run.underline || run.strike || hasColor || hasHighlight || hasSize);
 }
 
 /** 확장 charPr 시그니처 키: "bold italic underline strike | #RRGGBB | height"
@@ -791,7 +841,9 @@ function extCharKey(run) {
         ? run.highlight.toUpperCase()
         : '';
     const underline = run.href || run.underline;
-    return `${run.bold ? 1 : 0}${run.italic ? 1 : 0}${underline ? 1 : 0}${run.strike ? 1 : 0}|${color}|${run.height || ''}|${highlight}`;
+    const h = runHeightHwp(run);
+    const height = h && h !== _runBaseHeightHwp ? h : '';
+    return `${run.bold ? 1 : 0}${run.italic ? 1 : 0}${underline ? 1 : 0}${run.strike ? 1 : 0}|${color}|${height}|${highlight}|${run.emoji ? 'E' : ''}`;
 }
 
 function normalizeSafeHyperlink(raw) {
@@ -868,13 +920,20 @@ function buildParaRuns(runs, paraId = '0', customCharMap = new Map(), options = 
         } else if (run.italic) {
             cId = '8';
         }
+        // 이모지는 본문 글꼴에 글리프가 없어 두부가 된다. 같은 서식의 이모지 전용
+        // charPr(이모지 폰트 참조)이 등록돼 있으면 그 구간만 별도 run으로 떼어낸다.
+        const emojiKey = extCharKey({ ...run, emoji: true });
+        const emojiId = customCharMap.has(emojiKey) ? String(customCharMap.get(emojiKey)) : null;
+        const body = emojiId && hasEmoji(visibleText)
+            ? splitEmojiRuns(visibleText, cId, emojiId)
+            : `<hp:run charPrIDRef="${cId}"><hp:t>${safe}</hp:t></hp:run>`;
         if (href) {
             const ids = _nextHyperlinkIds();
             runsXml += buildHyperlinkBegin(href, ids);
-            runsXml += `<hp:run charPrIDRef="${cId}"><hp:t>${safe}</hp:t></hp:run>`;
+            runsXml += body;
             runsXml += buildHyperlinkEnd(ids);
         } else {
-            runsXml += `<hp:run charPrIDRef="${cId}"><hp:t>${safe}</hp:t></hp:run>`;
+            runsXml += body;
         }
     }
     if (!runsXml && !ctrlsXml) return buildBlankPara();
@@ -1272,7 +1331,9 @@ function buildCellBlockContent(blocks, fallback, context) {
                 }
             } else if (type === 'heading') {
                 const { charId } = headingIds(block.level);
-                parts.push(buildPara(block.text || '', block._cId || charId, blockParaId));
+                parts.push(block._runs
+                    ? buildParaRuns(block._runs, blockParaId, customCharMap, options)
+                    : buildPara(block.text || '', block._cId || charId, blockParaId));
             } else if (type === 'blank') {
                 parts.push(buildBlankPara());
             } else if (type === 'list') {
@@ -1565,7 +1626,9 @@ async function buildSection(ir, marginsHwp, paperKey, landscape = false, customB
                 }
             } else if (qType === 'heading') {
                 const { charId } = headingIds(quoteBlock.level);
-                parts.push(buildPara(quoteBlock.text || '', quoteBlock._cId || charId, quotePid));
+                parts.push(quoteBlock._runs
+                    ? buildParaRuns(quoteBlock._runs, quotePid, customCharMap, options)
+                    : buildPara(quoteBlock.text || '', quoteBlock._cId || charId, quotePid));
             } else if (qType === 'list') {
                 const blockOrdered = !!quoteBlock.ordered;
                 let autoNum = 0;
@@ -1619,7 +1682,9 @@ async function buildSection(ir, marginsHwp, paperKey, landscape = false, customB
         if (bt === 'heading') {
             const { charId, paraId } = headingIds(block.level);
             // 색 있는 제목은 사전 스캔이 만든 동적 charPr(제목 크기+색) 사용
-            parts.push(buildPara(block.text || '', block._cId || charId, paraId));
+            parts.push(block._runs
+                ? buildParaRuns(block._runs, paraId, customCharMap, options)
+                : buildPara(block.text || '', block._cId || charId, paraId));
 
         } else if (bt === 'para') {
             const alignParaId = block.align === 'center' ? '12' : block.align === 'right' ? '13' : '0';
@@ -1788,6 +1853,8 @@ export async function buildHwpx(ir, fontName = '휴먼명조', fontSize = 12, ma
     const customCharMap = new Map();
     let nextCharId = 13;   // 0~11 기본 + 12(1pt) 이후부터 동적 확장
     const addExtChar = (run) => {
+        // 같은 서식의 이모지 전용 charPr을 함께 등록해 둔다(본문 글꼴엔 이모지 글리프가 없음).
+        if (!run.emoji && run.text && hasEmoji(run.text)) addExtChar({ ...run, emoji: true });
         if (!runNeedsExtChar(run)) return null;
         const key = extCharKey(run);
         if (!customCharMap.has(key)) customCharMap.set(key, nextCharId++);
@@ -1795,6 +1862,8 @@ export async function buildHwpx(ir, fontName = '휴먼명조', fontSize = 12, ma
     };
     // 제목 색 보존용 제목 크기(HWPUNIT) — buildHeaderXml sz와 동일 계산
     const _bp = Math.max(6, Math.min(36, Number(effectiveFontSize) || 12));
+    // DOCX run이 자체 글자 크기(w:sz)를 가지면 본문 기준과 다를 때만 동적 charPr을 만든다.
+    _runBaseHeightHwp = Math.round(_bp * 100);
     const _headingSizes = headingSizeMap(_bp, buildOptions.headingStyle);
     const headingHeightHwp = (lvl) => ({
         1: _headingSizes.h1, 2: _headingSizes.h2, 3: _headingSizes.h3,
@@ -1823,10 +1892,21 @@ export async function buildHwpx(ir, fontName = '휴먼명조', fontSize = 12, ma
         for (const block of (blocks || [])) {
             if (block.type === 'para' && Array.isArray(block.runs)) {
                 for (const run of block.runs) if (run.text) addExtChar(run);
-            } else if (block.type === 'heading' && block.color) {
-                // 색 있는 제목: 제목 크기 + bold + 색으로 동적 charPr 생성 후 블록에 charId 주석
-                const cid = addExtChar({ bold: true, color: block.color, height: headingHeightHwp(block.level || 1) });
-                if (cid != null) block._cId = String(cid);
+            } else if (block.type === 'heading') {
+                // 제목 안에 인라인 배지(배경색 run)가 있으면 run별 서식을 보존해야 한다.
+                // 배지 없이 한 가지 색이면 기존처럼 문단 전체를 charPr 하나로 낸다.
+                const badgeRuns = (block.runs || []).filter(r => r.text);
+                if (badgeRuns.some(r => r.highlight)) {
+                    const height = headingHeightHwp(block.level || 1);
+                    block._runs = badgeRuns.map(r => ({
+                        ...r, bold: true, color: r.color || block.color || null, height,
+                    }));
+                    for (const run of block._runs) addExtChar(run);
+                } else if (block.color) {
+                    // 색 있는 제목: 제목 크기 + bold + 색으로 동적 charPr 생성 후 블록에 charId 주석
+                    const cid = addExtChar({ bold: true, color: block.color, height: headingHeightHwp(block.level || 1) });
+                    if (cid != null) block._cId = String(cid);
+                }
             } else if (block.type === 'table') {
                 // 표 셀 글자색(예: 흰 글자 머리행)도 동적 charPr 대상 — 머리행은 bold
                 (block.header || []).forEach(c => {

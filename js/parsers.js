@@ -1174,7 +1174,7 @@ function groupDocxListItems(blocks) {
  * w:r, w:hyperlink(URL 포함), ins/del/sdt 컨테이너를 재귀 순회해
  * 공통 run 계약({text,bold,italic,underline,strike,color,href?})으로 반환한다.
  */
-function extractDocxInlineRuns(pNode, relsMap = {}, footnotesMap = {}, commentsMap = {}) {
+function extractDocxInlineRuns(pNode, relsMap = {}, footnotesMap = {}, commentsMap = {}, styleFormatMap = {}, paraStyleId = '') {
     const runs = [];
     function walk(node, href) {
         for (const child of node.childNodes) {
@@ -1207,14 +1207,28 @@ function extractDocxInlineRuns(pNode, relsMap = {}, footnotesMap = {}, commentsM
                 }
                 const text = sanitize(rawText);
                 if (!text) continue;
+                // 서식 우선순위: run 직접 지정 > w:rStyle(문자 스타일) > 문단 스타일.
+                // Word는 반복되는 서식을 스타일에만 두는 일이 흔해서(예: 콜아웃 라벨 문자
+                // 스타일 "lbl2" = 굵게+#8A5A08), 상속을 따르지 않으면 그 run이 통째로
+                // 서식 없는 검은 글자가 된다.
+                const rPrEl = docxDirectChildren(child, 'rPr')[0];
+                const rStyleEl = rPrEl ? docxDirectChildren(rPrEl, 'rStyle')[0] : null;
+                const inherited = {
+                    ...(styleFormatMap[paraStyleId] || {}),
+                    ...(rStyleEl ? (styleFormatMap[docxAttr(rStyleEl, 'val', '')] || {}) : {}),
+                };
+                const has = (tag) => !!(rPrEl && docxDirectChildren(rPrEl, tag).length);
                 const run = {
                     text,
-                    bold:      docxRunToggle(child, 'b'),
-                    italic:    docxRunToggle(child, 'i'),
-                    underline: docxRunToggle(child, 'u'),
-                    strike:    docxRunToggle(child, 'strike') || docxRunToggle(child, 'dstrike'),
-                    color:     docxRunColor(child),
-                    highlight: docxRunHighlight(child),
+                    bold:      has('b') ? docxRunToggle(child, 'b') : !!inherited.bold,
+                    italic:    has('i') ? docxRunToggle(child, 'i') : !!inherited.italic,
+                    underline: has('u') ? docxRunToggle(child, 'u') : !!inherited.underline,
+                    strike:    has('strike') || has('dstrike')
+                        ? (docxRunToggle(child, 'strike') || docxRunToggle(child, 'dstrike'))
+                        : !!inherited.strike,
+                    color:     docxRunColor(child) || inherited.color || null,
+                    highlight: docxRunHighlight(child) || inherited.highlight || null,
+                    sizePt:    docxRunSizePt(child) || inherited.sizePt || null,
                 };
                 if (href) run.href = href;
                 runs.push(run);
@@ -1386,6 +1400,12 @@ async function parseDocx(arrayBuffer, docType = 'plain') {
     // styles.xml의 rPr@color로만 정의하는 경우가 많아(예: "heading 2" → 12326E), 직접 run에
     // 색이 없을 때 이 맵으로 제목 색을 복원한다(basedOn 상속은 따라가지 않고 스타일 자체 값만 봄).
     const styleColorMap = {};
+    // 스타일 ID → 그 스타일이 정의하는 글자 서식 전체({bold,italic,underline,strike,color,highlight}).
+    // 문자 스타일(w:rStyle, 예: "lbl2" = 굵게+#8A5A08)과 문단 스타일(w:pStyle, 예: "none1" =
+    // 기울임+#8B95A1)은 서식을 run마다 반복하지 않고 styles.xml에만 두는 경우가 많다. 이 맵이
+    // 없으면 그런 run은 서식 없는 검은 글자로 떨어진다(실제 원본에서 콜아웃 라벨 전체가 유실됨).
+    // basedOn 체인을 따라가되 순환은 방문 집합으로 끊는다.
+    const styleFormatMap = {};
     const stylesFile = zip.file('word/styles.xml');
     if (stylesFile) {
         try {
@@ -1396,6 +1416,7 @@ async function parseDocx(arrayBuffer, docType = 'plain') {
                 const value = Number(docxAttr(sz, 'val', ''));
                 return Number.isFinite(value) && value > 0 ? value : null;
             };
+            const rawStyleNodes = {};
             const docDefaults = stylesDoc.getElementsByTagNameNS(DOCX_NS, 'docDefaults')[0];
             let defaultHalfPoints = halfPointValue(docDefaults);
             let defaultParagraphStyle = null;
@@ -1412,6 +1433,7 @@ async function parseDocx(arrayBuffer, docType = 'plain') {
                 }
                 const styleColor = docxRunColor(style);
                 if (sid && styleColor) styleColorMap[sid] = styleColor;
+                if (sid) rawStyleNodes[sid] = style;
                 const styleType = docxAttr(style, 'type', '');
                 const isDefault = docxAttr(style, 'default', '') === '1' || sid === 'Normal';
                 if (styleType === 'paragraph' && isDefault) defaultParagraphStyle = style;
@@ -1419,6 +1441,34 @@ async function parseDocx(arrayBuffer, docType = 'plain') {
                     defaultHalfPoints = halfPointValue(style);
                 }
             }
+            // basedOn 체인을 따라 스타일별 글자 서식을 합성한다(부모 먼저, 자식이 덮어씀).
+            const resolveStyleFormat = (sid, seen) => {
+                if (!sid || seen.has(sid)) return {};
+                seen.add(sid);
+                if (styleFormatMap[sid]) return styleFormatMap[sid];
+                const node = rawStyleNodes[sid];
+                if (!node) return {};
+                const basedOnEl = docxDirectChildren(node, 'basedOn')[0];
+                const parentId = basedOnEl ? docxAttr(basedOnEl, 'val', '') : '';
+                const fmt = { ...resolveStyleFormat(parentId, seen) };
+                const rPr = docxDirectChildren(node, 'rPr')[0];
+                if (rPr) {
+                    for (const [key, tag] of [['bold', 'b'], ['italic', 'i'], ['underline', 'u'], ['strike', 'strike']]) {
+                        if (docxDirectChildren(rPr, tag).length) fmt[key] = docxRunToggle(rPr, tag);
+                    }
+                    if (docxDirectChildren(rPr, 'dstrike').length && docxRunToggle(rPr, 'dstrike')) fmt.strike = true;
+                    const sizePt = docxRunSizePt(rPr);
+                    if (sizePt) fmt.sizePt = sizePt;
+                    const color = docxRunColor(rPr);
+                    if (color) fmt.color = color;
+                    const highlight = docxRunHighlight(rPr);
+                    if (highlight) fmt.highlight = highlight;
+                }
+                styleFormatMap[sid] = fmt;
+                return fmt;
+            };
+            for (const sid of Object.keys(rawStyleNodes)) resolveStyleFormat(sid, new Set());
+
             if (defaultHalfPoints) {
                 ir.typography = { baseFontSizePt: defaultHalfPoints / 2 };
                 const spacing = (defaultParagraphStyle || docDefaults)
@@ -1510,6 +1560,7 @@ async function parseDocx(arrayBuffer, docType = 'plain') {
     const docxContext = {
         stylesMap,
         styleColorMap,
+        styleFormatMap,
         footnotesMap,
         relsMap,
         numberingInfo,
@@ -1543,7 +1594,7 @@ async function parseDocx(arrayBuffer, docType = 'plain') {
                     }
                 }
             }
-            const block = extractDocxParagraph(node, stylesMap, footnotesMap, relsMap, numberingInfo, commentsMap, styleColorMap);
+            const block = extractDocxParagraph(node, stylesMap, footnotesMap, relsMap, numberingInfo, commentsMap, styleColorMap, styleFormatMap);
             if (block) ir.blocks.push(wrapDocxCalloutBlock(block, node));
         } else if (localName === 'tbl') {
             const block = await extractDocxTable(node, docxContext);
@@ -1596,6 +1647,16 @@ function docxRunToggle(r, name) {
     return !/^(0|false|none|off)$/i.test(v);
 }
 
+/** w:rPr 안의 글자 크기(w:sz@val, half-point) → pt | null */
+function docxRunSizePt(r) {
+    const rPr = r.localName === 'rPr' ? r : docxDirectChildren(r, 'rPr')[0];
+    if (!rPr) return null;
+    const el = docxDirectChildren(rPr, 'sz')[0];
+    if (!el) return null;
+    const v = Number(docxAttr(el, 'val', ''));
+    return Number.isFinite(v) && v > 0 ? v / 2 : null;
+}
+
 /** w:r 안의 글자색(w:color@val) → #RRGGBB | null (auto/지정없음 제외) */
 function docxRunColor(r) {
     const el = r.getElementsByTagNameNS(DOCX_NS, 'color')[0];
@@ -1625,7 +1686,8 @@ function docxRunHighlight(r) {
         };
         if (colors[value]) return colors[value];
     }
-    const rPr = r.getElementsByTagNameNS(DOCX_NS, 'rPr')[0];
+    // w:r을 받으면 그 안의 rPr을, 스타일 정의에서 rPr 자체를 받으면 그대로 쓴다.
+    const rPr = r.localName === 'rPr' ? r : r.getElementsByTagNameNS(DOCX_NS, 'rPr')[0];
     const shd = rPr?.getElementsByTagNameNS(DOCX_NS, 'shd')[0];
     if (shd) {
         const fill = shd.getAttributeNS(DOCX_NS, 'fill') || shd.getAttribute('w:fill') || shd.getAttribute('fill') || '';
@@ -1637,7 +1699,7 @@ function docxRunHighlight(r) {
 }
 
 /** w:p 단락 노드 → IR 블록 (텍스트 추출 + 스타일 판별 + 각주 + 목록 + 하이퍼링크) */
-function extractDocxParagraph(pNode, stylesMap = {}, footnotesMap = {}, relsMap = {}, numberingInfo = null, commentsMap = {}, styleColorMap = {}) {
+function extractDocxParagraph(pNode, stylesMap = {}, footnotesMap = {}, relsMap = {}, numberingInfo = null, commentsMap = {}, styleColorMap = {}, styleFormatMap = {}) {
     const pStyles = pNode.getElementsByTagNameNS(DOCX_NS, 'pStyle');
     let styleId = '';
     if (pStyles.length) {
@@ -1667,7 +1729,7 @@ function extractDocxParagraph(pNode, stylesMap = {}, footnotesMap = {}, relsMap 
                 const absId   = numberingInfo.numMap[numId];
                 const lvlDef  = absId ? numberingInfo.abstractMap[absId]?.lvls?.[ilvl] : null;
                 const ordered = lvlDef ? lvlDef.ordered : false;
-                const inlineRuns = extractDocxInlineRuns(pNode, relsMap, footnotesMap, commentsMap);
+                const inlineRuns = extractDocxInlineRuns(pNode, relsMap, footnotesMap, commentsMap, styleFormatMap, styleId);
                 const text = sanitize(inlineRuns.filter(r => r.text).map(r => r.text).join('').trim());
                 if (!text && !inlineRuns.some(r => r.footnote)) return null;
                 return { type: '_list_item', text, runs: inlineRuns, level: Math.min(ilvl, 2), ordered };
@@ -1676,12 +1738,21 @@ function extractDocxParagraph(pNode, stylesMap = {}, footnotesMap = {}, relsMap 
     }
 
     // 인라인 런 추출 — w:r, w:hyperlink, 변경 추적 컨테이너를 통합 처리
-    const inlineRuns = extractDocxInlineRuns(pNode, relsMap, footnotesMap, commentsMap);
+    const inlineRuns = extractDocxInlineRuns(pNode, relsMap, footnotesMap, commentsMap, styleFormatMap, styleId);
     const text = sanitize(inlineRuns.filter(r => r.text).map(r => r.text).join('').trim());
     // 각주만 있고 텍스트가 없는 경우도 각주 런이 있으면 null 반환 안 함
     const hasFootnotes = inlineRuns.some(r => r.footnote);
     const hasStructuralBreak = inlineRuns.some(r => typeof r.text === 'string' && /[\n\t]/.test(r.text));
-    if (!text && !hasFootnotes && !hasStructuralBreak) return null;
+    if (!text && !hasFootnotes && !hasStructuralBreak) {
+        // 글자 없이 위/아래 테두리만 있는 문단은 Word의 가로 구분선 표현이다.
+        // 그대로 버리면 원본의 구분선이 통째로 사라지므로 hr 블록으로 살린다.
+        const pBdr = pPrEl ? docxDirectChildren(pPrEl, 'pBdr')[0] : null;
+        if (pBdr && ['top', 'bottom'].some(side => docxDirectChildren(pBdr, side)
+            .some(el => docxAttr(el, 'val', 'none') !== 'none'))) {
+            return { type: 'hr' };
+        }
+        return null;
+    }
 
     // 제목 단락의 글자색 — 1순위 직접 run의 색, 2순위 문단 스타일 자체에 정의된 색
     // (Word 제목 스타일은 색을 run마다 반복하지 않고 styles.xml의 rPr@color로만 주는 경우가
@@ -1694,7 +1765,14 @@ function extractDocxParagraph(pNode, stylesMap = {}, footnotesMap = {}, relsMap 
     const headColor = (headColorCandidate || {}).color
         || (styleId && styleColorMap[styleId] !== '#FFFFFF' ? styleColorMap[styleId] : null)
         || null;
-    const withColor = (b) => (headColor ? { ...b, color: headColor } : b);
+    // 제목 안 인라인 배지(run 배경색, 예: 초록 "신규")는 제목을 통짜 문자열로 만들면
+    // 통째로 사라진다. 배지가 있을 때만 runs를 함께 넘겨 렌더러가 run별 서식을 살리게 한다.
+    const hasBadgeRun = inlineRuns.some(r => r.text && r.highlight);
+    const withColor = (b) => {
+        const out = headColor ? { ...b, color: headColor } : { ...b };
+        if (hasBadgeRun) out.runs = inlineRuns;
+        return out;
+    };
 
     // styles.xml에서 해석한 스타일 이름 사용 (없으면 styleId 원본으로 폴백)
     const resolvedStyle = stylesMap[styleId] || styleId;
@@ -1780,7 +1858,8 @@ async function extractDocxCellBlocks(tc, context = {}) {
                 context.relsMap || {},
                 context.numberingInfo || null,
                 context.commentsMap || {},
-                context.styleColorMap || {}
+                context.styleColorMap || {},
+                context.styleFormatMap || {}
             );
             if (paragraph) blocks.push(wrapDocxCalloutBlock(paragraph, child));
             else if (!hasDrawing) blocks.push({ type: 'blank' });
