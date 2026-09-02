@@ -6154,3 +6154,30 @@ a:hover { text-decoration: underline; }
     color: var(--c-text-muted);
     line-height: 1.5;
 }
+
+/* ─────────────────────────────────────────────────────────────────
+   [공문서 항목 들여쓰기] 규정 기반 변환이므로 근거를 함께 표시한다.
+   ───────────────────────────────────────────────────────────────── */
+.result-gov-note {
+    display: grid;
+    gap: 4px;
+    margin: 10px 0 12px;
+    padding: 11px 13px;
+    border: 1px solid var(--c-info-border);
+    border-left: 3px solid var(--c-primary);
+    border-radius: var(--radius-md);
+    background: var(--c-info-bg);
+}
+.result-gov-note strong {
+    color: var(--c-primary);
+    font-size: 0.84rem;
+}
+.result-gov-note > span {
+    color: var(--c-text-sub);
+    font-size: 0.8rem;
+    line-height: 1.55;
+}
+.result-gov-note .gov-note-detail {
+    color: var(--c-text);
+    font-weight: 500;
+}

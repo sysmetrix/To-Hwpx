@@ -22,6 +22,9 @@
 // 호스트 기능 어댑터 — 이 렌더러를 브라우저와 Node에서 같은 코드로 돌리기 위한 층.
 // 렌더러를 두 벌로 두면 웹앱과 CLI/MCP 산출물이 언젠가 갈라지므로 한 벌로 유지한다.
 import { requireZip, zipOutputType, toZipInput, checkXmlWellFormed } from './core/runtime.js';
+// 공문서 들여쓰기 값은 규정 해석과 함께 gov-doc.js에 둔다. 렌더러가 따로
+// 계산하면 규칙이 두 군데로 갈라져 언젠가 어긋난다.
+import { indentStepHwp as govIndentStepHwp, hangingIndentHwp as govHangingIndentHwp } from './gov-doc.js';
 
 // ─────────────────────────────────────────────────────────────────────────
 // [단위 상수]
@@ -380,7 +383,7 @@ function getBoldFontName(name) {
  * [borderFill] 1=테두리없음, 2=실선(표셀), 3=실선+회색음영(표머리)
  *              4~9=표 좌/우 바깥 테두리 제거 변형
  */
-function buildHeaderXml(fontName, basePt, customBfMap = new Map(), imageBlocks = [], docHeaderFooter = {}, customCharMap = new Map(), lineSpacingPercent = 160, options = {}, customQuoteMap = new Map()) {
+function buildHeaderXml(fontName, basePt, customBfMap = new Map(), imageBlocks = [], docHeaderFooter = {}, customCharMap = new Map(), lineSpacingPercent = 160, options = {}, customQuoteMap = new Map(), govParaMap = new Map()) {
     const resolvedFontName = fontName || '휴먼명조';
     const fn = xmlEsc(resolvedFontName);
     const bp = Math.max(6, Math.min(36, parseInt(basePt, 10) || 12));
@@ -490,7 +493,7 @@ ${[...customCharMap.entries()].map(([key, cid]) => {
         { underline: flags[2] === '1', strike: flags[3] === '1', color, highlight });
 }).join('\n')}
     </hh:charProperties>
-    <hh:paraProperties itemCnt="${20 + customQuoteMap.size}">
+    <hh:paraProperties itemCnt="${20 + customQuoteMap.size + govParaMap.size}">
       <!-- id  정렬    행간  전    후   들여  테두리참조 -->
 ${paraBase(0, 'JUSTIFY', bodyLineSpacing, paragraphSpacing.bodyPrev, paragraphSpacing.bodyNext,    0)}
 ${paraBase(1, 'LEFT',    h1LineSpacing, paragraphSpacing.headingPrev, paragraphSpacing.headingNext,    0)}
@@ -523,6 +526,10 @@ ${paraBase(18, 'LEFT',   bodyLineSpacing,   0,  paragraphSpacing.listNext, 1800,
 ${paraBase(19, 'LEFT',   bodyLineSpacing, 300,  850,  900, '19')}
 ${[...customQuoteMap.entries()].map(([bg, { paraId, bfId }]) =>
     `      <!-- id=${paraId} DOCX 문단 배경(콜아웃) #${bg} 인용구 -->\n${paraBase(paraId, 'LEFT', bodyLineSpacing, 300, 850, 900, bfId)}`
+).join('\n')}
+${[...govParaMap.entries()].map(([key, { paraId, leftHwp, hangingHwp }]) =>
+    `      <!-- id=${paraId} 공문서 항목 ${key} — 규정 2타 들여쓰기 + 내용 첫 글자 정렬 -->\n`
+    + paraBase(paraId, 'JUSTIFY', bodyLineSpacing, 0, 0, leftHwp, '1', -hangingHwp)
 ).join('\n')}
     </hh:paraProperties>
     <hh:borderFills itemCnt="${19 + customBfMap.size + customQuoteMap.size}">
@@ -1572,10 +1579,19 @@ function buildSectionBootstrap(secPrXml, contentWidthHwp) {
  * IR → section0.xml 전체 문자열
  * [v4] 참조 앱(md-to-hwpx)처럼 첫 bootstrap 문단에 secPr를 배치한다.
  */
-async function buildSection(ir, marginsHwp, paperKey, landscape = false, customBfMap = new Map(), customCharMap = new Map(), options = {}, customQuoteMap = new Map()) {
+async function buildSection(ir, marginsHwp, paperKey, landscape = false, customBfMap = new Map(), customCharMap = new Map(), options = {}, customQuoteMap = new Map(), govParaMap = new Map()) {
     // DOCX 문단 배경(예: "쉽게 말하면" 콜아웃 박스)이 있는 인용구는 색상별 동적 paraPr을 쓰고,
     // 배경이 없는 일반 인용구(Markdown/HTML blockquote 등)는 기존 고정 paraPr id=19를 그대로 쓴다.
     const quoteParaId = (bg) => (bg && customQuoteMap.has(bg) ? customQuoteMap.get(bg).paraId : '19');
+
+    // 공문서 항목 문단 — 규정이 정한 2타 들여쓰기와 내어쓰기를 적용한다.
+    // 기호 종류마다 내어쓰기 폭이 다르므로(깊이, 기호)를 키로 등록한다.
+    const govDocParaId = (block) => {
+        if (!Number.isInteger(block?.indentLevel) || !block.govMarker) return null;
+        const key = `${block.indentLevel}|${block.govMarker}`;
+        return govParaMap.has(key) ? govParaMap.get(key).paraId : null;
+    };
+
     const NS_HS = 'http://www.hancom.co.kr/hwpml/2011/section';
     const NS_HP = 'http://www.hancom.co.kr/hwpml/2011/paragraph';
     const docType = ir.doc_type || 'plain';
@@ -1691,7 +1707,11 @@ async function buildSection(ir, marginsHwp, paperKey, landscape = false, customB
                 : buildPara(block.text || '', block._cId || charId, paraId));
 
         } else if (bt === 'para') {
-            const alignParaId = block.align === 'center' ? '12' : block.align === 'right' ? '13' : '0';
+            // 공문서 항목 들여쓰기가 지정된 문단은 전용 paraPr를 쓴다.
+            // 정렬 지정보다 우선한다 — 항목 문단은 좌측 기본선 기준이다.
+            const govParaId = govDocParaId(block);
+            const alignParaId = govParaId
+                || (block.align === 'center' ? '12' : block.align === 'right' ? '13' : '0');
             if (block.runs && block.runs.length > 0) {
                 // 인라인 서식(bold/italic/code) 보존 경로
                 const hasText = block.runs.some(r => r.text && (r.text.trim() || /[\n\t]/.test(r.text)));
@@ -1852,6 +1872,39 @@ export async function buildHwpx(ir, fontName = '휴먼명조', fontSize = 12, ma
     let nextQuoteParaId = 20;   // 0~19 기본 paraPr 이후부터
     scanBorderFills(ir.blocks || []);
 
+    // 공문서 항목 문단 수집 → 규정 들여쓰기 paraPr 생성용.
+    // 「행정업무의 운영 및 혁신에 관한 규정」이 정하는 바:
+    //   둘째 항목부터 바로 위 항목에서 오른쪽으로 2타씩,
+    //   두 줄 이상이면 둘째 줄부터 항목 내용 첫 글자에 맞춘다(내어쓰기).
+    // gov-doc.js가 표시한 indentLevel/govMarker를 그대로 쓴다 —
+    // 여기서 기호를 다시 해석하면 규칙이 두 군데로 갈라진다.
+    const govParaMap = new Map();
+    const scanGovParas = (blocks) => {
+        for (const block of blocks || []) {
+            if (!block) continue;
+            if (block.type === 'para' && Number.isInteger(block.indentLevel) && block.govMarker) {
+                const key = `${block.indentLevel}|${block.govMarker}`;
+                if (!govParaMap.has(key)) {
+                    // HWPX에서 문단 왼쪽(left)은 **둘째 줄부터**의 시작 위치이고,
+                    // 첫 줄은 intent(음수)만큼 되돌아가 기호를 놓는다. 따라서
+                    //   기호 위치 = left - hanging
+                    // 규정은 "기호 위치 = 단계 × 2타"(0단계는 기본선)이므로
+                    //   left = 단계 × 2타 + hanging
+                    // 이어야 한다. left를 (단계+1) × 2타로 두면 기호가 규정보다
+                    // 앞으로 밀린다(가., 가), (1) 등 기호 폭이 다른 단계에서 어긋남).
+                    const hangingHwp = govHangingIndentHwp(block.govMarker, effectiveFontSize);
+                    govParaMap.set(key, {
+                        paraId: String(nextQuoteParaId++),
+                        leftHwp: govIndentStepHwp(effectiveFontSize) * block.indentLevel + hangingHwp,
+                        hangingHwp,
+                    });
+                }
+            }
+            if (Array.isArray(block.blocks)) scanGovParas(block.blocks);
+        }
+    };
+    scanGovParas(ir.blocks || []);
+
     // 인라인 확장 서식(밑줄/취소선/글자색) 수집 → 동적 charPr 생성용
     // (header가 section보다 먼저 빌드되므로 customBfMap과 동일하게 사전 스캔)
     const customCharMap = new Map();
@@ -1941,8 +1994,8 @@ export async function buildHwpx(ir, fontName = '휴먼명조', fontSize = 12, ma
     const imageBlocks = collectImageBlocks(ir.blocks || []);
     const docHeaderFooter = { header: ir.header || '', footer: ir.footer || '' };
 
-    const headerXml   = buildHeaderXml(fontName, effectiveFontSize, customBfMap, imageBlocks, docHeaderFooter, customCharMap, effectiveLineSpacing, buildOptions, customQuoteMap);
-    const section0Xml = await buildSection(ir, marginsHwp, paperSize, landscape, customBfMap, customCharMap, buildOptions, customQuoteMap);
+    const headerXml   = buildHeaderXml(fontName, effectiveFontSize, customBfMap, imageBlocks, docHeaderFooter, customCharMap, effectiveLineSpacing, buildOptions, customQuoteMap, govParaMap);
+    const section0Xml = await buildSection(ir, marginsHwp, paperSize, landscape, customBfMap, customCharMap, buildOptions, customQuoteMap, govParaMap);
 
     // 이미지가 있을 때 manifest를 동적으로 생성하여 BinData 파일 선언
     const manifestXml = imageBlocks.length

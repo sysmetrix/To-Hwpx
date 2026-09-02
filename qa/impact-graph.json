@@ -113,6 +113,18 @@
         "qa/pdf-gate.js",
         "tests/make-pdf-fixtures.js"
       ]
+    },
+    {
+      "id": "gov-doc",
+      "paths": [
+        "js/gov-doc.js"
+      ]
+    },
+    {
+      "id": "gov-doc-gate",
+      "paths": [
+        "qa/gov-doc-gate.js"
+      ]
     }
   ],
   "edges": [
@@ -210,6 +222,21 @@
       "from": "pdf-parser",
       "to": "quality-ui",
       "reason": "추론 근거를 결과 카드에 표시"
+    },
+    {
+      "from": "gov-doc",
+      "to": "ir-v2",
+      "reason": "공통 IR에 항목 깊이(indentLevel/govMarker) 표시"
+    },
+    {
+      "from": "gov-doc",
+      "to": "hwpx-renderer",
+      "reason": "규정 2타 들여쓰기 paraPr 생성"
+    },
+    {
+      "from": "gov-doc",
+      "to": "gov-doc-gate",
+      "reason": "규정 기준 회귀 검사"
     }
   ],
   "rules": [
@@ -304,6 +331,18 @@
       "tests": [
         "npm run test:pdf",
         "npm run test:core"
+      ]
+    },
+    {
+      "whenChanged": [
+        "js/gov-doc.js"
+      ],
+      "requiresChanged": [
+        "hwpx-public-doc/references/format_conversion_playbook.md"
+      ],
+      "tests": [
+        "npm run test:gov",
+        "npm run test:golden"
       ]
     }
   ]

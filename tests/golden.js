@@ -1538,6 +1538,11 @@ async function validateDetailSettingsUx(page) {
   await page.locator('.advanced-settings > summary').click();
 
   const defaults = await page.evaluate(() => ({
+    govButtons: [...document.querySelectorAll('[data-gov-doc]')].map(btn => ({
+      value: btn.dataset.govDoc,
+      active: btn.classList.contains('is-active'),
+      label: btn.textContent.trim(),
+    })),
     hrButtons: [...document.querySelectorAll('[data-hr-display]')].map(btn => ({
       value: btn.dataset.hrDisplay,
       active: btn.classList.contains('is-active'),
@@ -1566,6 +1571,11 @@ async function validateDetailSettingsUx(page) {
   assert(defaults.hrButtons.length === 2, 'detail settings: 가로 구분선 표시 옵션 누락');
   assert(defaults.hrButtons.some(btn => btn.value === 'hide' && btn.active),
     'detail settings: 가로 구분선 기본값이 숨김이 아님');
+  // 공문서 항목 들여쓰기 — 규정 기반 변환이라 기본값이 "끔"이어야 한다.
+  // 일반 문서에도 "1."로 시작하는 줄은 흔하고, 켜져 있으면 원문보다 나빠진다.
+  assert(defaults.govButtons.length === 2, 'detail settings: 공문서 항목 들여쓰기 옵션 누락');
+  assert(defaults.govButtons.some(btn => btn.value === 'off' && btn.active),
+    'detail settings: 공문서 항목 들여쓰기 기본값이 끔이 아님');
   assert(defaults.marginMap, 'detail settings: 페이지 여백 종이 미니맵 누락');
   assert(defaults.marginSideLabels === 2, 'detail settings: 페이지 여백 좌우 라벨 누락');
   assert(defaults.marginSideLabelsInsidePaper, 'detail settings: 페이지 여백 좌우 라벨이 종이 영역 밖으로 침범함');
