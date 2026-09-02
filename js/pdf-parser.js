@@ -28,10 +28,76 @@
 
 'use strict';
 
+import { styleOf, splitByColor, DEFAULT_COLOR } from './pdf-style.js';
+import { extractGraphics, encodePng } from './pdf-graphics.js';
+import { buildGrid, fillCells, firstRowIsHeader } from './pdf-table.js';
+import { findRunningLines, orderByColumns } from './pdf-layout.js';
+
 // 버전 고정 vendor 경로. PDF 입력이 실제로 들어왔을 때만 지연 로드한다.
 const PDFJS_DIR = new URL('./vendor/pdfjs-6.3.289/', import.meta.url).href;
 
 let _pdfjsPromise = null;
+
+/**
+ * 글꼴의 **원래 이름**을 얻는다(`AAAAAA+MalgunGothicBold`).
+ *
+ * pdf.js v6.3에서 이 값은 열거 가능한 속성이 아니라 `getOwnPropertyNames`로는
+ * 안 보인다. 직접 `.name`으로 읽어야 한다. 그리고 `getOperatorList()`를 먼저
+ * 부르지 않으면 commonObjs가 비어 있어 예외가 난다.
+ *
+ * 이름을 못 얻어도 변환은 계속한다 — 서식이 빠질 뿐 글자는 온전하다.
+ */
+function fontRealName(page, loadedName) {
+    if (!loadedName) return '';
+    try {
+        return page.commonObjs.get(loadedName)?.name || loadedName;
+    } catch {
+        return loadedName;
+    }
+}
+
+/** 1pt = 1/72인치, HWP 단위 = 1/7200인치 → 정확히 100배. */
+const PT_TO_HWP = 100;
+
+/**
+ * 뽑아낸 픽셀을 IR 그림 블록으로 만든다.
+ *
+ * pdf.js는 원본 JPEG이 아니라 **디코딩된 픽셀**을 준다. 그래서 HWPX에 넣으려면
+ * 다시 인코딩해야 한다. 무손실이 필요한 도표·로고가 문서 그림의 대부분이라
+ * PNG로 굽는다.
+ *
+ * 크기는 픽셀 수가 아니라 **PDF가 놓은 크기**를 쓴다. 1x1 픽셀을 90x60pt로
+ * 늘려 놓은 그림이 실제로 있다.
+ */
+async function toImageBlocks(images, startIndex) {
+    const out = [];
+    for (let k = 0; k < images.length; k++) {
+        const img = images[k];
+        // 너무 작은 그림은 대개 표 배경이나 여백 채움이다. 본문 그림이 아니다.
+        if (img.wPt < 4 || img.hPt < 4) continue;
+        let data;
+        try {
+            data = await encodePng(img.rgba, img.pxWidth, img.pxHeight);
+        } catch {
+            continue;   // 한 장을 못 구워도 나머지 변환은 계속한다
+        }
+        out.push({
+            block: {
+                type: 'image',
+                binName: `pdf-image${startIndex + k}.png`,
+                mimeType: 'image/png',
+                data,
+                widthHwp: Math.round(img.wPt * PT_TO_HWP),
+                heightHwp: Math.round(img.hPt * PT_TO_HWP),
+                alt: '',
+                sourceFormat: 'pdf',
+            },
+            // 줄 사이 어디에 끼울지 정하려면 놓인 높이가 필요하다.
+            top: img.y + img.hPt,
+        });
+    }
+    return out;
+}
 
 async function loadPdfjs() {
     if (_pdfjsPromise) return _pdfjsPromise;
@@ -94,13 +160,70 @@ function splitColumns(line) {
         const contiguous = cur && !cur.forceBreak && (it.x - (cur.x + cur.w)) < gapThreshold;
         if (contiguous) {
             cur.s += it.s;
+            cur.runs.push(...(it.runs || []));
             cur.w = (it.x + it.w) - cur.x;
         } else {
-            cur = { s: it.s, x: it.x, w: it.w, forceBreak: false };
+            cur = { s: it.s, x: it.x, w: it.w, forceBreak: false, runs: [...(it.runs || [])] };
             cols.push(cur);
         }
     }
-    return cols.map(c => ({ text: c.s.trim(), x: c.x, w: c.w })).filter(c => c.text);
+    return cols
+        .map(c => ({ text: c.s.trim(), x: c.x, w: c.w, runs: trimRuns(c.runs) }))
+        .filter(c => c.text);
+}
+
+/** 같은 서식이 이어지면 하나로 합친다. 잘게 쪼개진 run은 XML만 불린다. */
+function mergeRuns(runs) {
+    const out = [];
+    for (const r of runs || []) {
+        if (!r || !r.text) continue;
+        const last = out[out.length - 1];
+        if (last && last.bold === r.bold && last.italic === r.italic && last.color === r.color) {
+            last.text += r.text;
+        } else {
+            out.push({ ...r });
+        }
+    }
+    return out;
+}
+
+/** 앞뒤 공백을 잘라낸다 — 조각 단위로 붙은 공백이 run 경계에 남지 않게. */
+function trimRuns(runs) {
+    const merged = mergeRuns(runs);
+    if (merged.length) {
+        merged[0].text = merged[0].text.replace(/^\s+/, '');
+        merged[merged.length - 1].text = merged[merged.length - 1].text.replace(/\s+$/, '');
+    }
+    return merged.filter(r => r.text);
+}
+
+/**
+ * 공통 IR 계약에 맞는 run 배열로 만든다.
+ *
+ * 서식이 하나도 없으면 `runs`를 아예 붙이지 않는다 — 기존 출력과 바이트가
+ * 같아야 다른 포맷의 회귀 검사가 이 변경에 걸리지 않는다.
+ */
+function runsForBlock(runs) {
+    const merged = mergeRuns(runs);
+    const plain = merged.every(r => !r.bold && !r.italic && (!r.color || r.color === DEFAULT_COLOR));
+    if (plain) return null;
+    return merged.map(r => {
+        const out = { text: r.text };
+        if (r.bold) out.bold = true;
+        if (r.italic) out.italic = true;
+        if (r.color && r.color !== DEFAULT_COLOR) out.color = r.color;
+        return out;
+    });
+}
+
+/** 여러 열/줄의 runs를 이어 붙인다(사이에 구분 문자를 넣어). */
+function joinRuns(groups, sep) {
+    const out = [];
+    groups.forEach((g, i) => {
+        if (i > 0 && sep) out.push({ text: sep, bold: false, italic: false, color: DEFAULT_COLOR });
+        out.push(...(g || []));
+    });
+    return out;
 }
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -229,29 +352,99 @@ function linesToBlocks(pages) {
         headingSizesPt: headingSizes,
         indentStepPt: Math.round(indentStep * 10) / 10,
         pages: pages.length,
-        counts: { lines: allLines.length, headings: 0, paragraphs: 0, tables: 0, listItems: 0 },
+        counts: { lines: allLines.length, headings: 0, paragraphs: 0, tables: 0, listItems: 0, images: 0 },
+        // 쪽 장식(머리말·꼬리말·쪽번호)으로 보고 본문에서 뺀 글자.
+        // 일부러 뺀 것을 기록해 두어야 "조용히 사라진 글자"와 구분된다.
+        removedPageFurniture: [],
         notes: [],
     };
 
-    for (const page of pages) {
-        const lines = page.lines;
+    // 쪽마다 반복되는 머리말·꼬리말·쪽번호를 먼저 걷어낸다. 본문 사이에
+    // 계속 끼어들면 10쪽 문서에서 같은 문장이 10번 박힌다.
+    const running = findRunningLines(pages);
+
+    pages.forEach((page, pageIdx) => {
+        // 괘선 표는 원래 좌표로 세워야 하므로, 단 재배열은 표에 쓰지 않는다.
+        const kept = page.lines.filter((_, i) => {
+            if (!running.has(`${pageIdx}:${i}`)) return true;
+            // 무엇을 뺐는지 남긴다. 조용히 사라지는 글자가 있으면 안 된다 —
+            // 일부러 뺀 것과 잃어버린 것을 구분할 수 없게 되기 때문이다.
+            const t = (page.lines[i].items || []).map(x => x.s).join('').trim();
+            if (t) audit.removedPageFurniture.push(t);
+            return false;
+        });
+        const lines = orderByColumns(kept, page.width || 595);
         const colsCache = lines.map(l => splitColumns(l));
         const colsOf = i => colsCache[i] || [];
         const tableRuns = findTableRuns(lines, colsOf, bodySize);
         const inTable = new Set();
         for (const r of tableRuns) for (let k = r.start; k <= r.end; k++) inTable.add(k);
 
+        // ── 괘선으로 세운 표 ──
+        // 선이 있으면 추측할 필요가 없다. 공백 기반 추론보다 먼저 본다.
+        const grid = buildGrid(page.hLines, page.vLines);
+        const ruledLines = grid ? fillCells(grid, lines) : new Set();
+        let ruledEmitted = false;
+
+        const emitRuledTable = () => {
+            if (!grid || ruledEmitted) return;
+            ruledEmitted = true;
+            const rows = [];
+            for (let r = 0; r < grid.nRows; r++) {
+                const rowCells = grid.cells
+                    .filter(c => c.row === r)
+                    .sort((a, b) => a.col - b.col)
+                    .map(c => {
+                        const runs = trimRuns(c.runs);
+                        const cell = { text: runs.map(x => x.text).join('') };
+                        const styled = runsForBlock(runs);
+                        if (styled) cell.runs = styled;
+                        if (c.colspan > 1) cell.colSpan = c.colspan;
+                        if (c.rowspan > 1) cell.rowSpan = c.rowspan;
+                        return cell;
+                    });
+                if (rowCells.length) rows.push(rowCells);
+            }
+            if (!rows.length) return;
+            blocks.push(firstRowIsHeader(grid)
+                ? { type: 'table', header: rows[0], rows: rows.slice(1) }
+                : { type: 'table', rows });
+            audit.counts.tables++;
+        };
+
         let paraBuf = null;
         const flushPara = () => {
             if (paraBuf && paraBuf.text.trim()) {
-                blocks.push({ type: 'para', text: paraBuf.text.trim() });
+                const block = { type: 'para', text: paraBuf.text.trim() };
+                const runs = runsForBlock(trimRuns(paraBuf.runs));
+                if (runs) block.runs = runs;
+                blocks.push(block);
                 audit.counts.paragraphs++;
             }
             paraBuf = null;
         };
 
+        // 그림은 줄 사이에 끼워 넣는다. 위에 있는 것부터(PDF y는 위가 크다).
+        const pending = [...(page.images || [])].sort((a, b) => b.top - a.top);
+        const flushImagesAbove = y => {
+            while (pending.length && pending[0].top >= y) {
+                flushPara();
+                blocks.push(pending.shift().block);
+                audit.counts.images = (audit.counts.images || 0) + 1;
+            }
+        };
+
         for (let i = 0; i < lines.length; i++) {
-            // ── 표 ──
+            flushImagesAbove(lines[i].y + lines[i].h);
+
+            // 괘선 표가 차지한 줄은 문단으로 다시 내보내지 않는다.
+            if (ruledLines.has(i)) {
+                flushPara();
+                emitRuledTable();
+                continue;
+            }
+
+            // ── 표(공백 기반 추론) ──
             const run = tableRuns.find(r => r.start === i);
             if (run) {
                 flushPara();
@@ -280,6 +473,7 @@ function linesToBlocks(pages) {
             const cols = colsOf(i);
             const text = cols.map(c => c.text).join(' ').trim();
             if (!text) continue;
+            const lineRuns = joinRuns(cols.map(c => c.runs), ' ');
 
             const size = Math.round(line.h * 2) / 2;
             const headingIdx = headingSizes.indexOf(size);
@@ -287,13 +481,19 @@ function linesToBlocks(pages) {
             // ── 제목 ──
             if (headingIdx >= 0) {
                 flushPara();
-                blocks.push({ type: 'heading', level: headingIdx + 1, text });
+                const block = { type: 'heading', level: headingIdx + 1, text };
+                const runs = runsForBlock(lineRuns);
+                if (runs) block.runs = runs;
+                blocks.push(block);
                 audit.counts.headings++;
                 continue;
             }
 
             // ── 목록(들여쓰기 추론) ──
-            const indent = (line.items[0]?.x ?? leftMargin) - leftMargin;
+            // 들여쓰기는 **그 줄이 속한 단**의 왼쪽 끝을 기준으로 잰다.
+            // 쪽 왼쪽을 기준으로 하면 2단 문서의 오른쪽 단 전체가 목록이 된다.
+            const base = Number.isFinite(line.colLeft) ? line.colLeft : leftMargin;
+            const indent = (line.items[0]?.x ?? base) - base;
             const isIndented = indent > bodySize * 0.8;
 
             if (isIndented) {
@@ -302,6 +502,8 @@ function linesToBlocks(pages) {
                 const level = Math.min(2, Math.max(0, Math.round(indent / indentStep) - 1));
                 const last = blocks[blocks.length - 1];
                 const item = { text, level };
+                const itemRuns = runsForBlock(lineRuns);
+                if (itemRuns) item.runs = itemRuns;
                 if (last && last.type === 'list') last.items.push(item);
                 else blocks.push({ type: 'list', items: [item] });
                 audit.counts.listItems++;
@@ -312,21 +514,52 @@ function linesToBlocks(pages) {
             const prev = lines[i - 1];
             const gap = prev ? (prev.y - line.y) : Infinity;
             const sameStyle = prev ? Math.abs(prev.h - line.h) < 0.6 : false;
-            const continues = paraBuf && sameStyle && gap <= line.h * 1.9 && !inTable.has(i - 1);
+            // 단이 바뀌면 문단은 이어지지 않는다. 왼쪽 단 맨 아래에서 오른쪽 단
+            // 맨 위로 넘어가면 y가 **거꾸로 커져** 간격이 음수가 되는데, 그걸
+            // 그냥 두면 "아주 가까운 줄"로 읽혀 두 단의 문장이 한 문단이 된다.
+            const sameColumn = !prev || prev.colLeft === line.colLeft;
+            const continues = paraBuf && sameStyle && sameColumn
+                && gap > 0 && gap <= line.h * 1.9 && !inTable.has(i - 1);
 
             if (continues) {
                 // 한글은 어절 사이에 공백이 필요하지만, 줄 끝에서 잘린 단어는
                 // 붙여야 한다. 앞 줄이 문장부호로 끝나면 공백, 아니면 그대로 잇는다.
+                // 줄이 바뀔 때 PDF는 그 자리의 공백을 **버린다**. 그래서 이어 붙일 때
+                // 공백을 넣을지 판단해야 하는데, 한글에서는 **판단할 근거가 없다.**
+                //
+                //   `…왼쪽 단을` + `모두 읽은…`   → 원래 공백이 있었다(어절 경계)
+                //   `…추진하기 위` + `하여 수립…`  → 원래 공백이 없었다(어절 중간)
+                //
+                // 둘 다 같은 Chrome이 만든 PDF이고, 끝나는 x 좌표도 둘 다 오른쪽
+                // 여백에 붙어 있어 구별되지 않는다. 공백을 넣으면 `위 하여`가 되고
+                // 넣지 않으면 `단을모두`가 된다 — 손실이 대칭이다.
+                //
+                // 근거 없이 고르지 않는다. 라틴 문자로 이어질 때만 공백을 넣는다
+                // (영문은 어절 중간에서 줄을 바꾸지 않으므로 그때는 근거가 있다).
+                // 한글 어절이 붙는 경우가 남는 것은 알려진 한계다.
                 const needsSpace = /[.!?。」』\p{L}\p{N}]$/u.test(paraBuf.text) && /^[A-Za-z0-9(]/.test(text);
                 paraBuf.text += (needsSpace ? ' ' : '') + text;
+                paraBuf.runs = joinRuns([paraBuf.runs, lineRuns], needsSpace ? ' ' : '');
             } else {
                 flushPara();
-                paraBuf = { text };
+                paraBuf = { text, runs: lineRuns };
             }
         }
         flushPara();
+        // 마지막 줄보다 아래에 있던 그림들.
+        while (pending.length) {
+            blocks.push(pending.shift().block);
+            audit.counts.images = (audit.counts.images || 0) + 1;
+        }
         // 페이지 경계는 빈 줄로만 표시한다(강제 쪽 나눔을 넣지 않는다).
         if (page !== pages[pages.length - 1]) blocks.push({ type: 'blank' });
+    });
+
+    if (running.size) {
+        const sample = [...new Set(audit.removedPageFurniture)].slice(0, 3).join(' · ');
+        audit.notes.push(
+            `쪽마다 반복되는 머리말·꼬리말·쪽번호 ${running.size}줄을 본문에서 제외했습니다`
+            + (sample ? ` (${sample})` : '') + '.');
     }
 
     return { blocks, audit };
@@ -355,7 +588,17 @@ export async function parsePdf(buffer, options = {}) {
             // 글꼴 파일을 따로 받지 않는다 — 텍스트 추출에는 필요 없고
             // 외부 요청을 늘리지 않는다는 이 프로젝트의 원칙과도 맞다.
             disableFontFace: true,
-            isEvalSupported: false,
+
+            // ── 한글 PDF에 이게 없으면 글자가 깨진다 ──
+            // 한국어 PDF는 흔히 미리 정의된 CMap(UniKS-UCS2-H, KSCms-UHC-H,
+            // Adobe-Korea1 계열)을 쓰는 Type0/CIDFont로 만들어진다. ToUnicode가
+            // 없으면 pdf.js는 이 bcmap 파일을 읽어야 유니코드를 복원할 수 있다.
+            // 없으면 조용히 깨진 글자나 빈 문자열이 나오고, 증상은 "어떤 PDF는
+            // 되고 어떤 건 안 된다"로 보인다. 한글이 주 대상인 도구에서
+            // 이건 치명적이라 파일을 함께 둔다(요청은 self-origin이라 CSP 통과).
+            // 끝 슬래시는 선택이 아니다 — pdf.js가 없으면 예외를 던진다.
+            cMapUrl: `${PDFJS_DIR}cmaps/`,
+            cMapPacked: true,
         }).promise;
     } catch (err) {
         throw new Error('PDF를 열지 못했습니다(암호 보호되었거나 손상된 파일일 수 있습니다).');
@@ -365,28 +608,55 @@ export async function parsePdf(buffer, options = {}) {
         const pageCount = Math.min(doc.numPages, maxPages);
         const pages = [];
         let rawItemCount = 0;
+        let imageCounter = 0;
 
         for (let p = 1; p <= pageCount; p++) {
             const page = await doc.getPage(p);
+
+            // 그림·괘선·글자색을 연산자 목록 한 번으로 모은다. 그리고 이 호출이
+            // commonObjs를 채우므로, 글꼴의 **원래 이름**을 읽으려면 어차피 먼저
+            // 해야 한다(getTextContent만으로는 글꼴 이름을 얻을 수 없다).
+            const gfx = await extractGraphics(page, pdfjs.OPS);
+            const seq = gfx.colorChars;
+            const cursor = { i: 0 };
+
             const tc = await page.getTextContent();
             rawItemCount += tc.items.length;
 
             const items = tc.items
-                .filter(i => typeof i.str === 'string')
-                .map(i => ({
-                    s: i.str,
-                    x: i.transform[4],
-                    y: i.transform[5],
-                    h: i.height || Math.abs(i.transform[3]) || 0,
-                    w: i.width || 0,
-                    // 글꼴 식별자는 머리행 판정의 **근거**다. 표 머리행은 보통
-                    // 본문과 다른 글꼴(굵은 변형)로 그려진다. 크기가 같아도
-                    // 글꼴이 다르면 그건 추측이 아니라 관찰이다.
-                    font: i.fontName || '',
-                }))
-                .filter(i => i.s.length > 0);
+                .filter(i => typeof i.str === 'string' && i.str.length > 0)
+                .map(i => {
+                    const realName = fontRealName(page, i.fontName);
+                    const { bold, italic } = styleOf(realName, i.transform);
+                    const runs = splitByColor(i.str, seq, cursor)
+                        .map(r => ({ text: r.text, bold, italic, color: r.color }));
+                    return {
+                        s: i.str,
+                        x: i.transform[4],
+                        y: i.transform[5],
+                        h: i.height || Math.abs(i.transform[3]) || 0,
+                        w: i.width || 0,
+                        // 글꼴 식별자는 머리행 판정의 **근거**다. 표 머리행은 보통
+                        // 본문과 다른 글꼴(굵은 변형)로 그려진다. 크기가 같아도
+                        // 글꼴이 다르면 그건 추측이 아니라 관찰이다.
+                        font: i.fontName || '',
+                        runs,
+                    };
+                });
 
-            pages.push({ number: p, lines: assembleLines(items) });
+            // 머리말·꼬리말은 "쪽 가장자리에 있는가"로 판단하므로 쪽 크기가 필요하다.
+            const view = page.view || [0, 0, 595, 842];
+            pages.push({
+                number: p,
+                width: view[2] - view[0],
+                height: view[3] - view[1],
+                yBottom: view[1],
+                lines: assembleLines(items),
+                images: await toImageBlocks(gfx.images, imageCounter),
+                hLines: gfx.hLines,
+                vLines: gfx.vLines,
+            });
+            imageCounter += gfx.images.length;
             page.cleanup();
         }
 
@@ -394,7 +664,7 @@ export async function parsePdf(buffer, options = {}) {
         audit.truncatedPages = doc.numPages > pageCount ? doc.numPages - pageCount : 0;
 
         // 글자 레이어가 없는 스캔 PDF — 추출할 것이 없다는 사실을 분명히 말한다.
-        if (rawItemCount === 0 || blocks.every(b => b.type === 'blank')) {
+        if (rawItemCount === 0 || blocks.every(b => b.type === 'blank' || b.type === 'image')) {
             throw new Error(
                 'PDF에서 글자를 찾지 못했습니다. 스캔한 이미지로만 된 PDF일 수 있습니다'
                 + '(글자 인식(OCR)은 지원하지 않습니다).'

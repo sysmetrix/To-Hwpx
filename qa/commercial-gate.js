@@ -21,8 +21,30 @@ for (const file of [
     'qa/hwp-export-pdf.ps1', 'qa/render-pdf-contact-sheets.py',
 ]) mustExist(file);
 
+/**
+ * 디렉터리 하나의 집계 해시.
+ *
+ * pdf.js CMap은 169개 파일이라 하나씩 적으면 목록이 파일 자체보다 커진다.
+ * 이름과 내용 해시를 정렬해 이어 붙인 것을 다시 해시한다 — 파일이 하나라도
+ * 바뀌거나 늘거나 줄면 값이 달라진다.
+ */
+function dirDigest(dir) {
+    const abs = path.join(ROOT, dir);
+    const lines = fs.readdirSync(abs).sort().map(name => {
+        const h = crypto.createHash('sha256').update(fs.readFileSync(path.join(abs, name))).digest('hex');
+        return `${name}:${h}`;
+    });
+    return crypto.createHash('sha256').update(lines.join('\n')).digest('hex');
+}
+
 const integrity = JSON.parse(read('qa/vendor-integrity.json'));
 for (const [file, expected] of Object.entries(integrity)) {
+    // 끝이 '/'면 디렉터리 전체를 하나로 본다.
+    if (file.endsWith('/')) {
+        assert(fs.existsSync(path.join(ROOT, file)), `vendor 디렉터리 없음: ${file}`);
+        assert(dirDigest(file) === expected, `vendor 무결성 불일치(디렉터리): ${file}`);
+        continue;
+    }
     mustExist(file);
     const actual = crypto.createHash('sha256').update(fs.readFileSync(path.join(ROOT, file))).digest('hex');
     assert(actual === expected, `vendor 무결성 불일치: ${file}`);
