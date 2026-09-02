@@ -109,7 +109,11 @@
        font-size 하드코딩(0.78/0.8/0.82/0.84rem처럼 거의 구분 안 되는 값 30여 개)이
        누적된 상태라 지금 일괄 치환하지 않는다. 새 컴포넌트만 이 토큰을 쓰고,
        기존 코드는 손대는 김에 기회적으로 옮긴다(같은 커밋에서 전체 치환 금지). */
-    --fs-2xs:  0.68rem;   /* 최소 메타 정보(타임스탬프, 카운트 배지) */
+    --fs-2xs:  0.7rem;    /* 최소 메타 정보. 한글 가독 하한 11px — 더 줄이지 않는다 */
+
+    /* 섹션 세로 리듬 — 섹션마다 제각각이면 스크롤 박자가 어긋난다.
+       하나의 값에서 시작하고, 히어로처럼 의도적으로 다른 곳만 따로 준다. */
+    --section-y: clamp(48px, 6vw, 72px);
     --fs-xs:   0.75rem;   /* 캡션, 작은 배지 */
     --fs-sm:   0.82rem;   /* 보조 본문(가장 흔한 UI 텍스트 크기) */
     --fs-base: 0.9rem;    /* 기본 UI 텍스트 */
@@ -616,7 +620,7 @@ a:hover { text-decoration: underline; }
     background-image: radial-gradient(circle, color-mix(in srgb, var(--c-primary) 9%, transparent) 1px, transparent 1px);
     background-size: 24px 24px;
     color: var(--c-text);
-    padding: clamp(56px, 9vw, 104px) 0 clamp(40px, 6vw, 72px);
+    padding: clamp(56px, 9vw, 104px) 0 var(--section-y);
     text-align: center;
     border-bottom: 1px solid var(--c-border);
 }
@@ -967,7 +971,7 @@ a:hover { text-decoration: underline; }
 .value-demo-label {
     display: block;
     margin-bottom: 8px;
-    font-size: 0.68rem;
+    font-size: var(--fs-2xs);
     font-weight: 700;
     letter-spacing: 0.06em;
     text-transform: uppercase;
@@ -1059,7 +1063,7 @@ a:hover { text-decoration: underline; }
    [포맷 그리드]  지원 포맷 카드 목록
    ───────────────────────────────────────────────────────────────── */
 .formats-section {
-    padding: clamp(8px, 1.6vw, 16px) 0 clamp(32px, 4vw, 52px);
+    padding: var(--section-y) 0;
     background: var(--c-bg);
     border-top: 1px solid var(--c-border);
 }
@@ -1237,7 +1241,7 @@ a:hover { text-decoration: underline; }
     border-radius: 6px;
     color: var(--c-primary);
     background: #fff;
-    font-size: 0.68rem;
+    font-size: var(--fs-2xs);
     font-weight: 800;
     line-height: 1;
     letter-spacing: 0;
@@ -1303,7 +1307,7 @@ a:hover { text-decoration: underline; }
    [변환기 패널]  실제 변환 조작 영역
    ───────────────────────────────────────────────────────────────── */
 .converter-section {
-    padding: 64px 0;
+    padding: var(--section-y) 0;
     background: var(--c-bg);
 }
 
@@ -1627,7 +1631,7 @@ a:hover { text-decoration: underline; }
     max-width: 360px;
 }
 .detail-hint {
-    font-size: 0.68rem;
+    font-size: var(--fs-2xs);
     font-weight: 500;
     color: var(--c-text-muted);
     letter-spacing: 0;
@@ -1822,7 +1826,9 @@ a:hover { text-decoration: underline; }
     align-items: center;
     justify-content: center;
     color: var(--c-text-muted);
-    font-size: 0.62rem;
+    /* 한글은 획이 많아 11px 미만이면 실질적으로 읽을 수 없다.
+       미니맵 라벨이라도 읽으라고 넣은 글자이므로 하한을 지킨다. */
+    font-size: var(--fs-2xs);
     font-weight: 700;
     background: color-mix(in srgb, var(--c-primary-light) 55%, transparent);
 }
@@ -1831,13 +1837,13 @@ a:hover { text-decoration: underline; }
     align-items: center;
     justify-content: center;
     color: var(--c-text-sub);
-    font-size: 0.68rem;
+    font-size: var(--fs-xs);
     font-weight: 800;
 }
 .margin-page-label {
     position: absolute;
     color: var(--c-text-muted);
-    font-size: 0.54rem;
+    font-size: var(--fs-2xs);
     font-weight: 800;
     letter-spacing: 0;
     line-height: 1;
@@ -1935,7 +1941,7 @@ a:hover { text-decoration: underline; }
     background: var(--c-surface);
     color: var(--c-text-muted);
     font-family: var(--font-main);
-    font-size: 0.68rem;
+    font-size: var(--fs-2xs);
     font-weight: 800;
     line-height: 1;
     cursor: help;
@@ -2386,7 +2392,7 @@ a:hover { text-decoration: underline; }
     object-fit: contain;
 }
 .format-hint-fmt-badge {
-    font-size: 0.68rem;
+    font-size: var(--fs-2xs);
     font-weight: 800;
     color: var(--c-primary);
     letter-spacing: 0.03em;
@@ -2407,7 +2413,7 @@ a:hover { text-decoration: underline; }
 .fh-quality-badge {
     display: inline-flex;
     align-items: center;
-    font-size: 0.69rem;
+    font-size: var(--fs-2xs);
     font-weight: 700;
     padding: 2px 7px;
     border-radius: 100px;
@@ -2659,7 +2665,7 @@ a:hover { text-decoration: underline; }
 }
 
 .step-label {
-    font-size: 0.6rem;
+    font-size: var(--fs-2xs);
     font-weight: 500;
     line-height: 1.25;
     color: var(--c-text-muted);
@@ -2709,7 +2715,7 @@ a:hover { text-decoration: underline; }
     align-items: center;
     justify-content: center;
     color: #fff;
-    font-size: 9px;
+    font-size: var(--fs-2xs);
     font-weight: 800;
     line-height: 1;
 }
@@ -2861,7 +2867,7 @@ a:hover { text-decoration: underline; }
     border-radius: var(--radius-sm);
     background: var(--c-surface);
 }
-.result-source-audit dt { color: var(--c-text-sub); font-size: 0.68rem; }
+.result-source-audit dt { color: var(--c-text-sub); font-size: var(--fs-2xs); }
 .result-source-audit dd { margin: 2px 0 0; color: var(--c-text); font-size: 0.86rem; font-weight: 800; }
 .result-source-audit--recoverable-with-loss {
     border-color: var(--c-warnwash-border);
@@ -3173,7 +3179,7 @@ a:hover { text-decoration: underline; }
 .site-footer {
     background: #1b1c20;
     color: rgba(255,255,255,0.7);
-    padding: clamp(48px, 6vw, 72px) 0 28px;
+    padding: var(--section-y) 0 28px;
     font-size: 0.85rem;
 }
 .footer-inner {
@@ -3341,11 +3347,8 @@ a:hover { text-decoration: underline; }
         flex: 1;
         text-align: center;
     }
-    .formats-section,
-    .converter-section,
     .how-section,
     .support-section { padding: 48px 0; }
-    .formats-section { padding: 14px 0 38px; }
 
     .format-grid { grid-template-columns: repeat(2, 1fr); }
     #panel-basic .format-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -3971,7 +3974,7 @@ a:hover { text-decoration: underline; }
 }
 .install-icon-sample figcaption {
     color: var(--c-text-muted);
-    font-size: 0.66rem;
+    font-size: var(--fs-2xs);
     white-space: nowrap;
 }
 .install-guide-grid ol {
@@ -4661,7 +4664,7 @@ a:hover { text-decoration: underline; }
     border-radius: 999px;
     background: var(--c-surface-alt);
     color: var(--c-text-sub);
-    font-size: 0.68rem;
+    font-size: var(--fs-2xs);
     font-weight: 700;
     line-height: 1.35;
 }
@@ -4778,7 +4781,7 @@ a:hover { text-decoration: underline; }
     border-radius: 999px;
     background: var(--c-warning-light);
     color: var(--c-warning);
-    font-size: 0.64rem;
+    font-size: var(--fs-2xs);
     font-style: normal;
     font-weight: 800;
     vertical-align: 1px;
@@ -5092,7 +5095,7 @@ a:hover { text-decoration: underline; }
     border-radius: 999px;
     background: var(--c-accent-light);
     color: var(--c-accent);
-    font-size: 0.62rem;
+    font-size: var(--fs-2xs);
     font-weight: 800;
     font-style: normal;
     vertical-align: middle;
@@ -5177,7 +5180,7 @@ a:hover { text-decoration: underline; }
     display: block;
     margin-bottom: 3px;
     color: var(--c-text-muted);
-    font-size: 0.66rem;
+    font-size: var(--fs-2xs);
 }
 @media (max-width: 480px) {
     .changelog-lab-control {
@@ -6423,7 +6426,7 @@ a:hover { text-decoration: underline; }
     margin-left: 6px;
     padding: 1px 7px;
     border-radius: 100px;
-    font-size: 0.68rem;
+    font-size: var(--fs-2xs);
     background: var(--c-surface-alt);
     color: var(--c-text-muted);
 }
@@ -6669,5 +6672,98 @@ a:hover { text-decoration: underline; }
     .format-card:not(.coming-soon):hover,
     .btn-download:hover, .btn-preview:hover, .btn-secondary-export:hover:not(:disabled) {
         transform: none;
+    }
+}
+
+/* ── 히어로 가치 제안 ────────────────────────────────────────────
+   제품명만 있던 597px 히어로에 "무엇을 / 왜 / 무엇이 다른지"를 넣는다.
+   처음 온 사람은 제목만 보고는 이 도구를 쓸지 판단할 수 없다. */
+.hero-lead {
+    /* 한국어는 어절 중간에서 끊기면 "바꿉/니다"처럼 읽기가 무너진다.
+       keep-all로 어절을 지키고, 그만큼 폭을 넉넉히 준다. */
+    max-width: 46ch;
+    margin: var(--sp-4) auto var(--sp-2);
+    font-size: clamp(1rem, 2.1vw, 1.18rem);
+    line-height: 1.65;
+    color: var(--c-text-sub);
+    word-break: keep-all;
+    text-wrap: balance;
+}
+.hero-lead b { color: var(--c-text); font-weight: 700; }
+/* 두 문장이 한 줄에 섞여 문장 중간에서 접히면 읽기가 끊긴다.
+   문장 경계에서만 줄이 바뀌도록 둘째 문장을 제 줄에 둔다. */
+.hero-lead span { display: block; }
+
+.hero-points {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--sp-2) var(--sp-5);
+    margin: 0 auto var(--sp-6);
+    padding: 0;
+    list-style: none;
+    font-size: var(--fs-sm);
+    color: var(--c-text-sub);
+}
+.hero-points li {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+}
+.hero-points span { font-size: 0.95em; }
+
+@media (prefers-reduced-motion: no-preference) {
+    .hero-lead-anim { animation: hero-rise 620ms var(--spring-soft) both; }
+    .hero-lead  { animation-delay: 90ms; }
+    .hero-points { animation-delay: 130ms; }
+    /* 가치 제안이 들어오면서 드롭존은 한 박자 뒤로 */
+    .hero .drop-zone { animation-delay: 200ms; }
+    .drop-trust      { animation-delay: 300ms; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .hero-lead-anim { animation: none !important; }
+}
+@media (max-width: 560px) {
+    .hero-points { gap: var(--sp-1) var(--sp-4); font-size: var(--fs-xs); }
+}
+
+/* "더 알아보기"는 라벨 하나에 탭 줄만 떠 있어 무슨 섹션인지 알 수 없었다.
+   무엇을 볼 수 있는지 한 줄로 말해 준다. */
+.service-info-label {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    line-height: 1.35;
+}
+.service-info-label small {
+    font-size: var(--fs-2xs);
+    font-weight: 500;
+    color: var(--c-text-muted);
+    white-space: nowrap;
+}
+@media (max-width: 720px) {
+    .service-info-label small { display: none; }
+}
+
+/* 첫 방문 안내 점 — 모달로 가로막는 대신 도움말 버튼을 가리키기만 한다.
+   처음 온 사람이 히어로와 드롭존을 먼저 보게 하는 것이 우선이다. */
+.nav-shortcut-btn.has-nudge { position: relative; }
+.nav-shortcut-btn.has-nudge::after {
+    content: "";
+    position: absolute;
+    top: 3px;
+    right: 3px;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--c-primary);
+    box-shadow: 0 0 0 2px var(--c-surface);
+}
+@media (prefers-reduced-motion: no-preference) {
+    .nav-shortcut-btn.has-nudge::after { animation: nudge-pulse 2.4s var(--ease-out) infinite; }
+    @keyframes nudge-pulse {
+        0%, 70%, 100% { transform: scale(1); opacity: 1; }
+        35%           { transform: scale(1.35); opacity: 0.75; }
     }
 }

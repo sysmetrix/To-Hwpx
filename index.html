@@ -147,7 +147,7 @@
             <span>｢BWYF｣ AX Challenger 2026</span>
             <!-- [주의] id="open-changelog"는 app.js에서 관리자 모드일 때 업데이트 내역 모달을 여는 연결값 -->
             <button class="util-changelog-btn" id="open-changelog" aria-label="버전 정보">
-                📋 v4.17.2
+                📋 v4.17.3
             </button>
         </div>
     </div>
@@ -218,6 +218,18 @@
         <!-- [문구 수정 가능] h1 안의 글자와 줄바꿈(<br>)만 수정. id="hero-title"은 유지 -->
         <h1 id="hero-title" class="hero-title-anim"><span class="hero-title-accent">TO HWPX</span> - 한글로</h1>
 
+        <!-- 가치 제안 — 제품명만으로는 "왜 써야 하는지"를 말하지 못한다.
+             무엇을 하는지 / 왜 필요한지 / 무엇이 다른지 순서로 한 문장씩. -->
+        <p class="hero-lead hero-lead-anim">
+            PDF·워드·엑셀 문서를 <b>한글(HWPX)</b>로 바꿉니다.
+            <span>한컴오피스 없이, 브라우저에서 바로.</span>
+        </p>
+        <ul class="hero-points hero-lead-anim" aria-label="주요 특징">
+            <li><span aria-hidden="true">🔒</span> 파일이 서버로 가지 않습니다</li>
+            <li><span aria-hidden="true">📁</span> 폴더째 100개까지 한 번에</li>
+            <li><span aria-hidden="true">📐</span> 공문서 항목 규정 자동 적용</li>
+        </ul>
+
         <!-- 파일 드롭존 (app.js의 initDropZone에서 이벤트 연결) -->
         <div id="drop-zone" class="drop-zone" role="button" tabindex="0"
              aria-label="파일을 드래그하거나 클릭하여 선택">
@@ -284,7 +296,7 @@
                             </div>
                         </div>
                         <div class="cda-body">
-                            <span id="cda-label">파일을 드래그하거나 클릭하여 선택 (여러 개 가능)</span>
+                            <span id="cda-label">여기에 놓거나 클릭해 선택</span>
                             <span id="detected-format" aria-live="polite"></span>
                         </div>
                     </div>
@@ -773,7 +785,7 @@
     <div class="container">
         <div class="service-info anim-target">
             <div class="service-info-bar">
-                <span class="service-info-label">더 알아보기</span>
+                <span class="service-info-label">더 알아보기<small>포맷별 보존 범위 · 변환 과정 · 품질</small></span>
                 <div class="format-tabs service-tabs" id="format-more-tabs" role="tablist" aria-label="포맷 안내">
                     <button class="format-tab"
                             data-target="panel-dev-story"
