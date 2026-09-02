@@ -185,6 +185,35 @@ const EXPECTATIONS = [
             '하위 항목 보존': ir => /기관별\s*서식이/.test(flat(ir)) && /가\.\s*단계적\s*전환/.test(flat(ir)),
         },
     },
+    {
+        file: 'pdf-gov-real.pdf',
+        why: '실제 한글 공문서에서 무너졌던 것들 — 글머리 목록·설명 상자·한 쪽 두 표·양쪽 정렬',
+        checks: {
+            // ⚫ 목록이 2열 표로 둔갑했었다. 23쪽 문서에서 가짜 표 19개가 나온 원인.
+            '글머리 목록이 표가 아님': ir => !(ir.blocks || []).some(b =>
+                b.type === 'table'
+                && [b.header, ...(b.rows || [])].some(r => (r || []).some(c =>
+                    /^[\u25CF\u26AB\u00B7\uFF65]$/.test((typeof c === 'string' ? c : c?.text || '').trim())))),
+            '글머리 기호는 본문에서 제거': ir => !/[\u25CF\u26AB]/.test(irText(ir)),
+            '목록 항목 3개 이상': ir => (ir.blocks || [])
+                .filter(b => b.type === 'list')
+                .reduce((n, b) => n + (b.items || []).length, 0) >= 3,
+            // 테두리만 있는 상자를 표로 만들면 문단이 셀에 갇힌다.
+            '설명 상자는 표가 아님': ir => !(ir.blocks || []).some(b =>
+                b.type === 'table'
+                && [b.header, ...(b.rows || [])].some(r => (r || []).some(c =>
+                    /설명 상자이므로/.test((typeof c === 'string' ? c : c?.text || ''))))),
+            // 쪽의 괘선을 한 격자로 뭉치면 두 표가 하나가 된다.
+            '표 2개가 따로': ir => byType(ir, 'table').length === 2,
+            '각 표는 3행 2열': ir => byType(ir, 'table').every(t => {
+                const s = tableShape(t);
+                return s?.rows === 3 && s?.cols === 2;
+            }),
+            '표 사이 문단 보존': ir => /위 표와 아래 표는 서로 다른 표다/.test(flat(ir)),
+            // 양쪽 정렬 줄바꿈에서 낱말이 붙지 않아야 한다.
+            '줄바꿈 낱말 안 붙음': ir => !/[가-힣]{12,}/.test(flat(ir)),
+        },
+    },
 ];
 
 /**
@@ -193,7 +222,8 @@ const EXPECTATIONS = [
  */
 function stripDeclared(rawText, ir) {
     let s = normalizeForCompare(rawText);
-    for (const piece of ir.audit?.removedPageFurniture || []) {
+    for (const piece of [...(ir.audit?.removedPageFurniture || []),
+        ...(ir.audit?.convertedMarkers || [])]) {
         const p = normalizeForCompare(piece);
         if (!p) continue;
         const at = s.indexOf(p);
@@ -254,7 +284,10 @@ function multisetLoss(rawText, outText) {
         // 그래서 문자 보존의 기준은 "하나도 안 없어졌는가"가 아니라
         // **"조용히 없어진 것이 없는가"**다. 뺀 것은 audit에 적혀 있어야 하고,
         // 적혀 있지 않은데 사라졌다면 그건 버그다.
-        const declared = (ir.audit?.removedPageFurniture || []).join('');
+        const declared = [
+            ...(ir.audit?.removedPageFurniture || []),
+            ...(ir.audit?.convertedMarkers || []),   // 글머리 기호 → 목록 구조
+        ].join('');
         const chars = multisetLoss(raw, out + declared);
 
         // 읽기 순서도 같은 기준으로 본다 — 뺀 줄을 원문에서 지우고 비교한다.

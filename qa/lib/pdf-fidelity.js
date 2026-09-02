@@ -63,7 +63,10 @@ function irText(ir) {
     };
     if (ir && typeof ir.title === 'string') out.push(ir.title);
     walk(ir && ir.blocks);
-    return out.join('');
+    // 블록 사이에 줄바꿈을 넣는다. 붙여 버리면 앞 블록 끝과 뒤 블록 시작이
+    // 한 낱말처럼 보여 "낱말이 붙었다"는 검사가 헛돈다.
+    // 비교용 정규화가 공백을 지우므로 보존율 계산에는 영향이 없다.
+    return out.join('\n');
 }
 
 /**
