@@ -544,6 +544,45 @@ v4.5.7 회귀에서 피해야 할 오답:
 
 현재 상태(v4.16.16): MD 4종·CSV 2종·JSON 2종·TXT 2종 총 10개 픽스처 전부 통과.
 
+## 역방향 텍스트 추출 (HWPX → MD / HTML)
+
+관련 코드: `js/core/ir-to-text.js` · `js/core/hwpx-to-ir.js`
+
+```
+HWPX → (hwpx-to-ir) → IR → (ir-to-text) → Markdown / HTML
+```
+
+HWP 내보내기(구버전 한/글 수신자용, rhwp 기반)와 **다른 계통**이다. 이쪽은 한컴 공개 OWPML 기준의 자체 역파서를 쓰며 rhwp를 거치지 않는다.
+
+### 정직성 원칙
+
+레이아웃 복제가 아니라 **구조 추출**이다. 표현할 수 없는 것을 표현한 척하지 않는다.
+
+- 서식·여백·글꼴은 포함되지 않는다.
+- 그림은 파일 이름(`BinData/xxx.png`)만 참조하며 바이트는 내보내지 않는다. CLI와 MCP 모두 결과에 그 사실을 적는다.
+- 표 안의 링크처럼 IR이 담지 않는 것은 만들어내지 않는다.
+
+### 마커가 담는 정보를 버리지 않는다
+
+목록 마커(`· ◦ ▪ ▣ □ N.`)는 장식이 아니라 정보다. `1. `은 순서 목록, `▣/□`는 태스크와 체크 상태를 뜻한다. **떼어내기만 하고 버리면** HWPX를 Markdown으로 되돌릴 때 순서 목록이 글머리 목록이 되고 체크박스가 사라진다 — 실제로 그랬다.
+
+`readMarkerMeta()`가 마커를 해석해 `ordered` / `task` / `checked`를 복원하고, 왕복 게이트의 ④가 그 회귀를 막는다.
+
+또한 `coalesceBlocks()`는 순서 목록과 글머리 목록이 붙어 있으면 **다른 목록으로 나눈다.** 한 덩어리로 묶으면 되돌릴 때 번호가 글머리로 바뀐다.
+
+### 제목의 굵게는 한 번만
+
+렌더러는 제목을 굵은 글꼴 face로 그리므로 역파서가 모든 제목 run에 `bold`를 붙인다. 그대로 직렬화하면 `## **제목**`이 되어 강조가 두 번 표현된다. Markdown·HTML 직렬화 모두 제목 안의 굵게를 뺀다(`headingRunsToMd`, HTML은 `bold:false` 매핑).
+
+### 사용
+
+```bash
+node js/core/cli.js 공문.hwpx --to md
+node js/core/cli.js 공문.hwpx --to html
+```
+
+MCP는 `read_hwpx`(`as: markdown | html | ir`). `as=ir`은 파싱 가능한 IR JSON을 주므로 에이전트가 읽고 고쳐 `ir_to_hwpx`로 다시 쓰는 왕복 작업이 가능하다.
+
 ## 코어 추출 (브라우저 ≡ Node)
 
 관련 코드: `js/core/runtime.js`, `js/core/index.js` · 게이트: `qa/core-parity-gate.js`

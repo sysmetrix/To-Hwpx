@@ -120,6 +120,31 @@ function run(args) {
         note(false, '⑧ A3 가로 변환 실패', `code=${r8.code}`);
     }
 
+    // ⑧-b 역방향 --to — HWPX를 Markdown/HTML로 추출
+    const mdOut = path.join(TMP, 'back.md');
+    const r10 = run([out1, '--to', 'md', '-o', mdOut, '-q']);
+    note(r10.code === 0 && fs.existsSync(mdOut), '⑧ --to md 성공', `code=${r10.code}`);
+    if (fs.existsSync(mdOut)) {
+        const md = fs.readFileSync(mdOut, 'utf8');
+        note(/^#{1,6} /m.test(md), '⑧ 제목이 Markdown 제목으로');
+        note(/\|.*\|/.test(md) && /\| --- \|/.test(md), '⑧ 표가 Markdown 표로');
+        // 렌더러는 제목을 굵은 글꼴로 그린다. 그대로 직렬화하면 ## **제목**이 된다.
+        note(!/^#{1,6} \*\*/m.test(md), '⑧ 제목에 굵게가 중복되지 않음');
+    }
+
+    const htmlOut = path.join(TMP, 'back.html');
+    const r11 = run([out1, '--to', 'html', '-o', htmlOut, '-q']);
+    note(r11.code === 0 && fs.existsSync(htmlOut), '⑧ --to html 성공', `code=${r11.code}`);
+    if (fs.existsSync(htmlOut)) {
+        const html = fs.readFileSync(htmlOut, 'utf8');
+        note(/<!doctype html>/i.test(html) && /<table>/.test(html), '⑧ HTML 문서 구조');
+    }
+
+    const r12 = run([out1, '--to', 'pdf']);
+    note(r12.code === 2, '⑧ 지원하지 않는 --to 값 거절', `code=${r12.code}`);
+    const r13 = run(['qa/fixtures/md_hwpx_test.md', '--to', 'md', '--out-dir', TMP]);
+    note(r13.code === 1 && /\.hwpx 입력에만/.test(r13.err), '⑧ --to는 .hwpx 입력에만');
+
     // ⑨ --help / --version
     const r9 = run(['--help']);
     note(r9.code === 0 && /사용법/.test(r9.out), '⑨ --help', `code=${r9.code}`);

@@ -33,8 +33,10 @@ if (typeof globalThis.marked === 'undefined') {
     globalThis.marked = require('../vendor/marked-18.0.11.min.js');
 }
 
-const { irToHwpx } = await import('./index.js');
+const { irToHwpx, ensureNodeRuntime } = await import('./index.js');
 const { parseMd, parseCsv, parseJson, parseTxt } = await import('../parsers.js');
+const { hwpxToIr, coalesceBlocks } = await import('./hwpx-to-ir.js');
+const { TEXT_EXPORTERS } = await import('./ir-to-text.js');
 
 const VERSION = require('../../package.json').version;
 const PROTOCOL_VERSION = '2024-11-05';
@@ -99,6 +101,28 @@ const TOOLS = [
                 ...RENDER_OPTION_SCHEMA,
             },
             required: ['ir'],
+        },
+    },
+    {
+        name: 'read_hwpx',
+        description:
+            'HWPX 파일을 읽어 Markdown·HTML·IR(JSON) 중 하나로 반환한다. 표는 표로, 링크는 링크로, '
+            + '목록은 중첩·순서·체크 상태까지 유지한다. 문서를 읽고 고쳐 다시 쓰는 작업의 첫 단계로 쓴다.',
+        inputSchema: {
+            type: 'object',
+            properties: {
+                path: { type: 'string', description: '읽을 .hwpx 파일 경로' },
+                as: {
+                    type: 'string',
+                    enum: ['markdown', 'html', 'ir'],
+                    description: '반환 형식 (기본 markdown)',
+                },
+                maxChars: {
+                    type: 'number',
+                    description: '반환 문자 수 상한(기본 60000). 넘으면 잘린 사실을 함께 알린다.',
+                },
+            },
+            required: ['path'],
         },
     },
     {
@@ -236,6 +260,62 @@ async function renderAndReport(ir, args, sourceLabel) {
     return { isError: false, text: lines.join('\n') };
 }
 
+/**
+ * HWPX를 읽어 텍스트 형식으로 돌려준다.
+ *
+ * 레이아웃 복제가 아니라 **구조 추출**이다. 에이전트가 오해하지 않도록
+ * 그림처럼 바이트를 함께 주지 않는 항목은 결과에 명시한다.
+ */
+async function readHwpxTool(args) {
+    if (typeof args.path !== 'string' || !args.path.trim()) {
+        throw new Error('path가 필요합니다.');
+    }
+    const abs = path.resolve(args.path);
+    if (!/\.hwpx$/i.test(abs)) throw new Error(`.hwpx 파일이 아닙니다: ${args.path}`);
+    if (!fs.existsSync(abs)) throw new Error(`파일이 없습니다: ${abs}`);
+
+    ensureNodeRuntime();
+    let parseXml;
+    try {
+        const { DOMParser } = require('@xmldom/xmldom');
+        parseXml = (xml) => new DOMParser().parseFromString(xml, 'text/xml');
+    } catch {
+        throw new Error('XML 파서가 없습니다. `npm i -D @xmldom/xmldom`을 실행하세요.');
+    }
+
+    const { ir, stats } = await hwpxToIr(fs.readFileSync(abs), { parseXml });
+    ir.blocks = coalesceBlocks(ir.blocks);
+
+    const as = String(args.as || 'markdown').toLowerCase();
+    let body;
+    if (as === 'ir') {
+        body = JSON.stringify(ir, null, 2);
+    } else {
+        const exporter = TEXT_EXPORTERS[as === 'markdown' ? 'md' : as];
+        if (!exporter) throw new Error(`as는 markdown|html|ir 중 하나여야 합니다: ${args.as}`);
+        // 제목 문단은 이미 blocks 안에 있다. 앞에 또 붙이면 두 번 나온다.
+        body = exporter.serialize(ir, { includeTitle: false });
+    }
+
+    const limit = Number.isFinite(args.maxChars) ? Math.max(1000, args.maxChars) : 60000;
+    const truncated = body.length > limit;
+    const shown = truncated ? body.slice(0, limit) : body;
+
+    const notes = [
+        `문단 ${stats.paragraphs} · 표 ${stats.tables} · 링크 ${stats.links} · 그림 ${stats.images}`,
+    ];
+    if (stats.images > 0) {
+        notes.push(`그림 ${stats.images}개는 파일명만 참조합니다(바이트는 포함되지 않음).`);
+    }
+    if (truncated) {
+        notes.push(`전체 ${body.length}자 중 ${limit}자만 반환했습니다. maxChars를 올리세요.`);
+    }
+    notes.push('레이아웃 복제가 아니라 구조 추출입니다. 서식·여백·글꼴은 포함되지 않습니다.');
+
+    const noteBlock = notes.map(n => `※ ${n}`).join('\n');
+    return { isError: false, text: `${shown}\n\n---\n${noteBlock}` };
+}
+
 async function callTool(name, args = {}) {
     switch (name) {
         case 'markdown_to_hwpx': {
@@ -258,6 +338,9 @@ async function callTool(name, args = {}) {
             }
             return await renderAndReport(reviveImageData(args.ir), args, 'IR');
         }
+        case 'read_hwpx':
+            return await readHwpxTool(args);
+
         case 'get_ir_schema':
             return { isError: false, text: JSON.stringify(IR_SCHEMA_DOC, null, 2) };
         default:

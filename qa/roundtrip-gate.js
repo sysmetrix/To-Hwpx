@@ -15,9 +15,9 @@
  *
  * 불변식 (전부 지켜야 한다)
  *   ① 본문 텍스트가 빠짐없이 살아남는다
- *   ② 표 개수와 각 표의 행·열 수가 같다
+ *   ② 표 개수와 각 표의 행·열·셀 수, 머리행 유무가 같다
  *   ③ 링크 개수와 URL 집합이 같다
- *   ④ 목록 항목 수와 중첩 레벨 분포가 같다
+ *   ④ 목록 항목 수·중첩 레벨 분포·순서 목록 항목 수·태스크 체크 상태가 같다
  *   ⑤ 제목 개수와 레벨 분포가 같다
  *   ⑥ 그림 개수가 같다
  *   ⑦ 코드 블록 개수와 코드 본문이 같다
@@ -200,7 +200,23 @@ function fingerprint(ir, blocks, titleIsRendered = true) {
         text: normText([titleIsRendered ? (ir.title || '') : '', ...bs.map(blockText)].join('\n')),
         headingLevels: headings.map(h => h.level).sort((a, b2) => a - b2),
         listItemCount: listItems.length,
-        listLevels: listItems.map(i => i.level || 0).sort((a, b2) => a - b2),
+        listLevels: listItems.map(i => (typeof i === 'object' ? (i.level || 0) : 0)).sort((a, b2) => a - b2),
+        // 순서 목록 여부와 태스크 상태는 마커가 담는 정보다. 마커를 떼면서
+        // 이것까지 버리면 HWPX를 Markdown으로 되돌릴 때 번호가 글머리가 되고
+        // 체크박스가 사라진다 — 실제로 그랬고 이 항목이 그 회귀를 막는다.
+        //
+        // ordered는 IR 모양에 따라 항목에 있기도(Markdown 파서) 블록에 있기도
+        // (역파서) 하다. 한쪽만 보면 같은 문서를 다르게 센다.
+        orderedItemCount: lists.reduce(
+            (n, l) => n + (l.items || []).filter(
+                i => (typeof i === 'object' && i.ordered === true) || l.ordered === true
+            ).length,
+            0,
+        ),
+        taskStates: listItems
+            .filter(i => typeof i === 'object' && i.task)
+            .map(i => (i.checked ? 'x' : ' '))
+            .sort(),
         tableShapes: tables.map(tableShape),
         tableCount: tables.length,
         codeTexts: codes.map(c => normText(c.text)),
@@ -253,6 +269,11 @@ function compare(src, back) {
     }
     const lvlDiff = diffLists(src.listLevels, back.listLevels, '④ 목록 중첩 레벨');
     if (lvlDiff) issues.push(lvlDiff);
+    if (src.orderedItemCount !== back.orderedItemCount) {
+        issues.push(`④ 순서 목록 항목 수 ${src.orderedItemCount} → ${back.orderedItemCount}`);
+    }
+    const taskDiff = diffLists(src.taskStates, back.taskStates, '④ 태스크 상태');
+    if (taskDiff) issues.push(taskDiff);
 
     // ⑤ 제목
     const hDiff = diffLists(src.headingLevels, back.headingLevels, '⑤ 제목 레벨');

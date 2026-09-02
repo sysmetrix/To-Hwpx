@@ -266,6 +266,25 @@ function stripMarkerFromRuns(runs) {
     return [{ ...first, text: stripped }, ...runs.slice(1)];
 }
 
+/**
+ * 마커가 무엇을 뜻하는지 읽는다.
+ *
+ * 마커는 단순 장식이 아니라 정보다 — "1. "은 순서 목록, "▣/□"는 태스크와
+ * 그 상태를 뜻한다. 떼어내기만 하고 버리면 HWPX를 Markdown으로 되돌릴 때
+ * 순서 목록이 글머리 목록이 되고 체크박스가 사라진다.
+ */
+function readMarkerMeta(text) {
+    const m = LIST_MARKER.exec(text || '');
+    if (!m) return {};
+    const marker = m[0];
+    if (/^\d+[.)]/.test(marker)) {
+        return { ordered: true, marker: parseInt(marker, 10) };
+    }
+    if (marker.startsWith('▣')) return { task: true, checked: true };
+    if (marker.startsWith('□')) return { task: true, checked: false };
+    return {};
+}
+
 // ─────────────────────────────────────────────────────────────────────────
 // [블록 복원]
 // ─────────────────────────────────────────────────────────────────────────
@@ -425,6 +444,7 @@ export async function hwpxToIr(input, options = {}) {
                     level: role.level,
                     text: text.replace(LIST_MARKER, ''),
                     runs: stripMarkerFromRuns(runs),
+                    ...readMarkerMeta(text),
                 });
                 break;
             }
@@ -457,10 +477,17 @@ export function coalesceBlocks(blocks) {
     for (const b of blocks) {
         const last = out[out.length - 1];
         if (b.type === 'list-item') {
-            if (last && last.type === 'list') {
-                last.items.push({ text: b.text, level: b.level, runs: b.runs });
+            const item = { text: b.text, level: b.level, runs: b.runs };
+            if (b.task) { item.task = true; item.checked = !!b.checked; }
+            if (b.marker != null) item.marker = b.marker;
+
+            // 순서 목록과 글머리 목록이 붙어 있으면 다른 목록이다. 한 덩어리로
+            // 묶으면 Markdown으로 되돌릴 때 번호가 글머리로 바뀐다.
+            const sameKind = last && last.type === 'list' && !!last.ordered === !!b.ordered;
+            if (sameKind) {
+                last.items.push(item);
             } else {
-                out.push({ type: 'list', items: [{ text: b.text, level: b.level, runs: b.runs }] });
+                out.push({ type: 'list', ...(b.ordered ? { ordered: true } : {}), items: [item] });
             }
             continue;
         }
