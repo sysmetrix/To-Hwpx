@@ -1,6 +1,28 @@
 {
-  "current": "4.16.14",
+  "current": "4.16.15",
   "versions": [
+    {
+      "version": "4.16.15",
+      "date": "2026-09-02",
+      "user": [
+        "명령줄 도구가 생겼습니다. 터미널에서 `node js/core/cli.js 파일.md`로 여러 파일을 한 번에 HWPX로 만들 수 있습니다. 지금은 MD·CSV·TSV·TXT·JSON을 지원합니다.",
+        "AI 에이전트(Claude·Cursor 등)가 한/글 없이 HWPX를 만들 수 있는 MCP 서버를 추가했습니다. 표는 표로, 링크는 클릭되는 링크로 들어갑니다.",
+        "웹앱과 명령줄이 정확히 같은 HWPX를 만드는지 자동으로 검사합니다. 어느 쪽으로 만들든 결과가 같습니다."
+      ],
+      "dev": [
+        "[v4.16.15] js/core/runtime.js 신설 — 렌더러(js/hwpx.js)를 복제하지 않고 브라우저·Node 양쪽에서 실행하는 호스트 어댑터. ZIP 구현(전역 JSZip / require), 출력 컨테이너(Blob / Uint8Array), XML 파서(DOMParser / @xmldom)만 갈아 끼운다. 렌더러를 두 벌로 두면 웹앱과 CLI·MCP 산출물이 언젠가 반드시 갈라지므로 한 벌로 유지한다. runtime.js에는 포맷 지식을 넣지 않는다 — 들어가는 순간 두 번째 렌더러가 된다",
+        "[v4.16.15] XML 파서가 없는 호스트에서는 well-formed 검사를 건너뛴다(checkXmlWellFormed가 null 반환). 검사기가 없다는 사실을 '통과'로 바꾸면 게이트가 거짓말을 하게 된다",
+        "[v4.16.15] qa/core-parity-gate.js 신설 — 이 릴리스의 합격 기준. 브라우저가 실제로 렌더에 넘긴 IR·옵션을 window.__tohwpxDebug.lastRender에서 꺼내 Node 코어에 그대로 넣고 두 ZIP을 엔트리 단위로 비교한다. 9개 픽스처에서 모든 엔트리 내용 동일, 산출물 크기도 동일. 옵션을 게이트에서 손으로 다시 적으면 '같은 입력'이라는 전제가 깨지므로 반드시 앱에서 꺼내 간다",
+        "[v4.16.15] 변이 테스트로 게이트 유효성 확인 — lineSpacingPercent를 코어에서만 140으로 바꾸자 7개 픽스처가 Contents/header.xml 불일치로 실패했고, 바이트 길이가 같은 상태에서 첫 차이 문자 위치까지 짚어냈다",
+        "[v4.16.15] js/core/cli.js 신설 — tohwpx CLI. MD·CSV/TSV·TXT·JSON 지원. 종료 코드 계약(0 성공 / 1 변환 실패 / 2 사용법 오류)을 tests/cli-test.js 22개 검사로 고정. 미지원 확장자는 조용히 다르게 처리하지 않고 이유와 대안을 말하며 거절한다",
+        "[v4.16.15] CLI 일괄 변환 데이터 손실 방지 — notes.csv와 notes.json이 둘 다 notes.hwpx가 되어 뒤 파일이 앞 파일을 조용히 덮어썼다. 변환 시작 전에 출력 경로 충돌을 검사해 종료 코드 2로 거절하고 어떤 파일도 쓰지 않는다. cli-test ⑦이 잡아낸 실제 결함",
+        "[v4.16.15] js/core/mcp-server.js 신설 — MCP stdio 서버(markdown_to_hwpx, text_to_hwpx, ir_to_hwpx, get_ir_schema). 외부 SDK 없이 JSON-RPC 직접 구현(공급망 최소 유지). 읽기·편집 도구를 늘리는 대신 생성 품질만 보증한다: 표를 텍스트 행으로 평탄화하지 않고(tbl=1 tr=3 tc=6 검증), 링크를 hp:fieldBegin 하이퍼링크로 넣고, 구조 검증에 실패한 산출물은 파일로 쓰지 않는다(에이전트가 성공으로 읽고 넘어가면 깨진 문서가 사람 손에 들어간다)",
+        "[v4.16.15] tests/mcp-server-test.js — 실제 stdio JSON-RPC로 대화하는 20개 검사. 내부 함수를 직접 부르면 프로토콜 계층 버그(응답 누락, 알림에 응답하기, stdout 오염)를 놓친다",
+        "[v4.16.15] 모듈 타입 스코프 — js/(module) · js/vendor/(commonjs, marked·jszip·xlsx UMD) · js/vendor/rhwp-core-0.8.4/(module, ESM). vendor를 commonjs로만 두면 rhwp가 Unexpected token 'export'로 깨지는데 역방향 게이트에서만 드러난다. CLI stderr의 MODULE_TYPELESS_PACKAGE_JSON 경고도 함께 사라졌다(스크립트가 stderr를 파싱하므로 계약이다)",
+        "[v4.16.15] golden에 validateCoreParityHook 추가 — 디버그 훅이 비면 test:core가 조용히 무의미해지므로 IR과 렌더 옵션 7개 필드 존재를 고정한다",
+        "[v4.16.15] qa/lib/browser-convert.js 재사용, impact-graph에 core-runtime·core-surfaces·core-gates 3노드 4간선 추가, test:core/cli/mcp를 test:release에 편입. 전체 게이트 통과"
+      ]
+    },
     {
       "version": "4.16.14",
       "date": "2026-09-02",

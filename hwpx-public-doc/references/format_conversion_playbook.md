@@ -481,6 +481,48 @@ v4.5.7 회귀에서 피해야 할 오답:
 - `tests/orientation-e2e.js`: 실제 파일 선택 → 변환 → 미리보기 흐름에서 가로 비율, 페이지 수, 잘림 여부, 안내 문구를 확인한다.
 - 화면 캡처에서 종이 내부 스크롤이 없고 각 페이지가 가로 형태로 보이는지 사람이 확인한다.
 
+## 코어 추출 (브라우저 ≡ Node)
+
+관련 코드: `js/core/runtime.js`, `js/core/index.js` · 게이트: `qa/core-parity-gate.js`
+
+### 원칙 — 렌더러는 한 벌만 둔다
+
+CLI·MCP를 만들 때 가장 쉬운 실수는 렌더러를 복제하는 것이다. 그러면 웹앱과 코어 산출물이 조용히 갈라지고, 어느 쪽이 진짜인지 아무도 모르게 된다.
+
+그래서 `js/hwpx.js`는 한 벌로 두고, 호스트마다 다른 것만 `js/core/runtime.js`에서 갈아 끼운다.
+
+| 갈아 끼우는 것 | 브라우저 | Node |
+|---|---|---|
+| ZIP 구현 | 전역 `JSZip` | `require('jszip')` |
+| 출력 컨테이너 | `Blob` | `Uint8Array` |
+| XML well-formed 검사 | `DOMParser` | `@xmldom/xmldom` (없으면 **건너뛴다**) |
+
+`runtime.js`에는 포맷 지식을 넣지 않는다. 여기에 변환 규칙이 들어가기 시작하면 어댑터가 아니라 두 번째 렌더러가 된다.
+
+XML 파서가 없을 때 그 검사를 "통과"로 처리하지 않는다(`checkXmlWellFormed`가 `null`을 반환하고 호출자가 건너뛴다). 검사기가 없다는 사실을 합격으로 바꾸면 게이트가 거짓말을 하게 된다.
+
+### 동등성 게이트
+
+`npm run test:core` — 브라우저에서 픽스처를 변환하면서 그때 쓰인 IR과 렌더 옵션을 `window.__tohwpxDebug.lastRender`로 꺼내, 같은 값을 Node 코어에 넣고 두 ZIP을 **엔트리 단위로** 비교한다.
+
+옵션을 게이트에서 손으로 다시 적으면 그 순간 비교가 무의미해지므로 반드시 앱에서 꺼내 간다.
+
+ZIP 원시 바이트가 아니라 엔트리 내용을 비교하는 이유: JSZip은 엔트리마다 생성 시각을 기록해 원시 바이트가 실행마다 달라진다. 그 차이는 변환 품질과 무관하다. 같아야 한다고 주장하는 것은 **내용**이다.
+
+현재 상태(v4.16.15): 9개 픽스처에서 모든 엔트리 내용 동일, 산출물 크기도 동일. 변이 테스트로 게이트 유효성 확인 — `lineSpacingPercent`를 코어에서만 바꾸자 7개 픽스처가 `Contents/header.xml` 불일치로 실패했다.
+
+### 이미지 데이터 직렬화 함정
+
+IR의 `image.data`는 `Uint8Array`다. 게이트가 브라우저에서 IR을 꺼낼 때 `JSON.stringify`를 그냥 태우면 `{0:..,1:..}` 꼴의 평범한 객체가 되어 JSZip이 `Can't read the data of ...`로 거절한다. base64로 감싸 넘기고 Node에서 되돌린다. MCP의 `ir_to_hwpx`도 같은 이유로 base64 문자열을 받아 `Uint8Array`로 복원한다.
+
+### CLI·MCP 범위
+
+DOM 없이 파싱 가능한 포맷만 지원한다 — MD·CSV/TSV·TXT·JSON. HTML·DOCX·PPTX·XLSX·IPYNB는 각각 DOMParser·JSZip·SheetJS가 더 필요하다.
+
+**반쯤 지원해서 조용히 다른 결과를 내는 것보다 안 된다고 말하는 편이 낫다.** CLI는 미지원 확장자에 이유와 대안(웹앱)을 함께 말하며 종료 코드 1로 끝낸다.
+
+일괄 변환에서 `notes.csv`와 `notes.json`은 둘 다 `notes.hwpx`가 된다. 막지 않으면 뒤 파일이 앞 파일을 조용히 덮어쓰므로, 변환 시작 **전에** 충돌을 검사해 종료 코드 2로 거절한다(`tests/cli-test.js` ⑦).
+
 ## 역방향 내보내기 (HWPX → HWP)
 
 관련 코드: `js/reverse-export.js` · 게이트: `qa/reverse-export-gate.js`, `tests/hwp-export-e2e.js`

@@ -55,6 +55,51 @@
 
 > **HWP 파일을 더 잘 변환하려면:** 한글 프로그램에서 `파일 → 다른 이름으로 저장` 후 파일 형식을 **HWPX(\*.hwpx)** 로 변경하여 저장한 뒤 업로드하면 훨씬 높은 품질로 변환됩니다.
 
+## 명령줄과 AI 에이전트 (tohwpx CLI · MCP)
+
+웹앱과 **같은 렌더러**를 Node에서도 쓸 수 있습니다. 두 경로가 같은 HWPX를 만드는지는 `npm run test:core`가 엔트리 단위로 검사합니다.
+
+### CLI
+
+```bash
+node js/core/cli.js README.md                 # README.hwpx 생성
+node js/core/cli.js notes.md -o 보고서.hwpx --font 함초롬바탕
+node js/core/cli.js data/*.csv --out-dir build --paper A3 --orientation landscape
+node js/core/cli.js --help
+```
+
+지원 입력은 `.md` `.markdown` `.csv` `.tsv` `.txt` `.json`입니다. HTML·DOCX·PPTX·XLSX·IPYNB·HWP는 DOM이나 추가 엔진이 필요해 아직 웹앱에서만 변환합니다. CLI는 그런 입력을 **조용히 다르게 처리하지 않고 이유를 말하며 거절**합니다.
+
+종료 코드: `0` 성공 / `1` 변환 실패·구조 경고 / `2` 사용법 오류.
+
+### MCP 서버
+
+AI 에이전트가 한/글 설치 없이 HWPX를 만들 수 있습니다.
+
+```json
+{
+  "mcpServers": {
+    "tohwpx": { "command": "node", "args": ["<저장소 경로>/js/core/mcp-server.js"] }
+  }
+}
+```
+
+| 도구 | 하는 일 |
+|---|---|
+| `markdown_to_hwpx` | Markdown → HWPX |
+| `text_to_hwpx` | TXT·CSV/TSV·JSON → HWPX |
+| `ir_to_hwpx` | 공통 IR(JSON)을 직접 렌더 — 정밀 제어용 |
+| `get_ir_schema` | IR 스키마와 블록별 예시 반환 |
+
+범위를 좁게 유지합니다. 읽기·편집 도구를 늘리는 대신 **생성 품질**만 보증합니다.
+
+- 표를 텍스트 행으로 평탄화하지 않습니다(셀 병합·머리행 유지).
+- 링크를 표시 문자열로 죽이지 않습니다(`hp:fieldBegin` 하이퍼링크).
+- 그림을 `BinData`·manifest·`content.hpf`까지 연결해 넣습니다.
+- **구조 검증에 실패한 산출물은 파일로 쓰지 않습니다.** 에이전트가 성공으로 읽고 넘어가면 깨진 문서가 사람 손에 들어가기 때문입니다.
+
+구조 검증 통과가 한컴에서 보이는 것까지 보증하지는 않습니다. 최종 확인은 한컴오피스에서 하세요.
+
 ## 개인정보와 외부 요청
 
 원본 파일과 생성된 HWPX는 서버에 업로드하지 않습니다. 브라우저가 외부로 접속하는 경우는 다음으로 제한됩니다.

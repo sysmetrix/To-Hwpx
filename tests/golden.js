@@ -1777,6 +1777,46 @@ async function validatePretendardCompatibility(page) {
   console.log('PASS FONT   installed Pretendard name + reverse substFont');
 }
 
+
+/**
+ * 코어 동등성 게이트가 의존하는 디버그 훅을 지킨다.
+ *
+ * qa/core-parity-gate.js는 브라우저가 **실제로 렌더에 넘긴** IR과 옵션을
+ * window.__tohwpxDebug.lastRender에서 꺼내 Node 코어와 비교한다. 이 훅이
+ * 비거나 필드가 빠지면 그 게이트가 조용히 무의미해지므로 여기서 고정한다.
+ */
+async function validateCoreParityHook(page) {
+  const mdPath = path.join(FIXTURES, 'sample.md');
+  await page.goto(`http://127.0.0.1:${PORT}/index.html`, { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => window.JSZip && window.marked && window.XLSX && window.__appReady, null, { timeout: 30000 });
+  const downloadPromise = page.waitForEvent('download', { timeout: 30000 });
+  await page.setInputFiles('#file-input', mdPath);
+  await page.locator('#convert-btn').click();
+  await downloadPromise;
+
+  const snap = await page.evaluate(() => {
+    const s = window.__tohwpxDebug?.lastRender;
+    if (!s) return null;
+    return {
+      hasIr: !!s.ir && Array.isArray(s.ir.blocks),
+      blockCount: s.ir?.blocks?.length ?? -1,
+      optionKeys: Object.keys(s.options || {}).sort(),
+      innerOptionKeys: Object.keys(s.options?.options || {}).sort(),
+    };
+  });
+
+  assert(snap, 'core-hook: window.__tohwpxDebug.lastRender가 비어 있음 — test:core가 무력화된다');
+  assert(snap.hasIr && snap.blockCount > 0, `core-hook: IR 블록이 비었음 (${snap.blockCount})`);
+
+  // 렌더러 호출에 넘기는 인자와 훅이 남기는 필드가 어긋나면 비교 전제가 깨진다.
+  const required = ['fontName', 'fontSize', 'lineSpacingPercent', 'marginsMm', 'options', 'orientation', 'paperSize'];
+  const missing = required.filter(k => !snap.optionKeys.includes(k));
+  assert(missing.length === 0, `core-hook: 렌더 옵션 누락 ${missing.join(', ')}`);
+  assert(snap.innerOptionKeys.length > 0, 'core-hook: 문서 세부 옵션(options.options)이 비었음');
+
+  console.log('PASS CORE  parity hook (IR + 렌더 옵션 스냅샷)');
+}
+
 (async () => {
   const docxPath = path.join(FIXTURES, 'sample.docx');
   if (!fs.existsSync(docxPath)) {
@@ -1826,6 +1866,7 @@ async function validatePretendardCompatibility(page) {
     await validateDetailSettingsUx(page);
     await validateMobileFormFontSize(page);
     await validatePretendardCompatibility(page);
+    await validateCoreParityHook(page);
     assert(pageErrors.length === 0, `브라우저 오류 발생: ${pageErrors.join(' | ')}`);
     console.log(`\nGOLDEN: ${CASES.length} cases passed`);
   } finally {
