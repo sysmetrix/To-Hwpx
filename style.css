@@ -3369,6 +3369,70 @@ a:hover { text-decoration: underline; }
     transform: translateY(-1px);
 }
 
+/* ─────────────────────────────────────────────────────────────────
+   [역방향 내보내기] HWPX 결과를 HWP로도 저장 — 보조 동작이므로
+   주 다운로드(HWPX)보다 시각적 무게를 낮춘다.
+   ───────────────────────────────────────────────────────────────── */
+.btn-secondary-export {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: transparent;
+    color: var(--c-text-sub);
+    border: 1.5px dashed var(--c-border);
+    min-height: 44px;
+    padding: 9px 16px;
+    border-radius: var(--radius-md);
+    font-family: var(--font-main);
+    font-size: 0.88rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background var(--trans), border-color var(--trans), color var(--trans);
+}
+.btn-secondary-export:hover:not(:disabled) {
+    background: var(--c-primary-light);
+    border-color: var(--c-primary);
+    border-style: solid;
+    color: var(--c-primary);
+}
+.btn-secondary-export:disabled {
+    cursor: default;
+    opacity: 0.75;
+}
+
+.result-hwp-export {
+    margin: 10px 0 4px;
+    padding: 11px 13px;
+    border: 1px solid var(--c-border);
+    border-radius: var(--radius-md);
+    background: var(--c-surface-alt, var(--c-surface));
+    font-size: 0.82rem;
+    color: var(--c-text-sub);
+    line-height: 1.55;
+}
+.hwp-export-done {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 14px;
+}
+.hwp-export-meta {
+    font-size: 0.8rem;
+    color: var(--c-text-sub);
+}
+.hwp-export-hint {
+    flex-basis: 100%;
+    font-size: 0.76rem;
+    color: var(--c-text-muted);
+    line-height: 1.5;
+}
+.hwp-export-error {
+    margin: 0;
+    color: var(--c-error);
+    font-size: 0.82rem;
+    line-height: 1.55;
+}
+
 
 /* ─────────────────────────────────────────────────────────────────
    [모달 공통]

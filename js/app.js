@@ -27,6 +27,9 @@ const ANALYTICS_SCHEMA = Object.freeze({
     conversion_start: new Set(['format', 'font', 'paper', 'style', 'doc_type', 'heading', 'table', 'input']),
     conversion_success: new Set(['format', 'valid', 'dur_s', 'size']),
     conversion_fail: new Set(['format', 'stage']),
+    // 역방향(HWP) 내보내기 — 손실 건수만 수집한다(문서 내용은 수집하지 않는다)
+    hwp_export_success: new Set(['loss']),
+    hwp_export_fail: new Set([]),
 });
 
 function track(name, data) {
@@ -3064,8 +3067,13 @@ function showResult({ url, fileName, size, validation }) {
                     <button class="btn-preview" id="preview-result-btn">
                         👁 미리보기
                     </button>
+                    <button class="btn-secondary-export" id="export-hwp-btn"
+                            title="구버전 한/글에서도 열리는 HWP 파일로 변환합니다">
+                        ⬇ HWP로도 받기
+                    </button>
                 </div>
             </div>
+            <div class="result-hwp-export" id="hwp-export-slot" hidden></div>
             <div class="result-validation ${validClass}">
                 <span class="result-validation-mark">${validation.pass ? '✓' : '!'}</span>
                 <span>${escHtml(validText)}</span>
@@ -3137,7 +3145,81 @@ function showResult({ url, fileName, size, validation }) {
         }
     });
     area.querySelector('#preview-result-btn')?.addEventListener('click', () => openPreview(state.hwpxBlob));
+    area.querySelector('#export-hwp-btn')?.addEventListener('click', ev => {
+        runHwpExport(ev.currentTarget, fileName);
+    });
     area.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+/**
+ * HWPX 결과를 HWP 5.0 바이너리로도 내보낸다.
+ *
+ * 2026년 10월부터 공공 문서 시스템이 hwp 첨부를 제한하는 방향이지만, 현장에는
+ * 아직 HWPX를 열지 못하는 구버전 한/글이 남아 있다. 그 수신자에게 보낼 때 쓰는
+ * 보조 산출물이며, 주 산출물은 계속 HWPX다.
+ *
+ * 엔진(@rhwp/core)은 선택 기능이라 여기서만 동적 import한다. 실패해도
+ * 이미 만들어진 HWPX 다운로드에는 아무 영향이 없어야 한다.
+ */
+async function runHwpExport(btn, hwpxFileName) {
+    const slot = document.getElementById('hwp-export-slot');
+    if (!slot || !state.hwpxBlob) return;
+
+    const originalLabel = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = '⏳ HWP 변환 중…';
+    slot.hidden = false;
+    slot.textContent = 'HWP 변환 엔진을 불러오는 중입니다… (최초 1회 약 8MB)';
+
+    try {
+        const { exportHwpxToHwp, swapExtension, REVERSE_FORMATS } =
+            await import('./reverse-export.js');
+        const buffer = await state.hwpxBlob.arrayBuffer();
+        const { blob, report, verify } = await exportHwpxToHwp(buffer);
+        const hwpName = swapExtension(hwpxFileName, REVERSE_FORMATS.hwp.ext);
+        const url = URL.createObjectURL(blob);
+
+        // 결과 URL도 기존 정리 타이머 대상에 포함되도록 큐에 부속시킨다
+        state.hwpExportUrls = state.hwpExportUrls || [];
+        state.hwpExportUrls.push(url);
+
+        // 사실만 적는다 — 손실이 있으면 있다고 쓴다(보존도 과장 금지).
+        const lossNote = !report.known
+            ? '변환 엔진이 손실 보고서를 주지 않았습니다. 한/글에서 직접 확인하세요.'
+            : report.count === 0
+                ? '변환 엔진이 보고한 손실 항목은 없습니다.'
+                : `변환 엔진이 손실 ${report.count}건을 보고했습니다.`;
+        const pageNote = verify.known && verify.pageCountStable
+            ? `쪽수 ${verify.pageCountAfter}쪽 유지`
+            : verify.known
+                ? `쪽수 ${verify.pageCountBefore} → ${verify.pageCountAfter}`
+                : '쪽수 확인 불가';
+
+        // eslint-disable-next-line no-unsanitized/property -- url is a blob: URL we created; all text wrapped in escHtml()
+        slot.innerHTML = `
+            <div class="hwp-export-done">
+                <a class="btn-download" href="${url}" download="${escHtml(hwpName)}"
+                   type="${escHtml(REVERSE_FORMATS.hwp.mimeType)}">⬇ ${escHtml(hwpName)}</a>
+                <span class="hwp-export-meta">${escHtml(pageNote)} · ${escHtml(lossNote)}</span>
+                <span class="hwp-export-hint">
+                    HWP는 구버전 한/글 수신자를 위한 보조 파일입니다.
+                    공공 문서 제출에는 HWPX를 쓰세요.
+                </span>
+            </div>
+        `;
+        btn.textContent = '✓ HWP 준비됨';
+        track('hwp_export_success', { loss: String(report.count ?? -1) });
+    } catch (err) {
+        console.error('[HWP 내보내기]', err);
+        slot.textContent = '';
+        const p = document.createElement('p');
+        p.className = 'hwp-export-error';
+        p.textContent = `HWP로 변환하지 못했습니다: ${err.message || err}`;
+        slot.appendChild(p);
+        btn.disabled = false;
+        btn.textContent = originalLabel;
+        track('hwp_export_fail', {});
+    }
 }
 
 /** 배치 변환 결과 — 파일별 행 목록 + 전체 ZIP 다운로드 버튼 */
@@ -3565,6 +3647,11 @@ function revokeAllQueueUrls() {
             URL.revokeObjectURL(item.url);
             item.url = null;
         }
+    }
+    // 역방향(HWP) 내보내기로 만든 URL도 같은 시점에 정리한다
+    if (Array.isArray(state.hwpExportUrls)) {
+        for (const url of state.hwpExportUrls) URL.revokeObjectURL(url);
+        state.hwpExportUrls = [];
     }
 }
 

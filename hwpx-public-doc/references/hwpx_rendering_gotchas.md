@@ -154,6 +154,43 @@ curl -s -H "Authorization: Bearer $TOKEN" \
 
 ---
 
+## 3-1. 역방향 엔진(@rhwp/core)의 "조용한 성공" 함정 (v4.16.13 실측)
+
+역방향 내보내기(HWPX → HWP)를 붙이면서 만난 것들. 생성 경로와는 다른 계통이지만 **증상 모양은 같다 — 오류 없이 기능만 사라진다.**
+
+### ① `contentLoss()`가 0이어도 손실이 없다는 뜻이 아니다
+
+엔진의 자기 보고는 **엔진이 아는 손실만** 센다. 개발 중 그림이 든 문서에서 HWP 산출물이 빈 문서와 같은 크기(6656B)로 나오는데 `contentLoss`는 `{"count":0,"losses":[]}`를 보고했다.
+
+결론적으로 그림은 실제로 보존돼 있었고 크기 차이는 CFB/ZIP 압축 효율 차이였지만, **그 판정을 손실 보고서로는 내릴 수 없었다.** 진위를 가른 것은 렌더 비교였다.
+
+```
+HWPX 원본 : pages=1  <image>=1  <text>=27
+HWP 변환본: pages=1  <image>=1  <text>=27   ← 보존 확정
+```
+
+→ **판정은 항상 렌더된 SVG의 요소 개수로 한다.** 바이트 크기 비교와 엔진 자기 보고는 근거가 아니다. `qa/reverse-export-gate.js`의 ⑤가 이 검사다.
+
+### ② `getSourceImageBytes(i)`로 그림 존재를 확인하면 안 된다
+
+인덱스가 맞지 않을 때 예외가 아니라 `memory access out of bounds`로 WASM이 죽는다. 그림이 멀쩡히 있어도 "0개"로 보인다. 위의 오진이 바로 이것 때문이었다.
+
+### ③ `HwpViewer`는 `HwpDocument`의 소유권을 가져간다
+
+```js
+const doc = new mod.HwpDocument(bytes);
+const viewer = new mod.HwpViewer(doc);   // ← doc 소유권 이전
+// ...
+viewer.free();
+doc.free();   // ✗ 이중 해제 → "null pointer passed to rust"로 프로세스 사망
+```
+
+뷰어를 만들었으면 **뷰어만** 해제한다. 뷰어 생성이 실패한 경우에만 `doc.free()`를 부른다.
+
+### ④ `exportHml()`은 HML 원본에서만 동작한다
+
+HWPX 출처 문서에는 `[HML_SOURCE_REQUIRED]`로 거부된다. UI에 형식 선택지로 노출하지 않는다.
+
 ## 4. 사용자(지시자)용 — 이렇게 지시하면 빠르다
 
 - 한글에서 무언가 **안 보이거나 깨지면**, "**파일은 열리는데 한글에서 ○○(음영/배경/그림/표)가 안 보임**"처럼 **증상 + 열림 여부**를 함께 알려주세요. → 네임스페이스/요소 점검으로 바로 들어갑니다.

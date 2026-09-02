@@ -1,6 +1,6 @@
 {
   "name": "to-hwpx",
-  "version": "4.16.12",
+  "version": "4.16.13",
   "private": true,
   "scripts": {
     "test:golden": "node tests/golden.js",
@@ -9,9 +9,10 @@
     "test:browsers": "node tests/browser-readiness.js browsers",
     "test:performance": "node tests/browser-readiness.js performance",
     "test:impact": "node qa/impact-gate.js",
+    "test:reverse": "node qa/reverse-export-gate.js --fixtures",
     "test:docx": "node tests/make-docx-fidelity-fixture.js && node qa/docx-fidelity-harness.js tests/fixtures/docx-fidelity.docx",
     "test:package": "node qa/gate.js qa/fixtures/md_hwpx_test.md && node qa/gate.js qa/fixtures/sample.docx && node qa/gate.js qa/fixtures/docx_table_test.docx && node qa/gate.js qa/fixtures/docx_image_test.docx && node qa/gate.js tests/fixtures/sample.xlsx",
-    "test:release": "npm run lint && npm run test:commercial && npm run test:impact && npm run test:docx && npm run test:golden && npm run test:package && npm run test:accessibility && npm run test:performance",
+    "test:release": "npm run lint && npm run test:commercial && npm run test:impact && npm run test:docx && npm run test:golden && npm run test:package && npm run test:reverse && npm run test:accessibility && npm run test:performance",
     "version:next": "node qa/bump-version.js",
     "lint": "eslint js/"
   },
