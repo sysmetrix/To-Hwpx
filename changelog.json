@@ -1,6 +1,25 @@
 {
-  "current": "4.16.15",
+  "current": "4.16.16",
   "versions": [
+    {
+      "version": "4.16.16",
+      "date": "2026-09-02",
+      "user": [
+        "변환 품질을 재는 방식을 바꿨습니다. 이제 만든 HWPX를 다시 읽어 원본과 대조합니다. 표·링크·목록·줄바꿈이 실제로 살아남았는지 기계가 확인합니다.",
+        "그 과정에서 줄바꿈과 표 머리행이 제대로 들어가는지 검사가 없던 것을 찾아 보강했습니다."
+      ],
+      "dev": [
+        "[v4.16.16] js/core/hwpx-to-ir.js 신설 — 만든 HWPX를 되읽어 IR로 되돌리는 역파서. 목적은 기능이 아니라 증명이다. 지금까지 품질 근거는 '자기 픽스처를 자기 채점기로 잰 점수'였고, 채점 규칙을 느슨하게 쓰면 점수는 올라가는데 아무도 눈치채지 못한다. 왕복은 점수를 매기지 않는다 — 세고, 비교하고, 다르면 실패한다",
+        "[v4.16.16] qa/roundtrip-gate.js — 불변식 7종(본문 텍스트 / 표 개수·행·열·셀·머리행 유무 / 링크 개수·URL 집합 / 목록 항목 수·중첩 레벨 / 제목 개수·레벨 / 그림 개수 / 코드 블록). MD 4종·CSV 2종·JSON 2종·TXT 2종 10개 픽스처 전부 통과",
+        "[v4.16.16] 의도된 변형은 명시된 것만 허용 — 첫 H1의 title 승격(원본 지문에만 title을 더한다. 양쪽 다 더하면 왕복만 두 번 세어 항상 불일치), replaceEmoji의 □ 치환, new URL().href 정규화(https://example.org → .org/), 코드 블록의 표 렌더(paraPr=14로 판별)",
+        "[v4.16.16] 변이 테스트 4종으로 게이트 유효성 확인 — 항상 통과하는 게이트는 무가치하다. buildHyperlinkBegin 무력화→링크 4→0·6→0, header=\"1\"→\"0\"→hasHeader true→false(표 6개), listParaId 평탄화→중첩 레벨 1→0, hp:lineBreak 제거→텍스트 495→494·213→204. 전부 정확히 검출",
+        "[v4.16.16] hasHeader는 변이 테스트가 만들어낸 항목이다 — 처음에는 행·셀 총계만 봐서 머리행이 일반 행으로 내려앉아도 게이트가 통과했다. 머리행 지정은 한컴에서 표가 페이지를 넘길 때 반복되는지를 가른다",
+        "[v4.16.16] 역파서 작업에서 확인한 규약 함정 4종을 플레이북에 기록 — (1) hp:lineBreak는 hp:t의 자식이지 hp:run의 형제가 아니다. textContent만 읽으면 줄바꿈이 소리 없이 사라지고 hp:run에서 찾으면 하나도 못 찾는다 (2) 머리행 표시는 행이 아니라 셀(hp:tc@header)에 있다 (3) 목록 마커는 별도 run이라 text와 runs 양쪽에서 떼야 한다 (4) IR은 같은 정보를 여러 모양으로 담는다(목록 항목은 문자열이거나 {text,runs}, quote는 text가 아니라 중첩 blocks) — 한쪽만 읽으면 원본이 비어 보여 렌더러 결함으로 오진한다",
+        "[v4.16.16] 하이퍼링크 URL은 Path 파라미터를 먼저 읽는다. XML 순서상 Command가 앞이라 단순 순회로 집으면 이스케이프된 https\\://... 를 얻는다",
+        "[v4.16.16] tests/fixtures/fidelity/rich.* 를 왕복 표본에 편입(재현도 채점용으로 만든 가장 조밀한 입력). impact-graph에 roundtrip 노드·2간선 추가, 렌더러 변경 규칙에 test:roundtrip 편입, test:release에 추가",
+        "[v4.16.16] lint·golden 13·package 5·impact·commercial·docx·reverse 10/10·core 9/9·roundtrip 10/10·cli 22·mcp 20·accessibility·performance 전부 통과"
+      ]
+    },
     {
       "version": "4.16.15",
       "date": "2026-09-02",
