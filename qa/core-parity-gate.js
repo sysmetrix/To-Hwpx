@@ -38,6 +38,9 @@ const FIXTURES = [
     'qa/fixtures/sample.pptx',
     'qa/fixtures/sample.ipynb',
     'qa/fixtures/sample.pdf',
+    // 그림이 있는 PDF. 브라우저는 ImageBitmap을, Node는 원시 픽셀을 준다 —
+    // 서로 다른 경로로 같은 PNG가 나오는지 여기서 확인한다.
+    'qa/fixtures/pdf_image_test.pdf',
 ];
 
 /** 페이지에서 base64로 감싸 넘긴 바이트를 Uint8Array로 되돌린다. */

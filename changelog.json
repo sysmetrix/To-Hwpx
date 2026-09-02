@@ -1,6 +1,27 @@
 {
-  "current": "4.17.3",
+  "current": "4.17.4",
   "versions": [
+    {
+      "version": "4.17.4",
+      "date": "2026-09-03",
+      "user": [
+        "PDF 변환이 크게 좋아졌습니다. 굵은 글자·기울인 글자·글자색이 그대로 옮겨지고, 문서 안 그림도 함께 들어갑니다.",
+        "표를 괘선(선)으로 읽습니다. 칸 간격이 좁아 표인지 못 알아보던 문서와, 칸이 합쳐진 표(가로·세로 병합)가 이제 표 모양 그대로 나옵니다.",
+        "2단으로 편집된 문서에서 왼쪽·오른쪽 글이 뒤섞이던 문제를 고쳤습니다. 왼쪽 단을 끝까지 읽은 뒤 오른쪽 단으로 넘어갑니다.",
+        "쪽마다 반복되는 머리말·꼬리말·쪽번호를 본문에서 빼냅니다. 무엇을 뺐는지는 변환 결과에 함께 적어 둡니다.",
+        "한글 PDF 글자가 깨질 수 있던 문제를 고쳤습니다. 한국어 문자표(CMap)를 함께 담아, 글꼴 정보가 없는 PDF에서도 글자를 제대로 읽습니다."
+      ],
+      "dev": [
+        "js/pdf-style.js — 글꼴 이름(commonObjs.get(fontName).name, 열거 불가 속성이라 직접 접근)으로 굵게, 글자 행렬 기울기(|c/d|>0.1)로 기울임 판정. 색은 조각 경계를 넘나들어 글리프 단위로 대응.",
+        "js/pdf-graphics.js — 연산자 목록 1회 순회로 그림·괘선·글자색을 함께 수집. CTM을 save/restore 스택으로 정확히 추적(마지막 transform만 보면 375x250으로 어긋났다). RGBA→PNG 인코더(CompressionStream, 없으면 zlib stored).",
+        "js/pdf-table.js — 괘선 격자. 칸의 네 변에 선이 있는지 관찰해 colSpan/rowSpan을 정한다(Camelot set_span 방식). 머리행은 글꼴·크기 근거가 있을 때만 주장.",
+        "js/pdf-layout.js — 머리말/꼬리말은 가장자리 띠 + 여러 쪽 같은 높이 + 숫자 제외 동일 문자열 3조건. 다단은 글자 조각 점유도로 골짜기를 찾아 **합쳐진 줄을 도로 가른다**(줄 묶기가 이미 좌우를 합쳐 버려 순서만 바꿔서는 못 고친다).",
+        "cMapUrl + cmaps/ 169개 vendor — 한국어 predefined CMap(UniKS·KSCms-UHC·Adobe-Korea1) PDF의 텍스트 깨짐 수정. commercial-gate에 디렉터리 집계 해시 지원 추가(파일 169개를 목록에 나열하지 않기 위해).",
+        "qa/pdf-fidelity-gate.js — 문자 보존/읽기 순서/구조를 **분리** 측정. 하나로 뭉치면 글자를 잃고도 구조 점수로 가릴 수 있다. 어려운 케이스 8종 35개 단언 전부 통과(변이 검사 3건으로 게이트 유효성 확인).",
+        "문자 보존의 기준은 '아무것도 안 사라짐'이 아니라 **'조용히 사라진 것이 없음'**. 일부러 뺀 쪽 장식은 audit.removedPageFurniture에 기록되고 게이트가 그것과 대조한다.",
+        "v6에서 제거된 죽은 옵션 isEvalSupported 제거. OPS.paintJpegXObject는 v6에 없어 paintImageXObject/paintImageXObjectRepeat + commonObjs('g_' 접두사) 경로로 교체."
+      ]
+    },
     {
       "version": "4.17.3",
       "date": "2026-09-03",

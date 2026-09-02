@@ -1,6 +1,6 @@
 {
   "name": "to-hwpx",
-  "version": "4.17.3",
+  "version": "4.17.4",
   "private": true,
   "bin": {
     "tohwpx": "js/core/cli.js",
@@ -26,9 +26,10 @@
     "mcp": "node js/core/mcp-server.js",
     "test:docx": "node tests/make-docx-fidelity-fixture.js && node qa/docx-fidelity-harness.js tests/fixtures/docx-fidelity.docx",
     "test:package": "node qa/gate.js qa/fixtures/md_hwpx_test.md && node qa/gate.js qa/fixtures/sample.docx && node qa/gate.js qa/fixtures/docx_table_test.docx && node qa/gate.js qa/fixtures/docx_image_test.docx && node qa/gate.js tests/fixtures/sample.xlsx",
-    "test:release": "npm run lint && npm run test:commercial && npm run test:impact && npm run test:docx && npm run test:golden && npm run test:package && npm run test:reverse && npm run test:core && npm run test:roundtrip && npm run test:pdf && npm run test:gov && npm run test:diff && npm run test:roadmap && npm run test:cli && npm run test:mcp && npm run test:accessibility && npm run test:performance",
+    "test:release": "npm run lint && npm run test:commercial && npm run test:impact && npm run test:docx && npm run test:golden && npm run test:package && npm run test:reverse && npm run test:core && npm run test:roundtrip && npm run test:pdf && npm run test:pdf-fidelity && npm run test:gov && npm run test:diff && npm run test:roadmap && npm run test:cli && npm run test:mcp && npm run test:accessibility && npm run test:performance",
     "version:next": "node qa/bump-version.js",
-    "lint": "eslint js/"
+    "lint": "eslint js/",
+    "test:pdf-fidelity": "node tests/make-pdf-hard-fixtures.js && node qa/pdf-fidelity-gate.js"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.12.1",

@@ -7,6 +7,8 @@ desktop.ini
 .vscode/settings.json
 .idea/
 .claude/settings.local.json
+# 에이전트 작업용 임시 워크트리 — 저장소에 남기지 않는다
+.claude/worktrees/
 *.swp
 *.swo
 
