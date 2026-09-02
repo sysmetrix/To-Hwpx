@@ -6477,3 +6477,197 @@ a:hover { text-decoration: underline; }
     color: var(--c-text-muted);
     line-height: 1.6;
 }
+
+/* ═════════════════════════════════════════════════════════════════
+   [모션 안무]  Motion choreography
+   ─────────────────────────────────────────────────────────────────
+   이징만 바꾸는 것으로는 아무것도 체감되지 않는다. 2px 움직이는 호버는
+   아무리 좋은 스프링을 걸어도 여전히 2px이다. 이 구역은 **무엇이, 얼마나,
+   어떤 순서로** 움직이는지를 정한다.
+
+   이 앱에서 감정이 실리는 순간은 넷이다.
+     ① 페이지가 열릴 때        — 도구가 준비되는 인상
+     ② 파일을 끌어올 때        — 받아들일 준비가 됐다는 응답
+     ③ 변환이 도는 동안        — 일이 진행되고 있다는 확신
+     ④ 결과가 나올 때          — 보상. 여기가 가장 중요하다
+
+   전부 prefers-reduced-motion에서 꺼진다(맨 아래 일괄 해제).
+   ═════════════════════════════════════════════════════════════════ */
+
+/* ── ① 히어로 진입 ───────────────────────────────────────────────
+   스크롤 진입(.anim-target)과 다르다. 첫 화면은 스크롤을 기다릴 수 없으므로
+   로드 즉시 순서대로 자리를 잡는다. 제목 → 드롭존 → 안내 순서가
+   "무엇을 하는 도구인지 → 어디를 눌러야 하는지"를 그대로 따라간다. */
+@media (prefers-reduced-motion: no-preference) {
+    .hero-title-anim,
+    .hero .drop-zone,
+    .drop-trust {
+        animation: hero-rise 620ms var(--spring-soft) both;
+    }
+    .hero-title-anim { animation-delay: 40ms; }
+    .hero .drop-zone { animation-delay: 140ms; }
+    .drop-trust      { animation-delay: 260ms; }
+}
+@keyframes hero-rise {
+    from { opacity: 0; transform: translateY(26px) scale(0.97); }
+    to   { opacity: 1; transform: none; }
+}
+
+/* ── ② 드롭존 ────────────────────────────────────────────────────
+   scale(1.01)은 1%다 — 눈으로 확인할 수 없다. 끌어온 파일을 받을 준비가
+   됐다는 것은 분명히 보여야 하므로 호버보다 드래그를 훨씬 크게 반응시킨다. */
+.hero .drop-zone {
+    transition:
+        background var(--trans),
+        border-color var(--trans),
+        box-shadow var(--dur-snap) var(--spring-snap),
+        transform var(--dur-snap) var(--spring-snap);
+}
+.hero .drop-zone:hover {
+    transform: translateY(-3px) scale(1.008);
+    box-shadow:
+        0 0 0 4px color-mix(in srgb, var(--c-primary) 12%, transparent),
+        0 12px 28px -8px color-mix(in srgb, var(--c-primary) 30%, transparent);
+}
+/* 드래그 중 — 확실히 커지고, 테두리가 살아 움직인다 */
+.hero .drop-zone.drag-over {
+    transform: scale(1.035);
+    border-style: dashed;
+    box-shadow:
+        0 0 0 8px color-mix(in srgb, var(--c-primary) 16%, transparent),
+        0 20px 44px -12px color-mix(in srgb, var(--c-primary) 42%, transparent);
+    animation: drop-ready 1.1s ease-in-out infinite;
+}
+@keyframes drop-ready {
+    0%, 100% { border-color: var(--c-primary); }
+    50%      { border-color: color-mix(in srgb, var(--c-primary) 55%, transparent); }
+}
+/* 아이콘도 함께 반응해야 영역 전체가 살아 있다고 느낀다 */
+.hero .drop-zone .drop-icon svg {
+    transition: transform var(--dur-bounce) var(--spring-bounce);
+}
+.hero .drop-zone:hover .drop-icon svg { transform: translateY(-4px); }
+.hero .drop-zone.drag-over .drop-icon svg { transform: translateY(-9px) scale(1.14); }
+
+/* ── ③ 변환 진행 ─────────────────────────────────────────────────
+   진행 막대만 움직이면 "숫자가 올라간다"로만 읽힌다. 단계가 넘어갈 때마다
+   점이 튀어야 "지금 이 일을 하고 있다"가 보인다. */
+.step-dot {
+    transition:
+        background var(--trans),
+        border-color var(--trans),
+        transform var(--dur-bounce) var(--spring-bounce);
+}
+@media (prefers-reduced-motion: no-preference) {
+    .step-active .step-dot {
+        animation: step-pop var(--dur-bounce) var(--spring-bounce) both;
+    }
+    .step-done .step-dot { transform: scale(1.06); }
+}
+@keyframes step-pop {
+    from { transform: scale(0.55); }
+    to   { transform: scale(1.18); }
+}
+/* 변환 중인 버튼 — 정지 상태가 아니라는 것을 계속 알린다 */
+@media (prefers-reduced-motion: no-preference) {
+    .btn-convert:disabled.is-converting {
+        animation: convert-pulse 1.6s ease-in-out infinite;
+    }
+}
+@keyframes convert-pulse {
+    0%, 100% { box-shadow: 0 2px 14px color-mix(in srgb, var(--c-primary) 30%, transparent); }
+    50%      { box-shadow: 0 2px 26px color-mix(in srgb, var(--c-primary) 60%, transparent); }
+}
+
+/* ── ④ 결과 등장 ─────────────────────────────────────────────────
+   이 앱에서 가장 중요한 순간인데 지금까지 애니메이션이 하나도 없었다.
+   변환이 끝난 결과 카드가 아무 예고 없이 튀어나오면 "됐나?" 싶다.
+   카드가 자리를 잡고, 성공 표시줄이 왼쪽에서 차오르고, 내용이 순서대로
+   들어온다 — 이 세 박자가 "끝났다"를 만든다. */
+@media (prefers-reduced-motion: no-preference) {
+    .result-card {
+        animation: result-in 560ms var(--spring-bounce) both;
+    }
+    /* 왼쪽 상태 표시줄이 위에서 아래로 차오른다 */
+    .result-card::before {
+        animation: result-bar 520ms var(--spring-soft) 120ms both;
+        transform-origin: top;
+    }
+    /* 카드 내용은 뒤따라 순서대로 */
+    .result-card > * {
+        animation: result-item 460ms var(--spring-soft) both;
+    }
+    .result-card > *:nth-child(1) { animation-delay: 140ms; }
+    .result-card > *:nth-child(2) { animation-delay: 200ms; }
+    .result-card > *:nth-child(3) { animation-delay: 250ms; }
+    .result-card > *:nth-child(4) { animation-delay: 295ms; }
+    .result-card > *:nth-child(5) { animation-delay: 335ms; }
+    .result-card > *:nth-child(n+6) { animation-delay: 370ms; }
+
+    /* 다운로드 버튼은 한 박자 늦게, 조금 더 크게 — 다음 행동이기 때문 */
+    .result-card .btn-download-primary {
+        animation: result-cta 520ms var(--spring-bounce) 400ms both;
+    }
+}
+@keyframes result-in {
+    from { opacity: 0; transform: translateY(16px) scale(0.975); }
+    to   { opacity: 1; transform: none; }
+}
+@keyframes result-bar {
+    from { transform: scaleY(0); }
+    to   { transform: scaleY(1); }
+}
+@keyframes result-item {
+    from { opacity: 0; transform: translateY(9px); }
+    to   { opacity: 1; transform: none; }
+}
+@keyframes result-cta {
+    from { opacity: 0; transform: scale(0.88); }
+    to   { opacity: 1; transform: scale(1); }
+}
+
+/* ── ⑤ 호버 깊이 상향 ────────────────────────────────────────────
+   1~2px 이동은 스프링을 걸어도 체감되지 않는다. 카드처럼 면적이 큰 요소는
+   그림자 깊이가 함께 변해야 "떠올랐다"고 읽힌다. */
+.format-card:not(.coming-soon) {
+    transition:
+        transform var(--dur-snap) var(--spring-snap),
+        box-shadow var(--dur-snap) var(--spring-snap),
+        border-color var(--trans);
+}
+.format-card:not(.coming-soon):hover {
+    transform: translateY(-6px);
+    box-shadow: 0 16px 32px -14px rgba(15, 23, 42, 0.34);
+}
+.format-card:not(.coming-soon):active { transform: translateY(-2px); transition-duration: 70ms; }
+
+.btn-download, .btn-preview, .btn-secondary-export {
+    transition:
+        background var(--trans), color var(--trans), border-color var(--trans),
+        transform var(--dur-snap) var(--spring-snap),
+        box-shadow var(--dur-snap) var(--spring-snap);
+}
+.btn-download:hover, .btn-preview:hover, .btn-secondary-export:hover:not(:disabled) {
+    transform: translateY(-3px);
+}
+.btn-download:active, .btn-preview:active, .btn-secondary-export:active:not(:disabled) {
+    transform: translateY(0) scale(0.97);
+    transition-duration: 70ms;
+}
+
+/* ── 모션 최소화 — 위 전부를 끈다 ─────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+    .hero-title-anim, .hero .drop-zone, .drop-trust,
+    .result-card, .result-card::before, .result-card > *,
+    .result-card .btn-download-primary,
+    .step-active .step-dot, .btn-convert:disabled.is-converting,
+    .hero .drop-zone.drag-over {
+        animation: none !important;
+    }
+    .hero .drop-zone:hover, .hero .drop-zone.drag-over,
+    .hero .drop-zone:hover .drop-icon svg, .hero .drop-zone.drag-over .drop-icon svg,
+    .format-card:not(.coming-soon):hover,
+    .btn-download:hover, .btn-preview:hover, .btn-secondary-export:hover:not(:disabled) {
+        transform: none;
+    }
+}
