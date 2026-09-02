@@ -1,6 +1,19 @@
 {
-  "current": "4.16.10",
+  "current": "4.16.11",
   "versions": [
+    {
+      "version": "4.16.11",
+      "date": "2026-09-02",
+      "user": [
+        "Markdown 체크리스트가 \"□ [ ] 할 일\"처럼 표기가 두 번 나오던 문제를 고쳤습니다. 이제 \"□ 할 일\"로 나옵니다."
+      ],
+      "dev": [
+        "[v4.16.11] js/parsers.js flattenMdList(): marked 18은 태스크리스트 체크박스를 raw가 \"[ ] \"/\"[x] \"인 별도 checkbox 토큰으로 낸다(이전 버전은 text에 인라인으로 포함). 체크 상태는 item.task/item.checked로 이미 받아 ▣/□ 마커를 붙이므로 이 토큰을 텍스트로 흘리면 표기가 중복된다. ownBlocks 수집과 runs 수집 두 경로 모두에서 checkbox 토큰을 건너뛴다. v4.16.0 marked 업그레이드 때 들어온 회귀이며 기존 테스트가 잡지 못했음",
+        "[v4.16.11] tests/format-fidelity-score.js 채점 차원 보강 — 이전 규칙은 목록을 '텍스트가 남았는가'로만 봐서 위 회귀를 통과시켰다. 목록 중첩 레벨(paraPr 5/17/18), 순서 번호, 태스크 마커와 원문 [ ]/[x] 미유출, MD/HTML 표의 header=\"1\" 머리행 지정을 각각 독립 항목으로 추가",
+        "[v4.16.11] 변이 테스트로 채점기 유효성 확인: HTML의 href 보존과 글자색 추출을 각각 고의로 되돌리자 100.0 → 84.0으로 떨어지며 해당 두 항목만 정확히 0점 처리됨",
+        "[v4.16.11] lint·golden 13케이스·test:docx·test:package·impact-gate 통과, DOCX 및 8개 포맷 재현도 100.0점 유지 확인"
+      ]
+    },
     {
       "version": "4.16.10",
       "date": "2026-09-02",

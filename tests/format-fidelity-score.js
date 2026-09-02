@@ -82,6 +82,12 @@ function readHwpx(section, header) {
         // 코드 블록은 표로 렌더되므로(코드 줄 = paraPr 14), 데이터 표만 세려면 그 표들을 뺀다.
         dataTables: all(section, /<hp:tbl\b[\s\S]*?<\/hp:tbl>/g)
             .filter(m => !/paraPrIDRef="14"/.test(m[0])).length,
+        // 목록 문단을 레벨(5=1단계, 17=2단계, 18=3단계)별로 텍스트와 함께 뽑는다.
+        listItems: all(section, /<hp:p [^>]*paraPrIDRef="(5|17|18)"[^>]*>([\s\S]*?)<\/hp:p>/g)
+            .map(m => ({
+                level: m[1],
+                text: all(m[2], /<hp:t[^>]*>([\s\S]*?)<\/hp:t>/g).map(t => t[1]).join(''),
+            })),
         boldChars: count(charPrs.join(''), /<hh:bold\b/g),
         italicChars: count(charPrs.join(''), /<hh:italic\b/g),
         underlineChars: count(charPrs.join(''), /<hh:underline\b[^>]*type="(?!NONE)/g),
@@ -125,12 +131,27 @@ function scoreMd(src, x) {
     ], x);
     const badEntities = /&apos;|&#39;|&amp;#39;/.test(x.section);
     return [
-        ['텍스트 완전성', 20, cov.ratio, cov.missing.length ? `누락: ${cov.missing.join(' | ')}` : '전체 일치'],
+        ['텍스트 완전성', 18, cov.ratio, cov.missing.length ? `누락: ${cov.missing.join(' | ')}` : '전체 일치'],
         ['제목 H1~H6', 10, atLeast(x.headingParas + x.titleParas, 6),
             `본문 제목 ${x.headingParas} + 문서 제목 ${x.titleParas} = ${x.headingParas + x.titleParas}/6`],
-        ['표(머리행+3행)', 10, atLeast(x.rows, 4) * atLeast(x.cells, 12),
-            `표 ${x.tables}, 행 ${x.rows}/4, 셀 ${x.cells}/12`],
-        ['목록(비순서/순서/중첩/task)', 10, cov.ratio >= 1 ? 1 : 0.5, '목록 텍스트 보존 기준'],
+        ['표(머리행 지정 + 3행)', 10,
+            atLeast(x.rows, 4) * atLeast(x.cells, 12) * (x.headerCells >= 3 ? 1 : 0),
+            `표 ${x.dataTables}, 행 ${x.rows}/4, 셀 ${x.cells}/12, header="1" ${x.headerCells}/3`],
+        // 목록은 텍스트 존재만으로는 부족하다 — 중첩 레벨(paraPr 5/17/18), 순서 번호,
+        // 태스크 마커가 각각 맞아야 하고, 원문 체크박스 표기 "[ ]"/"[x]"가 마커와
+        // 중복으로 새면 안 된다(marked 18의 checkbox 토큰 raw 유출).
+        ['목록 중첩 레벨(1/2/3단계)', 5,
+            (['5', '17', '18'].filter(l => x.listItems.some(i => i.level === l)).length) / 3,
+            `레벨별 항목 수: ${['5', '17', '18'].map(l => `${l}:${x.listItems.filter(i => i.level === l).length}`).join(' ')}`],
+        ['순서 목록 번호', 3,
+            (['1.', '2.', '3.'].filter(n => x.listItems.some(i => i.text.startsWith(n))).length) / 3,
+            `번호 항목: ${x.listItems.filter(i => /^\d+\./.test(i.text)).length}/3`],
+        ['태스크 마커(체크 상태 + 원문 표기 미유출)', 4,
+            ((x.listItems.some(i => i.text.startsWith('□ ')) ? 1 : 0)
+                + (x.listItems.some(i => i.text.startsWith('▣ ')) ? 1 : 0)
+                + (x.listItems.some(i => /\[[ x]\]/.test(i.text)) ? 0 : 1)) / 3,
+            `□ ${x.listItems.some(i => i.text.startsWith('□ '))}, ▣ ${x.listItems.some(i => i.text.startsWith('▣ '))}, `
+            + `원문 [ ]/[x] 유출 ${x.listItems.some(i => /\[[ x]\]/.test(i.text))}`],
         ['인용구(paraPr 19)', 8,
             (atLeast(x.quoteParas, 1) + (x.quoteText.includes('인용문 첫 줄입니다.')
                 && x.quoteText.includes('인용문 둘째 줄입니다.') ? 1 : 0)) / 2,
@@ -166,10 +187,16 @@ function scoreHtml(src, x) {
         ['텍스트 완전성', 20, cov.ratio, cov.missing.length ? `누락: ${cov.missing.join(' | ')}` : '전체 일치'],
         ['제목 H1~H6', 10, atLeast(x.headingParas + x.titleParas, 6),
             `본문 제목 ${x.headingParas} + 문서 제목 ${x.titleParas} = ${x.headingParas + x.titleParas}/6`],
-        ['표 + 병합(colspan/rowspan)', 14,
-            (atLeast(x.rows, 4) + (x.colSpan >= 1 ? 1 : 0) + (x.rowSpan >= 1 ? 1 : 0)) / 3,
-            `행 ${x.rows}/4, colSpan ${x.colSpan}, rowSpan ${x.rowSpan}`],
-        ['목록(중첩 포함)', 10, cov.ratio >= 1 ? 1 : 0.5, '목록 텍스트 보존 기준'],
+        ['표 + 병합(colspan/rowspan) + th 머리행', 14,
+            (atLeast(x.rows, 4) + (x.colSpan >= 1 ? 1 : 0) + (x.rowSpan >= 1 ? 1 : 0)
+                + (x.headerCells >= 3 ? 1 : 0)) / 4,
+            `행 ${x.rows}/4, colSpan ${x.colSpan}, rowSpan ${x.rowSpan}, header="1" ${x.headerCells}/3`],
+        ['목록 중첩 레벨(1/2/3단계)', 6,
+            (['5', '17', '18'].filter(l => x.listItems.some(i => i.level === l)).length) / 3,
+            `레벨별 항목 수: ${['5', '17', '18'].map(l => `${l}:${x.listItems.filter(i => i.level === l).length}`).join(' ')}`],
+        ['순서 목록 번호', 4,
+            (['1.', '2.'].filter(n => x.listItems.some(i => i.text.startsWith(n))).length) / 2,
+            `번호 항목: ${x.listItems.filter(i => /^\d+\./.test(i.text)).length}/2`],
         ['인용구(blockquote)', 8, atLeast(x.quoteParas, 1), `인용 문단 ${x.quoteParas}/1`],
         ['서식(굵게/기울임/코드/밑줄/취소)', 14,
             (x.boldChars ? 1 : 0) * 0.25 + (x.italicChars ? 1 : 0) * 0.2
