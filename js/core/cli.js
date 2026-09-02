@@ -29,8 +29,10 @@ if (typeof globalThis.marked === 'undefined') {
     globalThis.marked = require('../vendor/marked-18.0.11.min.js');
 }
 
-const { irToHwpx } = await import('./index.js');
+const { irToHwpx, ensureNodeRuntime } = await import('./index.js');
 const { parseMd, parseCsv, parseJson, parseTxt } = await import('../parsers.js');
+const { hwpxToIr, coalesceBlocks } = await import('./hwpx-to-ir.js');
+const { TEXT_EXPORTERS } = await import('./ir-to-text.js');
 
 const VERSION = require('../../package.json').version;
 
@@ -78,13 +80,17 @@ const HELP = `tohwpx ${VERSION} — 문서를 HWPX(한글)로 변환합니다
   -h, --help               이 도움말
   -v, --version            버전
 
+역방향 (.hwpx 입력)
+      --to <md|html>       HWPX를 Markdown 또는 HTML로 추출합니다
+
 지원 입력
-  ${Object.keys(PARSERS).join(' ')}
+  ${Object.keys(PARSERS).join(' ')}  (역방향은 .hwpx)
 
 예시
   tohwpx README.md
   tohwpx notes.md -o 보고서.hwpx --font 함초롬바탕 --paper A4
   tohwpx data/*.csv --out-dir build --orientation landscape
+  tohwpx 공문.hwpx --to md -o 공문.md
 `;
 
 function parseArgs(argv) {
@@ -94,6 +100,7 @@ function parseArgs(argv) {
         orientation: 'portrait', lineSpacingPercent: 160,
         title: null, docType: 'plain', showHorizontalRules: false,
         jsonIr: false, quiet: false, help: false, version: false,
+        to: null,
     };
     for (let i = 0; i < argv.length; i++) {
         const a = argv[i];
@@ -114,6 +121,7 @@ function parseArgs(argv) {
             case '--doc-type': opts.docType = next(); break;
             case '--hr': opts.showHorizontalRules = true; break;
             case '--json-ir': opts.jsonIr = true; break;
+            case '--to': opts.to = String(next()).toLowerCase(); break;
             case '-q': case '--quiet': opts.quiet = true; break;
             case '-h': case '--help': opts.help = true; break;
             case '-v': case '--version': opts.version = true; break;
@@ -141,6 +149,9 @@ function validateOptions(o) {
     }
     if (!Number.isFinite(o.lineSpacingPercent) || o.lineSpacingPercent < 50 || o.lineSpacingPercent > 500) {
         errors.push(`--line-spacing은 50~500 사이여야 합니다: ${o.lineSpacingPercent}`);
+    }
+    if (o.to && !TEXT_EXPORTERS[o.to]) {
+        errors.push(`--to 값이 잘못됐습니다: ${o.to} (${Object.keys(TEXT_EXPORTERS).join('|')})`);
     }
     if (o.out && o.inputs.length > 1) {
         errors.push('--out은 입력이 하나일 때만 쓸 수 있습니다. 여러 개는 --out-dir을 쓰세요.');
@@ -175,9 +186,35 @@ function fileToIrSync(file, o) {
     return parser(text, o.docType);
 }
 
+/**
+ * HWPX를 Markdown/HTML로 추출한다.
+ *
+ * 레이아웃 복제가 아니라 **텍스트 형식으로의 추출**이다. 그림은 파일 이름만
+ * 참조하며 바이트는 내보내지 않는다 — 그 사실을 호출자가 사용자에게 알린다.
+ */
+async function hwpxToText(input, o) {
+    ensureNodeRuntime();
+    let parseXml;
+    try {
+        const { DOMParser } = require('@xmldom/xmldom');
+        parseXml = (xml) => new DOMParser().parseFromString(xml, 'text/xml');
+    } catch {
+        throw new Error('XML 파서가 없습니다. `npm i -D @xmldom/xmldom`을 실행하세요.');
+    }
+
+    const { ir, stats } = await hwpxToIr(fs.readFileSync(input), { parseXml });
+    ir.blocks = coalesceBlocks(ir.blocks);
+    if (o.title) ir.title = o.title;
+
+    // 제목 문단은 이미 blocks 안에 있다. 앞에 title을 또 붙이면 두 번 나온다.
+    const text = TEXT_EXPORTERS[o.to].serialize(ir, { includeTitle: false });
+    return { text, stats };
+}
+
 function outputPathFor(input, o) {
     if (o.out) return path.resolve(o.out);
-    const base = path.basename(input, path.extname(input)) + '.hwpx';
+    const ext = o.to ? TEXT_EXPORTERS[o.to].ext : '.hwpx';
+    const base = path.basename(input, path.extname(input)) + ext;
     const dir = o.outDir ? path.resolve(o.outDir) : path.dirname(path.resolve(input));
     return path.join(dir, base);
 }
@@ -227,6 +264,24 @@ async function main() {
         const rel = path.relative(process.cwd(), input) || input;
         try {
             if (!fs.existsSync(input)) throw new Error('파일이 없습니다.');
+
+            // ── 역방향: HWPX → Markdown/HTML ──
+            if (o.to) {
+                if (path.extname(input).toLowerCase() !== '.hwpx') {
+                    throw new Error(`--to는 .hwpx 입력에만 씁니다: ${path.extname(input) || '(확장자 없음)'}`);
+                }
+                const outPath = outputPathFor(input, o);
+                const { text, stats } = await hwpxToText(input, o);
+                fs.mkdirSync(path.dirname(outPath), { recursive: true });
+                fs.writeFileSync(outPath, text, 'utf8');
+                const outRel = path.relative(process.cwd(), outPath) || outPath;
+                log(`✓ ${rel} → ${outRel}`);
+                log(`  ${Buffer.byteLength(text).toLocaleString()}B · 문단 ${stats.paragraphs} · 표 ${stats.tables} · 링크 ${stats.links} · 그림 ${stats.images}`);
+                if (stats.images > 0) {
+                    log(`  ! 그림 ${stats.images}개는 파일명만 참조합니다(바이트는 내보내지 않음).`);
+                }
+                continue;
+            }
 
             const ir = fileToIrSync(input, o);
             if (o.title) ir.title = o.title;

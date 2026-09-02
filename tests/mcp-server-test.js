@@ -86,7 +86,8 @@ function startServer() {
         // ② tools/list
         const list = await s.request('tools/list', {});
         const names = (list.result?.tools || []).map(t => t.name);
-        note(names.includes('markdown_to_hwpx') && names.includes('ir_to_hwpx') && names.includes('get_ir_schema'),
+        note(names.includes('markdown_to_hwpx') && names.includes('ir_to_hwpx')
+            && names.includes('get_ir_schema') && names.includes('read_hwpx'),
             '② tools/list', names.join(', '));
         const mdTool = list.result.tools.find(t => t.name === 'markdown_to_hwpx');
         note(mdTool?.inputSchema?.required?.includes('markdown'), '② 입력 스키마에 required 명시');
@@ -182,6 +183,32 @@ function startServer() {
         });
         note(badPath.result?.isError === true && /\.hwpx/.test(badPath.result?.content?.[0]?.text || ''),
             '⑦ 잘못된 확장자 거절');
+
+        // ⑦-b read_hwpx — 만든 문서를 다시 읽어 구조가 살아 있는지
+        const readBack = await s.request('tools/call', {
+            name: 'read_hwpx', arguments: { path: out, as: 'markdown' },
+        });
+        const readText = readBack.result?.content?.[0]?.text || '';
+        note(readBack.result?.isError === false, '⑦ read_hwpx 성공');
+        note(/\| 항목 \| 값 \|/.test(readText), '⑦ 표가 Markdown 표로 복원');
+        note(/\[링크\]\(https:\/\/example\.com/.test(readText), '⑦ 링크가 Markdown 링크로 복원');
+        note(/- 첫째/.test(readText) && /- 둘째/.test(readText), '⑦ 목록 복원');
+        // 에이전트가 "레이아웃까지 복제됐다"고 오해하지 않도록 한계를 함께 적는다
+        note(/구조 추출입니다/.test(readText), '⑦ 한계를 명시');
+
+        const readIr = await s.request('tools/call', {
+            name: 'read_hwpx', arguments: { path: out, as: 'ir' },
+        });
+        let irBack = null;
+        try {
+            const raw = readIr.result?.content?.[0]?.text || '';
+            irBack = JSON.parse(raw.slice(0, raw.lastIndexOf('\n\n---')));
+        } catch { /* 아래에서 실패 처리 */ }
+        note(irBack && Array.isArray(irBack.blocks) && irBack.blocks.length > 0,
+            '⑦ as=ir이 파싱 가능한 IR 반환', irBack ? `블록 ${irBack.blocks.length}개` : '파싱 실패');
+
+        const badExt = await s.request('tools/call', { name: 'read_hwpx', arguments: { path: 'x.docx' } });
+        note(badExt.result?.isError === true, '⑦ .hwpx가 아니면 거절');
 
         // ⑧ 알 수 없는 메서드는 JSON-RPC 오류로
         const unknown = await s.request('nope/method', {});

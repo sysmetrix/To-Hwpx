@@ -72,6 +72,17 @@ node js/core/cli.js --help
 
 종료 코드: `0` 성공 / `1` 변환 실패·구조 경고 / `2` 사용법 오류.
 
+### 역방향 — HWPX에서 뽑아내기
+
+```bash
+node js/core/cli.js 공문.hwpx --to md      # 공문.md
+node js/core/cli.js 공문.hwpx --to html    # 공문.html
+```
+
+표는 Markdown 표로, 링크는 Markdown 링크로, 목록은 중첩·순서·체크 상태까지 유지합니다.
+
+**레이아웃 복제가 아니라 구조 추출입니다.** 서식·여백·글꼴은 포함되지 않고, 그림은 파일 이름만 참조합니다(바이트는 내보내지 않음). 결과에 그 사실을 함께 표시합니다.
+
 ### MCP 서버
 
 AI 에이전트가 한/글 설치 없이 HWPX를 만들 수 있습니다.
@@ -89,6 +100,7 @@ AI 에이전트가 한/글 설치 없이 HWPX를 만들 수 있습니다.
 | `markdown_to_hwpx` | Markdown → HWPX |
 | `text_to_hwpx` | TXT·CSV/TSV·JSON → HWPX |
 | `ir_to_hwpx` | 공통 IR(JSON)을 직접 렌더 — 정밀 제어용 |
+| `read_hwpx` | HWPX를 읽어 Markdown·HTML·IR로 반환 — 읽고 고쳐 다시 쓰기의 첫 단계 |
 | `get_ir_schema` | IR 스키마와 블록별 예시 반환 |
 
 범위를 좁게 유지합니다. 읽기·편집 도구를 늘리는 대신 **생성 품질**만 보증합니다.
