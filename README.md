@@ -68,7 +68,7 @@ node js/core/cli.js data/*.csv --out-dir build --paper A3 --orientation landscap
 node js/core/cli.js --help
 ```
 
-지원 입력은 `.md` `.markdown` `.csv` `.tsv` `.txt` `.json`입니다. HTML·DOCX·PPTX·XLSX·IPYNB·HWP는 DOM이나 추가 엔진이 필요해 아직 웹앱에서만 변환합니다. CLI는 그런 입력을 **조용히 다르게 처리하지 않고 이유를 말하며 거절**합니다.
+지원 입력은 `.md` `.markdown` `.csv` `.tsv` `.txt` `.json` `.pdf`입니다. HTML·DOCX·PPTX·XLSX·IPYNB·HWP는 DOM이나 추가 엔진이 필요해 아직 웹앱에서만 변환합니다. CLI는 그런 입력을 **조용히 다르게 처리하지 않고 이유를 말하며 거절**합니다.
 
 종료 코드: `0` 성공 / `1` 변환 실패·구조 경고 / `2` 사용법 오류.
 
@@ -100,6 +100,7 @@ AI 에이전트가 한/글 설치 없이 HWPX를 만들 수 있습니다.
 | `markdown_to_hwpx` | Markdown → HWPX |
 | `text_to_hwpx` | TXT·CSV/TSV·JSON → HWPX |
 | `ir_to_hwpx` | 공통 IR(JSON)을 직접 렌더 — 정밀 제어용 |
+| `pdf_to_hwpx` | PDF → HWPX. 구조를 좌표에서 추론하며 근거를 함께 반환 |
 | `read_hwpx` | HWPX를 읽어 Markdown·HTML·IR로 반환 — 읽고 고쳐 다시 쓰기의 첫 단계 |
 | `get_ir_schema` | IR 스키마와 블록별 예시 반환 |
 

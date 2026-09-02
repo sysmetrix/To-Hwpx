@@ -147,7 +147,7 @@
             <span>｢BWYF｣ AX Challenger 2026</span>
             <!-- [주의] id="open-changelog"는 app.js에서 관리자 모드일 때 업데이트 내역 모달을 여는 연결값 -->
             <button class="util-changelog-btn" id="open-changelog" aria-label="버전 정보">
-                📋 v4.16.17
+                📋 v4.16.18
             </button>
         </div>
     </div>
@@ -232,7 +232,7 @@
             <div class="drop-title">여러 파일을 드래그하거나 클릭하세요</div>
             <!-- [AGENTS.md UI 불변식] 입력과 출력을 분리해 적는다. HWPX를 입력 포맷처럼 쓰지 않는다. -->
             <div class="drop-sub">
-                <span class="drop-io"><b>입력</b> MD · HTML · DOCX · PPTX · CSV · XLSX · JSON · TXT · IPYNB · HWP</span>
+                <span class="drop-io"><b>입력</b> PDF · MD · HTML · DOCX · PPTX · CSV · XLSX · JSON · TXT · IPYNB · HWP</span>
                 <span class="drop-io"><b>출력</b> HWPX <span class="drop-io-aux">(HWP · PDF로도 저장 가능)</span></span>
             </div>
         </div>
@@ -244,7 +244,7 @@
         <!-- [포맷 추가 시] accept에 새 확장자를 추가해야 파일 선택창에서 보입니다. -->
         <!-- multiple: 여러 파일을 한 번에 선택해 배치 변환 -->
         <input type="file" id="file-input" hidden multiple
-               accept=".md,.markdown,.docx,.pptx,.html,.htm,.csv,.xlsx,.xls,.json,.txt,.hwp,.ipynb,.hwpx">
+               accept=".md,.markdown,.docx,.pptx,.html,.htm,.csv,.xlsx,.xls,.json,.txt,.hwp,.ipynb,.hwpx,.pdf">
     </div>
 </section>
 

@@ -3064,7 +3064,16 @@ const PARSERS = {
     'pptx':     { fn: parsePptx,  async: true,  label: 'PPTX',     accept: 'buffer' },
     'hwp':      { fn: parseHwp,   async: true,  label: 'HWP',      accept: 'buffer' },
     'hwpx':     { fn: parseHwp,   async: true,  label: 'HWPX',     accept: 'buffer' },
+    // PDF는 레이아웃 형식이라 구조를 좌표에서 추론한다. 엔진(pdf.js)이 크므로
+    // PDF 입력이 실제로 들어왔을 때만 동적 import한다.
+    'pdf':      { fn: parsePdfLazy, async: true, label: 'PDF',     accept: 'buffer', maxMb: 50 },
 };
+
+/** PDF 파서 지연 로드 — 초기 로딩에 pdf.js를 얹지 않는다. */
+async function parsePdfLazy(buffer, docType = 'plain') {
+    const { parsePdf } = await import('./pdf-parser.js');
+    return await parsePdf(buffer, { docType });
+}
 
 /**
  * 파일명에서 소문자 확장자 추출

@@ -12,7 +12,10 @@ const INPUT = process.argv[2] || path.join(ROOT, '원본 docx.docx');
 
 const TYPES = {
   '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8',
-  '.js': 'text/javascript; charset=utf-8', '.json': 'application/json; charset=utf-8',
+  '.js': 'text/javascript; charset=utf-8',
+  '.mjs': 'text/javascript; charset=utf-8',
+  '.pdf': 'application/pdf',
+  '.wasm': 'application/wasm', '.json': 'application/json; charset=utf-8',
   '.svg': 'image/svg+xml', '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   '.ttf': 'font/ttf', '.woff2': 'font/woff2', '.png': 'image/png', '.wasm': 'application/wasm',
 };

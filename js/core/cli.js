@@ -32,6 +32,7 @@ if (typeof globalThis.marked === 'undefined') {
 const { irToHwpx, ensureNodeRuntime } = await import('./index.js');
 const { parseMd, parseCsv, parseJson, parseTxt } = await import('../parsers.js');
 const { hwpxToIr, coalesceBlocks } = await import('./hwpx-to-ir.js');
+const { parsePdf } = await import('../pdf-parser.js');
 const { TEXT_EXPORTERS } = await import('./ir-to-text.js');
 
 const VERSION = require('../../package.json').version;
@@ -46,6 +47,11 @@ const PARSERS = {
     '.json': parseJson,
 };
 
+/** 비동기 파서 — 확장자별로 따로 둔다(동기 파서와 호출 방식이 다르다). */
+const ASYNC_PARSERS = {
+    '.pdf': (buffer, docType) => parsePdf(buffer, { docType }),
+};
+
 /** 웹앱에만 있는 입력 — 왜 안 되는지 함께 말한다. */
 const BROWSER_ONLY = {
     '.html': 'HTML 파싱에 DOM이 필요합니다',
@@ -56,7 +62,7 @@ const BROWSER_ONLY = {
     '.xls': 'XLS 파싱에 SheetJS가 필요합니다',
     '.ipynb': 'IPYNB의 Markdown 셀 처리에 DOM이 필요합니다',
     '.hwp': 'HWP 읽기에 WASM 엔진이 필요합니다',
-    '.hwpx': 'HWPX는 출력 형식입니다',
+    '.hwpx': 'HWPX는 출력 형식입니다(역방향 추출은 --to를 쓰세요)',
 };
 
 const HELP = `tohwpx ${VERSION} — 문서를 HWPX(한글)로 변환합니다
@@ -84,7 +90,7 @@ const HELP = `tohwpx ${VERSION} — 문서를 HWPX(한글)로 변환합니다
       --to <md|html>       HWPX를 Markdown 또는 HTML로 추출합니다
 
 지원 입력
-  ${Object.keys(PARSERS).join(' ')}  (역방향은 .hwpx)
+  ${Object.keys(PARSERS).join(' ')} ${Object.keys(ASYNC_PARSERS).join(' ')}  (역방향은 .hwpx)
 
 예시
   tohwpx README.md
@@ -159,9 +165,15 @@ function validateOptions(o) {
     return errors;
 }
 
-/** 입력 파일 하나를 IR로 만든다. */
-function fileToIrSync(file, o) {
+/** 입력 파일 하나를 IR로 만든다. PDF만 비동기 엔진을 쓴다. */
+async function fileToIr(file, o) {
     const ext = path.extname(file).toLowerCase();
+
+    // PDF는 레이아웃 형식이라 구조를 추론한다. 엔진이 크므로 여기서만 쓴다.
+    const asyncParser = ASYNC_PARSERS[ext];
+    if (asyncParser) {
+        return await asyncParser(new Uint8Array(fs.readFileSync(file)), o.docType);
+    }
 
     if (o.jsonIr && ext === '.json') {
         const ir = JSON.parse(fs.readFileSync(file, 'utf8'));
@@ -283,7 +295,7 @@ async function main() {
                 continue;
             }
 
-            const ir = fileToIrSync(input, o);
+            const ir = await fileToIr(input, o);
             if (o.title) ir.title = o.title;
 
             const { bytes, validation } = await irToHwpx(ir, {
