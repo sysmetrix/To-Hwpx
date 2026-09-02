@@ -125,6 +125,18 @@
       "paths": [
         "qa/gov-doc-gate.js"
       ]
+    },
+    {
+      "id": "diff-table",
+      "paths": [
+        "js/diff-table.js"
+      ]
+    },
+    {
+      "id": "diff-table-gate",
+      "paths": [
+        "qa/diff-table-gate.js"
+      ]
     }
   ],
   "edges": [
@@ -237,6 +249,21 @@
       "from": "gov-doc",
       "to": "gov-doc-gate",
       "reason": "규정 기준 회귀 검사"
+    },
+    {
+      "from": "diff-table",
+      "to": "ir-v2",
+      "reason": "현행·개정안 대비를 표 블록 IR로 생성"
+    },
+    {
+      "from": "diff-table",
+      "to": "diff-table-gate",
+      "reason": "짝짓기 정확성 회귀 검사"
+    },
+    {
+      "from": "diff-table",
+      "to": "core-surfaces",
+      "reason": "CLI --diff, MCP make_comparison_table"
     }
   ],
   "rules": [
@@ -343,6 +370,19 @@
       "tests": [
         "npm run test:gov",
         "npm run test:golden"
+      ]
+    },
+    {
+      "whenChanged": [
+        "js/diff-table.js"
+      ],
+      "requiresChanged": [
+        "hwpx-public-doc/references/format_conversion_playbook.md"
+      ],
+      "tests": [
+        "npm run test:diff",
+        "npm run test:cli",
+        "npm run test:mcp"
       ]
     }
   ]

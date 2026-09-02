@@ -145,6 +145,26 @@ function run(args) {
     const r13 = run(['qa/fixtures/md_hwpx_test.md', '--to', 'md', '--out-dir', TMP]);
     note(r13.code === 1 && /\.hwpx 입력에만/.test(r13.err), '⑧ --to는 .hwpx 입력에만');
 
+    // ⑧-c 신구조문대비표
+    const oldPath = path.join(TMP, 'cur.txt');
+    const newPath = path.join(TMP, 'rev.txt');
+    fs.writeFileSync(oldPath, ['제1조(목적) 목적 조문.', '제2조(적용) 본사에 적용한다.'].join('\n'), 'utf8');
+    fs.writeFileSync(newPath, ['제1조(목적) 목적 조문.', '제2조(적용) 본사와 지사에 적용한다.'].join('\n'), 'utf8');
+    const diffOut = path.join(TMP, 'diff.hwpx');
+    const r14 = run([newPath, '--diff', oldPath, '-o', diffOut]);
+    note(r14.code === 0 && fs.existsSync(diffOut), '⑧ --diff 신구조문대비표 생성', `code=${r14.code}`);
+    note(/유지 1 · 개정 1/.test(r14.out), '⑧ 대비 집계 출력', r14.out.trim().split('\n').pop());
+    if (fs.existsSync(diffOut)) {
+        const zip = await JSZip.loadAsync(fs.readFileSync(diffOut));
+        const sec = await zip.file('Contents/section0.xml').async('string');
+        note(/현 행/.test(sec) && /개 정 안/.test(sec), '⑧ 대비표 머리행');
+        note(/본사와 지사/.test(sec), '⑧ 개정 내용 포함');
+    }
+    const r15 = run([newPath, '--diff', 'nope.txt', '--out-dir', TMP]);
+    note(r15.code === 1 && /현행 파일이 없습니다/.test(r15.err), '⑧ --diff 현행 파일 없음 안내');
+    const r16 = run([newPath, '--diff', oldPath, '--to', 'md', '--out-dir', TMP]);
+    note(r16.code === 2, '⑧ --diff와 --to 동시 사용 거절', `code=${r16.code}`);
+
     // ⑨ --help / --version
     const r9 = run(['--help']);
     note(r9.code === 0 && /사용법/.test(r9.out), '⑨ --help', `code=${r9.code}`);

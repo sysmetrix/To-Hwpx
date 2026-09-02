@@ -38,6 +38,7 @@ const { parseMd, parseCsv, parseJson, parseTxt } = await import('../parsers.js')
 const { hwpxToIr, coalesceBlocks } = await import('./hwpx-to-ir.js');
 const { TEXT_EXPORTERS } = await import('./ir-to-text.js');
 const { parsePdf } = await import('../pdf-parser.js');
+const { buildComparisonTable } = await import('../diff-table.js');
 
 const VERSION = require('../../package.json').version;
 const PROTOCOL_VERSION = '2024-11-05';
@@ -141,6 +142,26 @@ const TOOLS = [
                 },
             },
             required: ['path'],
+        },
+    },
+    {
+        name: 'make_comparison_table',
+        description:
+            '현행과 개정안을 비교해 신구조문대비표(HWPX)를 만든다. 현행 순서를 기준으로 정렬하고, '
+            + '새 항목은 현행 칸에 <신설>, 없앤 항목은 개정안 칸에 <삭제>로 표시한다. '
+            + '조문 번호(제N조)가 같으면 같은 조문의 개정으로 짝짓고, 번호가 없으면 문장 유사도로 판단한다. '
+            + '문단 단위 비교이며 조·항·호 단위 대비는 하지 않는다.',
+        inputSchema: {
+            type: 'object',
+            properties: {
+                current: { type: 'string', description: '현행 본문(줄바꿈으로 구분)' },
+                revised: { type: 'string', description: '개정안 본문(줄바꿈으로 구분)' },
+                outputPath: { type: 'string', description: '저장할 .hwpx 경로. 생략하면 요약만 반환한다.' },
+                title: { type: 'string', description: '문서 제목 (기본: 신구조문대비표)' },
+                changedOnly: { type: 'boolean', description: 'true면 바뀐 항목만 표에 담는다 (기본 false)' },
+                ...RENDER_OPTION_SCHEMA,
+            },
+            required: ['current', 'revised'],
         },
     },
     {
@@ -375,6 +396,35 @@ async function callTool(name, args = {}) {
                     ...a.notes.map(n => `※ ${n}`),
                 ];
                 r.text += evidence.join('\n');
+            }
+            return r;
+        }
+
+        case 'make_comparison_table': {
+            if (typeof args.current !== 'string' || typeof args.revised !== 'string') {
+                throw new Error('current와 revised가 모두 필요합니다.');
+            }
+            if (!args.current.trim() && !args.revised.trim()) {
+                throw new Error('current와 revised가 모두 비어 있습니다.');
+            }
+            const { ir, report } = buildComparisonTable(args.current, args.revised, {
+                title: args.title || '신구조문대비표',
+                includeUnchanged: args.changedOnly !== true,
+            });
+            const r = await renderAndReport(ir, args, '신구조문대비표');
+            if (!r.isError) {
+                const lines = [
+                    '',
+                    '[대비 결과]',
+                    `유지 ${report.same} · 개정 ${report.changed} · 신설 ${report.added} · 삭제 ${report.removed}`,
+                    `현행 ${report.oldUnits}항목 → 개정안 ${report.newUnits}항목`,
+                    '※ 현행 순서를 기준으로 정렬합니다. 개정 부분의 위치가 다소 어색해 보일 수 있습니다.',
+                    '※ 문단 단위 비교입니다. 조·항·호 단위 대비는 하지 않습니다.',
+                ];
+                if (report.degraded) {
+                    lines.push('※ 문서가 커서 정밀 대조를 생략하고 순서대로 짝지었습니다. 결과를 확인하세요.');
+                }
+                r.text += lines.join('\n');
             }
             return r;
         }
