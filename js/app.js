@@ -64,6 +64,7 @@ const state = {
     orientation:  'portrait',          // 용지 방향: "portrait" | "landscape"
     lineSpacing:  160,                 // 줄 간격 (%)
     showHorizontalRules: false,        // 가로 구분선 표시 여부 (false면 빈 줄 처리)
+    govDocIndent: false,               // 공문서 항목 들여쓰기(규정 2타) 적용 여부
     paragraphSpacing: 'normal',        // 문단 앞/뒤 간격 프리셋
     headingStyle: 'standard',          // 제목 크기/굵기 프리셋
     tableStyle: 'standard',            // 표 스타일 프리셋
@@ -2033,6 +2034,24 @@ function initOptions() {
         });
     }
 
+    // 공문서 항목 들여쓰기 — 「행정업무의 운영 및 혁신에 관한 규정」의
+    // 항목 기호 체계(1. 가. 1) 가) (1) (가) ① ㉮)와 2타 들여쓰기를 적용한다.
+    // 기본은 끔이다. 일반 문서에도 "1."로 시작하는 줄은 흔하고, 그것을 전부
+    // 공문서 항목으로 취급하면 원문보다 나빠진다.
+    const govDocBtns = document.querySelectorAll('.seg-btn[data-gov-doc]');
+    if (govDocBtns.length) {
+        state.govDocIndent = localStorage.getItem('tohwpx_govDocIndent') === 'true';
+        applyGovDocUi(state.govDocIndent);
+        govDocBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                state.govDocIndent = btn.dataset.govDoc === 'on';
+                applyGovDocUi(state.govDocIndent);
+                localStorage.setItem('tohwpx_govDocIndent', String(state.govDocIndent));
+                updateAdvancedSettingsSummary();
+            });
+        });
+    }
+
     const detailSelects = [
         { id: 'style-policy', key: 'stylePolicy', store: 'tohwpx_stylePolicy', allowed: ['source', 'balanced', 'app'] },
         { id: 'paragraph-spacing', key: 'paragraphSpacing', store: 'tohwpx_paragraphSpacing', allowed: ['compact', 'normal', 'relaxed'] },
@@ -3073,6 +3092,21 @@ async function convertOneFile(file, statusPrefix = '', outputFontName = state.do
     } catch (e) {
         throw new Error('파일 파싱 실패: ' + e.message);
     }
+
+    // 공문서 항목 들여쓰기 — 파싱 뒤, 렌더 전에 IR에 깊이를 표시한다.
+    // 파서는 원본 문법만 해석하고 이 규칙은 포맷과 무관하므로 공통 IR 단계에서
+    // 적용한다(MD·HWP·PDF 어느 입력이든 같게 동작한다).
+    state.govDocReport = null;
+    if (state.govDocIndent) {
+        try {
+            const { applyGovDocStructure } = await import('./gov-doc.js');
+            state.govDocReport = applyGovDocStructure(ir).report;
+        } catch (err) {
+            console.error('[공문서 구조]', err);
+            // 이 기능이 실패해도 변환 자체는 계속한다 — 보조 기능이다.
+        }
+    }
+
     state.ir = ir;
 
     // [보안] IR 미리보기는 textContent로만 표시 (innerHTML 사용 금지)
@@ -3197,6 +3231,7 @@ function showResult({ url, fileName, size, validation }) {
     // PDF는 구조를 추론하므로, 추론에 쓴 근거를 사용자에게 그대로 보여준다.
     // 고정 백분율로 품질을 주장하지 않는다(AGENTS.md).
     const pdfAudit = state.ir?.audit?.sourceFormat === 'pdf' ? state.ir.audit : null;
+    const govReport = state.govDocReport || null;
     const auditRepairCount = sourceAudit
         ? (sourceAudit.repairs || []).reduce((sum, item) => sum + (Number(item.count) || 0), 0)
         : 0;
@@ -3268,6 +3303,18 @@ function showResult({ url, fileName, size, validation }) {
                 <span class="result-validation-mark">${validation.pass ? '✓' : '!'}</span>
                 <span>${escHtml(validText)}</span>
             </div>
+            ${govReport && govReport.applied > 0 ? `
+            <div class="result-gov-note">
+                <strong>📑 공문서 항목 들여쓰기를 적용했습니다</strong>
+                <span>「행정업무의 운영 및 혁신에 관한 규정」의 항목 기호 순서와 2타 들여쓰기를 따랐습니다.</span>
+                <span class="gov-note-detail">
+                    항목 ${escHtml(String(govReport.applied))}개 · 최대 ${escHtml(String(govReport.maxDepth + 1))}단계
+                    · 사용된 기호 ${escHtml(Object.keys(govReport.byMarker).join(' '))}
+                    ${govReport.attachments ? ` · 붙임 ${escHtml(String(govReport.attachments))}건` : ''}
+                    ${govReport.hasEndMark ? ' · 끝. 표시 확인' : ''}
+                </span>
+            </div>
+            ` : ''}
             ${pdfAudit ? `
             <div class="result-inference-note">
                 <strong>📕 PDF 구조는 추론한 결과입니다</strong>
@@ -4001,6 +4048,14 @@ function applyOrientationUi(orientation) {
     const landscape = orientation === 'landscape';
     document.querySelectorAll('.seg-btn[data-orient]').forEach(btn => {
         const active = (btn.dataset.orient === 'landscape') === landscape;
+        btn.classList.toggle('is-active', active);
+        btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+    });
+}
+
+function applyGovDocUi(on) {
+    document.querySelectorAll('.seg-btn[data-gov-doc]').forEach(btn => {
+        const active = (btn.dataset.govDoc === 'on') === !!on;
         btn.classList.toggle('is-active', active);
         btn.setAttribute('aria-pressed', active ? 'true' : 'false');
     });
