@@ -754,6 +754,43 @@ async function validateDirectInput(page) {
     && qualityText.includes('내용 보존도')
     && qualityText.includes('생성 안정성'),
     'admin: 변환률/성공률 추정 배지 또는 의미 풀이가 누락됨');
+
+  // 고도화 계획 탭 — 내용은 roadmap.json에서 오고, 화면에 하드코딩하지 않는다.
+  await page.locator('.changelog-tab[data-tab="roadmap"]').click();
+  await page.locator('.roadmap-panel').waitFor({ state: 'visible', timeout: 15000 });
+  const roadmapInfo = await page.evaluate(async () => {
+    const res = await fetch('roadmap.json');
+    const data = await res.json();
+    const expectedItems = (data.phases || []).reduce((n, p) => n + (p.items || []).length, 0);
+    const manualEl = document.querySelector('.rm-manual');
+    const firstPhase = document.querySelector('.rm-phase');
+    return {
+      phases: document.querySelectorAll('.rm-phase').length,
+      expectedPhases: (data.phases || []).length,
+      items: document.querySelectorAll('.rm-item').length,
+      expectedItems,
+      manual: document.querySelectorAll('.rm-manual-list li').length,
+      expectedManual: (data.manualVerification || []).length,
+      // 수동 확인이 단계 목록보다 위에 있어야 한다. 자동 게이트가 많다고
+      // 한컴 시각 확인이 대체되지 않는다는 것이 이 저장소의 황금률이고,
+      // 화면이 그 반대 인상을 주면 안 된다.
+      manualAbovePhases: manualEl && firstPhase
+        ? manualEl.compareDocumentPosition(firstPhase) === Node.DOCUMENT_POSITION_FOLLOWING
+        : false,
+      text: document.querySelector('.roadmap-panel').textContent,
+    };
+  });
+  assert(roadmapInfo.phases === roadmapInfo.expectedPhases && roadmapInfo.phases > 0,
+    `admin roadmap: 단계 수가 roadmap.json과 다름 (${roadmapInfo.phases}/${roadmapInfo.expectedPhases})`);
+  assert(roadmapInfo.items === roadmapInfo.expectedItems,
+    `admin roadmap: 항목 수가 roadmap.json과 다름 (${roadmapInfo.items}/${roadmapInfo.expectedItems})`);
+  assert(roadmapInfo.manual === roadmapInfo.expectedManual && roadmapInfo.manual > 0,
+    `admin roadmap: 수동 확인 항목이 roadmap.json과 다름 (${roadmapInfo.manual}/${roadmapInfo.expectedManual})`);
+  assert(roadmapInfo.manualAbovePhases,
+    'admin roadmap: 사람이 확인할 항목이 완료 목록보다 아래에 있음 — 자동 게이트가 시각 확인을 대체한다는 인상을 준다');
+  assert(roadmapInfo.text.includes('시각 통과가 아닙니다'),
+    'admin roadmap: 구조 게이트 통과가 시각 통과가 아니라는 경고가 누락됨');
+
   await page.keyboard.press('Escape');
 
   await page.locator('#mode-paste').click();

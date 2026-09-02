@@ -137,6 +137,19 @@
       "paths": [
         "qa/diff-table-gate.js"
       ]
+    },
+    {
+      "id": "roadmap",
+      "paths": [
+        "roadmap.json",
+        "js/roadmap-panel.js"
+      ]
+    },
+    {
+      "id": "roadmap-gate",
+      "paths": [
+        "qa/roadmap-gate.js"
+      ]
     }
   ],
   "edges": [
@@ -264,6 +277,16 @@
       "from": "diff-table",
       "to": "core-surfaces",
       "reason": "CLI --diff, MCP make_comparison_table"
+    },
+    {
+      "from": "roadmap",
+      "to": "roadmap-gate",
+      "reason": "계획서 주장이 저장소와 일치하는지 검사"
+    },
+    {
+      "from": "roadmap",
+      "to": "quality-ui",
+      "reason": "관리자 모드 고도화 계획 탭 렌더링"
     }
   ],
   "rules": [
@@ -383,6 +406,19 @@
         "npm run test:diff",
         "npm run test:cli",
         "npm run test:mcp"
+      ]
+    },
+    {
+      "whenChanged": [
+        "roadmap.json",
+        "js/roadmap-panel.js"
+      ],
+      "requiresChanged": [
+        "DESIGN.md"
+      ],
+      "tests": [
+        "npm run test:roadmap",
+        "npm run test:golden"
       ]
     }
   ]
