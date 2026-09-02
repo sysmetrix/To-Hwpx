@@ -93,6 +93,13 @@
         "tests/cli-test.js",
         "tests/mcp-server-test.js"
       ]
+    },
+    {
+      "id": "roundtrip",
+      "paths": [
+        "js/core/hwpx-to-ir.js",
+        "qa/roundtrip-gate.js"
+      ]
     }
   ],
   "edges": [
@@ -165,6 +172,16 @@
       "from": "docx-parser",
       "to": "core-surfaces",
       "reason": "CLI·MCP가 공용 파서를 재사용(DOM 비의존 포맷 한정)"
+    },
+    {
+      "from": "hwpx-renderer",
+      "to": "roundtrip",
+      "reason": "만든 HWPX를 되읽어 원본 IR과 대조"
+    },
+    {
+      "from": "roundtrip",
+      "to": "release-docs",
+      "reason": "품질 주장의 재현 가능한 근거"
     }
   ],
   "rules": [
@@ -181,7 +198,8 @@
       ],
       "tests": [
         "npm run test:docx",
-        "npm run test:golden"
+        "npm run test:golden",
+        "npm run test:roundtrip"
       ]
     },
     {
@@ -235,6 +253,17 @@
       "tests": [
         "npm run test:cli",
         "npm run test:mcp"
+      ]
+    },
+    {
+      "whenChanged": [
+        "js/core/hwpx-to-ir.js"
+      ],
+      "requiresChanged": [
+        "hwpx-public-doc/references/format_conversion_playbook.md"
+      ],
+      "tests": [
+        "npm run test:roundtrip"
       ]
     }
   ]
