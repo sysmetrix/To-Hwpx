@@ -186,6 +186,7 @@ node tests/docx-real-convert.js "원본.docx" && node tests/docx-fidelity-score.
 - `blockquote`(Markdown 인용구와 같은 HWPX 인용 문단)
 - `strong`, `em`, `code`, `u`, `ins`, `s`, `strike`, `del`
 - 일부 글자색(`style="color:"`, `<font color>`)
+- (v4.16.12) `<li>` 항목의 인라인 서식과 링크 — `extractHtmlList()`가 `textContent`만 담아 목록 안의 굵게·기울임·글자색·링크가 통째로 사라졌다. Markdown 목록과 같은 공통 run 계약(`{text, runs}`)으로 함께 보존한다. **표 셀 안 링크는 여전히 미지원** — `hwpx.js`의 `buildCellBlockContent()`가 `href: undefined`로 명시적으로 끈다(공용 cell run 계약 설계 후 별도 릴리스).
 - (v4.16.10) `<a href>` 링크 — Markdown `link` 토큰과 같은 공통 run 계약(`href`/`title`)으로 보존해 HWPX 하이퍼링크 필드로 나간다. 허용 스킴은 `http:`, `https:`, `mailto:`, `#`이고 그 외는 표시 문자열만 남는다(IR 레벨 차단 + `hwpx.js`·preview 각자 재검증). 이전엔 `extractInlineRuns()`가 `<a>`를 일반 인라인 요소로만 훑어 **링크가 죽은 텍스트로만 남았다.**
 
 주의:

@@ -1,6 +1,21 @@
 {
-  "current": "4.16.11",
+  "current": "4.16.12",
   "versions": [
+    {
+      "version": "4.16.12",
+      "date": "2026-09-02",
+      "user": [
+        "HTML 목록 항목 안의 링크와 굵게·기울임·글자색이 사라지던 문제를 고쳤습니다.",
+        "Markdown 표의 열 정렬(왼쪽/가운데/오른쪽)과 링크 표시 문자열이 제대로 유지되는지 검사에 추가했습니다."
+      ],
+      "dev": [
+        "[v4.16.12] js/parsers.js extractHtmlList(): <li>에서 textContent만 담아 목록 안의 인라인 서식과 <a href>가 통째로 사라지던 것을 공통 run 계약({text, runs})으로 보존. Markdown 목록과 동일 경로(buildParaRuns)로 렌더된다. 표 셀 안 링크는 buildCellBlockContent()가 href: undefined로 명시적으로 끄는 계약상 미지원 항목이라 이번 범위에서 제외 — 공용 cell run 계약 설계 후 별도 릴리스",
+        "[v4.16.12] tests/format-fidelity-score.js 미측정 차원 보강: MD 표 열 정렬(:--- / :---: / ---: → 셀 문단 paraPr 10/7/11), 링크 표시 문자열과 중첩 강조 링크([**굵은 링크**](url)), HTML 목록/표 셀 안 링크. PPTX 규칙은 텍스트·제목만 보던 것을 그룹 도형(p:grpSp) 내부 텍스트, 표 가로/세로 병합, 그림(p:pic → hc:img), 발표자 노트, 글머리 기호 목록으로 확장",
+        "[v4.16.12] 픽스처 보강: rich.md에 열 정렬 표·title 속성 링크·중첩 강조 링크, rich.html에 목록 항목 링크와 표 셀 링크 추가",
+        "[v4.16.12] 채점기가 계약 밖 동작을 요구하지 않게 함 — 표 셀 링크는 문서화된 의도적 보류라 감점 대신 상태만 표시한다. 채점 항목은 제품이 약속한 범위를 재는 것이어야 하고, 그렇지 않으면 점수가 회귀가 아니라 희망을 재게 된다",
+        "[v4.16.12] lint·golden 13케이스·test:docx·test:package·impact-gate·commercial-gate 통과. DOCX 100.0점, 8개 포맷 전부 100.0점 유지"
+      ]
+    },
     {
       "version": "4.16.11",
       "date": "2026-09-02",
