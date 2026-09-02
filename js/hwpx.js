@@ -1940,11 +1940,21 @@ export async function validateHwpx(blob, expectedMarginsMm = null) {
         if (/<hs:secPr\b|<hs:page\b|<hs:margin\b/.test(xml)) {
             issues.push('section0.xml: 섹션 설정 네임스페이스 오류(hs:* 대신 hp:* 필요)');
         }
-        if (!/<hp:p\b[\s\S]*<hp:run\b[\s\S]*<hp:secPr\b/.test(xml)) {
+        // [주의] 여기서 예전에 /<hp:p\b[\s\S]*<hp:run\b[\s\S]*<hp:secPr\b/ 처럼 탐욕적(greedy)
+        // [\s\S]*를 두 번 연달아 쓰면, 문단이 수천 개인 대형 문서에서 각 <hp:p 위치마다 역추적을
+        // 시도해 파국적 역추적(catastrophic backtracking)이 일어난다 — 실측 문서(문단 4522개, 4.3MB)
+        // 에서 이 정규식 하나가 83초를 잡아먹어 "응답 없음"의 진짜 원인이었다(v4.16.6까지는 몰랐음).
+        // hp:secPr는 문서 전체에서 한 번만 나오므로, 그 위치에서 lastIndexOf로 거슬러 올라가는
+        // 선형 탐색(O(n))으로 바꾼다 — 역추적이 아예 없다.
+        const secPrIdx = xml.indexOf('<hp:secPr');
+        const runBeforeSecPrIdx = secPrIdx === -1 ? -1 : xml.lastIndexOf('<hp:run', secPrIdx);
+        const pBeforeRunIdx = runBeforeSecPrIdx === -1 ? -1 : xml.lastIndexOf('<hp:p', runBeforeSecPrIdx);
+        if (secPrIdx === -1 || runBeforeSecPrIdx === -1 || pBeforeRunIdx === -1) {
             issues.push('section0.xml: hp:secPr가 hp:run 내부에 없음');
         }
-        const secParaMatch = xml.match(/<hp:p\b([^>]*)>[\s\S]*?<hp:secPr\b/);
-        if (!secParaMatch || !/\bid="/.test(secParaMatch[1])) {
+        const pTagEnd = pBeforeRunIdx === -1 ? -1 : xml.indexOf('>', pBeforeRunIdx);
+        const pTagAttrs = pBeforeRunIdx !== -1 && pTagEnd !== -1 ? xml.slice(pBeforeRunIdx, pTagEnd) : '';
+        if (!pTagAttrs || !/\bid="/.test(pTagAttrs)) {
             issues.push('section0.xml: hp:secPr를 담은 첫 문단에 id가 없음');
         }
 
@@ -1976,7 +1986,9 @@ export async function validateHwpx(blob, expectedMarginsMm = null) {
             const pageDirection = (pagePrMatch[1].match(/\blandscape="([^"]+)"/) || [])[1] || 'WIDELY';
             const effectivePageWidth = pageDirection === 'NARROWLY' ? pageAttrs.height : pageAttrs.width;
             const expectedContentWidth = effectivePageWidth - marginAttrs.left - marginAttrs.right;
-            const lineSegMatch = xml.match(/<hp:p\b[^>]*>[\s\S]*?<hp:secPr\b[\s\S]*?<hp:lineseg\b([^>]+?)\/>/);
+            // secPrIdx부터만 잘라서 찾는다 — 대형 문서에서 문서 처음부터 통째로 훑지 않게 함.
+            const lineSegMatch = secPrIdx === -1 ? null
+                : xml.slice(secPrIdx).match(/^<hp:secPr\b[\s\S]*?<hp:lineseg\b([^>]+?)\/>/);
             if (!lineSegMatch) {
                 issues.push('section0.xml: hp:secPr 문단에 linesegarray가 없음');
             } else {
