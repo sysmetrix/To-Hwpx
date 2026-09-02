@@ -1,6 +1,26 @@
 {
-  "current": "4.16.8",
+  "current": "4.16.9",
   "versions": [
+    {
+      "version": "4.16.9",
+      "date": "2026-09-02",
+      "user": [
+        "DOCX 변환 품질을 크게 올렸습니다. 원본에서 쓴 글자 크기(7.5~10.5pt 등)를 그대로 살리고, 스타일에만 지정된 굵게·색상도 이제 반영됩니다.",
+        "제목 옆의 색 배지(예: 초록 \"신규\")가 사라지던 문제를 고쳤습니다.",
+        "🔎 같은 이모지가 □로 바뀌던 것을 실제 이모지로 보존합니다(주변 글자와 같은 크기·색).",
+        "글자 없이 선만 있던 가로 구분선이 사라지던 문제를 고쳤습니다."
+      ],
+      "dev": [
+        "[v4.16.9] js/parsers.js: styles.xml의 문자 스타일(w:rStyle)·문단 스타일 rPr에서 굵게/기울임/밑줄/취소선/색/글자배경/크기를 합성하는 styleFormatMap 추가(w:basedOn 체인 추적, 순환은 방문 집합으로 차단). run 서식 우선순위 = run 직접 > w:rStyle > 문단 스타일. 기존엔 w:rStyle을 전혀 읽지 않아 서식을 스타일에만 둔 run(실제 원본의 콜아웃 라벨 스타일 lbl2 = 굵게+#8A5A08, 214개 run)이 통째로 서식 없는 검은 글자로 떨어졌음",
+        "[v4.16.9] js/parsers.js docxRunSizePt(): run별 w:sz(half-point)를 run.sizePt로 보존. js/hwpx.js runHeightHwp()/extCharKey()가 이를 charPr height(1pt=100)로 옮기고, 본문 기준 크기(_runBaseHeightHwp)와 다를 때만 동적 charPr을 만든다. 실제 원본은 본문이 7.5/8/8.5/9/9.5/10.5pt로 나뉜 4만여 run인데 전부 무시되고 단일 크기로 렌더되고 있었음",
+        "[v4.16.9] 제목 안 인라인 배지 보존: highlight 있는 run이 포함된 heading만 runs를 함께 넘겨 block._runs로 run별 렌더(scanCharProps에서 제목 크기+bold로 charPr 등록). 배지 없는 제목은 기존 단일 charPr 경로 유지. 초록 #16A34A 배지 \"신규\"가 통째로 유실되던 문제",
+        "[v4.16.9] 이모지 보존: 각 hh:fontface에 Segoe UI Emoji(대체 Segoe UI Symbol)를 추가 등록하고, splitEmojiRuns()가 이모지 구간만 그 폰트를 참조하는 별도 run으로 분리. extCharKey 5번째 필드 'E'로 같은 서식의 이모지 변형 charPr을 customCharMap에 함께 등록해 크기·색을 주변 글자와 동일하게 유지. VS/ZWJ는 한컴이 별도 글자로 그리므로 제거. buildParaRuns 경로만 적용, buildPara(머리글/바닥글)는 기존 □ 폴백 유지",
+        "[v4.16.9] 글자 없이 w:pBdr(위/아래 테두리)만 있는 문단을 hr 블록으로 보존 — 이전엔 텍스트가 없어 null로 버려져 구분선이 사라졌음",
+        "[v4.16.9] tests/docx-fidelity-score.js 신설: 원본 OOXML과 생성 HWPX를 18개 항목으로 대조해 100점 만점 채점 + 미달 근거 출력. 실제 원본(51쪽) 기준 95.3 → 100.0점. 반올림으로 손실을 숨기지 않도록 정확히 1.0일 때만 통과 표시하고, 본문에서 참조되지 않는 스타일 색과 공백뿐인 spacer run의 크기는 재현 대상에서 제외(오탐 방지)",
+        "[v4.16.9] 주의: 채점 100점은 구조·값 대조 결과일 뿐 한컴 육안 확인을 대체하지 않는다(AGENTS.md '자동은 well-formed/구조만 본다'). 특히 이모지 폰트는 한컴에 Segoe UI Emoji가 없으면 두부로 보일 수 있으나, 기존 □ 치환보다 정보 손실이 작다",
+        "[v4.16.9] lint·golden 13케이스·test:docx·test:package(charProperties itemCnt 14/16 반영)·impact-gate·commercial-gate 전부 통과"
+      ]
+    },
     {
       "version": "4.16.8",
       "date": "2026-09-02",
