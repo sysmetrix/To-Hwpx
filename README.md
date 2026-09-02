@@ -83,6 +83,17 @@ node js/core/cli.js 공문.hwpx --to html    # 공문.html
 
 **레이아웃 복제가 아니라 구조 추출입니다.** 서식·여백·글꼴은 포함되지 않고, 그림은 파일 이름만 참조합니다(바이트는 내보내지 않음). 결과에 그 사실을 함께 표시합니다.
 
+### 신구조문대비표
+
+```bash
+node js/core/cli.js 개정안.txt --diff 현행.txt -o 신구조문대비표.hwpx
+node js/core/cli.js 개정안.txt --diff 현행.txt --changed-only
+```
+
+현행 순서를 기준으로 정렬하고, 새 항목은 현행 칸에 `<신설>`, 없앤 항목은 개정안 칸에 `<삭제>`로 표시합니다. 조문 번호(`제N조`)가 같으면 같은 조문의 개정으로 짝짓습니다.
+
+**문단 단위 비교입니다.** 조·항·호 단위 대비는 하지 않습니다.
+
 ### MCP 서버
 
 AI 에이전트가 한/글 설치 없이 HWPX를 만들 수 있습니다.
@@ -101,6 +112,7 @@ AI 에이전트가 한/글 설치 없이 HWPX를 만들 수 있습니다.
 | `text_to_hwpx` | TXT·CSV/TSV·JSON → HWPX |
 | `ir_to_hwpx` | 공통 IR(JSON)을 직접 렌더 — 정밀 제어용 |
 | `pdf_to_hwpx` | PDF → HWPX. 구조를 좌표에서 추론하며 근거를 함께 반환 |
+| `make_comparison_table` | 현행·개정안 → 신구조문대비표 HWPX |
 | `read_hwpx` | HWPX를 읽어 Markdown·HTML·IR로 반환 — 읽고 고쳐 다시 쓰기의 첫 단계 |
 | `get_ir_schema` | IR 스키마와 블록별 예시 반환 |
 

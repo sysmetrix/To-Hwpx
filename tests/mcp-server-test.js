@@ -87,7 +87,8 @@ function startServer() {
         const list = await s.request('tools/list', {});
         const names = (list.result?.tools || []).map(t => t.name);
         note(names.includes('markdown_to_hwpx') && names.includes('ir_to_hwpx')
-            && names.includes('get_ir_schema') && names.includes('read_hwpx'),
+            && names.includes('get_ir_schema') && names.includes('read_hwpx')
+            && names.includes('make_comparison_table'),
             '② tools/list', names.join(', '));
         const mdTool = list.result.tools.find(t => t.name === 'markdown_to_hwpx');
         note(mdTool?.inputSchema?.required?.includes('markdown'), '② 입력 스키마에 required 명시');
@@ -209,6 +210,36 @@ function startServer() {
 
         const badExt = await s.request('tools/call', { name: 'read_hwpx', arguments: { path: 'x.docx' } });
         note(badExt.result?.isError === true, '⑦ .hwpx가 아니면 거절');
+
+        // ⑦-c make_comparison_table — 틀린 짝짓기가 없는지까지 본다
+        const cmpOut = path.join(TMP, 'cmp.hwpx');
+        const cmp = await s.request('tools/call', {
+            name: 'make_comparison_table',
+            arguments: {
+                current: ['제1조(목적) 목적 조문.', '제2조(적용) 본사에 적용한다.', '제3조(보존) 3년 보존.'].join(String.fromCharCode(10)),
+                revised: ['제1조(목적) 목적 조문.', '제2조(적용) 본사와 지사에 적용한다.'].join(String.fromCharCode(10)),
+                outputPath: cmpOut,
+            },
+        });
+        const cmpText = cmp.result?.content?.[0]?.text || '';
+        note(cmp.result?.isError === false && fs.existsSync(cmpOut), '⑦ make_comparison_table 성공');
+        note(/유지 1 · 개정 1 · 신설 0 · 삭제 1/.test(cmpText), '⑦ 대비 집계 정확',
+            (cmpText.match(/유지[^\n]*/) || [''])[0]);
+        // 현행 기준 정렬이라는 한계를 에이전트에게 알린다
+        note(/현행 순서를 기준으로/.test(cmpText) && /문단 단위 비교/.test(cmpText),
+            '⑦ 대비표 한계를 명시');
+
+        if (fs.existsSync(cmpOut)) {
+            const zip = await JSZip.loadAsync(fs.readFileSync(cmpOut));
+            const sec = await zip.file('Contents/section0.xml').async('string');
+            note(/현 행/.test(sec) && /개 정 안/.test(sec), '⑦ 대비표 머리행');
+            note(/&lt;삭제&gt;|<삭제>/.test(sec), '⑦ 삭제 표기 포함');
+        }
+
+        const cmpBad = await s.request('tools/call', {
+            name: 'make_comparison_table', arguments: { current: '', revised: '' },
+        });
+        note(cmpBad.result?.isError === true, '⑦ 빈 입력 거절');
 
         // ⑧ 알 수 없는 메서드는 JSON-RPC 오류로
         const unknown = await s.request('nope/method', {});

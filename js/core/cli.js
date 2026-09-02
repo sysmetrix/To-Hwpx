@@ -33,6 +33,7 @@ const { irToHwpx, ensureNodeRuntime } = await import('./index.js');
 const { parseMd, parseCsv, parseJson, parseTxt } = await import('../parsers.js');
 const { hwpxToIr, coalesceBlocks } = await import('./hwpx-to-ir.js');
 const { parsePdf } = await import('../pdf-parser.js');
+const { buildComparisonTable } = await import('../diff-table.js');
 const { TEXT_EXPORTERS } = await import('./ir-to-text.js');
 
 const VERSION = require('../../package.json').version;
@@ -89,6 +90,11 @@ const HELP = `tohwpx ${VERSION} — 문서를 HWPX(한글)로 변환합니다
 역방향 (.hwpx 입력)
       --to <md|html>       HWPX를 Markdown 또는 HTML로 추출합니다
 
+신구조문대비표
+      --diff <현행파일>     현행과 비교해 신구조문대비표를 만듭니다
+                          (마지막 입력이 개정안)
+      --changed-only       바뀐 항목만 표에 담습니다
+
 지원 입력
   ${Object.keys(PARSERS).join(' ')} ${Object.keys(ASYNC_PARSERS).join(' ')}  (역방향은 .hwpx)
 
@@ -97,6 +103,7 @@ const HELP = `tohwpx ${VERSION} — 문서를 HWPX(한글)로 변환합니다
   tohwpx notes.md -o 보고서.hwpx --font 함초롬바탕 --paper A4
   tohwpx data/*.csv --out-dir build --orientation landscape
   tohwpx 공문.hwpx --to md -o 공문.md
+  tohwpx 개정안.txt --diff 현행.txt -o 신구조문대비표.hwpx
 `;
 
 function parseArgs(argv) {
@@ -106,7 +113,7 @@ function parseArgs(argv) {
         orientation: 'portrait', lineSpacingPercent: 160,
         title: null, docType: 'plain', showHorizontalRules: false,
         jsonIr: false, quiet: false, help: false, version: false,
-        to: null,
+        to: null, diff: null, changedOnly: false,
     };
     for (let i = 0; i < argv.length; i++) {
         const a = argv[i];
@@ -128,6 +135,8 @@ function parseArgs(argv) {
             case '--hr': opts.showHorizontalRules = true; break;
             case '--json-ir': opts.jsonIr = true; break;
             case '--to': opts.to = String(next()).toLowerCase(); break;
+            case '--diff': opts.diff = next(); break;
+            case '--changed-only': opts.changedOnly = true; break;
             case '-q': case '--quiet': opts.quiet = true; break;
             case '-h': case '--help': opts.help = true; break;
             case '-v': case '--version': opts.version = true; break;
@@ -158,6 +167,12 @@ function validateOptions(o) {
     }
     if (o.to && !TEXT_EXPORTERS[o.to]) {
         errors.push(`--to 값이 잘못됐습니다: ${o.to} (${Object.keys(TEXT_EXPORTERS).join('|')})`);
+    }
+    if (o.diff && o.inputs.length !== 1) {
+        errors.push('--diff는 개정안 파일 하나만 함께 지정합니다: tohwpx 개정안.txt --diff 현행.txt');
+    }
+    if (o.diff && o.to) {
+        errors.push('--diff와 --to는 함께 쓸 수 없습니다.');
     }
     if (o.out && o.inputs.length > 1) {
         errors.push('--out은 입력이 하나일 때만 쓸 수 있습니다. 여러 개는 --out-dir을 쓰세요.');
@@ -276,6 +291,37 @@ async function main() {
         const rel = path.relative(process.cwd(), input) || input;
         try {
             if (!fs.existsSync(input)) throw new Error('파일이 없습니다.');
+
+            // ── 신구조문대비표: 현행 vs 개정안 ──
+            if (o.diff) {
+                if (!fs.existsSync(o.diff)) throw new Error(`현행 파일이 없습니다: ${o.diff}`);
+                const oldIr = await fileToIr(o.diff, o);
+                const newIr = await fileToIr(input, o);
+                const { ir: tableIr, report } = buildComparisonTable(oldIr, newIr, {
+                    title: o.title || '신구조문대비표',
+                    includeUnchanged: !o.changedOnly,
+                });
+                const { bytes, validation } = await irToHwpx(tableIr, {
+                    fontName: o.fontName, fontSize: o.fontSize, paperSize: o.paperSize,
+                    orientation: o.orientation, lineSpacingPercent: o.lineSpacingPercent,
+                    options: { showHorizontalRules: o.showHorizontalRules },
+                });
+                const outPath = outputPathFor(input, o);
+                fs.mkdirSync(path.dirname(outPath), { recursive: true });
+                fs.writeFileSync(outPath, bytes);
+                const outRel = path.relative(process.cwd(), outPath) || outPath;
+                log(`✓ ${path.relative(process.cwd(), o.diff)} ↔ ${rel} → ${outRel}`);
+                log(`  유지 ${report.same} · 개정 ${report.changed} · 신설 ${report.added} · 삭제 ${report.removed}`);
+                if (report.degraded) {
+                    console.error('  ! 문서가 커서 정밀 대조를 생략하고 순서대로 짝지었습니다. 결과를 확인하세요.');
+                    failed++;
+                }
+                if (!validation.pass) {
+                    console.error(`  ! 구조 검증 경고 ${validation.issues.length}건`);
+                    failed++;
+                }
+                continue;
+            }
 
             // ── 역방향: HWPX → Markdown/HTML ──
             if (o.to) {
