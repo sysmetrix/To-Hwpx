@@ -370,7 +370,10 @@ function flattenMdList(listToken, level, out) {
         const nested = [];
         for (const t of (item.tokens || [])) {
             if (t.type === 'list') nested.push(t);          // 하위 목록은 레벨+1로 따로
-            else extractMarkdownTokens([t], ownBlocks);
+            // marked 18은 태스크리스트의 체크박스를 raw가 "[ ] "/"[x] "인 별도 checkbox
+            // 토큰으로 낸다. 체크 상태는 item.task/item.checked로 이미 받아 ▣/□ 마커를
+            // 붙이므로, 이 토큰을 텍스트로 흘리면 "□ [ ] 할 일"처럼 표기가 중복된다.
+            else if (t.type !== 'checkbox') extractMarkdownTokens([t], ownBlocks);
         }
         const textParts = ownBlocks
             .filter(b => b.type === 'para' || b.type === 'heading')
@@ -378,7 +381,7 @@ function flattenMdList(listToken, level, out) {
             .filter(Boolean);
         const runs = [];
         for (const token of (item.tokens || [])) {
-            if (token.type === 'list' || token.type === 'code') continue;
+            if (token.type === 'list' || token.type === 'code' || token.type === 'checkbox') continue;
             const inlineTokens = token.tokens || [token];
             const tokenRuns = markdownInlineRuns(inlineTokens);
             if (!tokenRuns.length) continue;
