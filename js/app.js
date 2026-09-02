@@ -2973,6 +2973,10 @@ function updateConvertButton(enabled) {
     // 바뀔 때(파일 개수 변경 등)는 튕기지 않는다 — 반복되면 잡음이 된다.
     const becameReady = enabled && btn.disabled;
     btn.disabled = !enabled;
+
+    // 변환이 도는 동안은 버튼이 정지 상태가 아니라는 것을 계속 알린다.
+    // 진행 막대만 움직이면 "숫자가 올라간다"로만 읽힌다.
+    btn.classList.toggle('is-converting', !!state.isConverting);
     if (becameReady && !prefersReducedMotion()) {
         btn.classList.remove('is-ready');
         void btn.offsetWidth;                 // 애니메이션 재시작을 위한 리플로우
