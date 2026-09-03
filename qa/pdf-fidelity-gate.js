@@ -214,6 +214,42 @@ const EXPECTATIONS = [
             '줄바꿈 낱말 안 붙음': ir => !/[가-힣]{12,}/.test(flat(ir)),
         },
     },
+    {
+        file: 'pdf-shaded.pdf',
+        why: '셀 음영 — 못 가져오면 흰 글자 머리행이 흰 바탕에 흰 글자가 된다',
+        checks: {
+            '표 1개 3행 2열': ir => {
+                const s = tableShape(byType(ir, 'table')[0]);
+                return byType(ir, 'table').length === 1 && s?.rows === 3 && s?.cols === 2;
+            },
+            '머리행 음영 있음': ir => {
+                const t = byType(ir, 'table')[0];
+                const row0 = t?.header || (t?.rows || [])[0] || [];
+                return row0.length > 0 && row0.every(c => /^40404[0-9A-F]?$/i.test(c?.bg || ''));
+            },
+            '첫 열 음영 있음': ir => {
+                const t = byType(ir, 'table')[0];
+                const body = t?.header ? (t.rows || []) : (t?.rows || []).slice(1);
+                return body.length > 0 && body.every(r => /^E8F6FD$/i.test(r[0]?.bg || ''));
+            },
+            '음영 없는 칸은 그대로': ir => {
+                const t = byType(ir, 'table')[0];
+                const body = t?.header ? (t.rows || []) : (t?.rows || []).slice(1);
+                return body.every(r => !r[1]?.bg);
+            },
+            // 열 너비는 글자 길이가 아니라 원본 괘선 간격에서 와야 한다.
+            '열 너비가 원본에서 옴': ir => {
+                const w = byType(ir, 'table')[0]?.columnWidthsHwp;
+                return Array.isArray(w) && w.length === 2 && w[1] > w[0] * 1.5;
+            },
+            // 이 문서가 지켜야 할 불변식 — 흰 글자에는 반드시 배경이 있어야 한다.
+            '흰 글자 셀에는 배경이 있다': ir => byType(ir, 'table').every(t =>
+                [t.header, ...(t.rows || [])].every(row => (row || []).every(c => {
+                    const white = (c?.runs || []).some(r => /^#f{6}$/i.test(r.color || ''));
+                    return !white || !!c.bg;
+                }))),
+        },
+    },
 ];
 
 /** 순서를 무시한 다중집합 비교 — 글자가 사라졌는지만 본다. */

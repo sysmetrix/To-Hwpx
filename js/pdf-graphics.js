@@ -256,12 +256,14 @@ export async function extractGraphics(page, OPS) {
     try {
         ops = await page.getOperatorList();
     } catch {
-        return { images: [], hLines: [], vLines: [], colorChars: [] };
+        return { images: [], hLines: [], vLines: [], colorChars: [], fills: [] };
     }
 
     const images = [];
     const hLines = [];
     const vLines = [];
+    // 채워진 면 = 셀 배경(음영). 표 셀에 색을 돌려주려면 이것도 모아야 한다.
+    const fills = [];
     // 글자마다의 색. getTextContent()는 색이 바뀌어도 조각을 합쳐서 주므로
     // 색만은 여기서 글리프 단위로 모아야 한다.
     const colorChars = [];
@@ -298,6 +300,7 @@ export async function extractGraphics(page, OPS) {
             ctm = mul(ctm, args);
         } else if (fn === OPS.constructPath) {
             collectLines(args, ctm, hLines, vLines, OPS);
+            collectFill(args, ctm, fill, fills, OPS);
         } else if (fn === OPS.paintImageXObject) {
             // 그림은 언제나 단위 정사각형에 그려진다. 실제 크기·자리는 CTM이 정한다.
             if (typeof args[0] === 'string') images.push(placed(args[0], ctm));
@@ -322,7 +325,7 @@ export async function extractGraphics(page, OPS) {
         img.rgba = rgba;
     }
 
-    return { images: images.filter(i => i.rgba), hLines, vLines, colorChars };
+    return { images: images.filter(i => i.rgba), hLines, vLines, colorChars, fills };
 }
 
 /**
@@ -413,4 +416,33 @@ function collectLines(args, ctm, hLines, vLines, OPS) {
     const [ax, ay] = pt(bbox[0], bbox[1]);
     const [bx, by] = pt(bbox[2], bbox[3]);
     addSeg(ax, ay, bx, by);
+}
+
+/**
+ * 채워진 **면**을 모은다 — 표 셀의 음영이다.
+ *
+ * `collectLines`는 얇은 것만 괘선으로 가져가고 나머지를 버린다. 그런데 그
+ * 버려지는 것들 중에 **셀 배경색**이 있다. 실측하면 23쪽 문서에서 208개가
+ * 버려지고 있었고, 그 탓에 표 머리행이 **흰 글자 + 배경 없음**이 되어
+ * 한글에서 글자가 보이지 않았다(흰 바탕에 흰 글자).
+ *
+ * 흰색은 기본 바탕이라 넣지 않는다 — 넣어 봐야 달라지는 것이 없고
+ * borderFill만 늘어난다.
+ */
+function collectFill(args, ctm, color, out, OPS) {
+    const paintOp = args[0];
+    const bbox = args[2];
+    if (!bbox) return;
+    if (paintOp !== OPS.fill && paintOp !== OPS.eoFill && paintOp !== OPS.fillStroke) return;
+    if (!color || /^#f{6}$/i.test(color)) return;      // 흰 바탕은 의미 없다
+
+    const pt = (x, y) => [ctm[0] * x + ctm[2] * y + ctm[4], ctm[1] * x + ctm[3] * y + ctm[5]];
+    const [ax, ay] = pt(bbox[0], bbox[1]);
+    const [bx, by] = pt(bbox[2], bbox[3]);
+    const x0 = Math.min(ax, bx), x1 = Math.max(ax, bx);
+    const y0 = Math.min(ay, by), y1 = Math.max(ay, by);
+
+    // 얇은 것은 괘선이지 배경이 아니다.
+    if (Math.min(x1 - x0, y1 - y0) <= 2.5) return;
+    out.push({ x0, y0, x1, y1, color });
 }
