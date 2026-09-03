@@ -189,6 +189,8 @@ const KOREAN_BOUND_TOKENS = new Set([
 const STANDALONE_SYLLABLES = new Set([
     '수', '것', '등', '및', '때', '점', '바', '뿐', '자', '그', '이', '저',
     '더', '못', '안', '잘', '곧', '또', '즉', '단', '약', '전', '후', '말',
+    // 관형사 — 뒤 낱말과 반드시 띄어 쓴다(`본 윤리원칙`, `각 기관`).
+    '본', '각', '매', '총', '온', '뭇', '첫',
 ]);
 
 /**
@@ -202,14 +204,30 @@ const HA_DOE_ENDING = new RegExp(
     '^(?:하|되)(?:여|며|고|는|지|기|면|도록|더라도|든지|지만|는데|니까|므로|거나|게끔|려면|였|았|겠)'
     + '|^(?:할|될|한|된|함|됨|했|됐)(?:지|까|수|는|던|으로|으며|고|다|서|야|도|에|를|은)');
 
-function koreanJoinNeedsSpace(prevText, nextText) {
-    const prev = String(prevText).trimEnd();
-    const next = String(nextText).trim();
-
+/**
+ * 줄을 이어 붙일 때 공백이 필요한가 — 언어와 무관한 부분.
+ *
+ * (테스트에서 직접 부를 수 있게 내보낸다. 이 판단은 규칙이 많아
+ *  픽스처만으로는 어떤 규칙이 깨졌는지 짚어내기 어렵다.)
+ *
+ * **문장부호 판정을 한글 판정보다 먼저 해야 한다.** 예전에는 "앞이 한글로 끝날
+ * 때만" 한글 규칙을 태웠는데, 그러면 `보상,`+`일자리의`나 `한다.`+`나아가`가
+ * 라틴 규칙으로 떨어졌다. 라틴 규칙은 뒤가 영문·숫자일 때만 공백을 넣으므로
+ * 한글이 오면 그냥 붙어 버렸다(`한다.나아가`).
+ *
+ * @returns {boolean|null} 확정이면 true/false, 언어별 판단이 필요하면 null
+ */
+export function punctuationJoinRule(prev) {
     // 가운뎃점·붙임표로 끝나면 이어지는 표기다(`공정성·포용성`).
     if (/[·・‧/\-]$/.test(prev)) return false;
     // 다른 문장부호로 끝나면 어절 경계가 확실하다.
-    if (/[.,!?;:)\]}」』”’…]$/.test(prev)) return true;
+    if (/[.,!?;:)\]}」』”’…、。]$/.test(prev)) return true;
+    return null;
+}
+
+export function koreanJoinNeedsSpace(prevText, nextText) {
+    const prev = String(prevText).trimEnd();
+    const next = String(nextText).trim();
 
     // ① 앞 줄이 **홀로 못 쓰는 한 글자**로 끝나면 어절 중간에서 끊긴 것이다.
     //    `…칙을 존` + `중하고` → `존중하고`,  `…추진하기 위` + `하여` → `위하여`.
@@ -773,9 +791,12 @@ function linesToBlocks(pages) {
                 // 근거 없이 고르지 않는다. 라틴 문자로 이어질 때만 공백을 넣는다
                 // (영문은 어절 중간에서 줄을 바꾸지 않으므로 그때는 근거가 있다).
                 // 한글 어절이 붙는 경우가 남는 것은 알려진 한계다.
-                const needsSpace = (HANGUL_END.test(paraBuf.text) && HANGUL_START.test(text))
-                    ? koreanJoinNeedsSpace(paraBuf.text, text)
-                    : /[.!?。」』\p{L}\p{N}]$/u.test(paraBuf.text) && /^[A-Za-z0-9(]/.test(text);
+                const punct = punctuationJoinRule(paraBuf.text.trimEnd());
+                const needsSpace = punct !== null
+                    ? punct
+                    : (HANGUL_END.test(paraBuf.text) && HANGUL_START.test(text))
+                        ? koreanJoinNeedsSpace(paraBuf.text, text)
+                        : /[.!?。」』\p{L}\p{N}]$/u.test(paraBuf.text) && /^[A-Za-z0-9(]/.test(text);
                 paraBuf.text += (needsSpace ? ' ' : '') + text;
                 paraBuf.runs = joinRuns([paraBuf.runs, lineRuns], needsSpace ? ' ' : '');
             } else {
