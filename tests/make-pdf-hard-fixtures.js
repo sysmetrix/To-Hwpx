@@ -145,6 +145,17 @@ const FIXTURES = [
 <tr><td>1단계</td><td>2026.05~06</td></tr>
 <tr><td>2단계</td><td>2026.07~09</td></tr></table>`,
     },
+    {
+        name: 'pdf-shaded.pdf',
+        // 셀 음영. 진한 배경 + 흰 글자 머리행은 배경을 못 가져오면
+        // **흰 바탕에 흰 글자**가 되어 한글에서 아예 안 보인다.
+        html: `<h1>셀 음영 표</h1>
+<table>
+<tr><th style="background:#404040;color:#ffffff">주체</th><th style="background:#404040;color:#ffffff">역할</th></tr>
+<tr><td style="background:#e8f6fd">공급자</td><td>인공지능을 설계·개발·운영한다</td></tr>
+<tr><td style="background:#e8f6fd">이용자</td><td>산출물을 검토하고 활용한다</td></tr>
+</table>`,
+    },
 ];
 
 async function render(page, html, outPath, pdfOptions) {

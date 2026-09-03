@@ -30,7 +30,7 @@
 
 import { styleOf, splitByColor, DEFAULT_COLOR } from './pdf-style.js';
 import { extractGraphics, encodePng } from './pdf-graphics.js';
-import { buildGrids, fillCells, firstRowIsHeader } from './pdf-table.js';
+import { buildGrids, fillCells, firstRowIsHeader, applyCellFills } from './pdf-table.js';
 import { findRunningLines, orderByColumns } from './pdf-layout.js';
 
 // 버전 고정 vendor 경로. PDF 입력이 실제로 들어왔을 때만 지연 로드한다.
@@ -572,6 +572,7 @@ function linesToBlocks(pages) {
         // 제목과 본문 문단까지 표 안에 갇힌다.
         const grids = buildGrids(page.hLines, page.vLines);
         const gridLines = grids.map(g => fillCells(g, lines));
+        for (const g of grids) applyCellFills(g, page.fills);
         const emitted = new Set();
         // 줄 번호 → 그 줄을 삼킨 표 번호
         const lineOwner = new Map();
@@ -593,14 +594,25 @@ function linesToBlocks(pages) {
                         if (styled) cell.runs = styled;
                         if (c.colspan > 1) cell.colSpan = c.colspan;
                         if (c.rowspan > 1) cell.rowSpan = c.rowspan;
+                        if (c.bg) cell.bg = c.bg;
                         return cell;
                     });
                 if (rowCells.length) rows.push(rowCells);
             }
             if (!rows.length) return;
-            blocks.push(firstRowIsHeader(grid)
+            // 열 너비는 **원본 괘선 간격** 그대로 쓴다. 글자 길이로 추정하면
+            // `주체`처럼 짧은 머리글이 든 좁은 열이 넓어져 원본과 달라진다.
+            const colWidths = [];
+            for (let c = 0; c + 1 < grid.xs.length; c++) {
+                colWidths.push(Math.round((grid.xs[c + 1] - grid.xs[c]) * PT_TO_HWP));
+            }
+            const table = firstRowIsHeader(grid)
                 ? { type: 'table', header: rows[0], rows: rows.slice(1) }
-                : { type: 'table', rows });
+                : { type: 'table', rows };
+            if (colWidths.length === grid.nCols && colWidths.every(w => w > 0)) {
+                table.columnWidthsHwp = colWidths;
+            }
+            blocks.push(table);
             audit.counts.tables++;
         };
 
@@ -914,6 +926,7 @@ export async function parsePdf(buffer, options = {}) {
                 images: await toImageBlocks(gfx.images, imageCounter),
                 hLines: gfx.hLines,
                 vLines: gfx.vLines,
+                fills: gfx.fills,
             });
             imageCounter += gfx.images.length;
             page.cleanup();

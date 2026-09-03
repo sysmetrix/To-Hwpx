@@ -267,3 +267,35 @@ export function fillCells(grid, lines) {
     }
     return used;
 }
+
+/**
+ * 채워진 면을 표 셀에 이어 준다 — 셀 음영.
+ *
+ * 셀 하나를 **충분히 덮는** 면만 그 셀의 배경으로 본다. 단순히 셀 중심을
+ * 포함하는 면을 쓰면 쪽 전체를 덮는 큰 도형이 모든 셀의 배경이 되어 버린다.
+ *
+ * 이걸 하지 않으면 흰 글자 머리행이 **배경 없이** 남아 한글에서 글자가
+ * 보이지 않는다(흰 바탕에 흰 글자). 실문서에서 표 20개가 그 상태였다.
+ */
+export function applyCellFills(grid, fills) {
+    if (!fills?.length) return;
+    for (const cell of grid.cells) {
+        const cw = cell.x1 - cell.x0, ch = cell.yTop - cell.yBot;
+        if (cw <= 0 || ch <= 0) continue;
+        const cellArea = cw * ch;
+
+        let best = null, bestCover = 0;
+        for (const f of fills) {
+            const ox = Math.min(cell.x1, f.x1) - Math.max(cell.x0, f.x0);
+            const oy = Math.min(cell.yTop, f.y1) - Math.max(cell.yBot, f.y0);
+            if (ox <= 0 || oy <= 0) continue;
+            const cover = (ox * oy) / cellArea;                 // 셀의 몇 %를 덮나
+            const fillArea = (f.x1 - f.x0) * (f.y1 - f.y0);
+            // 셀보다 훨씬 큰 면은 배경 도형이지 이 셀의 음영이 아니다.
+            if (fillArea > cellArea * 2.5) continue;
+            if (cover > bestCover) { bestCover = cover; best = f; }
+        }
+        // 절반 넘게 덮어야 그 셀의 음영으로 인정한다.
+        if (best && bestCover >= 0.5) cell.bg = best.color.replace(/^#/, '').toUpperCase();
+    }
+}
