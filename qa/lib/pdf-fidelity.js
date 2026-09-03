@@ -36,14 +36,20 @@ function irText(ir) {
     const pushRuns = runs => {
         for (const r of runs || []) if (r && typeof r.text === 'string') out.push(r.text);
     };
+    // ⚠ `text`와 `runs`는 **같은 내용**이다. 둘 다 세면 글자가 두 번 들어가
+    // 보존율이 부풀고 읽기 순서 비교가 통째로 어긋난다(`서문서문`).
+    // 서식이 있으면 runs가 정본이고, 없으면 text가 정본이다.
+    const pushBoth = (text, runs) => {
+        if (runs && runs.length) pushRuns(runs);
+        else if (typeof text === 'string') out.push(text);
+    };
     const walk = blocks => {
         for (const b of blocks || []) {
             if (!b) continue;
-            if (typeof b.text === 'string') out.push(b.text);
-            pushRuns(b.runs);
+            pushBoth(b.text, b.runs);
             for (const item of b.items || []) {
                 if (typeof item === 'string') out.push(item);
-                else if (item) { if (typeof item.text === 'string') out.push(item.text); pushRuns(item.runs); }
+                else if (item) pushBoth(item.text, item.runs);
             }
             // 표는 머리행(header)이 rows와 **별도 배열**이다. 빠뜨리면
             // 파서는 멀쩡한데 측정만 글자를 잃은 것처럼 보인다.
@@ -52,8 +58,7 @@ function irText(ir) {
                 for (const cell of row || []) {
                     if (typeof cell === 'string') out.push(cell);
                     else if (cell) {
-                        if (typeof cell.text === 'string') out.push(cell.text);
-                        pushRuns(cell.runs);
+                        pushBoth(cell.text, cell.runs);
                         walk(cell.blocks);
                     }
                 }
@@ -111,33 +116,67 @@ async function pdfRawText(data) {
 }
 
 /**
- * 문자 보존율.
+ * 두 문자열의 최장 공통 부분수열(LCS) 길이 — **띠(band) 안에서만** 계산한다.
  *
- * 원문 글자를 순서대로 훑으며 결과에서 같은 순서로 찾는다. 단순 집합 비교로는
- * 같은 글자가 여러 번 나올 때 하나만 남아도 100%가 나와 버린다.
+ * 읽기 순서를 재려면 "같은 순서로 얼마나 겹치는가"를 알아야 한다. 예전에는
+ * 앞에서부터 탐욕적으로 같은 글자를 찾았는데, 그러면 **먼 곳의 같은 글자에
+ * 잘못 걸려** 그 뒤가 통째로 어긋난다. 실제로 쪽번호 `1`이 본문 `1.1.`의 `1`에
+ * 걸려 `서문`을 건너뛰었고, 멀쩡한 문서가 순서 2%로 나왔다.
  *
- * @returns {{rate:number, total:number, kept:number, lostSample:string[]}}
+ * 온전한 LCS는 19,000자 × 19,000자면 3억 6천만 칸이라 못 쓴다. 하지만 두 문자열이
+ * 거의 같으므로 정렬은 대각선 근처를 벗어나지 않는다. 그래서 대각선에서 ±W만
+ * 계산한다.
  */
-function charCoverage(rawText, outText) {
-    const src = normalizeForCompare(rawText);
-    const dst = normalizeForCompare(outText);
-    if (!src.length) return { rate: 1, total: 0, kept: 0, lostSample: [] };
+function lcsBanded(a, b, band) {
+    const n = a.length, m = b.length;
+    if (!n || !m) return 0;
+    const W = Math.min(4096, Math.max(256, band ?? (Math.abs(n - m) + 512)));
+    const width = 2 * W + 1;
+    let prev = new Int32Array(width);
+    let cur = new Int32Array(width);
 
-    let di = 0, kept = 0;
-    const lost = [];
-    for (let si = 0; si < src.length; si++) {
-        const ch = src[si];
-        const found = dst.indexOf(ch, di);
-        // 너무 멀리 건너뛰면 "다른 곳의 같은 글자"를 잘못 맞춘 것이다.
-        if (found !== -1 && found - di <= 200) { kept++; di = found + 1; }
-        else if (lost.length < 40) lost.push(`${ch}@${si}`);
+    for (let i = 1; i <= n; i++) {
+        cur.fill(0);
+        const lo = Math.max(1, i - W), hi = Math.min(m, i + W);
+        for (let j = lo; j <= hi; j++) {
+            const k = j - i + W;                       // 띠 안 위치
+            if (a.charCodeAt(i - 1) === b.charCodeAt(j - 1)) {
+                cur[k] = prev[k] + 1;                  // D[i-1][j-1]
+            } else {
+                const up = (k + 1 < width) ? prev[k + 1] : 0;   // D[i-1][j]
+                const left = (k - 1 >= 0) ? cur[k - 1] : 0;     // D[i][j-1]
+                cur[k] = up > left ? up : left;
+            }
+        }
+        const t = prev; prev = cur; cur = t;
     }
-    return {
-        rate: kept / src.length,
-        total: src.length,
-        kept,
-        lostSample: lost,
-    };
+    let best = 0;
+    for (let k = 0; k < width; k++) if (prev[k] > best) best = prev[k];
+    return best;
 }
 
-module.exports = { normalizeForCompare, irText, pdfRawText, charCoverage, loadPdfjsForMeasure };
+/**
+ * 읽기 순서 정확도.
+ *
+ * 원문 글자 중 **원래 순서대로** 결과에 남아 있는 비율이다.
+ * 일부러 뺀 글자(쪽 장식·구조로 바뀐 글머리 기호)는 분모에서 뺀다 —
+ * 빼기로 한 글자는 순서를 따질 대상이 아니다.
+ *
+ * @param {string} rawText PDF 원문
+ * @param {string} outText 변환 결과
+ * @param {string[]} [declaredPieces] 일부러 뺀 것들
+ */
+function orderAccuracy(rawText, outText, declaredPieces = []) {
+    const src = normalizeForCompare(rawText);
+    const dst = normalizeForCompare(outText);
+    if (!src.length) return { rate: 1, lcs: 0, total: 0 };
+
+    let declared = 0;
+    for (const piece of declaredPieces) declared += normalizeForCompare(piece).length;
+
+    const lcs = lcsBanded(src, dst);
+    const total = Math.max(1, src.length - declared);
+    return { rate: Math.min(1, lcs / total), lcs, total };
+}
+
+module.exports = { normalizeForCompare, irText, pdfRawText, orderAccuracy, lcsBanded, loadPdfjsForMeasure };

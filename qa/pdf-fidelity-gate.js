@@ -26,7 +26,7 @@
 
 const fs = require('node:fs');
 const path = require('node:path');
-const { irText, pdfRawText, charCoverage, normalizeForCompare } = require('./lib/pdf-fidelity.js');
+const { irText, pdfRawText, normalizeForCompare, orderAccuracy } = require('./lib/pdf-fidelity.js');
 
 const ROOT = path.resolve(__dirname, '..');
 const FIX = path.join(ROOT, 'tests', 'fixtures');
@@ -216,22 +216,6 @@ const EXPECTATIONS = [
     },
 ];
 
-/**
- * 원문에서 "일부러 뺀 쪽 장식"을 지운 문자열.
- * 순서 비교를 할 때 머리말이 원문에 남아 있으면 본문 순서가 어긋난 것처럼 보인다.
- */
-function stripDeclared(rawText, ir) {
-    let s = normalizeForCompare(rawText);
-    for (const piece of [...(ir.audit?.removedPageFurniture || []),
-        ...(ir.audit?.convertedMarkers || [])]) {
-        const p = normalizeForCompare(piece);
-        if (!p) continue;
-        const at = s.indexOf(p);
-        if (at !== -1) s = s.slice(0, at) + s.slice(at + p.length);
-    }
-    return s;
-}
-
 /** 순서를 무시한 다중집합 비교 — 글자가 사라졌는지만 본다. */
 function multisetLoss(rawText, outText) {
     const count = s => {
@@ -290,8 +274,12 @@ function multisetLoss(rawText, outText) {
         ].join('');
         const chars = multisetLoss(raw, out + declared);
 
-        // 읽기 순서도 같은 기준으로 본다 — 뺀 줄을 원문에서 지우고 비교한다.
-        const order = charCoverage(stripDeclared(raw, ir), out);
+        // 읽기 순서 — 최장 공통 부분수열로 잰다. 탐욕적 비교는 먼 곳의 같은
+        // 글자에 잘못 걸려 멀쩡한 문서를 2%로 만든다.
+        const order = orderAccuracy(raw, out, [
+            ...(ir.audit?.removedPageFurniture || []),
+            ...(ir.audit?.convertedMarkers || []),
+        ]);
 
         const results = [];
         for (const [name, fn] of Object.entries(exp.checks)) {

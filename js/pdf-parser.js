@@ -698,24 +698,11 @@ function linesToBlocks(pages) {
             // 들여쓰기는 **그 줄이 속한 단**의 왼쪽 끝을 기준으로 잰다.
             // 쪽 왼쪽을 기준으로 하면 2단 문서의 오른쪽 단 전체가 목록이 된다.
             const base = Number.isFinite(line.colLeft) ? line.colLeft : leftMargin;
-            const indent = (line.items[0]?.x ?? base) - base;
+            const lineX = line.items[0]?.x ?? base;
+            const indent = lineX - base;
             const isIndented = indent > bodySize * 0.8;
 
-            if (isIndented) {
-                flushPara();
-                // 첫 들여쓰기 단계가 레벨 0이다(문서에서 구한 indentStep 기준).
-                const level = Math.min(2, Math.max(0, Math.round(indent / indentStep) - 1));
-                const last = blocks[blocks.length - 1];
-                const item = { text, level };
-                const itemRuns = runsForBlock(lineRuns);
-                if (itemRuns) item.runs = itemRuns;
-                if (last && last.type === 'list') last.items.push(item);
-                else blocks.push({ type: 'list', items: [item] });
-                audit.counts.listItems++;
-                continue;
-            }
-
-            // ── 문단 (줄 이어붙이기) ──
+            // 이 줄이 앞 줄에서 흐름이 이어지는가(간격·글자 크기·단 기준).
             const prev = lines[i - 1];
             const gap = prev ? (prev.y - line.y) : Infinity;
             const sameStyle = prev ? Math.abs(prev.h - line.h) < 0.6 : false;
@@ -726,6 +713,31 @@ function linesToBlocks(pages) {
             const continues = paraBuf && sameStyle && sameColumn
                 && gap > 0 && gap <= line.h * 1.9 && !inTable.has(i - 1);
 
+            // ── 매달린 들여쓰기는 새 항목이 아니라 **이어지는 줄**이다 ──
+            // 목록 항목이 줄을 넘기면 둘째 줄은 기호 너비만큼 더 들여쓴다.
+            //   `⚫ AI 행위자는 … 방향으로`   ← x=57.6
+            //   `   개발 및 활용한다.`        ← x=73.0
+            // 들여쓰기만 보고 새 항목으로 만들면 한 항목이 두 개로 쪼개진다.
+            // 항목 첫 줄보다 **더** 들여쓴 줄은 이어지는 줄로 본다.
+            const hangingCont = continues && Number.isFinite(paraBuf.startX)
+                && lineX > paraBuf.startX + bodySize * 0.3;
+
+            if (isIndented && !hangingCont) {
+                flushPara();
+                // 첫 들여쓰기 단계가 레벨 0이다(문서에서 구한 indentStep 기준).
+                // 목록 항목도 버퍼에 담는다 — 다음 줄이 이어질 수 있어야 한다.
+                paraBuf = {
+                    text,
+                    runs: lineRuns,
+                    bullet: true,
+                    level: Math.min(2, Math.max(0, Math.round(indent / indentStep) - 1)),
+                    colLeft: line.colLeft,
+                    startX: lineX,
+                };
+                continue;
+            }
+
+            // ── 문단 (줄 이어붙이기) ──
             // 글머리 기호로 시작하는 줄은 **언제나 새 항목**이다. 이어 붙이면
             // 여러 항목이 한 문단으로 뭉친다(`…않다.· 하나의 개인이나…`).
             const bulletMatch = LEADING_BULLET.exec(text);
@@ -740,6 +752,7 @@ function linesToBlocks(pages) {
                     bullet: bulletMatch[1],
                     level: Math.min(2, Math.max(0, Math.round(indent / indentStep))),
                     colLeft: line.colLeft,
+                    startX: lineX,
                 };
                 continue;
             }
@@ -767,7 +780,7 @@ function linesToBlocks(pages) {
                 paraBuf.runs = joinRuns([paraBuf.runs, lineRuns], needsSpace ? ' ' : '');
             } else {
                 flushPara();
-                paraBuf = { text, runs: lineRuns, colLeft: line.colLeft };
+                paraBuf = { text, runs: lineRuns, colLeft: line.colLeft, startX: lineX };
             }
         }
         flushPara();
