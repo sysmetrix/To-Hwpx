@@ -901,3 +901,16 @@ v4.12.1 출시 승인 판정:
 - [x] 병렬 완료 순서와 무관하게 IR 블록과 `image1.png`~`image4.png`가 원문 순서 유지
 - [x] `npm run test:golden`에 위 세 경쟁/성능 회귀 포함
 - [ ] 실제 원격 이미지 Markdown을 변환해 한컴에서 그림 순서와 표시 확인
+
+## 43. 오프라인 앱 셸과 배포 게이트 정합화
+
+실측 원인: warm service worker 뒤 네트워크를 끊고 새로고침하면 `logo-mark.svg`, `core/runtime.js`, `gov-doc.js`, `docx-audit.js` 요청이 실패하고 `window.__appReady=false`였다. Pages 워크플로는 package gate를 순차/병렬로 두 번 실행하면서 로컬 `test:release`의 impact·DOCX·reverse·core·roundtrip·PDF·공문·CLI·MCP 등은 빠뜨렸다. 대표 5개 package gate는 브라우저를 5번 순차 시작해 로컬에서 약 10.2초가 걸렸다.
+
+승인 기준:
+
+- [x] 서비스워커가 정적 import 폐쇄, 동적 PDF/역방향/roadmap 모듈, 로고, XLSX Worker/vendor를 원자적으로 캐시
+- [x] warm cache → offline reload에서 `__appReady=true`, 로고 로드, XLSX 변환·다운로드 성공
+- [x] Pages `release-gates`는 `npm run test:release`, `browser-compatibility`는 3브라우저 smoke를 병렬 실행하고 둘 다 성공해야 deploy
+- [x] Pages의 중복 package gate 제거
+- [x] `test:package`는 최대 2개 입력을 병렬 실행해 5개 입력 모두 통과, 로컬 실측 10.2초 → 6.0초
+- [ ] PR 머지 후 두 CI job과 Pages deploy 성공, 운영 production smoke 통과

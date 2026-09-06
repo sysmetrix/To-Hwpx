@@ -118,8 +118,10 @@ assert(vercelIgnore.includes('fonts/KoPubWorldDotum-Medium.ttf') && vercelIgnore
     '미검증 글꼴/개발 산출물 Vercel 배포 제외 누락');
 assert(vercelIgnore.includes('THIRD_PARTY_NOTICES.md'), 'Markdown 고지 파일의 운영 직접 노출 제외 누락');
 const workflow = read('.github/workflows/pages.yml');
-assert(workflow.includes('npm run test:commercial') && workflow.includes('privacy.html') && workflow.includes('notices.html')
-    && !workflow.includes('cp -R js fonts icons'), 'Pages 상용 게이트/선별 배포 누락');
+assert(workflow.includes('npm run test:release') && workflow.includes('npm run test:browsers')
+    && workflow.includes('needs: [release-gates, browser-compatibility]')
+    && workflow.includes('privacy.html') && workflow.includes('notices.html')
+    && !workflow.includes('cp -R js fonts icons'), 'Pages 전체 릴리스/브라우저 게이트 또는 선별 배포 누락');
 assert(!/uses:\s+[^\s]+@(v\d+|main|master)\b/.test(workflow), 'GitHub Action이 커밋 SHA로 고정되지 않음');
 assert(read('.github/workflows/production-smoke.yml').includes('*/15 * * * *')
     && read('OPERATIONS.md').includes('10분 이내'), '15분 감시 또는 10분 롤백 기준 누락');

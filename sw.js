@@ -11,7 +11,7 @@
 
 'use strict';
 
-const CACHE_VERSION = 'to-hwpx-v4.19.1';
+const CACHE_VERSION = 'to-hwpx-v4.19.2';
 
 // 설치 시 미리 캐시할 파일 목록 (앱 셸)
 // [주의] 절대경로(/)가 아닌 상대경로(./)를 사용해야 함.
@@ -29,15 +29,34 @@ const APP_SHELL = [
     './js/vendor/xlsx-0.20.3.full.min.js',
     './js/vendor/rhwp-core-0.8.4/rhwp.js',
     './js/vendor/rhwp-core-0.8.4/rhwp_bg.wasm',
+    './js/vendor/pdfjs-6.3.289/pdf.min.mjs',
+    './js/vendor/pdfjs-6.3.289/pdf.worker.min.mjs',
+    './js/vendor/pdfjs-6.3.289/cmaps/Adobe-Korea1-UCS2.bcmap',
+    './js/vendor/pdfjs-6.3.289/cmaps/UniKS-UCS2-H.bcmap',
+    './js/vendor/pdfjs-6.3.289/cmaps/UniKS-UCS2-V.bcmap',
+    './js/core/runtime.js',
+    './js/docx-audit.js',
+    './js/gov-doc.js',
     './js/parsers.js',
     './js/hwpx.js',
     './js/app.js',
+    './js/pdf-parser.js',
+    './js/pdf-style.js',
+    './js/pdf-graphics.js',
+    './js/pdf-table.js',
+    './js/pdf-layout.js',
+    './js/reverse-export.js',
+    './js/roadmap-panel.js',
     './manifest.json',
+    './roadmap.json',
+    './changelog.json',
     './icons/app-icon.svg',
     './icons/app-icon-192.png',
     './icons/app-icon-512.png',
     './icons/chrome-install.svg',
     './icons/edge-install.svg',
+    './icons/logo-mark.svg',
+    './icons/og-image.png',
     './icons/brand/markdown.svg',
     './icons/brand/microsoftword.svg',
     './icons/brand/html5.svg',
@@ -51,7 +70,6 @@ const APP_SHELL = [
     './terms.html',
     './notices.html',
     './legal.css',
-    // changelog.json(≈170KB)은 모달 열 때 fetch로 온디맨드 로드 → 선점 캐시 불필요
 ];
 
 const CACHEABLE_URLS = new Set(APP_SHELL.map(url => new URL(url, self.location.href).href));
@@ -62,15 +80,12 @@ function isCacheableRequest(request) {
 }
 
 // ── 설치 이벤트: 앱 셸을 캐시에 미리 저장 ────────────────────────
-// Promise.allSettled: 개별 파일 실패가 전체 SW 설치를 중단시키지 않음.
+// 앱 셸 하나라도 빠지면 오프라인 준비가 끝난 것이 아니다. 부분 캐시로 활성화해
+// 나중에 import 실패를 내지 말고 설치 자체를 실패시켜 이전 정상 SW를 유지한다.
 self.addEventListener('install', event => {
     event.waitUntil(
         caches.open(CACHE_VERSION)
-            .then(cache => Promise.allSettled(
-                APP_SHELL.map(url => cache.add(url).catch(err =>
-                    console.warn('[SW] cache.add 실패:', url, err)
-                ))
-            ))
+            .then(cache => cache.addAll(APP_SHELL))
             .then(() => self.skipWaiting())
     );
 });

@@ -1,6 +1,21 @@
 {
-  "current": "4.19.1",
+  "current": "4.19.2",
   "versions": [
+    {
+      "version": "4.19.2",
+      "date": "2026-09-07",
+      "user": [
+        "한 번 접속한 뒤 인터넷이 끊겨도 앱을 다시 열고 XLSX를 HWPX로 변환할 수 있도록 오프라인 캐시를 고쳤습니다.",
+        "배포 전에 로컬과 같은 전체 회귀 검사와 Chromium·Firefox·WebKit 호환성 검사를 모두 통과하도록 배포 절차를 강화했습니다."
+      ],
+      "dev": [
+        "SW APP_SHELL에 누락된 core/runtime.js, gov-doc.js, docx-audit.js, logo-mark.svg와 동적 PDF/reverse/roadmap 모듈 및 XLSX Worker 의존성을 추가했다.",
+        "Promise.allSettled 부분 캐시를 cache.addAll 원자 설치로 바꿔 누락된 새 캐시 대신 이전 정상 SW를 유지한다.",
+        "golden에 warm cache → offline reload → __appReady/로고/XLSX 변환·다운로드 E2E를 추가했다. 수정 전 requestfailed 4건과 __appReady=false, 수정 후 전부 통과했다.",
+        "Pages workflow를 release-gates(test:release)와 browser-compatibility(test:browsers) 병렬 job 및 양쪽 성공 후 deploy 구조로 바꾸고 중복 package 실행을 제거했다.",
+        "test:package를 concurrency=2 오케스트레이터로 바꿔 대표 5개 입력 검증을 10.2초에서 6.0초로 줄였다."
+      ]
+    },
     {
       "version": "4.19.1",
       "date": "2026-09-07",

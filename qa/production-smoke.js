@@ -32,7 +32,10 @@ async function checkSite(base, { headers = false, legacyNoticeRedirect = false }
             if (!response.headers.get(key)) throw new Error(`${base} 보안 헤더 누락: ${key}`);
         }
     }
-    for (const path of ['privacy.html', 'terms.html', 'notices.html', 'sw.js', 'fonts/InterVariable.woff2']) {
+    for (const path of [
+        'privacy.html', 'terms.html', 'notices.html', 'sw.js', 'fonts/InterVariable.woff2',
+        'js/core/runtime.js', 'js/docx-audit.js', 'js/gov-doc.js', 'js/xlsx-worker.js', 'icons/logo-mark.svg',
+    ]) {
         const asset = await get(new URL(path, base));
         if (!asset.ok) throw new Error(`${base}${path} HTTP ${asset.status}`);
     }

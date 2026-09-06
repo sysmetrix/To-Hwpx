@@ -1312,6 +1312,34 @@ async function validateCommercialUx(page) {
   console.log('PASS UX    keyboard, modal, warning download, PWA scope');
 }
 
+async function validateOfflineAppShell(page, context) {
+  const baseUrl = `http://127.0.0.1:${PORT}/index.html`;
+  await page.goto(baseUrl, { waitUntil: 'load' });
+  await page.evaluate(async () => { await navigator.serviceWorker.ready; });
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => !!navigator.serviceWorker.controller && window.__appReady, null, { timeout: 30000 });
+
+  await context.setOffline(true);
+  try {
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.waitForFunction(() => window.__appReady, null, { timeout: 30000 });
+    const shell = await page.evaluate(() => ({
+      controlled: !!navigator.serviceWorker.controller,
+      logoReady: !!document.querySelector('img[src="icons/logo-mark.svg"]')?.complete,
+    }));
+    assert(shell.controlled && shell.logoReady, 'offline: 앱 셸 또는 로고가 캐시에서 복원되지 않음');
+
+    const download = page.waitForEvent('download', { timeout: 30000 });
+    await page.setInputFiles('#file-input', path.join(FIXTURES, 'sample.xlsx'));
+    await page.locator('#convert-btn').click();
+    await download;
+    assert(await page.locator('#result-area').isVisible(), 'offline: 캐시된 XLSX Worker 변환 실패');
+  } finally {
+    await context.setOffline(false);
+  }
+  console.log('PASS PWA   warm-cache offline reload + XLSX conversion');
+}
+
 async function validateRejectedInputs(page) {
   const baseUrl = `http://127.0.0.1:${PORT}/index.html`;
   const cases = [
@@ -2149,6 +2177,7 @@ async function validateFolderDrop(page) {
     await validateDirectInput(page);
     await validateXssHardening(page);
     await validateCommercialUx(page);
+    await validateOfflineAppShell(page, context);
     await validateRejectedInputs(page);
     await validateAsyncAnalysisCoordination(page);
     await validateBatchKanban(page);
