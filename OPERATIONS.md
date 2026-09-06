@@ -1,6 +1,6 @@
 # To HWPX 운영 기준
 
-최종 갱신: 2026-07-12
+최종 갱신: 2026-09-07
 
 ## 서비스 등급과 목표
 
@@ -13,6 +13,10 @@
 - 롤백 목표: 결정 후 10분 이내
 
 GitHub Actions의 `운영 서비스 감시`가 15분마다 두 주소의 응답, 배포 버전, Vercel 보안 헤더, 핵심 vendor 해시를 확인한다. 실패 알림 수신자는 저장소 Watch 설정에서 Actions 알림을 활성화한다.
+
+Pages 배포는 `release-gates`와 `browser-compatibility`를 병렬 실행하고 둘이 모두 성공해야 `deploy`가 시작된다. 전자는 로컬과 같은 `npm run test:release`, 후자는 Chromium·Firefox·WebKit smoke를 실행한다. 개별 게이트를 워크플로에 다시 나열하거나 package gate를 중복 실행하지 않는다.
+
+서비스워커는 필수 앱 셸을 `cache.addAll()`로 원자적으로 설치한다. 일부 파일만 저장된 채 새 버전이 활성화되면 오프라인에서 ES module import가 조용히 끊기므로, 하나라도 실패하면 이전 정상 서비스워커를 유지한다.
 
 ## 릴리스 승인
 
