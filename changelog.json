@@ -1,6 +1,16 @@
 {
-  "current": "4.19.2",
+  "current": "4.19.3",
   "versions": [
+    {
+      "version": "4.19.3",
+      "date": "2026-09-07",
+      "user": [
+        "브라우저 호환성 검사에서 지연 로드된 XLSX Worker 구조를 정확히 확인하도록 개선했습니다."
+      ],
+      "dev": [
+        "browser-readiness가 더 이상 존재하지 않는 XLSX 전역을 요구하지 않고 JSZip·Worker·xlsx-worker.js 자산을 검증합니다."
+      ]
+    },
     {
       "version": "4.19.2",
       "date": "2026-09-07",
