@@ -48,8 +48,14 @@ async function smokeBrowser(browserType, name, baseUrl) {
         const page = await context.newPage();
         await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
         await page.waitForFunction(() => window.__appReady && window.JSZip && window.marked, null, { timeout: 30000 });
-        const versions = await page.evaluate(() => ({ xlsx: XLSX.version, jszip: JSZip.version }));
-        if (versions.xlsx !== '0.20.3' || versions.jszip !== '3.10.1') throw new Error(`${name}: vendor 버전 불일치`);
+        const runtime = await page.evaluate(async () => ({
+            jszip: JSZip.version,
+            worker: typeof Worker,
+            xlsxWorker: (await fetch('js/xlsx-worker.js', { cache: 'no-store' })).ok,
+        }));
+        if (runtime.jszip !== '3.10.1' || runtime.worker !== 'function' || !runtime.xlsxWorker) {
+            throw new Error(`${name}: runtime vendor/worker asset 불일치`);
+        }
         await page.setInputFiles('#file-input', {
             name: 'browser-smoke.md', mimeType: 'text/markdown',
             buffer: Buffer.from('# 브라우저 변환 점검\n\n본문 **굵게**와 [링크](https://example.com).'),
