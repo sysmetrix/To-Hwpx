@@ -245,7 +245,7 @@ function replaceEmoji(s) {
  * @param {number} contentWidthHwp 본문 폭(HWPUNIT) — 초과 시 비율 유지 축소
  */
 function buildImageRun(imgBlock, imgIndex, contentWidthHwp = 48000, options = {}) {
-    const pid = _nextParaId();
+    const pid = nextParaId(options.renderContext);
     let w = imgBlock.widthHwp  || 40000;
     let h = imgBlock.heightHwp || 30000;
     const imageOptions = normalizeImageOptions(options);
@@ -761,24 +761,29 @@ ${(docHeaderFooter.header || docHeaderFooter.footer)
 // ─────────────────────────────────────────────────────────────────────────
 
 /**
- * 전역 문단 ID 카운터
+ * 문서별 렌더 상태. buildSection()은 중간에 이벤트 루프를 양보하므로 이 값들을
+ * 모듈 전역에 두면 동시에 시작한 다른 문서가 카운터와 글자 크기를 덮어쓴다.
  * rhwp 기준: <hp:p id>는 섹션 전체에서 0부터 순번 부여
  * (한컴 OWPML 스펙: PARA_HEADER instance_id 매핑)
  */
-let _paraIdCounter = 0;
-function _nextParaId() { return _paraIdCounter++; }
-function _resetParaId() { _paraIdCounter = 0; }
-
-let _footnoteIdCounter = 1;
-function _nextFootnoteId() { return _footnoteIdCounter++; }
-function _resetFootnoteId() { _footnoteIdCounter = 1; }
-
-let _hyperlinkIdCounter = 1700000000;
-function _nextHyperlinkIds() {
-    const id = String(_hyperlinkIdCounter++);
-    return { id, fieldId: String(_hyperlinkIdCounter++) };
+function createRenderContext(baseHeightHwp) {
+    return {
+        paraId: 0,
+        footnoteId: 1,
+        hyperlinkId: 1700000000,
+        baseHeightHwp,
+        headingOverrides: new WeakMap(),
+    };
 }
-function _resetHyperlinkIds() { _hyperlinkIdCounter = 1700000000; }
+function nextParaId(context) { return context.paraId++; }
+function nextFootnoteId(context) { return context.footnoteId++; }
+function nextHyperlinkIds(context) {
+    const id = String(context.hyperlinkId++);
+    return { id, fieldId: String(context.hyperlinkId++) };
+}
+function headingOverride(block, context) {
+    return context.headingOverrides.get(block) || null;
+}
 
 /**
  * 단락(hp:p) XML 생성
@@ -812,9 +817,9 @@ function splitEmojiRuns(value, charId, emojiId) {
         .join('');
 }
 
-function buildPara(text, charId = '0', paraId = '0') {
+function buildPara(text, charId = '0', paraId = '0', context) {
     const safe = textToHwpContent(text);
-    const pid  = _nextParaId();
+    const pid  = nextParaId(context);
     return `<hp:p id="${pid}" paraPrIDRef="${paraId}" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0">` +
         `<hp:run charPrIDRef="${charId}"><hp:t>${safe}</hp:t></hp:run></hp:p>`;
 }
@@ -823,10 +828,6 @@ function buildPara(text, charId = '0', paraId = '0') {
  * run이 기본 charPr(0/6~9)로 표현 불가한 확장 서식(밑줄/취소선/유효한 글자색)을
  * 가지는지 판정. 동적 charPr(customCharMap) 대상 여부를 결정한다.
  */
-// 본문 기준 글자 크기(HWPUNIT). buildHwpx가 실제 값으로 채운다.
-// run이 이 크기와 다른 크기를 요구할 때만 동적 charPr을 만든다.
-let _runBaseHeightHwp = 1100;
-
 /** run이 요구하는 글자 높이(HWPUNIT). 명시 height > DOCX w:sz(sizePt) > 본문 기준 */
 function runHeightHwp(run) {
     if (run.height) return Number(run.height);
@@ -834,18 +835,18 @@ function runHeightHwp(run) {
     return 0;
 }
 
-function runNeedsExtChar(run) {
+function runNeedsExtChar(run, context) {
     const color = run.href && !run.color ? '#0563C1' : run.color;
     const hasColor = color && /^#[0-9A-Fa-f]{6}$/.test(color) && color.toUpperCase() !== '#000000';
     const hasHighlight = run.highlight && /^#[0-9A-Fa-f]{6}$/.test(run.highlight);
     const h = runHeightHwp(run);
-    const hasSize = h > 0 && h !== _runBaseHeightHwp;
+    const hasSize = h > 0 && h !== context.baseHeightHwp;
     return !!(run.emoji || run.href || run.underline || run.strike || hasColor || hasHighlight || hasSize);
 }
 
 /** 확장 charPr 시그니처 키: "bold italic underline strike | #RRGGBB | height"
  *  height 비움 = 본문 크기. 제목 색 보존 시 제목 크기(HWPUNIT)를 함께 넣어 구분한다. */
-function extCharKey(run) {
+function extCharKey(run, context) {
     const rawColor = run.href && !run.color ? '#0563C1' : run.color;
     const color = (rawColor && /^#[0-9A-Fa-f]{6}$/.test(rawColor)) ? rawColor.toUpperCase() : '#000000';
     const highlight = (run.highlight && /^#[0-9A-Fa-f]{6}$/.test(run.highlight))
@@ -853,7 +854,7 @@ function extCharKey(run) {
         : '';
     const underline = run.href || run.underline;
     const h = runHeightHwp(run);
-    const height = h && h !== _runBaseHeightHwp ? h : '';
+    const height = h && h !== context.baseHeightHwp ? h : '';
     return `${run.bold ? 1 : 0}${run.italic ? 1 : 0}${underline ? 1 : 0}${run.strike ? 1 : 0}|${color}|${height}|${highlight}|${run.emoji ? 'E' : ''}`;
 }
 
@@ -899,13 +900,14 @@ function buildHyperlinkEnd(ids) {
  * run.footnote 가 있는 경우 각주 컨트롤(hp:ctrl) 을 삽입한다.
  */
 function buildParaRuns(runs, paraId = '0', customCharMap = new Map(), options = {}) {
-    const pid = _nextParaId();
+    const context = options.renderContext;
+    const pid = nextParaId(context);
     const linkStyle = normalizeLinkStyle(options.linkStyle);
     let runsXml = '';
     let ctrlsXml = '';   // 각주 컨트롤은 run 뒤에 배치
     for (const run of (runs || [])) {
         if (run.footnote) {
-            ctrlsXml += buildFootnoteCtrl(run.footnote);
+            ctrlsXml += buildFootnoteCtrl(run.footnote, context);
             continue;
         }
         if (!run.text) continue;
@@ -921,9 +923,9 @@ function buildParaRuns(runs, paraId = '0', customCharMap = new Map(), options = 
             if (run.bold && run.italic) cId = '9';
             else if (run.bold) cId = '7';
             else if (run.italic) cId = '8';
-        } else if (runNeedsExtChar(run) && customCharMap.has(extCharKey(run))) {
+        } else if (runNeedsExtChar(run, context) && customCharMap.has(extCharKey(run, context))) {
             // 동적 확장 charPr (밑줄/취소선/색). 미스 시 아래 bold/italic 폴백으로 안전 처리
-            cId = String(customCharMap.get(extCharKey(run)));
+            cId = String(customCharMap.get(extCharKey(run, context)));
         } else if (run.bold && run.italic) {
             cId = '9';
         } else if (run.bold) {
@@ -933,13 +935,13 @@ function buildParaRuns(runs, paraId = '0', customCharMap = new Map(), options = 
         }
         // 이모지는 본문 글꼴에 글리프가 없어 두부가 된다. 같은 서식의 이모지 전용
         // charPr(이모지 폰트 참조)이 등록돼 있으면 그 구간만 별도 run으로 떼어낸다.
-        const emojiKey = extCharKey({ ...run, emoji: true });
+        const emojiKey = extCharKey({ ...run, emoji: true }, context);
         const emojiId = customCharMap.has(emojiKey) ? String(customCharMap.get(emojiKey)) : null;
         const body = emojiId && hasEmoji(visibleText)
             ? splitEmojiRuns(visibleText, cId, emojiId)
             : `<hp:run charPrIDRef="${cId}"><hp:t>${safe}</hp:t></hp:run>`;
         if (href) {
-            const ids = _nextHyperlinkIds();
+            const ids = nextHyperlinkIds(context);
             runsXml += buildHyperlinkBegin(href, ids);
             runsXml += body;
             runsXml += buildHyperlinkEnd(ids);
@@ -947,7 +949,7 @@ function buildParaRuns(runs, paraId = '0', customCharMap = new Map(), options = 
             runsXml += body;
         }
     }
-    if (!runsXml && !ctrlsXml) return buildBlankPara();
+    if (!runsXml && !ctrlsXml) return buildBlankPara('0', context);
     return `<hp:p id="${pid}" paraPrIDRef="${paraId}" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0">${runsXml}${ctrlsXml}</hp:p>`;
 }
 
@@ -955,27 +957,27 @@ function buildParaRuns(runs, paraId = '0', customCharMap = new Map(), options = 
  * 빈 단락 (빈 줄 간격 표현용) — paraPr id=9(여백 없음) 사용
  * 본문 paraPr(id=0)의 next=850 여백이 중복 적용되지 않도록 별도 스타일 사용
  */
-function buildBlankPara(charId = '0') {
-    const pid = _nextParaId();
+function buildBlankPara(charId = '0', context) {
+    const pid = nextParaId(context);
     return `<hp:p id="${pid}" paraPrIDRef="9" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0">` +
         `<hp:run charPrIDRef="${charId}"><hp:t> </hp:t></hp:run></hp:p>`;
 }
 
-function buildCodePara(text, paraId = '14', charId = '6') {
-    const pid = _nextParaId();
+function buildCodePara(text, paraId = '14', charId = '6', context) {
+    const pid = nextParaId(context);
     const raw = String(text ?? '');
     const safe = xmlEsc(raw === '' ? ' ' : raw);
     return `<hp:p id="${pid}" paraPrIDRef="${paraId}" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0">` +
         `<hp:run charPrIDRef="${charId}"><hp:t xml:space="preserve">${safe}</hp:t></hp:run></hp:p>`;
 }
 
-function buildCodeBlock(block, prefix = '', contentWidthHwp = 48000) {
+function buildCodeBlock(block, prefix = '', contentWidthHwp = 48000, context) {
     const text = String(block.text ?? '');
     const lines = text === '' ? [''] : text.split('\n');
     const tableWidth = Math.min(45000, Math.max(12000, contentWidthHwp));
     const rowHeight = Math.max(1500, 720 + (lines.length * 520));
-    const pid = _nextParaId();
-    const codeParas = lines.map(line => buildCodePara(prefix + line, '14', '6')).join('');
+    const pid = nextParaId(context);
+    const codeParas = lines.map(line => buildCodePara(prefix + line, '14', '6', context)).join('');
     return `<hp:p id="${pid}" paraPrIDRef="0" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0"><hp:run charPrIDRef="0">` +
         `<hp:tbl id="0" zOrder="0" numberingType="TABLE" textWrap="TOP_AND_BOTTOM" ` +
         `textFlow="BOTH_SIDES" lock="0" dropcapstyle="None" pageBreak="CELL" ` +
@@ -1038,9 +1040,9 @@ function validateCodeAudit(ir) {
 }
 
 /** 구분선(HR) — treatAsChar=1 표 객체로 생성해 한글에서 선택/삭제하기 쉽게 한다. */
-function buildHrPara(contentWidthHwp = 48000) {
-    const pid = _nextParaId();
-    const cellPara = buildBlankPara();
+function buildHrPara(contentWidthHwp = 48000, context) {
+    const pid = nextParaId(context);
+    const cellPara = buildBlankPara('0', context);
     return `<hp:p id="${pid}" paraPrIDRef="9" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0"><hp:run charPrIDRef="0">` +
         `<hp:tbl id="0" zOrder="0" numberingType="TABLE" textWrap="TOP_AND_BOTTOM" ` +
         `textFlow="BOTH_SIDES" lock="0" dropcapstyle="None" pageBreak="ROW" ` +
@@ -1081,8 +1083,8 @@ function removeHrSpacerBlanks(blocks) {
  *   annual: 상단 #126E3A / 하단 좌 #724598(129.93mm)·우 #FFD900(39.93mm)        (2열)
  * @param {string} style  'basic' | 'unit' | 'annual'
  */
-function buildCoverTable(style, titleText, contentWidthHwp = 48000) {
-    const pid   = _nextParaId();
+function buildCoverTable(style, titleText, contentWidthHwp = 48000, context) {
+    const pid   = nextParaId(context);
     // 총높이 22.96mm 통일. 색띠 높이는 style별(단위 1.91 / 그 외 1.35), 이름칸 8.22mm,
     // 중간 제목칸은 나머지(= 22.96 - 색띠×2 - 8.22)로 역산.
     const bandMm = style === 'unit' ? 1.91 : 1.35;
@@ -1100,9 +1102,9 @@ function buildCoverTable(style, titleText, contentWidthHwp = 48000) {
         `</hp:subList><hp:cellAddr colAddr="${colAddr}" rowAddr="${rowAddr}"/><hp:cellSpan colSpan="${colSpan}" rowSpan="1"/>` +
         `<hp:cellSz width="${w}" height="${h}"/><hp:cellMargin left="280" right="280" top="0" bottom="0"/></hp:tc>`;
 
-    const band = () => buildBlankPara('12');                                       // 1pt 빈줄(띠 높이 최소화)
-    const titlePara = titleText ? buildPara(titleText, '1', '7') : buildBlankPara();// H1 가운데
-    const nameContent = buildPara('[팀명 / 이름]', '7', '13');                     // 모든 스타일 공통, 굵게 우측
+    const band = () => buildBlankPara('12', context);                                       // 1pt 빈줄(띠 높이 최소화)
+    const titlePara = titleText ? buildPara(titleText, '1', '7', context) : buildBlankPara('0', context);// H1 가운데
+    const nameContent = buildPara('[팀명 / 이름]', '7', '13', context);                     // 모든 스타일 공통, 굵게 우측
     const nameBf = '17';                                                           // 하단 점선(0.12mm)
 
     let colCnt, W, rows;
@@ -1143,9 +1145,9 @@ function buildCoverTable(style, titleText, contentWidthHwp = 48000) {
  * 각주(footnote) 컨트롤 XML 생성
  * HWPX의 hp:ctrl type="FOOTNOTE" 구조를 사용한다.
  */
-function buildFootnoteCtrl(footnoteText) {
-    const fnId = _nextFootnoteId();
-    const pid  = _nextParaId();
+function buildFootnoteCtrl(footnoteText, context) {
+    const fnId = nextFootnoteId(context);
+    const pid  = nextParaId(context);
     return `<hp:ctrl ctrlID="${fnId}" type="FOOTNOTE">` +
         `<hp:fnote id="${fnId}" autoNum="1">` +
         `<hp:p id="${pid}" paraPrIDRef="0" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0">` +
@@ -1303,6 +1305,7 @@ function scaleColumnWidths(sourceWidths, nCols, tableWidth) {
 
 function buildCellBlockContent(blocks, fallback, context) {
     const { isHd, color, cId, paraId, cellContentWidth, customBfMap, customCharMap, options, imageBlocks } = context;
+    const renderContext = options.renderContext;
     if (!blocks.length) {
         const inlineRuns = cellRuns(fallback);
         if (inlineRuns) {
@@ -1315,7 +1318,7 @@ function buildCellBlockContent(blocks, fallback, context) {
                 title: undefined,
             })), paraId, customCharMap, options);
         }
-        return buildPara(cellText(fallback), cId, paraId);
+        return buildPara(cellText(fallback), cId, paraId, renderContext);
     }
 
     const parts = [];
@@ -1336,17 +1339,18 @@ function buildCellBlockContent(blocks, fallback, context) {
                         title: undefined,
                     })), blockParaId, customCharMap, options));
                 } else if (block.text) {
-                    parts.push(buildPara(block.text, cId, blockParaId));
+                    parts.push(buildPara(block.text, cId, blockParaId, renderContext));
                 } else {
-                    parts.push(buildBlankPara());
+                    parts.push(buildBlankPara('0', renderContext));
                 }
             } else if (type === 'heading') {
                 const { charId } = headingIds(block.level);
-                parts.push(block._runs
-                    ? buildParaRuns(block._runs, blockParaId, customCharMap, options)
-                    : buildPara(block.text || '', block._cId || charId, blockParaId));
+                const override = headingOverride(block, renderContext);
+                parts.push(override?.runs
+                    ? buildParaRuns(override.runs, blockParaId, customCharMap, options)
+                    : buildPara(block.text || '', override?.charId || charId, blockParaId, renderContext));
             } else if (type === 'blank') {
-                parts.push(buildBlankPara());
+                parts.push(buildBlankPara('0', renderContext));
             } else if (type === 'list') {
                 let autoNum = 0;
                 for (const rawItem of (block.items || [])) {
@@ -1356,11 +1360,11 @@ function buildCellBlockContent(blocks, fallback, context) {
                     if (item.runs?.length) {
                         parts.push(buildParaRuns([{ text: marker }, ...item.runs], blockParaId, customCharMap, options));
                     } else {
-                        parts.push(buildPara(marker + (item.text || ''), cId, blockParaId));
+                        parts.push(buildPara(marker + (item.text || ''), cId, blockParaId, renderContext));
                     }
                 }
             } else if (type === 'code') {
-                parts.push(buildCodeBlock(block, '', cellContentWidth));
+                parts.push(buildCodeBlock(block, '', cellContentWidth, renderContext));
             } else if (type === 'table') {
                 parts.push(buildTable(block.header, block.rows, cellContentWidth, customBfMap, customCharMap, {
                     ...options,
@@ -1373,19 +1377,20 @@ function buildCellBlockContent(blocks, fallback, context) {
             } else if (type === 'quote') {
                 appendBlocks(block.blocks || [], true);
             } else if (type === 'hr') {
-                parts.push(options.showHorizontalRules ? buildHrPara(cellContentWidth) : buildBlankPara());
+                parts.push(options.showHorizontalRules ? buildHrPara(cellContentWidth, renderContext) : buildBlankPara('0', renderContext));
             } else if (block?.text) {
-                parts.push(buildPara(block.text, cId, blockParaId));
+                parts.push(buildPara(block.text, cId, blockParaId, renderContext));
             }
         }
     };
     appendBlocks(blocks);
-    return parts.length ? parts.join('') : buildBlankPara();
+    return parts.length ? parts.join('') : buildBlankPara('0', renderContext);
 }
 
 function buildTable(header, rows, contentWidthHwp = 48000, customBfMap = new Map(), customCharMap = new Map(), options = {}) {
+    const context = options.renderContext;
     const allRows = (header && header.length ? [header] : []).concat(rows || []);
-    if (!allRows.length) return buildBlankPara();
+    if (!allRows.length) return buildBlankPara('0', context);
     const tableStyle = normalizeTableStyle(options.tableStyle);
     const tableBlock = options.tableBlock || {};
 
@@ -1404,7 +1409,7 @@ function buildTable(header, rows, contentWidthHwp = 48000, customBfMap = new Map
     const tableWidth = Math.max(minimumWidth, Math.min(contentWidthHwp, Math.round(requestedWidth)));
     const colWidths = scaleColumnWidths(tableBlock.columnWidthsHwp, nCols, tableWidth)
         || getColumnWidths(allRows, nCols, tableWidth);
-    const pid = _nextParaId();
+    const pid = nextParaId(context);
     const imageBlocks = options.imageBlocks || [];
     const rowMeta = Array.isArray(tableBlock.rowMeta) ? tableBlock.rowMeta : [];
     const hasSourceRowMeta = rowMeta.length > 0;
@@ -1424,8 +1429,8 @@ function buildTable(header, rows, contentWidthHwp = 48000, customBfMap = new Map
         const effectiveBg = (!bg && isHd && tableStyle === 'report') ? 'EAF2FF' : bg;
         let cId      = styledHeader ? '5' : '0';                               // 표머리=5(bold), 일반=0
         // 셀 글자색(예: 흰 글자 머리행)이 있으면 동적 charPr 사용 (미스 시 기본값 유지)
-        if (color && runNeedsExtChar({ color })) {
-            const key = extCharKey({ bold: isHd, color });
+        if (color && runNeedsExtChar({ color }, context)) {
+            const key = extCharKey({ bold: isHd, color }, context);
             if (customCharMap.has(key)) cId = String(customCharMap.get(key));
         }
         const paraId = isHd ? '7' : (isNumericCell(val) ? '11' : '10');
@@ -1565,8 +1570,8 @@ function buildSecPr(marginsHwp, paperKey, landscape = false, hasMasterPage = fal
         `</hp:secPr>`;
 }
 
-function buildSectionBootstrap(secPrXml, contentWidthHwp) {
-    const pid = _nextParaId();
+function buildSectionBootstrap(secPrXml, contentWidthHwp, context) {
+    const pid = nextParaId(context);
     return `<hp:p id="${pid}" paraPrIDRef="0" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0">` +
         `<hp:run charPrIDRef="0">${secPrXml}` +
         `<hp:ctrl><hp:colPr id="" type="NEWSPAPER" layout="LEFT" colCount="1" sameSz="1" sameGap="0"/></hp:ctrl>` +
@@ -1580,6 +1585,7 @@ function buildSectionBootstrap(secPrXml, contentWidthHwp) {
  * [v4] 참조 앱(md-to-hwpx)처럼 첫 bootstrap 문단에 secPr를 배치한다.
  */
 async function buildSection(ir, marginsHwp, paperKey, landscape = false, customBfMap = new Map(), customCharMap = new Map(), options = {}, customQuoteMap = new Map(), govParaMap = new Map()) {
+    const context = options.renderContext;
     // DOCX 문단 배경(예: "쉽게 말하면" 콜아웃 박스)이 있는 인용구는 색상별 동적 paraPr을 쓰고,
     // 배경이 없는 일반 인용구(Markdown/HTML blockquote 등)는 기존 고정 paraPr id=19를 그대로 쓴다.
     const quoteParaId = (bg) => (bg && customQuoteMap.has(bg) ? customQuoteMap.get(bg).paraId : '19');
@@ -1597,11 +1603,6 @@ async function buildSection(ir, marginsHwp, paperKey, landscape = false, customB
     const docType = ir.doc_type || 'plain';
     const showHorizontalRules = !!options.showHorizontalRules;
 
-    // 섹션마다 문단 ID 및 각주 ID를 재시작
-    _resetParaId();
-    _resetFootnoteId();
-    _resetHyperlinkIds();
-
     // 이미지 블록 목록 (빈 배열이면 이미지 없음)
     const imageBlocks = collectImageBlocks(ir.blocks || []);
     const hasMasterPage = !!(ir.header || ir.footer);
@@ -1609,7 +1610,7 @@ async function buildSection(ir, marginsHwp, paperKey, landscape = false, customB
     const pageSetup = options.preserveSourcePageSetup ? ir.pageSetup : null;
     const contentWidthHwp = getContentWidthHwp(marginsHwp, paperKey, landscape, pageSetup);
     const parts = [];
-    parts.push(buildSectionBootstrap(buildSecPr(marginsHwp, paperKey, landscape, hasMasterPage, pageSetup), contentWidthHwp));
+    parts.push(buildSectionBootstrap(buildSecPr(marginsHwp, paperKey, landscape, hasMasterPage, pageSetup), contentWidthHwp, context));
 
     // ── 상단 제목 블록 / 표지 / 문서 제목 ─────────────────────────────────
     //   basic/unit/annual 은 모두 한 표(buildCoverTable)로: 상단 띠 / 제목 흰칸 /
@@ -1622,14 +1623,14 @@ async function buildSection(ir, marginsHwp, paperKey, landscape = false, customB
                      : docType === 'cover-unit' ? 'unit'
                      : docType === 'cover-annual' ? 'annual' : null;
     if (coverStyle) {
-        parts.push(buildCoverTable(coverStyle, titleText, contentWidthHwp));
+        parts.push(buildCoverTable(coverStyle, titleText, contentWidthHwp, context));
         const today = new Date();
         const dateStr = `${today.getFullYear()}년 ${today.getMonth() + 1}월 ${today.getDate()}일`;
-        parts.push(buildPara(dateStr, '0', '13'));   // 작성일: 표 밖 바로 아래, 우측 정렬(paraPr 13)
-        parts.push(buildBlankPara());
+        parts.push(buildPara(dateStr, '0', '13', context));   // 작성일: 표 밖 바로 아래, 우측 정렬(paraPr 13)
+        parts.push(buildBlankPara('0', context));
     } else if (titleText && (options.renderDocumentTitle !== false || !titleAlreadyInBody)) {
-        parts.push(buildPara(titleText, '1', '12'));   // 제목: H1 + 가운데 정렬(paraPr 12)
-        parts.push(buildBlankPara());  // 제목 아래 빈 줄
+        parts.push(buildPara(titleText, '1', '12', context));   // 제목: H1 + 가운데 정렬(paraPr 12)
+        parts.push(buildBlankPara('0', context));  // 제목 아래 빈 줄
     }
 
     const pushQuoteBlocks = (quoteBlocks, quotePid = '19') => {
@@ -1638,17 +1639,18 @@ async function buildSection(ir, marginsHwp, paperKey, landscape = false, customB
             if (qType === 'para') {
                 if (quoteBlock.runs && quoteBlock.runs.length > 0) {
                     const hasText = quoteBlock.runs.some(r => r.text && (r.text.trim() || /[\n\t]/.test(r.text)));
-                    parts.push(hasText ? buildParaRuns(quoteBlock.runs, quotePid, customCharMap, options) : buildBlankPara());
+                    parts.push(hasText ? buildParaRuns(quoteBlock.runs, quotePid, customCharMap, options) : buildBlankPara('0', context));
                 } else if (quoteBlock.text && quoteBlock.text.trim()) {
-                    parts.push(buildPara(quoteBlock.text, '0', quotePid));
+                    parts.push(buildPara(quoteBlock.text, '0', quotePid, context));
                 } else {
-                    parts.push(buildBlankPara());
+                    parts.push(buildBlankPara('0', context));
                 }
             } else if (qType === 'heading') {
                 const { charId } = headingIds(quoteBlock.level);
-                parts.push(quoteBlock._runs
-                    ? buildParaRuns(quoteBlock._runs, quotePid, customCharMap, options)
-                    : buildPara(quoteBlock.text || '', quoteBlock._cId || charId, quotePid));
+                const override = headingOverride(quoteBlock, context);
+                parts.push(override?.runs
+                    ? buildParaRuns(override.runs, quotePid, customCharMap, options)
+                    : buildPara(quoteBlock.text || '', override?.charId || charId, quotePid, context));
             } else if (qType === 'list') {
                 const blockOrdered = !!quoteBlock.ordered;
                 let autoNum = 0;
@@ -1664,14 +1666,14 @@ async function buildSection(ir, marginsHwp, paperKey, landscape = false, customB
                     if (item.runs && item.runs.length) {
                         parts.push(buildParaRuns([{ text: marker }, ...item.runs], quotePid, customCharMap, options));
                     } else if (item.text) {
-                        parts.push(buildPara(marker + item.text, '0', quotePid));
+                        parts.push(buildPara(marker + item.text, '0', quotePid, context));
                     }
                     for (const codeBlock of (item.codeBlocks || [])) {
-                        parts.push(buildCodeBlock(codeBlock, '', contentWidthHwp));
+                        parts.push(buildCodeBlock(codeBlock, '', contentWidthHwp, context));
                     }
                 });
             } else if (qType === 'code') {
-                parts.push(buildCodeBlock(quoteBlock, '', contentWidthHwp));
+                parts.push(buildCodeBlock(quoteBlock, '', contentWidthHwp, context));
             } else if (qType === 'table') {
                 parts.push(buildTable(quoteBlock.header, quoteBlock.rows, contentWidthHwp, customBfMap, customCharMap, {
                     ...options,
@@ -1682,11 +1684,11 @@ async function buildSection(ir, marginsHwp, paperKey, landscape = false, customB
                 const imgIndex = imageBlocks.indexOf(quoteBlock);
                 if (imgIndex >= 0) parts.push(buildImageRun(quoteBlock, imgIndex, contentWidthHwp, options));
             } else if (qType === 'hr') {
-                parts.push(showHorizontalRules ? buildHrPara(contentWidthHwp) : buildBlankPara());
+                parts.push(showHorizontalRules ? buildHrPara(contentWidthHwp, context) : buildBlankPara('0', context));
             } else if (qType === 'quote') {
                 pushQuoteBlocks(quoteBlock.blocks || [], quoteParaId(quoteBlock.bg));
             } else if (quoteBlock.text) {
-                parts.push(buildPara(quoteBlock.text, '0', quotePid));
+                parts.push(buildPara(quoteBlock.text, '0', quotePid, context));
             }
         }
     };
@@ -1701,10 +1703,11 @@ async function buildSection(ir, marginsHwp, paperKey, landscape = false, customB
 
         if (bt === 'heading') {
             const { charId, paraId } = headingIds(block.level);
+            const override = headingOverride(block, context);
             // 색 있는 제목은 사전 스캔이 만든 동적 charPr(제목 크기+색) 사용
-            parts.push(block._runs
-                ? buildParaRuns(block._runs, paraId, customCharMap, options)
-                : buildPara(block.text || '', block._cId || charId, paraId));
+            parts.push(override?.runs
+                ? buildParaRuns(override.runs, paraId, customCharMap, options)
+                : buildPara(block.text || '', override?.charId || charId, paraId, context));
 
         } else if (bt === 'para') {
             // 공문서 항목 들여쓰기가 지정된 문단은 전용 paraPr를 쓴다.
@@ -1715,20 +1718,20 @@ async function buildSection(ir, marginsHwp, paperKey, landscape = false, customB
             if (block.runs && block.runs.length > 0) {
                 // 인라인 서식(bold/italic/code) 보존 경로
                 const hasText = block.runs.some(r => r.text && (r.text.trim() || /[\n\t]/.test(r.text)));
-                parts.push(hasText ? buildParaRuns(block.runs, alignParaId, customCharMap, options) : buildBlankPara());
+                parts.push(hasText ? buildParaRuns(block.runs, alignParaId, customCharMap, options) : buildBlankPara('0', context));
             } else if (!block.text || !block.text.trim()) {
-                parts.push(buildBlankPara());
+                parts.push(buildBlankPara('0', context));
             } else {
-                parts.push(buildPara(block.text, '0', alignParaId));
+                parts.push(buildPara(block.text, '0', alignParaId, context));
             }
 
         } else if (bt === 'blank') {
             // 명시적 빈 줄 블록
-            parts.push(buildBlankPara());
+            parts.push(buildBlankPara('0', context));
 
         } else if (bt === 'hr') {
             // 숨김은 시각 요소 대신 빈 줄로 대체해 본문 흐름만 유지한다.
-            parts.push(showHorizontalRules ? buildHrPara(contentWidthHwp) : buildBlankPara());
+            parts.push(showHorizontalRules ? buildHrPara(contentWidthHwp, context) : buildBlankPara('0', context));
 
         } else if (bt === 'list') {
             // 중첩 레벨(level)별 들여쓰기 paraPr: 0→5, 1→17, 2+→18
@@ -1750,10 +1753,10 @@ async function buildSection(ir, marginsHwp, paperKey, landscape = false, customB
                 if (item.runs && item.runs.length) {
                     parts.push(buildParaRuns([{ text: marker }, ...item.runs], listParaId, customCharMap, options));
                 } else if (item.text) {
-                    parts.push(buildPara(marker + item.text, '0', listParaId));
+                    parts.push(buildPara(marker + item.text, '0', listParaId, context));
                 }
                 for (const codeBlock of (item.codeBlocks || [])) {
-                    parts.push(buildCodeBlock(codeBlock, '  ', contentWidthHwp));
+                    parts.push(buildCodeBlock(codeBlock, '  ', contentWidthHwp, context));
                 }
             });
 
@@ -1765,7 +1768,7 @@ async function buildSection(ir, marginsHwp, paperKey, landscape = false, customB
             }));
 
         } else if (bt === 'code') {
-            parts.push(buildCodeBlock(block, '', contentWidthHwp));
+            parts.push(buildCodeBlock(block, '', contentWidthHwp, context));
 
         } else if (bt === 'quote') {
             pushQuoteBlocks(block.blocks || [], quoteParaId(block.bg));
@@ -1777,7 +1780,7 @@ async function buildSection(ir, marginsHwp, paperKey, landscape = false, customB
             }
 
         } else if (block.text) {
-            parts.push(buildPara(block.text, '0', '0'));
+            parts.push(buildPara(block.text, '0', '0', context));
         }
     }
 
@@ -1829,6 +1832,8 @@ export async function buildHwpx(ir, fontName = '휴먼명조', fontSize = 12, ma
         && Number.isFinite(sourceLineSpacing)
         ? sourceLineSpacing
         : lineSpacingPercent;
+    const renderContext = createRenderContext(Math.round((Number(effectiveFontSize) || 12) * 100));
+    buildOptions.renderContext = renderContext;
 
     const sourcePageSetup = buildOptions.preserveSourcePageSetup ? ir.pageSetup : null;
     const marginsHwp = sourcePageSetup?.marginsHwp
@@ -1912,15 +1917,14 @@ export async function buildHwpx(ir, fontName = '휴먼명조', fontSize = 12, ma
     const addExtChar = (run) => {
         // 같은 서식의 이모지 전용 charPr을 함께 등록해 둔다(본문 글꼴엔 이모지 글리프가 없음).
         if (!run.emoji && run.text && hasEmoji(run.text)) addExtChar({ ...run, emoji: true });
-        if (!runNeedsExtChar(run)) return null;
-        const key = extCharKey(run);
+        if (!runNeedsExtChar(run, renderContext)) return null;
+        const key = extCharKey(run, renderContext);
         if (!customCharMap.has(key)) customCharMap.set(key, nextCharId++);
         return customCharMap.get(key);
     };
     // 제목 색 보존용 제목 크기(HWPUNIT) — buildHeaderXml sz와 동일 계산
     const _bp = Math.max(6, Math.min(36, Number(effectiveFontSize) || 12));
     // DOCX run이 자체 글자 크기(w:sz)를 가지면 본문 기준과 다를 때만 동적 charPr을 만든다.
-    _runBaseHeightHwp = Math.round(_bp * 100);
     const _headingSizes = headingSizeMap(_bp, buildOptions.headingStyle);
     const headingHeightHwp = (lvl) => ({
         1: _headingSizes.h1, 2: _headingSizes.h2, 3: _headingSizes.h3,
@@ -1955,14 +1959,15 @@ export async function buildHwpx(ir, fontName = '휴먼명조', fontSize = 12, ma
                 const badgeRuns = (block.runs || []).filter(r => r.text);
                 if (badgeRuns.some(r => r.highlight)) {
                     const height = headingHeightHwp(block.level || 1);
-                    block._runs = badgeRuns.map(r => ({
+                    const runs = badgeRuns.map(r => ({
                         ...r, bold: true, color: r.color || block.color || null, height,
                     }));
-                    for (const run of block._runs) addExtChar(run);
+                    renderContext.headingOverrides.set(block, { runs });
+                    for (const run of runs) addExtChar(run);
                 } else if (block.color) {
-                    // 색 있는 제목: 제목 크기 + bold + 색으로 동적 charPr 생성 후 블록에 charId 주석
+                    // 색 있는 제목: 제목 크기 + bold + 색으로 동적 charPr 생성 후 문서별 컨텍스트에 보관
                     const cid = addExtChar({ bold: true, color: block.color, height: headingHeightHwp(block.level || 1) });
-                    if (cid != null) block._cId = String(cid);
+                    if (cid != null) renderContext.headingOverrides.set(block, { charId: String(cid) });
                 }
             } else if (block.type === 'table') {
                 // 표 셀 글자색(예: 흰 글자 머리행)도 동적 charPr 대상 — 머리행은 bold

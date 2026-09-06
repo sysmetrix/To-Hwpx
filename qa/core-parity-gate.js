@@ -169,7 +169,49 @@ function compareEntries(webMap, nodeMap) {
         }
     });
 
-    console.log(`\n${FIXTURES.length - failed}/${FIXTURES.length} 통과`);
+    // buildSection은 큰 문서에서 이벤트 루프에 양보한다. 두 렌더가 그 사이 겹쳐도
+    // 문단/각주/링크 ID와 본문 기준 글자 크기가 서로 섞이지 않아야 한다.
+    const makeConcurrentIr = (label) => ({
+        title: '',
+        doc_type: 'plain',
+        blocks: Array.from({ length: 90 }, (_, index) => index === 0
+            ? { type: 'heading', level: 1, text: `${label} 제목`, color: '#C00000' }
+            : { type: 'para', runs: [{ text: `${label}-${index}`, sizePt: 20, href: `https://example.com/${label}/${index}` }] }),
+    });
+    const optionsFor = (fontSize) => ({ fontSize, options: { renderDocumentTitle: false } });
+    const baselineA = await irToHwpx(makeConcurrentIr('A'), optionsFor(10));
+    const baselineB = await irToHwpx(makeConcurrentIr('B'), optionsFor(20));
+    const concurrentA = makeConcurrentIr('A');
+    const concurrentB = makeConcurrentIr('B');
+    const beforeA = JSON.stringify(concurrentA);
+    const beforeB = JSON.stringify(concurrentB);
+    const [actualA, actualB] = await Promise.all([
+        irToHwpx(concurrentA, optionsFor(10)),
+        irToHwpx(concurrentB, optionsFor(20)),
+    ]);
+    const [baseAMap, baseBMap, actualAMap, actualBMap] = await Promise.all([
+        zipEntries(Buffer.from(baselineA.bytes)),
+        zipEntries(Buffer.from(baselineB.bytes)),
+        zipEntries(Buffer.from(actualA.bytes)),
+        zipEntries(Buffer.from(actualB.bytes)),
+    ]);
+    const renderEntries = ['Contents/header.xml', 'Contents/section0.xml'];
+    const concurrencyIssues = [];
+    for (const entry of renderEntries) {
+        if (!baseAMap.get(entry).equals(actualAMap.get(entry))) concurrencyIssues.push(`A ${entry}`);
+        if (!baseBMap.get(entry).equals(actualBMap.get(entry))) concurrencyIssues.push(`B ${entry}`);
+    }
+    if (JSON.stringify(concurrentA) !== beforeA || JSON.stringify(concurrentB) !== beforeB) {
+        concurrencyIssues.push('입력 IR 변경');
+    }
+    if (concurrencyIssues.length) {
+        console.log(`FAIL  동시 렌더 격리\n      ✗ ${concurrencyIssues.join(', ')}`);
+        failed++;
+    } else {
+        console.log('PASS  동시 렌더 격리\n      10pt/20pt 문서 병렬 산출물 = 순차 기준 · 입력 IR 불변');
+    }
+
+    console.log(`\n${FIXTURES.length + 1 - failed}/${FIXTURES.length + 1} 통과`);
     if (failed) {
         console.error('\n코어 동등성 실패 — 웹앱과 코어가 갈라졌다. 릴리스하지 않는다.');
         process.exit(1);
