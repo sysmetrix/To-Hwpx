@@ -1,6 +1,18 @@
 {
-  "current": "4.17.8",
+  "current": "4.18.0",
   "versions": [
+    {
+      "version": "4.18.0",
+      "date": "2026-09-06",
+      "user": [
+        "운영 상태 감시가 정상 배포를 장애로 잘못 알리던 문제를 고쳤습니다. PDF 한글 글꼴 데이터도 실제 파일로 확인합니다."
+      ],
+      "dev": [
+        "production-smoke가 디렉터리 무결성 항목을 파일 URL로 GET해 404를 만들던 계약 불일치를 수정했다.",
+        "로컬 commercial gate는 CMap 디렉터리 169개 전체의 트리 해시를 계속 검증하고, 원격 smoke는 Adobe-Korea1 및 가로·세로 UniKS CMap 실파일의 응답과 비어 있지 않음을 검증한다.",
+        "수정 전 운영 워크플로는 최근 28회 연속 같은 404로 실패했으며, 수정 후 primary와 GitHub Pages mirror 모두 v4.17.8 기준 실측 통과했다."
+      ]
+    },
     {
       "version": "4.17.8",
       "date": "2026-09-03",

@@ -122,5 +122,10 @@ assert(workflow.includes('npm run test:commercial') && workflow.includes('privac
 assert(!/uses:\s+[^\s]+@(v\d+|main|master)\b/.test(workflow), 'GitHub Action이 커밋 SHA로 고정되지 않음');
 assert(read('.github/workflows/production-smoke.yml').includes('*/15 * * * *')
     && read('OPERATIONS.md').includes('10분 이내'), '15분 감시 또는 10분 롤백 기준 누락');
+const productionSmoke = read('qa/production-smoke.js');
+assert(productionSmoke.includes("if (file.endsWith('/'))")
+    && productionSmoke.includes('Adobe-Korea1-UCS2.bcmap')
+    && productionSmoke.includes('UniKS-UCS2-H.bcmap'),
+    '운영 감시의 vendor 디렉터리 실파일 점검 누락');
 
 console.log(`COMMERCIAL GATE: PASS (${Object.keys(integrity).length} vendor hashes, legal/privacy/security/deploy)`);
