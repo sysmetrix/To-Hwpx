@@ -401,7 +401,7 @@ async function readSource(file, ext) {
             try {
                 await page.goto(`http://127.0.0.1:${PORT}/index.html`, { waitUntil: 'domcontentloaded' });
                 await page.waitForFunction(
-                    () => window.JSZip && window.marked && window.XLSX && window.__appReady,
+                    () => window.JSZip && window.marked && window.__appReady,
                     null, { timeout: 30000 });
                 const dl = page.waitForEvent('download', { timeout: 60000 });
                 await page.setInputFiles('#file-input', file);

@@ -108,7 +108,6 @@
     <script src="js/vendor/marked-18.0.11.min.js" defer></script>
 
     <!-- SheetJS 0.20.3 — CVE-2023-30533/CVE-2024-22363 수정 버전 -->
-    <script src="js/vendor/xlsx-0.20.3.full.min.js" defer></script>
 
     <!-- ─── PostHog Product Analytics ───────────────────────────────
          퍼널 분석(포맷별 성공률), 세션 경로, 옵션 사용 분포 등 심층 분석.
@@ -147,7 +146,7 @@
             <span>｢BWYF｣ AX Challenger 2026</span>
             <!-- [주의] id="open-changelog"는 app.js에서 관리자 모드일 때 업데이트 내역 모달을 여는 연결값 -->
             <button class="util-changelog-btn" id="open-changelog" aria-label="버전 정보">
-                📋 v4.18.0
+                📋 v4.18.1
             </button>
         </div>
     </div>
@@ -973,6 +972,15 @@
                     <span class="card-badge badge-available">지원됨</span>
                 </div>
 
+                <!-- PDF (Beta) -->
+                <div class="format-card" data-ext="pdf" role="button" tabindex="0">
+                    <div class="card-icon"><img src="icons/brand/adobeacrobatreader.svg" alt="" class="format-brand-icon" loading="lazy" aria-hidden="true"></div>
+                    <div class="card-ext">PDF</div>
+                    <div class="card-name">PDF 문서</div>
+                    <div class="card-quality">★★☆</div>
+                    <span class="card-badge badge-beta">베타</span>
+                </div>
+
             </div><!-- /.format-grid -->
         </div><!-- /#panel-basic -->
 
@@ -982,15 +990,6 @@
             <div class="format-panel" id="panel-ext" role="tabpanel">
                 <p class="section-sub anim-target">변환 품질 검증 후 열 예정인 포맷입니다</p>
                 <div class="format-grid anim-target anim-stagger">
-
-                    <!-- PDF (Coming Soon) -->
-                    <div class="format-card coming-soon" data-ext="pdf" aria-disabled="true">
-                        <div class="card-icon"><img src="icons/brand/adobeacrobatreader.svg" alt="" class="format-brand-icon" loading="lazy" aria-hidden="true"></div>
-                        <div class="card-ext">PDF</div>
-                        <div class="card-name">PDF 문서</div>
-                        <div class="card-quality">★★☆</div>
-                        <span class="card-badge badge-soon">예정</span>
-                    </div>
 
                     <!-- ODT/RTF (Coming Soon) -->
                     <div class="format-card coming-soon" data-ext="odt" aria-disabled="true">
@@ -1141,9 +1140,9 @@
                         <tr>
                             <td><strong>PDF</strong></td>
                             <td>★★☆</td>
-                            <td><span class="card-badge badge-soon">예정</span></td>
-                            <td>—</td>
-                            <td>레이아웃 추출 복잡도로 백엔드 필요</td>
+                            <td><span class="card-badge badge-beta">베타</span></td>
+                            <td>pdf.js 좌표·그리기 연산 분석 → 문단·표·그림·서식 추론</td>
+                            <td>페이지 배치·글꼴 이름·표 밖 벡터 장식 제외, 스캔 PDF OCR 미지원</td>
                         </tr>
                         <tr>
                             <td><strong>ODT / RTF</strong></td>

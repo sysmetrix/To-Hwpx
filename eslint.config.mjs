@@ -22,6 +22,7 @@ export default [
             'no-unsanitized': noUnsanitized,
         },
         rules: {
+            'no-dupe-keys': 'error',
             'no-unsanitized/property': ['warn', sanitizerOptions],
             'no-unsanitized/method': ['warn', sanitizerOptions],
         },

@@ -47,7 +47,7 @@ async function smokeBrowser(browserType, name, baseUrl) {
         });
         const page = await context.newPage();
         await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
-        await page.waitForFunction(() => window.__appReady && window.JSZip && window.marked && window.XLSX, null, { timeout: 30000 });
+        await page.waitForFunction(() => window.__appReady && window.JSZip && window.marked, null, { timeout: 30000 });
         const versions = await page.evaluate(() => ({ xlsx: XLSX.version, jszip: JSZip.version }));
         if (versions.xlsx !== '0.20.3' || versions.jszip !== '3.10.1') throw new Error(`${name}: vendor 버전 불일치`);
         await page.setInputFiles('#file-input', {
