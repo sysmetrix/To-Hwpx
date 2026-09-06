@@ -7,6 +7,13 @@ const primary = process.argv[2] || 'https://to-hwpx.vercel.app/';
 const mirror = process.argv[3] || 'https://sysmetrix.github.io/To-Hwpx/';
 const expectedVersion = JSON.parse(fs.readFileSync('package.json', 'utf8')).version;
 const vendorIntegrity = JSON.parse(fs.readFileSync('qa/vendor-integrity.json', 'utf8'));
+const vendorDirectoryProbes = Object.freeze({
+    'js/vendor/pdfjs-6.3.289/cmaps/': Object.freeze([
+        'Adobe-Korea1-UCS2.bcmap',
+        'UniKS-UCS2-H.bcmap',
+        'UniKS-UCS2-V.bcmap'
+    ])
+});
 
 async function get(url) {
     const controller = new AbortController();
@@ -39,6 +46,18 @@ async function checkSite(base, { headers = false, legacyNoticeRedirect = false }
 
 async function checkVendor(base) {
     for (const [file, expected] of Object.entries(vendorIntegrity)) {
+        if (file.endsWith('/')) {
+            const probes = vendorDirectoryProbes[file];
+            if (!probes?.length) throw new Error(`${file} 운영 점검 파일이 정의되지 않음`);
+            for (const probe of probes) {
+                const response = await get(new URL(`${file}${probe}`, base));
+                if (!response.ok) throw new Error(`${file}${probe} HTTP ${response.status}`);
+                if (!(await response.arrayBuffer()).byteLength) {
+                    throw new Error(`${file}${probe} 운영 파일이 비어 있음`);
+                }
+            }
+            continue;
+        }
         const response = await get(new URL(file, base));
         if (!response.ok) throw new Error(`${file} HTTP ${response.status}`);
         const actual = crypto.createHash('sha256').update(Buffer.from(await response.arrayBuffer())).digest('hex');
