@@ -13,6 +13,7 @@ const { buildXlsx } = require('./make-xlsx-fixture');
 const ROOT = path.resolve(__dirname, '..');
 const FIXTURES = path.join(__dirname, 'fixtures');
 const PORT = 8732;
+const MIN_PNG_B64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
 
 const CASES = [
   {
@@ -1360,6 +1361,86 @@ async function validateRejectedInputs(page) {
   console.log(`PASS FAIL  ${cases.length} malformed inputs + XLSX 20MB limit rejected`);
 }
 
+async function installDelayedXlsxWorker(page, delayMs = 700) {
+  await page.evaluate((delay) => {
+    const NativeWorker = window.Worker;
+    window.__xlsxWorkerCount = 0;
+    window.Worker = class DelayedWorker {
+      constructor(...args) {
+        window.__xlsxWorkerCount++;
+        this.inner = new NativeWorker(...args);
+      }
+      postMessage(...args) { return this.inner.postMessage(...args); }
+      terminate() { return this.inner.terminate(); }
+      addEventListener(type, listener, options) {
+        if (type === 'message') {
+          this.inner.addEventListener(type, event => setTimeout(() => listener.call(this, event), delay), options);
+        } else {
+          this.inner.addEventListener(type, event => listener.call(this, event), options);
+        }
+      }
+      removeEventListener(...args) { return this.inner.removeEventListener(...args); }
+    };
+  }, delayMs);
+}
+
+async function validateAsyncAnalysisCoordination(page) {
+  const baseUrl = `http://127.0.0.1:${PORT}/index.html`;
+  const xlsxPath = path.join(FIXTURES, 'sample.xlsx');
+  const mdPath = path.join(FIXTURES, 'sample.md');
+
+  // 늦게 끝난 이전 XLSX가 새 Markdown 미리보기를 덮지 않아야 한다.
+  await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => window.__appReady);
+  await installDelayedXlsxWorker(page);
+  await page.setInputFiles('#file-input', xlsxPath);
+  await page.waitForFunction(() => window.__xlsxWorkerCount === 1);
+  await page.locator('#reset-btn').click();
+  await page.setInputFiles('#file-input', mdPath);
+  await page.waitForFunction(() => document.querySelector('#ir-content')?.textContent.includes('Golden Markdown 제목 Alpha'));
+  await page.waitForTimeout(900);
+  const currentPreview = await page.locator('#ir-content').textContent();
+  assert(currentPreview.includes('Golden Markdown 제목 Alpha') && !currentPreview.includes('Golden 첫 시트'),
+    'async: 늦게 끝난 이전 XLSX가 현재 Markdown 미리보기를 덮음');
+
+  // 미리보기 분석 중 변환을 눌러도 같은 XLSX Worker Promise를 공유해야 한다.
+  await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => window.__appReady);
+  await installDelayedXlsxWorker(page);
+  await page.setInputFiles('#file-input', xlsxPath);
+  await page.waitForFunction(() => window.__xlsxWorkerCount === 1);
+  const download = page.waitForEvent('download', { timeout: 30000 });
+  await page.locator('#convert-btn').click();
+  await download;
+  const workerCount = await page.evaluate(() => window.__xlsxWorkerCount);
+  assert(workerCount === 1, `async: 같은 XLSX를 미리보기와 변환에서 ${workerCount}번 파싱함`);
+
+  // 원격 이미지 4개는 최대 4개까지 함께 요청하되 결과 순서는 원문 순서여야 한다.
+  await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => window.__appReady);
+  const starts = [];
+  await page.route('**/__slow-image/*.png', async route => {
+    starts.push(Date.now());
+    await new Promise(resolve => setTimeout(resolve, 400));
+    await route.fulfill({ status: 200, contentType: 'image/png', body: Buffer.from(MIN_PNG_B64, 'base64') });
+  });
+  const assetBaseUrl = `http://127.0.0.1:${PORT}/`;
+  const remoteMd = Array.from({ length: 4 }, (_, i) => `![원격 ${i + 1}](${assetBaseUrl}__slow-image/${i + 1}.png)`).join('\n\n');
+  const startedAt = Date.now();
+  await page.setInputFiles('#file-input', { name: 'parallel-images.md', mimeType: 'text/markdown', buffer: Buffer.from(remoteMd) });
+  await page.waitForFunction(() => document.querySelector('#ir-content')?.textContent.includes('"externalImageCount": 4'));
+  const elapsed = Date.now() - startedAt;
+  await page.unroute('**/__slow-image/*.png');
+  assert(starts.length === 4 && Math.max(...starts) - Math.min(...starts) < 250,
+    `async: 원격 이미지 요청 시작이 직렬화됨 (${starts.join(', ')})`);
+  assert(elapsed < 1300, `async: 400ms 이미지 4개 분석이 ${elapsed}ms 걸림(직렬 처리 의심)`);
+  const remoteIr = JSON.parse(await page.locator('#ir-content').textContent());
+  assert(remoteIr.blocks.filter(block => block.type === 'image').map(block => block.binName).join(',') === 'image1.png,image2.png,image3.png,image4.png',
+    'async: 병렬 이미지 결과의 원문 순서/binName이 바뀜');
+
+  console.log(`PASS ASYNC stale preview blocked + XLSX parse shared + 4 images ${elapsed}ms`);
+}
+
 async function validateBatchKanban(page) {
   const baseUrl = `http://127.0.0.1:${PORT}/index.html`;
   await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
@@ -2069,6 +2150,7 @@ async function validateFolderDrop(page) {
     await validateXssHardening(page);
     await validateCommercialUx(page);
     await validateRejectedInputs(page);
+    await validateAsyncAnalysisCoordination(page);
     await validateBatchKanban(page);
     await validatePaperMatrix(page);
     await validateLineSpacingOption(page);

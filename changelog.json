@@ -1,6 +1,21 @@
 {
-  "current": "4.19.0",
+  "current": "4.19.1",
   "versions": [
+    {
+      "version": "4.19.1",
+      "date": "2026-09-07",
+      "user": [
+        "파일을 바꾼 뒤 이전 파일의 늦은 분석 결과가 현재 미리보기를 덮어쓰던 문제를 고쳤습니다.",
+        "XLSX 미리보기 분석 중 바로 변환해도 같은 파일을 두 번 읽지 않습니다.",
+        "Markdown 원격 이미지를 최대 4개씩 함께 받아, 이미지가 여러 개인 문서의 대기 시간을 줄였습니다. 원문 그림 순서는 그대로 유지됩니다."
+      ],
+      "dev": [
+        "큐/제목 정책 analysisGeneration과 파일명·크기·수정시각·docType 파싱 서명을 도입하고 stale completion의 UI/캐시 쓰기를 차단했다.",
+        "queue item에 raw IR 캐시와 analysisPromise를 두어 preview와 conversion이 같은 XLSX Worker를 공유한다. 지연 Worker 실측에서 2개 생성이 1개로 감소했다.",
+        "resolveMarkdownAssets를 DFS 수집 → bounded worker 4개 → 원문 순서 finalize 구조로 변경했다. 네트워크/디코딩은 병렬이고 20MB 총량·binName·warning 순서는 결정적이다.",
+        "400ms 이미지 4개 브라우저 실측은 627ms였고 요청 시작 간격은 250ms 미만이다. 기존 직렬 실측은 이미지당 500ms에서 총 2273ms였다."
+      ]
+    },
     {
       "version": "4.19.0",
       "date": "2026-09-07",

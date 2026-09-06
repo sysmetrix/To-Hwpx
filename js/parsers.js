@@ -2946,67 +2946,82 @@ async function fetchMarkdownImage(src) {
 async function resolveMarkdownAssets(ir, sourceFormat = 'md') {
     let imageCounter = 1;
     let totalBytes = 0;
-    let externalFetchCount = 0;  // 외부 서버 접속 건수 — 투명성 안내용
     const warnings = [];
-
-    async function resolveBlocks(blocks) {
-        const out = [];
+    const tasks = [];
+    const collectTasks = (blocks) => {
         for (const block of (blocks || [])) {
-            if (block?.type === 'quote') {
-                out.push({ ...block, blocks: await resolveBlocks(block.blocks || []) });
-                continue;
-            }
-            if (block?.type !== 'image-source') {
-                out.push(block);
-                continue;
-            }
-            try {
-                const src = normalizeMarkdownImageSource(block.src);
-                let loaded;
-                if (/^data:/i.test(src)) loaded = decodeDataImageUrl(src);
-                else if (/^https?:/i.test(src)) {
-                    externalFetchCount++;  // fetch 시도 전 카운트 — 실패해도 서버 접속은 발생
-                    loaded = await fetchMarkdownImage(src);
-                } else throw new Error('상대경로 이미지는 이미지 파일을 함께 선택하는 방식이 아직 필요합니다.');
-
-                if (loaded.bytes.byteLength > MARKDOWN_IMAGE_MAX_BYTES) {
-                    throw new Error('이미지 용량이 8MB를 초과합니다.');
-                }
-                // WebP → PNG 변환 (HWPX는 BMP/PNG/JPEG/GIF만 지원)
-                let imageBytes = loaded.bytes;
-                let imageMeta;
-                if (isWebP(imageBytes)) {
-                    const conv = await convertWebpToPng(imageBytes);
-                    imageBytes = conv.bytes;
-                    imageMeta = { ext: 'png', mimeType: 'image/png', width: conv.width, height: conv.height };
-                } else {
-                    imageMeta = sniffRasterImage(imageBytes, loaded.mimeType);
-                }
-                if (totalBytes + imageBytes.byteLength > MARKDOWN_IMAGE_TOTAL_MAX_BYTES) {
-                    throw new Error('문서 이미지 총용량이 20MB를 초과합니다.');
-                }
-                totalBytes += imageBytes.byteLength;
-                const size = imageSizeHwp(imageMeta);
-                out.push({
-                    type: 'image',
-                    binName: `image${imageCounter++}.${imageMeta.ext}`,
-                    mimeType: imageMeta.mimeType,
-                    data: imageBytes,
-                    ...size,
-                    alt: block.alt || '',
-                    title: block.title || '',
-                    sourceFormat,
-                });
-            } catch (error) {
-                const reason = error?.message || '알 수 없는 오류';
-                warnings.push({ assetType: 'image', source: block.src || '', reason });
-                out.push(markdownImageFallback(block, reason));
-            }
+            if (block?.type === 'quote') collectTasks(block.blocks || []);
+            else if (block?.type === 'image-source') tasks.push(block);
         }
-        return out;
-    }
+    };
+    collectTasks(ir.blocks || []);
+    const externalFetchCount = tasks.filter(block => /^https?:/i.test(normalizeMarkdownImageSource(block.src))).length;
 
-    ir.blocks = await resolveBlocks(ir.blocks || []);
+    const loadOne = async (block) => {
+        try {
+            const src = normalizeMarkdownImageSource(block.src);
+            let loaded;
+            if (/^data:/i.test(src)) loaded = decodeDataImageUrl(src);
+            else if (/^https?:/i.test(src)) loaded = await fetchMarkdownImage(src);
+            else throw new Error('상대경로 이미지는 이미지 파일을 함께 선택하는 방식이 아직 필요합니다.');
+            if (loaded.bytes.byteLength > MARKDOWN_IMAGE_MAX_BYTES) throw new Error('이미지 용량이 8MB를 초과합니다.');
+
+            let imageBytes = loaded.bytes;
+            let imageMeta;
+            if (isWebP(imageBytes)) {
+                const conv = await convertWebpToPng(imageBytes);
+                imageBytes = conv.bytes;
+                imageMeta = { ext: 'png', mimeType: 'image/png', width: conv.width, height: conv.height };
+            } else {
+                imageMeta = sniffRasterImage(imageBytes, loaded.mimeType);
+            }
+            return { imageBytes, imageMeta };
+        } catch (error) {
+            return { error };
+        }
+    };
+
+    // 네트워크 대기는 겹치되 동시 요청은 4개로 제한한다. 결과 배열은 원문 순서를
+    // 유지하고, 20MB 총량과 binName은 아래에서 그 순서대로 확정한다.
+    const loaded = new Array(tasks.length);
+    let nextTask = 0;
+    const worker = async () => {
+        while (nextTask < tasks.length) {
+            const index = nextTask++;
+            loaded[index] = await loadOne(tasks[index]);
+        }
+    };
+    await Promise.all(Array.from({ length: Math.min(4, tasks.length) }, worker));
+
+    const replacements = new Map();
+    tasks.forEach((block, index) => {
+        const result = loaded[index];
+        let reason = result?.error?.message || '';
+        if (!reason && totalBytes + result.imageBytes.byteLength > MARKDOWN_IMAGE_TOTAL_MAX_BYTES) {
+            reason = '문서 이미지 총용량이 20MB를 초과합니다.';
+        }
+        if (reason) {
+            warnings.push({ assetType: 'image', source: block.src || '', reason });
+            replacements.set(block, markdownImageFallback(block, reason));
+            return;
+        }
+        totalBytes += result.imageBytes.byteLength;
+        replacements.set(block, {
+            type: 'image',
+            binName: `image${imageCounter++}.${result.imageMeta.ext}`,
+            mimeType: result.imageMeta.mimeType,
+            data: result.imageBytes,
+            ...imageSizeHwp(result.imageMeta),
+            alt: block.alt || '',
+            title: block.title || '',
+            sourceFormat,
+        });
+    });
+    const replaceBlocks = blocks => (blocks || []).map(block => {
+        if (block?.type === 'quote') return { ...block, blocks: replaceBlocks(block.blocks || []) };
+        return replacements.get(block) || block;
+    });
+    ir.blocks = replaceBlocks(ir.blocks || []);
     if (warnings.length) ir.assetWarnings = warnings;
     if (externalFetchCount > 0) ir.externalImageCount = externalFetchCount;
     return ir;
