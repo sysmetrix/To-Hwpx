@@ -78,7 +78,8 @@ const state = {
     isConverting: false,               // 변환 중 중복 실행 방지 플래그
     hwpxBlob:    null,                 // 미리보기용 마지막 변환 결과 Blob
     downloadUrl: null,                 // 마지막 변환 결과 Blob URL
-    downloadTimer: null                // Blob URL 해제 타이머
+    downloadTimer: null,               // Blob URL 해제 타이머
+    analysisGeneration: 0,             // 늦게 끝난 이전 파일 분석이 현재 미리보기를 덮지 못하게 하는 세대
 };
 let modalReturnFocus = null;
 let _initialDropZoneNodes = null;
@@ -563,6 +564,7 @@ function addFilesToQueue(files) {
             status: 'pending',   // pending | converting | done | warn | error
             blob: null, url: null, fileName: null, validation: null, error: null,
             previewIr: null, previewIrSignature: '', previewIrStatus: 'idle', previewIrError: null,
+            rawIr: null, rawIrSignature: '', analysisPromise: null, analysisPromiseSignature: '',
         });
     }
 
@@ -605,6 +607,7 @@ function removeQueueItem(id) {
  * 길이 1 → 기존 단일 파일 UI / 길이 2+ → 배치 목록 UI
  */
 function onQueueChanged({ scroll = false } = {}) {
+    state.analysisGeneration++;
     const n = state.queue.length;
     state.file = n ? state.queue[0].file : null;   // 단일 참조 호환
     state.ir = null;
@@ -786,6 +789,8 @@ function setCustomTitleEnabled(enabled) {
 }
 
 function clearSelectedFile() {
+    state.analysisGeneration++;
+    window.clearTimeout(selectedIrAnalysisTimer);
     state.queue = [];
     state.file = null;
     state.ir = null;
@@ -1087,6 +1092,10 @@ function irPolicySignature(file) {
     ].join('|');
 }
 
+function irParseSignature(file) {
+    return [file?.name || '', file?.size || 0, file?.lastModified || 0, state.docType].join('|');
+}
+
 function applyCurrentTitlePolicy(ir, file) {
     const customTitle = state.queue.length === 1 && state.titleSource === 'custom' ? state.customTitle : '';
     applyDocumentTitlePolicy(ir, file, customTitle, state.titleSource, state.titleBodyPolicy);
@@ -1096,14 +1105,51 @@ function applyCurrentTitlePolicy(ir, file) {
 let selectedIrAnalysisTimer = null;
 
 function scheduleSelectedFileIrAnalysis() {
+    state.analysisGeneration++;
     window.clearTimeout(selectedIrAnalysisTimer);
     selectedIrAnalysisTimer = window.setTimeout(analyzeSelectedFileIr, 180);
+}
+
+async function getParsedIrForItem(item) {
+    const signature = irParseSignature(item.file);
+    if (item.rawIr && item.rawIrSignature === signature) return cloneIrForBuild(item.rawIr);
+    if (item.analysisPromise && item.analysisPromiseSignature === signature) {
+        return cloneIrForBuild(await item.analysisPromise);
+    }
+
+    const docType = state.docType;
+    const promise = fileToIR(item.file, docType);
+    item.analysisPromise = promise;
+    item.analysisPromiseSignature = signature;
+    try {
+        const ir = await promise;
+        // 큐에서 제거됐거나 분석 조건이 바뀐 결과는 캐시에 넣지 않는다.
+        if (state.queue.includes(item) && irParseSignature(item.file) === signature) {
+            item.rawIr = cloneIrForBuild(ir);
+            item.rawIrSignature = signature;
+        }
+        return cloneIrForBuild(ir);
+    } finally {
+        if (item.analysisPromise === promise) {
+            item.analysisPromise = null;
+            item.analysisPromiseSignature = '';
+        }
+    }
+}
+
+function isCurrentSingleAnalysis(item, generation, signature) {
+    return state.inputMode === 'upload'
+        && state.queue.length === 1
+        && state.queue[0] === item
+        && state.analysisGeneration === generation
+        && irPolicySignature(item.file) === signature;
 }
 
 async function analyzeSelectedFileIr() {
     if (state.isConverting || state.inputMode !== 'upload' || state.queue.length !== 1) return null;
     const item = state.queue[0];
     if (!item?.file) return null;
+    const generation = state.analysisGeneration;
     const signature = irPolicySignature(item.file);
     if (item.previewIr && item.previewIrSignature === signature) {
         state.ir = cloneIrForBuild(item.previewIr);
@@ -1114,7 +1160,8 @@ async function analyzeSelectedFileIr() {
     item.previewIrError = null;
     updateIrPreview(null, `${item.file.name} 분석 중입니다...`);
     try {
-        const ir = await fileToIR(item.file, state.docType);
+        const ir = await getParsedIrForItem(item);
+        if (!isCurrentSingleAnalysis(item, generation, signature)) return null;
         applyCurrentTitlePolicy(ir, item.file);
         item.previewIr = ir;
         item.previewIrSignature = signature;
@@ -1123,6 +1170,7 @@ async function analyzeSelectedFileIr() {
         updateIrPreview(state.ir);
         return state.ir;
     } catch (err) {
+        if (!isCurrentSingleAnalysis(item, generation, signature)) return null;
         item.previewIrStatus = 'error';
         item.previewIrError = err;
         updateIrPreview(null, `IR 분석 실패: ${err.message || err}`);
@@ -1136,7 +1184,7 @@ async function getPreparedIrForFile(file) {
     if (item?.previewIr && item.previewIrSignature === signature) {
         return cloneIrForBuild(item.previewIr);
     }
-    const ir = await fileToIR(file, state.docType);
+    const ir = item ? await getParsedIrForItem(item) : await fileToIR(file, state.docType);
     applyCurrentTitlePolicy(ir, file);
     if (item) {
         item.previewIr = cloneIrForBuild(ir);
@@ -2914,7 +2962,8 @@ function runPasteConversion() {
         id: `q_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
         file, ext,
         status: 'pending', blob: null, url: null, fileName: null, validation: null, error: null,
-        previewIr: null, previewIrSignature: '', previewIrStatus: 'idle', previewIrError: null,
+            previewIr: null, previewIrSignature: '', previewIrStatus: 'idle', previewIrError: null,
+            rawIr: null, rawIrSignature: '', analysisPromise: null, analysisPromiseSignature: '',
     }];
     runConversionPipeline();
 }

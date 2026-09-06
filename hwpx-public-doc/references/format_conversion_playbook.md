@@ -65,7 +65,7 @@ node tests/docx-real-convert.js "원본.docx" && node tests/docx-fidelity-score.
 
 - 직접 입력은 v4.8.3부터 일반 사용자에게 베타로 공개되었다. MD/HTML/TXT/CSV/JSON 텍스트를 가상 `File`로 감싸 기존 `fileToIR()` 변환 파이프라인을 재사용한다.
 - 입력 아래 미리보기는 실제 HWPX 렌더러가 아니라 변환 전 IR 해석 결과다. `parseMd()`, `parseHtml()`, `parseTxt()`, `parseCsv()`, `parseJson()`을 직접 호출하고 `irBlocksToHtml()`로 표시한다.
-- 미리보기는 타이핑마다 즉시 무거운 변환을 돌리지 않고 짧은 debounce를 둔다. Markdown 원격 이미지는 미리보기 단계에서 resolve하지 않는다.
+- 미리보기는 타이핑마다 즉시 무거운 변환을 돌리지 않고 짧은 debounce를 둔다. 파일 미리보기와 실제 변환이 같은 파싱 서명(파일명·크기·수정시각·문서 유형)이면 하나의 in-flight Promise와 raw IR 캐시를 공유한다. 큐/제목 정책 세대와 서명이 달라진 뒤 늦게 끝난 분석은 현재 미리보기와 캐시를 갱신하지 않는다.
 - 복사는 `원문 복사`, `미리보기 복사`, `HTML` 메뉴로 분리한다. HTML 메뉴에서는 미리보기 DOM의 정리된 HTML 조각을 `복사`하거나 간단한 독립 HTML 파일로 `다운로드`한다. 이 HTML은 HWPX 최종 XML이나 한컴 렌더링 결과가 아니다. Clipboard API가 막힌 브라우저에서는 textarea fallback을 사용한다.
 - JSON처럼 형식 오류가 생길 수 있는 입력은 변환 전 미리보기 패널에서 오류를 보여주고, 실제 변환 버튼은 기존 검증/실패 카드 흐름을 유지한다.
 
@@ -394,7 +394,7 @@ DrawOPS는 pdf.js가 내보내지 않으므로 숫자로 적을 수밖에 없다
 - Markdown 이미지 토큰은 먼저 `image-source`로 만들고 `fileToIR()` 뒤 `resolveMarkdownAssets()`에서 최종 `image` IR로 바꾼다. `parseMd()`는 IPYNB 재사용을 위해 동기로 유지한다.
 - data URL과 CORS가 허용된 HTTP(S) PNG/JPEG/GIF/BMP를 지원한다. 이미지별 8MB, 문서 합계 20MB, 요청 10초 제한을 적용한다.
 - 상대경로·CORS 차단·지원하지 않는 형식은 전체 변환을 실패시키지 않고 alt/주소가 포함된 fallback 문단과 `assetWarnings`로 남긴다.
-- 원격 이미지는 이미지 원본 서버에 브라우저가 직접 요청한다. 원본 MD/HWPX는 전송하지 않지만 개인정보 안내에 이 예외를 명시한다.
+- 원격 이미지는 이미지 원본 서버에 브라우저가 직접 요청한다. 원본 MD/HWPX는 전송하지 않지만 개인정보 안내에 이 예외를 명시한다. 네트워크 대기는 최대 4개까지 병렬 처리하되 결과의 원문 순서, `imageN` 이름 순서, 이미지별 8MB·문서 합계 20MB 판정은 원문 순서대로 확정한다.
 - 목록 항목은 `text`와 `runs`를 함께 보존하며 marker 뒤에 `buildParaRuns()`로 출력한다. `flattenMdList()`에서 `plainMdText()`만 남기면 목록 링크 URL이 다시 사라진다.
 - Markdown 표 셀은 평문이면 기존 문자열 IR을 유지하고, bold/italic/code/strike가 있으면 `{text,runs}` 셀로 승격해 인라인 서식을 보존한다. 내부 링크·이미지는 아직 표시 텍스트 중심이며, 활성 링크나 그림까지 확장할 때는 공용 cell run 계약을 별도로 설계한다.
 - 이미지 URL 자리에 `[URL](URL)`이 중첩된 입력은 실제 URL을 자동 추출한다. 올바른 원문은 `![대체 텍스트](https://.../image.jpg)`이다.
