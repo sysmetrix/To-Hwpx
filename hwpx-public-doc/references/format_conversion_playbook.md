@@ -1093,6 +1093,7 @@ MCP는 `make_comparison_table`(`current`, `revised`, `changedOnly`).
 - 파서를 바꿨는가? 해당 fixture와 `npm run test:golden`을 돌린다.
 - 포맷별 보존/손실 범위가 바뀌었는가? `FORMAT_INFO`와 `getConversionSummaryForExt()`를 같이 고친다.
 - HWPX XML 구조를 바꿨는가? `qa/gate.js` 또는 golden unzip 검사와 한컴 확인 요청을 병행한다.
+- 공용 Renderer의 카운터·사전 스캔·기본 서식 상태를 바꿨는가? 서로 다른 기본 글자 크기의 큰 문서를 동시에 만들어 순차 산출물과 동일한지, 입력 IR에 임시 필드가 생기지 않는지 `npm run test:core`로 확인한다.
 - 폰트/색/표/그림을 바꿨는가? `hwpx_rendering_gotchas.md`를 먼저 보고 namespace/IDRef를 대조한다.
 - 사용자 안내가 바뀌었는가? `changelog.json` 사용자 항목은 자잘한 내부 구현보다 사용자가 체감하는 변화 중심으로 쓴다.
 - 역방향 내보내기를 건드렸는가? `npm run test:reverse`와 `node tests/hwp-export-e2e.js`를 돌리고, 그림이 든 픽스처의 `<image>` 개수 유지를 확인한다.

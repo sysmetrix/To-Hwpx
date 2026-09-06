@@ -1932,7 +1932,37 @@ async function validateCoreParityHook(page) {
   assert(missing.length === 0, `core-hook: 렌더 옵션 누락 ${missing.join(', ')}`);
   assert(snap.innerOptionKeys.length > 0, 'core-hook: 문서 세부 옵션(options.options)이 비었음');
 
-  console.log('PASS CORE  parity hook (IR + 렌더 옵션 스냅샷)');
+  const concurrent = await page.evaluate(async () => {
+    const makeIr = label => ({
+      title: '', doc_type: 'plain',
+      blocks: Array.from({ length: 45 }, (_, i) => i === 0
+        ? { type: 'heading', level: 1, text: `${label} 제목`, color: '#C00000' }
+        : { type: 'para', runs: [{ text: `${label}-${i}`, sizePt: 20, href: `https://example.com/${label}/${i}` }] }),
+    });
+    const render = async (ir, fontSize) => {
+      const blob = await buildHwpx(ir, '휴먼명조', fontSize, null, 'A4', null, 'portrait', 160, { renderDocumentTitle: false });
+      const zip = await JSZip.loadAsync(await blob.arrayBuffer());
+      return Promise.all([
+        zip.file('Contents/header.xml').async('string'),
+        zip.file('Contents/section0.xml').async('string'),
+      ]);
+    };
+    const baseA = await render(makeIr('A'), 10);
+    const baseB = await render(makeIr('B'), 20);
+    const inputA = makeIr('A');
+    const inputB = makeIr('B');
+    const before = [JSON.stringify(inputA), JSON.stringify(inputB)];
+    const [actualA, actualB] = await Promise.all([render(inputA, 10), render(inputB, 20)]);
+    return {
+      sameA: baseA[0] === actualA[0] && baseA[1] === actualA[1],
+      sameB: baseB[0] === actualB[0] && baseB[1] === actualB[1],
+      inputsUnchanged: JSON.stringify(inputA) === before[0] && JSON.stringify(inputB) === before[1],
+    };
+  });
+  assert(concurrent.sameA && concurrent.sameB, 'core-hook: 브라우저 동시 렌더가 순차 기준과 다름');
+  assert(concurrent.inputsUnchanged, 'core-hook: 렌더러가 입력 IR을 변경함');
+
+  console.log('PASS CORE  parity hook + browser concurrent render isolation');
 }
 
 

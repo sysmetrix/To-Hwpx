@@ -1,6 +1,20 @@
 {
-  "current": "4.18.1",
+  "current": "4.19.0",
   "versions": [
+    {
+      "version": "4.19.0",
+      "date": "2026-09-07",
+      "user": [
+        "여러 문서를 동시에 변환할 때 한 문서의 글자 크기·링크·각주 번호가 다른 문서 처리 상태와 섞일 수 있던 문제를 고쳤습니다.",
+        "변환 과정이 입력 문서 데이터에 임시 속성을 덧붙이지 않도록 바꿔, 같은 문서를 다시 사용해도 결과가 안정적입니다."
+      ],
+      "dev": [
+        "buildSection의 15블록 이벤트 루프 양보 사이에 모듈 전역 para/footnote/hyperlink 카운터와 run base height가 다른 요청에 덮이는 재진입 결함을 호출별 RenderContext로 격리했다.",
+        "재현 실측: 기본 10pt 문서의 sizePt=20 run 100개를 기본 20pt 문서와 병렬 렌더하면 기존에는 86개가 charPrIDRef=0으로 오염됐다.",
+        "제목 사전 스캔의 block._runs/_cId 쓰기를 WeakMap 기반 headingOverrides로 교체해 입력 IR 불변을 보장했다.",
+        "test:core에 10pt/20pt 각 90문단 동시 렌더를 추가했다. Promise.all 산출물의 header.xml/section0.xml이 각 순차 기준과 완전히 같고 입력 IR JSON도 동일해야 통과한다."
+      ]
+    },
     {
       "version": "4.18.1",
       "date": "2026-09-06",

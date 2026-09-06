@@ -876,3 +876,15 @@ v4.12.1 출시 승인 판정:
 - [x] `node qa/gate.js qa/fixtures/docx_table_test.docx` — 외부 병합 표와 중첩 표 3개를 각각 분리해 ⑥ 격자 무결성 PASS
 - [x] `npm run test:release` — v4.15.1 lint·commercial·impact·DOCX·golden·대표 5종 package·accessibility·performance 전체 PASS
 - [ ] GitHub Pages 배포 워크플로 — 순차·병렬 패키지 게이트와 배포 PASS
+
+## 41. 동시 HWPX 렌더 상태 격리
+
+원인: `buildSection()`이 15개 블록마다 이벤트 루프에 양보하는 동안 다른 웹·CLI·MCP 요청이 모듈 전역 문단/각주/하이퍼링크 카운터와 본문 기준 글자 크기를 덮어썼다. 10pt 문서와 20pt 문서를 동시에 만들면 첫 문서의 20pt run 100개 중 86개가 기본 서식으로 바뀌는 것을 재현했다. 제목 사전 스캔은 원본 IR에 `_runs`·`_cId`도 추가했다.
+
+승인 기준:
+
+- [x] 문단·각주·하이퍼링크 ID, 본문 기준 글자 크기, 제목 동적 서식을 호출별 RenderContext로 격리
+- [x] 10pt/20pt 90문단 동시 렌더의 `header.xml`·`section0.xml`이 각각 순차 기준과 동일
+- [x] 렌더 전후 입력 IR JSON이 동일하고 `_runs`·`_cId` 임시 필드가 없음
+- [x] `npm run test:core` 웹/Node 11개 픽스처 동등성 + 동시 렌더 격리 통과
+- [ ] 한컴에서 일반 문서와 링크·각주·색상 제목 문서를 열어 기존 표시가 같은지 확인
