@@ -45,7 +45,7 @@ function serve() {
   page.on('pageerror', err => console.log('[pageerror]', err.message));
   try {
     await page.goto(`http://127.0.0.1:${PORT}/index.html`, { waitUntil: 'domcontentloaded' });
-    await page.waitForFunction(() => window.JSZip && window.marked && window.XLSX && window.__appReady, null, { timeout: 30000 });
+    await page.waitForFunction(() => window.JSZip && window.marked && window.__appReady, null, { timeout: 30000 });
     const downloadPromise = page.waitForEvent('download', { timeout: 120000 });
     await page.setInputFiles('#file-input', INPUT);
     await page.locator('#convert-btn').click();

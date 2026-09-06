@@ -1,6 +1,20 @@
 {
-  "current": "4.18.0",
+  "current": "4.18.1",
   "versions": [
+    {
+      "version": "4.18.1",
+      "date": "2026-09-06",
+      "user": [
+        "실제로 변환되는 PDF가 '지원 예정'으로 잘못 표시되던 문제를 고쳤습니다. PDF는 이제 입력 포맷의 베타 기능으로 안내됩니다.",
+        "첫 화면에서 쓰지 않는 엑셀 처리 코드 약 952KB를 미리 받지 않습니다. XLS/XLSX 파일을 선택할 때만 별도 작업자에서 불러옵니다.",
+        "PDF에서 보존되는 본문 그림·병합 표·셀 음영·굵게·기울임·글자색과 제외되는 항목 안내를 실제 변환기 기준으로 맞췄습니다."
+      ],
+      "dev": [
+        "FORMAT_INFO의 중복 pdf 키 때문에 available:true 구현 계약이 available:false 예정 계약으로 덮이던 문제를 제거하고 ESLint no-dupe-keys를 error로 고정했다.",
+        "입력 포맷 카드·지원 현황·결과 카드·포맷 플레이북을 PDF 파서와 pdf-fidelity 48/48 실측 계약에 맞췄다. HWP5 결과 카드도 실제 본문 텍스트 추출을 보존 항목으로 정정했다.",
+        "SheetJS 0.20.3은 xlsx-worker.js에서만 importScripts하도록 메인 defer script를 제거했다. XLSX golden 변환은 그대로 통과하며 초기 raw 전송 951,904B와 로컬 Chromium ScriptDuration 중앙값 약 35ms를 줄인다."
+      ]
+    },
     {
       "version": "4.18.0",
       "date": "2026-09-06",

@@ -57,9 +57,10 @@ assert(!/xlsx\/0\.18\.5|cdnjs\.cloudflare\.com|fonts\.googleapis\.com|_vercel\/(
 assert(style.includes("font-family: 'Inter'") && style.includes("fonts/InterVariable.woff2")
     && style.includes('--font-latin') && style.includes('.hero-title-accent'),
     '영문 전용 Inter 웹폰트 적용 누락');
-for (const file of ['js/vendor/jszip-3.10.1.min.js', 'js/vendor/marked-18.0.11.min.js', 'js/vendor/xlsx-0.20.3.full.min.js']) {
+for (const file of ['js/vendor/jszip-3.10.1.min.js', 'js/vendor/marked-18.0.11.min.js']) {
     assert(index.includes(file), `고정 vendor 스크립트 미참조: ${file}`);
 }
+assert(!index.includes('js/vendor/xlsx-0.20.3.full.min.js'), 'XLSX 라이브러리가 메인 스레드에서 불필요하게 로드됨');
 assert(index.includes('privacy.html') && index.includes('terms.html') && index.includes('notices.html'), '법적 문서 링크 누락');
 assert(!/github\.com|bwyf\.or\.kr/.test(index.replace(/<!--[^]*?-->/g, ''))
     && !/github\.com|bwyf\.or\.kr/.test(read('privacy.html'))

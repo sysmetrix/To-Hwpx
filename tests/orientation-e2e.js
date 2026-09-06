@@ -24,7 +24,7 @@ const target = process.argv[2] || 'https://sysmetrix.github.io/To-Hwpx/';
     for (const key of await caches?.keys?.() || []) await caches.delete(key);
   });
   await page.reload({ waitUntil: 'networkidle' });
-  await page.waitForFunction(() => window.JSZip && window.marked && window.XLSX, null, { timeout: 30000 });
+  await page.waitForFunction(() => window.JSZip && window.marked && window.__appReady, null, { timeout: 30000 });
 
   await page.locator('.advanced-settings > summary').click();
   await page.locator('#paper-size').selectOption('A3');

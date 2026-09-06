@@ -1210,26 +1210,28 @@ const GOV_ELEMENT_LABELS = Object.freeze({
 
 const FORMAT_INFO = {
     pdf: {
-        icon: '📕', name: 'PDF',
+        icon: '📕', svgIcon: 'icons/brand/adobeacrobatreader.svg', name: 'PDF 문서',
         quality: '★★☆', available: true, badge: '베타',
         desc: 'PDF는 글자를 어느 좌표에 그릴지만 담는 레이아웃 형식이라, 문단·제목·표를 좌표와 글자 크기로 추론합니다. 원본 그대로의 복제가 아닙니다.',
         tech: 'pdf.js로 글자와 좌표 추출 → 줄·열 조립 → 구조 추론 → IR → HWPX',
         features: [
             '글자 크기로 제목 단계를 추론(본문보다 15% 이상 큰 줄을 크기순으로 H1~H6)',
             '줄바꿈으로 잘린 문장을 한 문단으로 다시 이어붙임',
-            '열 경계가 맞는 줄이 2줄 이상 연속하면 표로 복원',
-            '머리행은 글자가 더 크거나 글꼴이 다를 때만 머리행으로 지정(근거 없으면 일반 행)',
+            '괘선과 열 경계에서 표를 복원하며 가로·세로 병합, 셀 음영과 열 너비를 보존',
+            '본문 그림과 굵게·기울임·글자색, 2단 문서의 읽기 순서를 보존',
             '들여쓴 줄은 목록으로 복원하고 들여쓰기 폭에서 중첩 단계를 계산',
             '추론에 쓴 근거(본문 크기·제목 크기·들여쓰기 폭)를 결과 카드에 표시',
         ],
         limits: [
-            '그림은 가져오지 않습니다',
-            '셀 병합·중첩 표는 좌표만으로 판단할 수 없어 제외',
-            '글꼴·글자색·굵게 등 문자 서식은 제외',
+            '중첩 표와 글꼴 이름은 제외합니다',
+            '표 밖의 도형·벡터 장식과 테두리 색·굵기는 제외합니다',
             '스캔 이미지 PDF는 글자 레이어가 없어 변환할 수 없습니다(글자 인식 미지원)',
             '단 나눔·머리말/꼬리말·각주는 본문 흐름에 섞일 수 있습니다',
         ],
-        tip: '원본 문서 파일(DOCX·HWP 등)이 있다면 그쪽을 넣는 편이 항상 더 정확합니다. PDF는 원본이 없을 때 쓰는 경로입니다.',
+        tip: {
+            title: '💡 원본 문서가 있나요?',
+            steps: ['DOCX·HWP 같은 원본 문서 파일이 있다면 그 파일을 넣는 편이 항상 더 정확합니다. PDF는 원본이 없을 때 쓰는 경로입니다.'],
+        },
     },
     md: {
         icon: '📝', svgIcon: 'icons/brand/markdown.svg', name: 'Markdown',
@@ -1356,14 +1358,6 @@ const FORMAT_INFO = {
             '일반적으로 노트북 변환은 실행 가능한 노트북 보존이 아니라 읽는 문서화가 목표',
         ],
         limits: ['차트 라이브러리의 인터랙티브·위젯 출력 미지원(정적 이미지만 변환)', 'LaTeX 수식과 실행 상태·메타데이터 미보존'],
-    },
-    pdf: {
-        icon: '📕', svgIcon: 'icons/brand/adobeacrobatreader.svg', name: 'PDF 문서',
-        quality: '★★☆', available: false, badge: '예정',
-        desc: '레이아웃 고정 문서 형식입니다. 클라이언트 단독 처리가 어렵습니다.',
-        tech: '백엔드 PDF 파싱 서비스 연동 예정',
-        features: ['텍스트 추출 후 변환 예정'],
-        limits: ['레이아웃 복원 불가', '이미지·표 추출 제한', '스캔 PDF 미지원'],
     },
     pptx: {
         icon: '📑', svgIcon: 'icons/brand/microsoftpowerpoint.svg', name: 'PowerPoint (PPTX)',
@@ -3899,8 +3893,8 @@ function getInputFormatLabel(ext) {
 function getConversionSummaryForExt(ext) {
     const summaries = {
         pdf: {
-            preserved: '본문 글자와 문단(줄바꿈으로 잘린 문장을 다시 이어붙임), 글자 크기로 추론한 제목 단계, 열이 맞는 표, 들여쓴 목록과 중첩 단계',
-            lossy: '그림, 셀 병합·중첩 표, 글꼴·글자색·굵게, 단 나눔·머리말/꼬리말, 페이지 배치. 스캔 이미지 PDF는 글자 레이어가 없어 변환 불가',
+            preserved: '본문 글자와 문단, 추론한 제목 단계, 괘선 표(가로·세로 병합·셀 음영·열 너비), 들여쓴 목록, 굵게·기울임·글자색, 본문 그림, 2단 읽기 순서',
+            lossy: '중첩 표, 글꼴 이름, 페이지 배치, 표 밖의 도형·벡터 장식, 테두리 색·굵기. 스캔 이미지 PDF는 글자 레이어가 없어 변환 불가',
         },
         md: {
             preserved: '제목, 문단, 목록, 표, 코드블록, 클릭 가능한 본문 링크, PNG/JPEG/GIF/BMP/WebP 이미지, GFM 각주, YAML frontmatter 제목',
@@ -3955,8 +3949,8 @@ function getConversionSummaryForExt(ext) {
             lossy: '실행 상태, 차트 라이브러리 위젯 출력, LaTeX 수식, 메타데이터',
         },
         hwp: {
-            preserved: 'HWPX 오업로드 시 XML 텍스트와 일부 표',
-            lossy: 'HWP5 본문, 이미지, 개체, 복잡한 한글 서식',
+            preserved: 'HWP5 본문 텍스트를 문단 단위로 추출, HWPX 오업로드 시 XML 텍스트와 일부 표',
+            lossy: 'HWP5 표·이미지·글머리·서식, HWPX 재변환 시 원본 스타일·개체·세밀한 레이아웃',
         },
         hwpx: {
             preserved: '이미 HWPX이므로 원본 사용 권장, 필요 시 텍스트 일부 재구성',

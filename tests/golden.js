@@ -581,7 +581,7 @@ async function runCase(page, testCase) {
   assert(fs.existsSync(inputPath), `${testCase.name}: fixture 없음 ${inputPath}`);
 
   await page.goto(`http://127.0.0.1:${PORT}/index.html`, { waitUntil: 'domcontentloaded' });
-  await page.waitForFunction(() => window.JSZip && window.marked && window.XLSX && window.__appReady, null, { timeout: 30000 });
+  await page.waitForFunction(() => window.JSZip && window.marked && window.__appReady, null, { timeout: 30000 });
   if (testCase.previewPaper) {
     await page.locator('#paper-size').evaluate((el, value) => {
       el.value = value;
@@ -675,7 +675,7 @@ async function runCase(page, testCase) {
 async function convertThroughUi(page, { inputPath, format, text, baseName, setup, returnPackage = false }) {
   const baseUrl = `http://127.0.0.1:${PORT}/index.html`;
   await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
-  await page.waitForFunction(() => window.JSZip && window.marked && window.XLSX && window.__appReady, null, { timeout: 30000 });
+  await page.waitForFunction(() => window.JSZip && window.marked && window.__appReady, null, { timeout: 30000 });
   if (!inputPath) {
     assert(await page.locator('.input-mode-tabs').isVisible(), 'direct: 일반 모드에서 직접 입력 탭이 보이지 않음');
   }
@@ -946,7 +946,7 @@ async function validateXssHardening(page) {
 
   // (3) 미리보기 렌더(innerHTML 경로) — 실제 XSS 표면. 실행/요소 생성이 0이어야 한다.
   await page.goto(`${baseUrl}?admin=1`, { waitUntil: 'domcontentloaded' });
-  await page.waitForFunction(() => window.JSZip && window.marked && window.XLSX && window.__appReady, null, { timeout: 30000 });
+  await page.waitForFunction(() => window.JSZip && window.marked && window.__appReady, null, { timeout: 30000 });
   await page.locator('#mode-paste').click();
   await page.locator('.paste-format-btn[data-paste-format="md"]').click();
   await page.locator('#paste-input').fill(mdPayload);
@@ -974,7 +974,7 @@ async function validateXssHardening(page) {
 async function validateCommercialUx(page) {
   const baseUrl = `http://127.0.0.1:${PORT}/index.html`;
   await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
-  await page.waitForFunction(() => window.JSZip && window.marked && window.XLSX && window.__appReady, null, { timeout: 30000 });
+  await page.waitForFunction(() => window.JSZip && window.marked && window.__appReady, null, { timeout: 30000 });
 
   const analyticsInitial = await page.evaluate(() => ({
     consent: window.ToHwpxAnalytics?.consent(),
@@ -1014,7 +1014,7 @@ async function validateCommercialUx(page) {
   assert(guestBeta.count > 0 && guestBeta.allHidden && guestBeta.converterBetaHidden,
     'ux: 일반 사용자에게 베타 배지가 노출됨(관리자 전용이어야 함)');
   await page.goto(`${baseUrl}?admin=1`, { waitUntil: 'domcontentloaded' });
-  await page.waitForFunction(() => window.JSZip && window.marked && window.XLSX && window.__appReady, null, { timeout: 30000 });
+  await page.waitForFunction(() => window.JSZip && window.marked && window.__appReady, null, { timeout: 30000 });
   const adminBeta = await page.evaluate(() => {
     const all = [...document.querySelectorAll('.badge-beta')];
     return { count: all.length, allShown: all.every(el => !el.hidden),
@@ -1023,7 +1023,7 @@ async function validateCommercialUx(page) {
   assert(adminBeta.count > 0 && adminBeta.allShown && adminBeta.rootClass,
     'ux: 관리자 모드에서 베타 배지가 표시되지 않음');
   await page.goto(`${baseUrl}?admin=0`, { waitUntil: 'domcontentloaded' });
-  await page.waitForFunction(() => window.JSZip && window.marked && window.XLSX && window.__appReady, null, { timeout: 30000 });
+  await page.waitForFunction(() => window.JSZip && window.marked && window.__appReady, null, { timeout: 30000 });
   assert((await page.locator('#file-input').getAttribute('accept')).startsWith('.md,.markdown,.docx,.pptx,.html,.htm,.csv,.xlsx,.xls,.json,.txt,.hwp,.ipynb'),
     'ux: 파일 선택 accept 순서가 드롭존 입력 포맷 순서와 다름');
   const versionButtonText = (await page.locator('#open-changelog').textContent()).trim();
@@ -1197,21 +1197,31 @@ async function validateCommercialUx(page) {
     'ux: 입력 포맷 패널 리드문에 카드 선택 안내 문구가 없음');
   const basicCardOrder = await page.locator('#panel-basic .format-card').evaluateAll(cards =>
     cards.map(card => card.getAttribute('data-ext')));
-  assert(JSON.stringify(basicCardOrder) === JSON.stringify(['md', 'docx', 'pptx', 'html', 'csv', 'json', 'txt', 'hwp', 'ipynb']),
-    'ux: 입력 포맷 카드 순서가 MD/DOCX/PPTX/HTML/CSV/XLSX/JSON/TXT/HWP/IPYNB 기준과 다름');
+  assert(JSON.stringify(basicCardOrder) === JSON.stringify(['md', 'docx', 'pptx', 'html', 'csv', 'json', 'txt', 'hwp', 'ipynb', 'pdf']),
+    'ux: 입력 포맷 카드 순서가 MD/DOCX/PPTX/HTML/CSV/XLSX/JSON/TXT/HWP/IPYNB/PDF 기준과 다름');
+  await tabs.nth(1).click();
+  const pdfCard = page.locator('#panel-basic .format-card[data-ext="pdf"]');
+  assert(await pdfCard.getAttribute('aria-disabled') !== 'true', 'ux: 지원 중인 PDF 카드가 비활성 상태임');
+  await pdfCard.click();
+  const pdfModalText = await page.locator('#format-modal').textContent();
+  assert(pdfModalText.includes('본문 그림') && pdfModalText.includes('스캔 이미지 PDF'),
+    'ux: PDF 상세 안내가 실제 파서의 그림 보존/OCR 제한 계약과 다름');
+  await page.keyboard.press('Escape');
   await tabs.nth(2).click();
   assert((await page.locator('#panel-ext > .section-sub').textContent()).includes('변환 품질 검증'),
     'ux: 예정 포맷 패널 리드문 누락');
-  assert(await page.locator('#panel-ext .format-card').first().getAttribute('data-ext') === 'pdf',
-    'ux: 예정 포맷 안내 첫 카드가 PDF가 아님(IPYNB는 지원됨으로 전환되어 입력 포맷 탭으로 이동)');
+  assert(await page.locator('#panel-ext .format-card').first().getAttribute('data-ext') === 'odt',
+    'ux: 지원 중인 PDF가 예정 포맷에 남았거나 ODT/RTF 카드 순서가 잘못됨');
   await tabs.nth(3).click();
   assert(!(await page.locator('#panel-support').textContent()).includes('PC / 모바일 브라우저'),
     'ux: 지원 현황에 포맷이 아닌 PC / 모바일 브라우저 행이 남아 있음');
   const supportOrder = await page.locator('#panel-support tbody tr').evaluateAll(rows =>
-    rows.slice(0, 10).map(row => row.cells[0].textContent.trim()));
+    rows.slice(0, 11).map(row => row.cells[0].textContent.trim()));
   assert(JSON.stringify(supportOrder) === JSON.stringify([
-    'MD (Markdown)', 'DOCX', 'PPTX', 'HTML', 'CSV', 'XLSX', 'JSON', 'TXT', 'HWP', 'IPYNB',
+    'MD (Markdown)', 'DOCX', 'PPTX', 'HTML', 'CSV', 'XLSX', 'JSON', 'TXT', 'HWP', 'IPYNB', 'PDF',
   ]), 'ux: 지원 현황 표 순서가 포맷 카드/안내 순서와 다름');
+  assert((await page.locator('#panel-support tbody tr').nth(10).textContent()).includes('베타'),
+    'ux: 지원 현황에서 PDF가 베타 입력으로 표시되지 않음');
   await tabs.first().focus();
   await tabs.first().press('ArrowRight');
   assert(await tabs.nth(1).getAttribute('aria-selected') === 'true', 'ux: 포맷 탭 방향키 전환 실패');
@@ -1317,7 +1327,7 @@ async function validateRejectedInputs(page) {
 
   for (const testCase of cases) {
     await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
-    await page.waitForFunction(() => window.JSZip && window.marked && window.XLSX && window.__appReady, null, { timeout: 30000 });
+    await page.waitForFunction(() => window.JSZip && window.marked && window.__appReady, null, { timeout: 30000 });
     let downloaded = false;
     const onDownload = () => { downloaded = true; };
     page.on('download', onDownload);
@@ -1353,7 +1363,7 @@ async function validateRejectedInputs(page) {
 async function validateBatchKanban(page) {
   const baseUrl = `http://127.0.0.1:${PORT}/index.html`;
   await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
-  await page.waitForFunction(() => window.JSZip && window.marked && window.XLSX && window.__appReady, null, { timeout: 30000 });
+  await page.waitForFunction(() => window.JSZip && window.marked && window.__appReady, null, { timeout: 30000 });
 
   // setInputFiles는 경로와 buffer를 같은 배열에 섞을 수 없어 전부 buffer로 통일한다.
   const files = [
@@ -1416,7 +1426,7 @@ async function validatePaperMatrix(page) {
   };
   const previewWidths = {};
   await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
-  await page.waitForFunction(() => window.JSZip && window.marked && window.XLSX && window.__appReady, null, { timeout: 30000 });
+  await page.waitForFunction(() => window.JSZip && window.marked && window.__appReady, null, { timeout: 30000 });
   await page.locator('.advanced-settings > summary').click();
 
   for (const [paper, [rawWidth, rawHeight]] of Object.entries(papers)) {
@@ -1476,7 +1486,7 @@ async function validatePaperMatrix(page) {
 async function validateLineSpacingOption(page) {
   const baseUrl = `http://127.0.0.1:${PORT}/index.html`;
   await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
-  await page.waitForFunction(() => window.JSZip && window.marked && window.XLSX && window.__appReady, null, { timeout: 30000 });
+  await page.waitForFunction(() => window.JSZip && window.marked && window.__appReady, null, { timeout: 30000 });
   await page.locator('.advanced-settings > summary').click();
   const defaultValue = await page.locator('#line-spacing').inputValue();
   assert(defaultValue === '160', 'line spacing: UI 기본값 160%가 아님');
@@ -1507,7 +1517,7 @@ async function validateLineSpacingOption(page) {
 async function validateDetailSettingsUx(page) {
   const baseUrl = `http://127.0.0.1:${PORT}/index.html`;
   await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
-  await page.waitForFunction(() => window.JSZip && window.marked && window.XLSX && window.__appReady, null, { timeout: 30000 });
+  await page.waitForFunction(() => window.JSZip && window.marked && window.__appReady, null, { timeout: 30000 });
   const shapeSummary = await page.locator('#advanced-settings-summary').evaluate(el => ({
     text: el.textContent.trim(),
     scrollWidth: el.scrollWidth,
@@ -1819,7 +1829,7 @@ async function validateMobileFormFontSize(page) {
 async function validatePretendardCompatibility(page) {
   const baseUrl = `http://127.0.0.1:${PORT}/index.html`;
   await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
-  await page.waitForFunction(() => window.JSZip && window.marked && window.XLSX && window.__appReady, null, { timeout: 30000 });
+  await page.waitForFunction(() => window.JSZip && window.marked && window.__appReady, null, { timeout: 30000 });
 
   const options = await page.locator('#doc-font option').evaluateAll(nodes =>
     nodes.map(node => ({ value: node.value, text: node.textContent.trim() })));
@@ -1896,7 +1906,7 @@ async function validatePretendardCompatibility(page) {
 async function validateCoreParityHook(page) {
   const mdPath = path.join(FIXTURES, 'sample.md');
   await page.goto(`http://127.0.0.1:${PORT}/index.html`, { waitUntil: 'domcontentloaded' });
-  await page.waitForFunction(() => window.JSZip && window.marked && window.XLSX && window.__appReady, null, { timeout: 30000 });
+  await page.waitForFunction(() => window.JSZip && window.marked && window.__appReady, null, { timeout: 30000 });
   const downloadPromise = page.waitForEvent('download', { timeout: 30000 });
   await page.setInputFiles('#file-input', mdPath);
   await page.locator('#convert-btn').click();
@@ -1935,7 +1945,7 @@ async function validateCoreParityHook(page) {
  */
 async function validateFolderDrop(page) {
   await page.goto(`http://127.0.0.1:${PORT}/index.html`, { waitUntil: 'domcontentloaded' });
-  await page.waitForFunction(() => window.JSZip && window.marked && window.XLSX && window.__appReady, null, { timeout: 30000 });
+  await page.waitForFunction(() => window.JSZip && window.marked && window.__appReady, null, { timeout: 30000 });
 
   const queued = await page.evaluate(async () => {
     const mkFile = (name, content) => ({
