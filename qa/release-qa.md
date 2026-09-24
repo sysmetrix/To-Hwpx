@@ -9,18 +9,18 @@ Scope: static browser-only conversion flow from file selection to HWPX download.
 
 - [x] `npm run test:release` 구성 게이트 전체 통과. 접근성 대비 수정 후 `test:accessibility`와 `test:performance`를 재통과.
 - [x] `npm run test:workspace` — 1280·1024·768·390px 첫 화면 잘림 없음, 준비→설정→결과 라우트, 최근 작업 복원 확인.
-- [x] `npm run test:legacy` — v4.19.3 고정 커밋·푸터 링크·서비스워커 캐시 격리 확인.
+- [x] `npm run test:legacy` — v4.20.0 고정 커밋·푸터 링크·서비스워커 캐시 격리 확인.
 - [x] `node tests/orientation-e2e.js` — A3 가로 3쪽, 내부 잘림 0, HWPX `landscape="NARROWLY"` 확인.
 - [x] Playwright 캡처로 데스크톱·390px 모바일 첫 화면과 직전 버전 링크를 확인.
 - [x] 한컴오피스 COM에서 DOCX 충실도 산출물 HWPX 실제 열기 및 PDF 내보내기 성공(14,363바이트).
-- [ ] 배포 후 `node qa/production-smoke.js`로 Vercel·Pages 현재판과 Pages `/legacy/v4.19.3/` 확인.
+- [ ] 배포 후 `node qa/production-smoke.js`로 Vercel·Pages 현재판과 Pages `/legacy/v4.20.0/` 확인.
 
 ### 사람이 반드시 확인할 항목
 
 - [ ] 브라우저 캐시를 비우고 `📋 v4.20.0`이 보이는지 확인.
 - [ ] MD·DOCX·XLSX·PDF 샘플을 각각 변환해 결과 요약의 성공·경고·실패가 실제 결과 카드와 일치하는지 확인.
 - [ ] 생성 HWPX를 한컴에서 열어 본문·표·이미지와 페이지 방향을 눈으로 확인. 자동 게이트 통과는 렌더링 통과가 아니다.
-- [ ] 푸터의 `이전 버전(v4.19.3)` 링크에서 실제 v4.19.3 화면이 열리고 현재판 캐시를 지우지 않는지 확인.
+- [ ] 푸터의 `이전 버전(v4.20.0)` 링크에서 실제 v4.20.0 화면이 열리고 현재판 캐시를 지우지 않는지 확인.
 
 ### 개인정보 경계
 
@@ -938,3 +938,24 @@ v4.12.1 출시 승인 판정:
 - [x] Pages의 중복 package gate 제거
 - [x] `test:package`는 최대 2개 입력을 병렬 실행해 5개 입력 모두 통과, 로컬 실측 10.2초 → 6.0초
 - [ ] PR 머지 후 두 CI job과 Pages deploy 성공, 운영 production smoke 통과
+
+## 44. v4.21.0 직접 입력 정식 상용화
+
+배경: 직접 입력 사용률이 예상보다 높아 베타 경고만 유지하는 대신, 원문을 서버로 보내지 않는 기존 구조 위에 편집·오류 진단·복구 안전망을 정식 기능으로 제공한다. HWPX 출력은 계속 가상 `File` → `fileToIR()` 공통 파이프라인을 사용한다.
+
+자동 승인 기준:
+
+- [x] MD·HTML·TXT·CSV/TSV·JSON 내용 기반 추천, 사용자 형식 잠금, `다시 감지` 계약
+- [x] JSON 오류 위치, CSV 열린 따옴표/열 수, Markdown 코드 펜스/참조, HTML 제외 요소 진단
+- [x] 복구 불가능한 오류 변환 차단, 500KB 초과 수동 미리보기, 200블록 표시 제한, 직접 입력 10MB 상한
+- [x] 줄 번호·행/열·글자/바이트·찾기/바꾸기·Tab·줄바꿈 제어
+- [x] 초안 자동복구 기본 꺼짐, 명시적 동의 후 별도 IndexedDB에 2MB 이하 1개·7일 저장, 확인 후 복구, 기능 해제/초기화/삭제 시 제거
+- [x] 분석 이벤트 allowlist에 원문·문서명·오류 주변 텍스트·URL이 없음
+- [x] `npm run test:direct-input`을 `test:release`에 편입하고 golden에서 자동 추천·잠금·오류 이동·편집·초안 복구를 검증
+- [x] MD/HTML/TXT/CSV/JSON 파일 입력↔직접 입력 HWPX 본문·표·링크·그림 동등성 유지
+
+수동 확인 기준:
+
+- [x] `node qa/direct-input-visual.js` 데스크톱 편집기/미리보기 분할과 모바일 390px 세로 흐름·버튼 잘림 없음 확인
+- [ ] MD·HTML·TSV·JSON 직접 입력 결과를 한컴에서 열어 제목·목록·표·링크와 전체 본문 누락 여부 확인
+- [ ] 캐시를 비우고 `📋 v4.21.0` 확인 후 하단 이전 버전(v4.20.0) 링크 동작 확인

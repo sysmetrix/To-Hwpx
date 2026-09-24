@@ -720,6 +720,74 @@ async function validateDirectInput(page) {
     'direct: 일반 사용자에게 직접 입력 탭이 보이지 않음 (v4.8.3 베타 공개)');
   assert(await page.locator('.paste-preview-panel:not([hidden])').count() === 1,
     'direct: 일반 모드에서 미리보기 패널이 노출되지 않음 (v4.10.6부터 정식 공개)');
+  const desktopWorkbench = await page.evaluate(() => {
+    const editor = document.querySelector('.paste-editor')?.getBoundingClientRect();
+    const preview = document.querySelector('.paste-preview-panel')?.getBoundingClientRect();
+    return editor && preview ? { editorX: editor.x, editorY: editor.y, previewX: preview.x, previewY: preview.y } : null;
+  });
+  assert(desktopWorkbench && desktopWorkbench.previewX > desktopWorkbench.editorX
+    && Math.abs(desktopWorkbench.previewY - desktopWorkbench.editorY) < 10,
+  'direct layout: 데스크톱에서 편집기와 미리보기가 나란히 배치되지 않음');
+  assert(await page.locator('#mode-paste .svc-beta-badge').count() === 0,
+    'direct commercial: 직접 입력 탭에 베타 배지가 남아 있음');
+  assert(await page.locator('.paste-notice--quality').isVisible(),
+    'direct commercial: 로컬 처리·미리보기 한계 안내가 보이지 않음');
+
+  // 내용 기반 자동 추천 → 사용자가 형식을 고르면 잠금 → 다시 감지로 복귀.
+  await page.locator('#paste-input').fill('{"제목":"자동 감지","값":1}');
+  await page.waitForFunction(() => document.querySelector('#paste-format')?.value === 'json');
+  assert((await page.locator('#paste-format-recommendation').textContent()).includes('추천 JSON'),
+    'direct detect: 유효한 JSON을 JSON으로 추천하지 않음');
+  await page.locator('.paste-format-btn[data-paste-format="md"]').click();
+  assert(await page.locator('#paste-redetect').isVisible(),
+    'direct detect: 사용자가 고른 형식이 잠기거나 다시 감지 버튼이 나타나지 않음');
+  await page.locator('#paste-input').fill('{"제목":"잠금 유지","값":2}');
+  assert(await page.locator('#paste-format').inputValue() === 'md',
+    'direct detect: 사용자 형식 잠금을 자동 감지가 덮어씀');
+  await page.locator('#paste-redetect').click();
+  assert(await page.locator('#paste-format').inputValue() === 'json',
+    'direct detect: 다시 감지가 JSON 추천을 적용하지 않음');
+
+  // 오류 위치 진단과 변환 차단.
+  await page.locator('#paste-input').fill('{\n  "값": 1,\n}');
+  await page.waitForFunction(() => document.querySelector('.paste-diagnostic[data-severity="error"]'));
+  assert((await page.locator('.paste-diagnostic[data-severity="error"]').textContent()).includes('JSON 문법 오류'),
+    'direct diagnostics: JSON 오류 설명이 누락됨');
+  assert(await page.locator('#convert-btn').isDisabled(),
+    'direct diagnostics: 복구 불가능한 문법 오류인데 변환 버튼이 활성화됨');
+  await page.locator('.paste-diagnostic[data-severity="error"]').click();
+  assert((await page.locator('#paste-cursor-status').textContent()).includes('행'),
+    'direct diagnostics: 진단 클릭이 편집 위치 상태를 갱신하지 않음');
+
+  // 소스 편집기 찾기·바꾸기와 줄/글자 상태.
+  await page.locator('.paste-format-btn[data-paste-format="txt"]').click();
+  await page.locator('#paste-input').fill('사과 한 개\n사과 두 개');
+  await page.locator('#paste-find-toggle').click();
+  await page.locator('#paste-find').fill('사과');
+  await page.locator('#paste-replace').fill('배');
+  await page.locator('#paste-replace-all').click();
+  assert(await page.locator('#paste-input').inputValue() === '배 한 개\n배 두 개',
+    'direct editor: 모두 바꾸기가 원문에 반영되지 않음');
+  assert((await page.locator('#paste-line-numbers').textContent()).trim() === '1\n2',
+    'direct editor: 줄 번호가 입력 줄 수와 동기화되지 않음');
+
+  // 명시적으로 켠 경우에만 IndexedDB에 저장하고 새로고침 후 사용자가 복구를 선택한다.
+  await page.locator('#paste-draft-enabled').check();
+  await page.locator('#paste-input').fill('# 복구할 초안\n\n본문');
+  await page.waitForTimeout(1200);
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => window.__appReady, null, { timeout: 30000 });
+  await page.locator('#start-paste').click();
+  await page.waitForFunction(() => document.body.dataset.workspaceRoute === 'settings');
+  await page.locator('#paste-draft-recovery:not([hidden])').waitFor({ state: 'visible' });
+  assert(await page.locator('#paste-input').inputValue() === '',
+    'direct draft: 사용자 확인 전에 초안을 자동으로 덮어씀');
+  await page.locator('#paste-restore-draft').click();
+  assert((await page.locator('#paste-input').inputValue()).includes('복구할 초안'),
+    'direct draft: 저장된 초안을 복구하지 못함');
+  await page.locator('#paste-delete-draft').click();
+  await page.locator('#paste-draft-enabled').uncheck();
+
   await page.locator('.paste-format-btn[data-paste-format="md"]').click();
   await page.locator('#paste-input').fill('# 일반 모드 미리보기\n\n본문 내용');
   await page.waitForFunction(() => document.querySelector('#paste-preview-status')?.textContent.includes('MD 해석 완료'));
@@ -1940,6 +2008,9 @@ async function validateMobileFormFontSize(page) {
       optionSelect: px('#font-size'),
       marginInput: px('#margin-top'),
       pasteTextarea: px('#paste-input'),
+      workbenchColumns: getComputedStyle(document.querySelector('.paste-workbench')).gridTemplateColumns,
+      editorX: document.querySelector('.paste-editor').getBoundingClientRect().x,
+      previewX: document.querySelector('.paste-preview-panel').getBoundingClientRect().x,
     };
   });
   await page.setViewportSize({ width: 1280, height: 720 });
@@ -1949,6 +2020,8 @@ async function validateMobileFormFontSize(page) {
     `mobile: 여백 입력 font-size가 16px 미만이라 iOS 자동 확대 위험 (${sizes.marginInput}px)`);
   assert(sizes.pasteTextarea >= 16,
     `mobile: 직접 입력 textarea font-size가 16px 미만이라 iOS 자동 확대 위험 (${sizes.pasteTextarea}px)`);
+  assert(sizes.workbenchColumns === 'none' && Math.abs(sizes.editorX - sizes.previewX) < 2,
+    'mobile: 직접 입력 편집기와 미리보기가 세로 흐름으로 전환되지 않음');
   console.log('PASS MOBILE 768px 이하 폼 컨트롤 font-size >= 16px (iOS 자동 확대 방지)');
 
   // 글자 크기 하한 — 한글은 획이 많아 11px 아래에서는 실질적으로 읽을 수 없다.
@@ -2209,6 +2282,12 @@ async function validateFolderDrop(page) {
   });
 
   try {
+    if (process.env.GOLDEN_DIRECT_ONLY === '1') {
+      await validateDirectInput(page);
+      assert(pageErrors.length === 0, `브라우저 오류 발생: ${pageErrors.join(' | ')}`);
+      console.log('\nGOLDEN DIRECT: passed');
+      return;
+    }
     for (const testCase of CASES) {
       await runCase(page, testCase);
     }
@@ -2234,6 +2313,6 @@ async function validateFolderDrop(page) {
   }
 })().catch(err => {
   console.error('\nGOLDEN: FAIL');
-  console.error(err.message);
+  console.error(err.stack || err.message);
   process.exit(1);
 });

@@ -1,6 +1,6 @@
 {
   "name": "to-hwpx",
-  "version": "4.20.0",
+  "version": "4.21.0",
   "private": true,
   "bin": {
     "tohwpx": "js/core/cli.js",
@@ -23,12 +23,13 @@
     "test:cli": "node tests/cli-test.js",
     "test:mcp": "node tests/mcp-server-test.js",
     "test:workspace": "node tests/workspace-e2e.js",
+    "test:direct-input": "node tests/direct-input-test.mjs",
     "test:legacy": "node qa/legacy-site-gate.js",
     "tohwpx": "node js/core/cli.js",
     "mcp": "node js/core/mcp-server.js",
     "test:docx": "node tests/make-docx-fidelity-fixture.js && node qa/docx-fidelity-harness.js tests/fixtures/docx-fidelity.docx",
     "test:package": "node qa/package-gate.js",
-    "test:release": "npm run lint && npm run test:commercial && npm run test:impact && npm run test:docx && npm run test:golden && npm run test:package && npm run test:reverse && npm run test:core && npm run test:roundtrip && npm run test:pdf && npm run test:pdf-fidelity && npm run test:korean-join && npm run test:gov && npm run test:diff && npm run test:roadmap && npm run test:cli && npm run test:mcp && npm run test:workspace && npm run test:legacy && npm run test:accessibility && npm run test:performance",
+    "test:release": "npm run lint && npm run test:commercial && npm run test:impact && npm run test:docx && npm run test:golden && npm run test:package && npm run test:reverse && npm run test:core && npm run test:roundtrip && npm run test:pdf && npm run test:pdf-fidelity && npm run test:korean-join && npm run test:gov && npm run test:diff && npm run test:roadmap && npm run test:cli && npm run test:mcp && npm run test:workspace && npm run test:direct-input && npm run test:legacy && npm run test:accessibility && npm run test:performance",
     "version:next": "node qa/bump-version.js",
     "lint": "eslint js/",
     "test:pdf-fidelity": "node tests/make-pdf-hard-fixtures.js && node qa/pdf-fidelity-gate.js",

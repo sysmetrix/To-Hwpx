@@ -12,7 +12,7 @@
 'use strict';
 
 const CACHE_PREFIX = 'to-hwpx-v';
-const CACHE_VERSION = 'to-hwpx-v4.20.0';
+const CACHE_VERSION = 'to-hwpx-v4.21.0';
 
 // 설치 시 미리 캐시할 파일 목록 (앱 셸)
 // [주의] 절대경로(/)가 아닌 상대경로(./)를 사용해야 함.
@@ -41,6 +41,7 @@ const APP_SHELL = [
     './js/parsers.js',
     './js/hwpx.js',
     './js/app.js',
+    './js/direct-input.js',
     './js/workspace.js',
     './js/workspace-history.js',
     './js/pdf-parser.js',

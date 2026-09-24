@@ -146,7 +146,7 @@
             <span>｢BWYF｣ AX Challenger 2026</span>
             <!-- [주의] id="open-changelog"는 app.js에서 관리자 모드일 때 업데이트 내역 모달을 여는 연결값 -->
             <button class="util-changelog-btn" id="open-changelog" aria-label="버전 정보">
-                📋 v4.20.0
+                📋 v4.21.0
             </button>
         </div>
     </div>
@@ -311,14 +311,14 @@
 
             <!-- ── 왼쪽: 옵션 패널 ──────────────────────────────── -->
             <div class="options-panel">
-                <h3 class="options-panel-title">파일 선택 및 기본 옵션</h3>
+                <h3 class="options-panel-title">입력 및 기본 옵션</h3>
 
                 <!-- 입력 방식 탭: 파일 업로드 / 직접 입력 -->
                 <div class="input-mode-tabs" role="tablist" aria-label="입력 방식">
                     <button type="button" id="mode-upload" class="input-mode-tab is-active"
                             role="tab" aria-selected="true" aria-controls="upload-mode">📂 파일 업로드</button>
                     <button type="button" id="mode-paste" class="input-mode-tab"
-                            role="tab" aria-selected="false" aria-controls="paste-mode">⌨ 직접 입력 <span class="svc-beta-badge">베타</span></button>
+                            role="tab" aria-selected="false" aria-controls="paste-mode">⌨ 직접 입력</button>
                 </div>
 
                 <!-- ── 모드 1: 파일 업로드 ── -->
@@ -352,9 +352,9 @@
                         <span class="paste-notice-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="11"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></span>
                         <p><strong>빠른 시작</strong> — ChatGPT·Claude 등 AI 채팅 답변을 복사해 <em>MD</em>로 붙여넣으면 제목·목록·표·강조가 그대로 HWPX로 변환됩니다. 미리 보기 결과를 <em>미리보기 복사</em>로 바로 가져갈 수도 있습니다.</p>
                     </div>
-                    <div class="paste-notice paste-notice--warn" role="note">
-                        <span class="paste-notice-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>
-                        <p><strong>베타 서비스</strong> — 변환 품질이 아직 완성 수준이 아닙니다. 결과 파일을 한글에서 꼭 확인하세요. <strong>HTML 버튼</strong>은 HTML 소스 코드 전용이며, 웹 화면 복사 텍스트는 MD·TXT를 사용하세요.</p>
+                    <div class="paste-notice paste-notice--quality" role="note">
+                        <span class="paste-notice-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
+                        <p><strong>브라우저에서 안전하게 작업</strong> — 입력 내용은 서버로 보내지 않습니다. 형식 추천과 오류 진단을 확인한 뒤 동일한 파일 변환 엔진으로 HWPX를 만듭니다. 미리 보기는 해석 결과이며 최종 모양은 한글에서 확인하세요.</p>
                     </div>
                     <div class="form-row">
                         <span class="form-row-label">입력 형식</span>
@@ -372,12 +372,41 @@
                             <option value="csv">CSV / 표 붙여넣기</option>
                             <option value="json">JSON (.json)</option>
                         </select>
+                        <div class="paste-format-detection" id="paste-format-detection" role="status" aria-live="polite">
+                            <span id="paste-format-recommendation">내용을 붙여넣으면 형식을 추천합니다.</span>
+                            <button type="button" id="paste-redetect" hidden>다시 감지</button>
+                        </div>
                         <p id="paste-format-help" class="paste-format-help" aria-live="polite"></p>
                     </div>
-                    <div class="form-row">
+                    <div class="paste-workbench">
+                    <div class="form-row paste-editor-row">
                         <label for="paste-input">내용 입력</label>
-                        <textarea id="paste-input" class="paste-textarea" rows="10"
-                                  placeholder="여기에 내용을 붙여넣으세요. 선택한 형식의 규칙에 따라 변환합니다."></textarea>
+                        <div class="paste-editor" id="paste-editor">
+                            <div class="paste-editor-toolbar" role="toolbar" aria-label="직접 입력 편집 도구">
+                                <button type="button" id="paste-undo" title="실행 취소 (Ctrl+Z)">실행 취소</button>
+                                <button type="button" id="paste-redo" title="다시 실행 (Ctrl+Y)">다시 실행</button>
+                                <button type="button" id="paste-find-toggle" aria-expanded="false" aria-controls="paste-find-panel">찾기·바꾸기</button>
+                                <label class="paste-wrap-toggle"><input type="checkbox" id="paste-wrap" checked> 자동 줄바꿈</label>
+                            </div>
+                            <div id="paste-find-panel" class="paste-find-panel" hidden>
+                                <label>찾기 <input type="text" id="paste-find" autocomplete="off"></label>
+                                <label>바꾸기 <input type="text" id="paste-replace" autocomplete="off"></label>
+                                <button type="button" id="paste-find-next">다음</button>
+                                <button type="button" id="paste-replace-one">바꾸기</button>
+                                <button type="button" id="paste-replace-all">모두 바꾸기</button>
+                            </div>
+                            <div class="paste-editor-body">
+                                <pre id="paste-line-numbers" class="paste-line-numbers" aria-hidden="true">1</pre>
+                                <textarea id="paste-input" class="paste-textarea" rows="14" spellcheck="false"
+                                          aria-describedby="paste-editor-status paste-diagnostics"
+                                          placeholder="여기에 내용을 붙여넣으세요. 내용에 맞는 형식을 자동으로 추천합니다."></textarea>
+                            </div>
+                            <div class="paste-editor-status" id="paste-editor-status" aria-live="polite">
+                                <span id="paste-cursor-status">1행 1열</span>
+                                <span id="paste-count-status">0자 · 0B</span>
+                            </div>
+                        </div>
+                        <div id="paste-diagnostics" class="paste-diagnostics" aria-live="polite"></div>
                     </div>
                     <section class="paste-preview-panel" aria-labelledby="paste-preview-title">
                         <div class="paste-preview-toolbar">
@@ -386,6 +415,7 @@
                                 <span id="paste-preview-status" aria-live="polite">입력하면 해석 결과가 표시됩니다.</span>
                             </div>
                             <div class="paste-preview-actions">
+                                <button type="button" class="paste-copy-btn" id="refresh-paste-preview" hidden>미리보기 갱신</button>
                                 <button type="button" class="paste-copy-btn" id="copy-paste-source">원문 복사</button>
                                 <button type="button" class="paste-copy-btn paste-copy-btn--primary" id="copy-paste-preview" title="미리보기 내용을 클립보드에 복사">미리보기 복사</button>
                                 <div class="paste-html-menu">
@@ -402,12 +432,23 @@
                             <p class="paste-preview-empty">아직 입력된 내용이 없습니다.</p>
                         </div>
                     </section>
+                    </div>
                     <div class="form-row paste-name-row">
                         <label for="paste-name">문서명 <small class="label-optional">(선택)</small></label>
                         <div class="paste-name-wrap">
                             <input type="text" id="paste-name" name="paste-name" placeholder="문서" maxlength="200">
                             <span class="paste-ext">.hwpx</span>
                         </div>
+                    </div>
+                    <div class="paste-draft-settings">
+                        <label class="paste-draft-toggle"><input type="checkbox" id="paste-draft-enabled"> 이 브라우저에서 초안 자동복구</label>
+                        <span>기본은 메모리 전용입니다. 동의하면 2MB 이하 초안 1개를 최대 7일간 이 기기에만 보관합니다.</span>
+                        <button type="button" id="paste-delete-draft" hidden>저장된 초안 삭제</button>
+                    </div>
+                    <div id="paste-draft-recovery" class="paste-draft-recovery" hidden role="status">
+                        <span id="paste-draft-recovery-message">저장된 초안이 있습니다.</span>
+                        <button type="button" id="paste-restore-draft">복구</button>
+                        <button type="button" id="paste-discard-draft">삭제</button>
                     </div>
                 </div>
 
@@ -1249,7 +1290,7 @@
             <div class="footer-links">
                 <h4>관련 서비스</h4>
                 <ul>
-                    <li><a href="https://sysmetrix.github.io/To-Hwpx/legacy/v4.19.3/" target="_blank" rel="noopener">이전 버전(v4.19.3)</a><small class="footer-link-note">새 화면에 문제가 있을 때 사용</small></li>
+                    <li><a href="https://sysmetrix.github.io/To-Hwpx/legacy/v4.20.0/" target="_blank" rel="noopener">이전 버전(v4.20.0)</a><small class="footer-link-note">새 화면에 문제가 있을 때 사용</small></li>
                     <li><a href="https://md-to-hwpx.vercel.app/" target="_blank" rel="noopener">MD→HWPX 변환기</a></li>
                     <li><a href="https://md-to-html-seven.vercel.app/" target="_blank" rel="noopener">MD→HTML 변환기</a></li>
                     <li><a href="https://www.hancom.com/support/downloadCenter/download" target="_blank" rel="noopener">한컴 HWPX 변환기</a></li>

@@ -17,6 +17,7 @@ for (const file of [
     'fonts/OFL-1.1.txt', 'fonts/InterVariable.woff2', 'qa/release-qa.md', 'qa/manual-release-evidence-template.md',
     'OPERATIONS.md', '.github/workflows/production-smoke.yml',
     'ARCHITECTURE.md', 'ENGINEERING.md', 'DESIGN.md', 'js/docx-audit.js',
+    'js/direct-input.js', 'tests/direct-input-test.mjs', 'qa/direct-input-visual.js',
     'qa/impact-graph.json', 'qa/impact-gate.js', 'qa/docx-fidelity-harness.js',
     'qa/hwp-export-pdf.ps1', 'qa/render-pdf-contact-sheets.py',
 ]) mustExist(file);
@@ -98,6 +99,16 @@ assert(analytics.includes("readConsent() !== 'granted'") && analytics.includes('
 const app = read('js/app.js');
 assert(app.includes('const ANALYTICS_SCHEMA') && app.includes("window.ToHwpxAnalytics?.consent() !== 'granted'")
     && !app.includes('window.va?.'), '분석 이벤트 allowlist/동의 방어 또는 Vercel 분석 제거 누락');
+const directInput = read('js/direct-input.js');
+assert(directInput.includes("DRAFT_ENABLED_KEY") && directInput.includes('2 * 1024 * 1024')
+    && directInput.includes('7 * 24 * 60 * 60 * 1000') && directInput.includes('10 * 1024 * 1024'),
+    '직접 입력 초안 동의·보유기간·용량 또는 입력 상한 누락');
+assert(index.includes('paste-format-recommendation') && index.includes('paste-draft-enabled')
+    && !index.includes('직접 입력 <span class="svc-beta-badge">'),
+    '직접 입력 정식 UI 또는 베타 제거 누락');
+assert(read('privacy.html').includes('직접 입력 초안 자동복구') && read('privacy.html').includes('최대 7일'),
+    '개인정보처리방침의 선택형 로컬 초안 고지 누락');
+assert(read('sw.js').includes("'./js/direct-input.js'"), '직접 입력 모듈 오프라인 앱 셸 누락');
 
 const vercel = JSON.parse(read('vercel.json'));
 assert(vercel.redirects?.some(rule => rule.source === '/THIRD_PARTY_NOTICES.md' && rule.destination === '/notices.html'),

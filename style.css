@@ -5969,6 +5969,190 @@ a:hover { text-decoration: underline; }
 }
 .paste-notice--warn .paste-notice-icon { color: var(--c-warning); }
 .paste-notice--warn strong { color: var(--c-warning); font-weight: 700; }
+.paste-notice--quality {
+    border: 1px solid color-mix(in srgb, var(--c-success) 35%, var(--c-border));
+    background: color-mix(in srgb, var(--c-success) 8%, var(--c-surface));
+}
+.paste-notice--quality .paste-notice-icon,
+.paste-notice--quality strong { color: var(--c-success); }
+
+.paste-format-detection {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 8px;
+    padding: 8px 10px;
+    border-radius: var(--radius-sm);
+    background: var(--c-surface-alt);
+    color: var(--c-text-muted);
+    font-size: 0.76rem;
+    line-height: 1.45;
+}
+.paste-format-detection.is-confident {
+    color: var(--c-primary);
+    background: var(--c-primary-light);
+}
+.paste-format-detection.is-locked { color: var(--c-text-sub); }
+.paste-format-detection button,
+.paste-editor-toolbar button,
+.paste-find-panel button,
+.paste-draft-settings button,
+.paste-draft-recovery button {
+    border: 1px solid var(--c-border);
+    border-radius: 7px;
+    background: var(--c-surface);
+    color: var(--c-text-sub);
+    font: inherit;
+    font-weight: 700;
+    padding: 6px 9px;
+    cursor: pointer;
+}
+
+.paste-editor {
+    overflow: hidden;
+    border: 1.5px solid var(--c-border);
+    border-radius: var(--radius-sm);
+    background: var(--c-surface);
+    transition: border-color var(--trans), box-shadow var(--trans);
+}
+.paste-editor:focus-within {
+    border-color: var(--c-primary);
+    box-shadow: 0 0 0 3px rgba(56, 108, 255, 0.15);
+}
+.paste-editor-toolbar,
+.paste-editor-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 9px;
+    background: var(--c-surface-alt);
+}
+.paste-editor-toolbar { border-bottom: 1px solid var(--c-border); }
+.paste-editor-toolbar button { padding: 5px 8px; font-size: 0.72rem; }
+.paste-wrap-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-left: auto;
+    color: var(--c-text-muted);
+    font-size: 0.72rem;
+}
+.paste-find-panel {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    gap: 7px;
+    padding: 8px 9px;
+    border-bottom: 1px solid var(--c-border);
+    background: var(--c-surface);
+}
+.paste-find-panel[hidden] { display: none; }
+.paste-find-panel label { color: var(--c-text-muted); font-size: 0.72rem; }
+.paste-find-panel input {
+    display: block;
+    width: 150px;
+    margin-top: 3px;
+    padding: 6px 8px;
+    border: 1px solid var(--c-border);
+    border-radius: 6px;
+    background: var(--c-surface);
+    color: var(--c-text);
+}
+.paste-editor-body { display: grid; grid-template-columns: auto minmax(0, 1fr); min-height: 260px; }
+.paste-line-numbers {
+    min-width: 3.3rem;
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+    padding: 12px 9px;
+    border-right: 1px solid var(--c-border);
+    background: var(--c-surface-alt);
+    color: var(--c-text-muted);
+    font-family: var(--font-mono);
+    font-size: 0.86rem;
+    line-height: 1.6;
+    text-align: right;
+    user-select: none;
+}
+.paste-editor .paste-textarea {
+    min-height: 260px;
+    margin: 0;
+    resize: vertical;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    white-space: pre;
+    overflow-wrap: normal;
+    overflow-x: auto;
+}
+.paste-editor .paste-textarea.is-wrapped { white-space: pre-wrap; overflow-wrap: break-word; }
+.paste-editor .paste-textarea:focus { border: 0; box-shadow: none; }
+.paste-editor-status {
+    justify-content: space-between;
+    border-top: 1px solid var(--c-border);
+    color: var(--c-text-muted);
+    font-size: 0.7rem;
+}
+.paste-diagnostics { margin-top: 8px; }
+.paste-diagnostic {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    width: 100%;
+    margin-top: 5px;
+    padding: 8px 10px;
+    border: 1px solid var(--c-border);
+    border-radius: var(--radius-sm);
+    background: var(--c-surface-alt);
+    color: var(--c-text-sub);
+    text-align: left;
+    font-size: 0.75rem;
+    line-height: 1.45;
+}
+button.paste-diagnostic { cursor: pointer; }
+.paste-diagnostic[data-severity="error"] { border-color: var(--c-error); }
+.paste-diagnostic[data-severity="warning"] { border-color: var(--c-warning); }
+.paste-diagnostic strong { white-space: nowrap; }
+.paste-diagnostic small { display: block; color: var(--c-text-muted); }
+.paste-draft-settings,
+.paste-draft-recovery {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+    padding: 10px 12px;
+    border: 1px solid var(--c-border);
+    border-radius: var(--radius-sm);
+    background: var(--c-surface-alt);
+    color: var(--c-text-muted);
+    font-size: 0.75rem;
+}
+.paste-draft-settings[hidden], .paste-draft-recovery[hidden] { display: none; }
+.paste-draft-toggle { display: inline-flex; align-items: center; gap: 6px; color: var(--c-text); font-weight: 700; }
+.paste-draft-recovery { border-color: var(--c-primary); background: var(--c-primary-light); }
+
+@media (min-width: 1100px) {
+    .paste-workbench {
+        display: grid;
+        grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+        gap: 12px;
+        align-items: start;
+    }
+    .paste-workbench .paste-preview-panel { margin: 24px 0 14px; }
+    .paste-workbench .paste-preview-toolbar { align-items: flex-start; flex-direction: column; }
+    .paste-workbench .paste-preview-actions { width: 100%; overflow-x: auto; }
+    .paste-workbench .paste-preview-output { height: 260px; max-height: 260px; }
+}
+
+@media (max-width: 768px) {
+    .paste-editor-toolbar { flex-wrap: wrap; }
+    .paste-wrap-toggle { margin-left: 0; width: 100%; }
+    .paste-line-numbers { min-width: 2.8rem; font-size: 16px; }
+    .paste-preview-toolbar { align-items: flex-start; flex-direction: column; }
+    .paste-preview-actions { width: 100%; overflow-x: auto; }
+}
 .paste-preview-panel {
     margin: 12px 0 14px;
     border: 1px solid var(--c-border);

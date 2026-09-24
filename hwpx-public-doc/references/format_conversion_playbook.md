@@ -45,7 +45,7 @@ node tests/docx-real-convert.js "원본.docx" && node tests/docx-fidelity-score.
 
 관련 코드: `isAdminMode()`, `renderAdminPanel()`, `renderQualityPanel()` in `js/app.js`
 
-- **직접 입력**은 v4.8.3부터 일반 사용자에게 베타로 공개되었다. 탭은 항상 노출되고, 탭 진입 시 품질 안내 패널이 표시된다. 미리보기 패널(`paste_preview`)과 HTML 복사·다운로드 메뉴(`html_actions`)는 v4.10.6부터 정식 공개되어 관리자 여부와 무관하게 항상 노출된다. 업데이트 내역 상세, 구현된 실험 기능 목록, 추천 실험 기능, 포맷 품질 평가는 계속 관리자 모드에서만 노출된다. `?admin=1` 또는 호환용 `?lab=1`로 관리자 모드에 들어가면 localStorage에 상태를 저장한다.
+- **직접 입력**은 v4.21.0부터 일반 사용자용 정식 기능이다. 탭·미리보기·HTML 복사/다운로드는 관리자 여부와 무관하게 항상 노출된다. 업데이트 내역 상세, 구현된 실험 기능 목록, 추천 실험 기능, 포맷 품질 평가는 계속 관리자 모드에서만 노출된다. `?admin=1` 또는 호환용 `?lab=1`로 관리자 모드에 들어가면 localStorage에 상태를 저장한다.
 - 관리자 모드 최상단 스위치는 개별 기능 토글이 아니라 전체 사용/전체 사용 안함이다. 켜면 현재 구현된 실험 기능 기본값을 함께 켜고, 끄면 개별 기능도 모두 비활성화한다. 개별 기능은 `tohwpx_feature_*` localStorage 키로 관리한다.
 - 서식 있는 입력(DOCX/HTML/XLSX/HWP 계열)은 문서 세부 설정의 `본문 서식 처리`를 `원본 우선`으로 두는 것이 기본이다. 원본 우선은 IR에 들어온 병합·색상·인라인 서식을 먼저 존중하고 앱 장식 프리셋 적용을 줄인다. 사용자가 `설정 우선`(value `app`)을 선택하면 문단·제목·표·링크·이미지 세부 프리셋을 강하게 적용한다. UI 라벨은 `원본 우선 / 혼합 / 설정 우선`이고 내부 value는 `source / balanced / app`로 고정한다(라벨 변경과 value 변경 구분).
 - 업데이트 내역 모달의 탭은 `사용자 변경사항`, `개발자 변경사항`, `관리자 모드`, `포맷 품질 평가`로 분리한다.
@@ -63,16 +63,19 @@ node tests/docx-real-convert.js "원본.docx" && node tests/docx-fidelity-score.
 
 관련 코드: `initInputMode()`, `renderPastePreview()`, `getPastePreviewIr()` in `js/app.js`
 
-- 직접 입력은 v4.8.3부터 일반 사용자에게 베타로 공개되었다. MD/HTML/TXT/CSV/JSON 텍스트를 가상 `File`로 감싸 기존 `fileToIR()` 변환 파이프라인을 재사용한다.
+- 직접 입력은 v4.21.0부터 정식 기능이다. MD/HTML/TXT/CSV/JSON 텍스트를 가상 `File`로 감싸 기존 `fileToIR()` 변환 파이프라인을 재사용한다. 자동 추천은 JSON → CSV/TSV → HTML → Markdown → TXT 순서의 증거 기반 판별이며, 사용자가 형식 버튼을 누르면 잠그고 `다시 감지`에서만 재개한다.
 - 입력 아래 미리보기는 실제 HWPX 렌더러가 아니라 변환 전 IR 해석 결과다. `parseMd()`, `parseHtml()`, `parseTxt()`, `parseCsv()`, `parseJson()`을 직접 호출하고 `irBlocksToHtml()`로 표시한다.
 - 미리보기는 타이핑마다 즉시 무거운 변환을 돌리지 않고 짧은 debounce를 둔다. 파일 미리보기와 실제 변환이 같은 파싱 서명(파일명·크기·수정시각·문서 유형)이면 하나의 in-flight Promise와 raw IR 캐시를 공유한다. 큐/제목 정책 세대와 서명이 달라진 뒤 늦게 끝난 분석은 현재 미리보기와 캐시를 갱신하지 않는다.
 - 복사는 `원문 복사`, `미리보기 복사`, `HTML` 메뉴로 분리한다. HTML 메뉴에서는 미리보기 DOM의 정리된 HTML 조각을 `복사`하거나 간단한 독립 HTML 파일로 `다운로드`한다. 이 HTML은 HWPX 최종 XML이나 한컴 렌더링 결과가 아니다. Clipboard API가 막힌 브라우저에서는 textarea fallback을 사용한다.
 - JSON처럼 형식 오류가 생길 수 있는 입력은 변환 전 미리보기 패널에서 오류를 보여주고, 실제 변환 버튼은 기존 검증/실패 카드 흐름을 유지한다.
+- `js/direct-input.js`는 형식 감지와 `{severity,code,message,line,column,recoverable,action}` 진단을 담당한다. 복구 불가능한 JSON/CSV 오류는 변환을 막고 진단을 누르면 원문 위치로 이동한다. 500KB 초과 입력은 자동 미리보기를 멈추고 수동 갱신하며, 미리보기 DOM은 처음 200개 블록만 렌더링한다. 직접 입력 상한은 10MB다.
+- 초안 자동복구는 명시적 동의 전에는 원문을 저장하지 않는다. 동의 후에도 별도 IndexedDB에 2MB 이하 활성 초안 1개만 7일 저장하며, 복구 확인 전 현재 입력을 덮어쓰지 않는다. 기능 해제·초기화·삭제는 초안을 즉시 지운다.
 
 검증:
 
 - 직접 입력 미리보기 회귀는 Markdown 제목·문단·표가 미리보기 영역에 표시되는지, HTML 메뉴에 복사/다운로드 선택지가 있는지 확인한다.
 - 파일 입력과 직접 입력의 HWPX 본문·표·링크·이미지 개수 동등성 검사는 기존 `tests/golden.js` 기준을 유지한다.
+- `npm run test:direct-input`은 감지·진단·용량·보존기간 계약을 검사하고, golden은 형식 잠금/재감지·오류 이동·찾기/바꾸기·IndexedDB 복구 확인을 브라우저에서 검사한다.
 
 ## 문서 세부 설정 옵션 매핑
 
