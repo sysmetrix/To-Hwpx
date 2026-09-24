@@ -16,6 +16,10 @@
 import { fileToIR, parseMd, parseHtml, parseTxt, parseCsv, parseJson } from './parsers.js';
 import { buildHwpx, isNumericCell } from './hwpx.js';
 import {
+    deleteDirectInputDraft, detectDirectInput, diagnoseDirectInput, DIRECT_INPUT_LIMITS,
+    draftRecoveryEnabled, loadDirectInputDraft, saveDirectInputDraft, setDraftRecoveryEnabled,
+} from './direct-input.js';
+import {
     initWorkspace, workspaceQueueChanged, workspaceReset,
     workspaceRunCompleted, workspaceRunStarted,
 } from './workspace.js';
@@ -40,6 +44,10 @@ const ANALYTICS_SCHEMA = Object.freeze({
     workspace_settings_restore: new Set(['source']),
     workspace_preset_save: new Set([]),
     workspace_history_toggle: new Set(['enabled']),
+    direct_input_open: new Set([]),
+    direct_input_detect: new Set(['suggested', 'selected', 'confidence', 'changed']),
+    direct_input_diagnostic: new Set(['format', 'severity', 'code']),
+    direct_input_draft: new Set(['action', 'size']),
 });
 
 function track(name, data) {
@@ -2355,6 +2363,16 @@ const PASTE_MIME = {
     json: 'application/json',
 };
 let pastePreviewTimer = null;
+let pasteDraftTimer = null;
+let pasteFormatLocked = false;
+let applyingDetectedPasteFormat = false;
+let pasteDiagnostics = [];
+let pendingRichClipboardHtml = '';
+let lastPasteDetection = null;
+
+const PASTE_FORMAT_LABEL = Object.freeze({
+    md: 'MD', html: 'HTML', txt: 'TXT', csv: 'CSV/TSV', json: 'JSON',
+});
 
 /** 관리자 모드 활성 여부. URL 파라미터 또는 localStorage 저장값으로 결정. */
 const ADMIN_STATE_KEY = 'tohwpx_admin';
@@ -2695,10 +2713,14 @@ function initInputMode() {
         if (saved && Array.from(fmt.options).some(o => o.value === saved)) fmt.value = saved;
         fmt.addEventListener('change', () => {
             localStorage.setItem('tohwpx_pasteFormat', fmt.value);
+            if (!applyingDetectedPasteFormat) pasteFormatLocked = true;
             applyPasteFormatUi(fmt.value);
             updatePasteFormatHelp(fmt.value);
             if (state.inputMode === 'paste') updateFormatExpectation(fmt.value);
+            updatePasteDiagnostics();
+            renderPasteFormatRecommendation();
             schedulePastePreview();
+            schedulePasteDraftSave();
         });
         document.querySelectorAll('.paste-format-btn').forEach(btn => {
             btn.addEventListener('click', () => {
@@ -2714,17 +2736,365 @@ function initInputMode() {
     const ta = document.getElementById('paste-input');
     ta?.addEventListener('input', () => {
         if (state.inputMode !== 'paste' || state.isConverting) return;
-        const hasText = !!ta.value.trim();
+        updateDirectInputEditorState();
+        updatePasteDiagnostics();
+        const hasText = !!ta.value.trim() && !hasBlockingPasteDiagnostic();
         updateConvertButton(hasText);
         if (hasText) setProgressPanelState('ready');
+        if (!pasteFormatLocked) applyPasteFormatDetection({ plainText: ta.value });
         schedulePastePreview();
+        schedulePasteDraftSave();
     });
+    ta?.addEventListener('paste', handleDirectInputPaste);
+    ta?.addEventListener('scroll', syncPasteEditorScroll);
+    ta?.addEventListener('click', updateDirectInputEditorState);
+    ta?.addEventListener('keyup', updateDirectInputEditorState);
+    ta?.addEventListener('keydown', handlePasteEditorKeydown);
+    initPasteEditorTools();
+    initPasteDraftRecovery();
+    document.getElementById('paste-redetect')?.addEventListener('click', () => {
+        pasteFormatLocked = false;
+        pendingRichClipboardHtml = '';
+        applyPasteFormatDetection({ plainText: ta?.value || '' }, true);
+        schedulePasteDraftSave();
+    });
+    document.getElementById('refresh-paste-preview')?.addEventListener('click', () => renderPastePreview(true));
     document.getElementById('copy-paste-source')?.addEventListener('click', copyPasteSource);
     document.getElementById('copy-paste-preview')?.addEventListener('click', copyPastePreview);
     initPasteHtmlMenu();
     document.getElementById('copy-paste-html')?.addEventListener('click', copyPasteHtml);
     document.getElementById('download-paste-html')?.addEventListener('click', downloadPasteHtml);
+    document.getElementById('paste-name')?.addEventListener('input', schedulePasteDraftSave);
+    updateDirectInputEditorState();
+    updatePasteDiagnostics();
+    renderPasteFormatRecommendation();
     renderPastePreview();
+}
+
+function utf8Bytes(value) {
+    return new TextEncoder().encode(String(value || '')).byteLength;
+}
+
+function handleDirectInputPaste(event) {
+    const ta = event.currentTarget;
+    const plainText = event.clipboardData?.getData('text/plain') || '';
+    const htmlText = event.clipboardData?.getData('text/html') || '';
+    if (!plainText && !htmlText) return;
+    if (htmlText && !ta.value && /<(?:p|div|table|h[1-6]|ul|ol|blockquote|pre|strong|em|a)\b/i.test(htmlText)) {
+        event.preventDefault();
+        ta.setRangeText(plainText, ta.selectionStart, ta.selectionEnd, 'end');
+        pendingRichClipboardHtml = htmlText;
+        pasteFormatLocked = false;
+        lastPasteDetection = detectDirectInput({ plainText });
+        renderPasteFormatRecommendation();
+        ta.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+}
+
+function applyPasteFormatDetection(payload, force = false) {
+    const text = payload?.plainText || '';
+    if (!text.trim()) {
+        lastPasteDetection = null;
+        renderPasteFormatRecommendation();
+        return;
+    }
+    if (pasteFormatLocked && !force) return;
+    const detection = detectDirectInput(payload);
+    const fmt = document.getElementById('paste-format');
+    if (!fmt) return;
+    const previous = fmt.value;
+    lastPasteDetection = detection;
+    applyingDetectedPasteFormat = true;
+    fmt.value = detection.format;
+    fmt.dispatchEvent(new Event('change'));
+    applyingDetectedPasteFormat = false;
+    pasteFormatLocked = false;
+    track('direct_input_detect', {
+        suggested: detection.format,
+        selected: fmt.value,
+        confidence: detection.confidence >= 0.9 ? 'high' : detection.confidence >= 0.7 ? 'medium' : 'low',
+        changed: String(previous !== detection.format),
+    });
+    renderPasteFormatRecommendation();
+}
+
+function renderPasteFormatRecommendation() {
+    const host = document.getElementById('paste-format-detection');
+    const message = document.getElementById('paste-format-recommendation');
+    const redetect = document.getElementById('paste-redetect');
+    if (!host || !message || !redetect) return;
+    host.querySelector('.paste-rich-actions')?.remove();
+    host.classList.toggle('is-locked', pasteFormatLocked);
+    host.classList.toggle('is-confident', !pasteFormatLocked && (lastPasteDetection?.confidence || 0) >= 0.7);
+    redetect.hidden = !pasteFormatLocked;
+    if (pendingRichClipboardHtml) {
+        message.textContent = '웹 서식이 함께 복사되었습니다. HTML 서식을 유지할지 일반 텍스트로 사용할지 선택하세요.';
+        const actions = document.createElement('span');
+        actions.className = 'paste-rich-actions';
+        const htmlButton = document.createElement('button');
+        htmlButton.type = 'button';
+        htmlButton.textContent = 'HTML 서식 사용';
+        htmlButton.addEventListener('click', () => {
+            const ta = document.getElementById('paste-input');
+            if (!ta) return;
+            ta.value = pendingRichClipboardHtml;
+            pendingRichClipboardHtml = '';
+            pasteFormatLocked = false;
+            applyPasteFormatDetection({ plainText: ta.value, htmlText: ta.value }, true);
+            ta.dispatchEvent(new Event('input', { bubbles: true }));
+        });
+        const plainButton = document.createElement('button');
+        plainButton.type = 'button';
+        plainButton.textContent = '일반 텍스트 유지';
+        plainButton.addEventListener('click', () => {
+            pendingRichClipboardHtml = '';
+            pasteFormatLocked = false;
+            applyPasteFormatDetection({ plainText: document.getElementById('paste-input')?.value || '' }, true);
+        });
+        actions.append(htmlButton, plainButton);
+        host.append(actions);
+        return;
+    }
+    if (pasteFormatLocked) {
+        const fmt = document.getElementById('paste-format')?.value || 'txt';
+        message.textContent = `${PASTE_FORMAT_LABEL[fmt]} 형식으로 고정했습니다.`;
+    } else if (lastPasteDetection) {
+        const pct = Math.round(lastPasteDetection.confidence * 100);
+        message.textContent = `추천 ${PASTE_FORMAT_LABEL[lastPasteDetection.format]} · 신뢰 ${pct}% — ${lastPasteDetection.evidence}`;
+    } else {
+        message.textContent = '내용을 붙여넣으면 형식을 추천합니다.';
+    }
+}
+
+function updateDirectInputEditorState() {
+    const ta = document.getElementById('paste-input');
+    const lines = document.getElementById('paste-line-numbers');
+    const cursor = document.getElementById('paste-cursor-status');
+    const count = document.getElementById('paste-count-status');
+    if (!ta) return;
+    const value = ta.value || '';
+    const lineCount = value.split('\n').length;
+    if (lines) lines.textContent = Array.from({ length: lineCount }, (_, index) => index + 1).join('\n');
+    const before = value.slice(0, ta.selectionStart || 0).split('\n');
+    if (cursor) cursor.textContent = `${before.length}행 ${before.at(-1).length + 1}열`;
+    const bytes = utf8Bytes(value);
+    if (count) count.textContent = `${value.length.toLocaleString()}자 · ${bytes < 1024 ? `${bytes}B` : `${(bytes / 1024).toFixed(1)}KB`}`;
+}
+
+function syncPasteEditorScroll() {
+    const ta = document.getElementById('paste-input');
+    const lines = document.getElementById('paste-line-numbers');
+    if (ta && lines) lines.scrollTop = ta.scrollTop;
+}
+
+let lastDiagnosticSignature = '';
+function updatePasteDiagnostics() {
+    const ta = document.getElementById('paste-input');
+    const format = document.getElementById('paste-format')?.value || 'txt';
+    const host = document.getElementById('paste-diagnostics');
+    if (!ta || !host) return;
+    pasteDiagnostics = ta.value.trim() ? diagnoseDirectInput(ta.value, format) : [];
+    host.replaceChildren();
+    for (const item of pasteDiagnostics) {
+        const node = document.createElement(item.line ? 'button' : 'div');
+        if (item.line) node.type = 'button';
+        node.className = 'paste-diagnostic';
+        node.dataset.severity = item.severity;
+        const badge = document.createElement('strong');
+        badge.textContent = item.severity === 'error' ? '오류' : item.severity === 'warning' ? '확인' : '안내';
+        const copy = document.createElement('span');
+        copy.textContent = `${item.line ? `${item.line}행${item.column ? ` ${item.column}열` : ''} · ` : ''}${item.message}`;
+        if (item.action) {
+            const action = document.createElement('small');
+            action.textContent = item.action;
+            copy.append(action);
+        }
+        node.append(badge, copy);
+        if (item.line) node.addEventListener('click', () => focusPasteLine(item.line, item.column || 1));
+        host.append(node);
+    }
+    const signature = pasteDiagnostics.map(item => `${format}:${item.severity}:${item.code}`).join('|');
+    if (signature && signature !== lastDiagnosticSignature) {
+        for (const item of pasteDiagnostics) track('direct_input_diagnostic', {
+            format, severity: item.severity, code: item.code,
+        });
+    }
+    lastDiagnosticSignature = signature;
+}
+
+function hasBlockingPasteDiagnostic() {
+    return pasteDiagnostics.some(item => item.severity === 'error' && !item.recoverable);
+}
+
+function focusPasteLine(line, column) {
+    const ta = document.getElementById('paste-input');
+    if (!ta) return;
+    const rows = ta.value.split('\n');
+    const start = rows.slice(0, Math.max(0, line - 1)).reduce((total, row) => total + row.length + 1, 0)
+        + Math.max(0, column - 1);
+    const end = Math.min(ta.value.length, start + Math.max(1, rows[line - 1]?.length || 1));
+    ta.focus();
+    ta.setSelectionRange(start, end);
+    updateDirectInputEditorState();
+}
+
+function initPasteEditorTools() {
+    const ta = document.getElementById('paste-input');
+    const panel = document.getElementById('paste-find-panel');
+    const toggle = document.getElementById('paste-find-toggle');
+    if (!ta || !panel || !toggle) return;
+    const toggleFind = open => {
+        panel.hidden = !open;
+        toggle.setAttribute('aria-expanded', String(open));
+        if (open) document.getElementById('paste-find')?.focus();
+    };
+    toggle.addEventListener('click', () => toggleFind(panel.hidden));
+    document.getElementById('paste-undo')?.addEventListener('click', () => { ta.focus(); document.execCommand('undo'); });
+    document.getElementById('paste-redo')?.addEventListener('click', () => { ta.focus(); document.execCommand('redo'); });
+    document.getElementById('paste-wrap')?.addEventListener('change', event => {
+        ta.classList.toggle('is-wrapped', event.target.checked);
+        ta.wrap = event.target.checked ? 'soft' : 'off';
+    });
+    ta.classList.add('is-wrapped');
+    const findNext = () => {
+        const needle = document.getElementById('paste-find')?.value || '';
+        if (!needle) return false;
+        let index = ta.value.indexOf(needle, ta.selectionEnd);
+        if (index < 0) index = ta.value.indexOf(needle);
+        if (index < 0) { showToast('<strong>찾는 내용이 없습니다</strong>', { timeout: 2000 }); return false; }
+        ta.focus();
+        ta.setSelectionRange(index, index + needle.length);
+        updateDirectInputEditorState();
+        return true;
+    };
+    document.getElementById('paste-find-next')?.addEventListener('click', findNext);
+    document.getElementById('paste-replace-one')?.addEventListener('click', () => {
+        const needle = document.getElementById('paste-find')?.value || '';
+        const replacement = document.getElementById('paste-replace')?.value || '';
+        if (!needle) return;
+        if (ta.value.slice(ta.selectionStart, ta.selectionEnd) !== needle && !findNext()) return;
+        ta.setRangeText(replacement, ta.selectionStart, ta.selectionEnd, 'end');
+        ta.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    document.getElementById('paste-replace-all')?.addEventListener('click', () => {
+        const needle = document.getElementById('paste-find')?.value || '';
+        const replacement = document.getElementById('paste-replace')?.value || '';
+        if (!needle) return;
+        const hits = ta.value.split(needle).length - 1;
+        if (!hits) { showToast('<strong>찾는 내용이 없습니다</strong>', { timeout: 2000 }); return; }
+        ta.value = ta.value.split(needle).join(replacement);
+        ta.dispatchEvent(new Event('input', { bubbles: true }));
+        showToast(`<strong>${hits}곳을 바꿨습니다</strong>`, { timeout: 2000 });
+    });
+    document.getElementById('paste-find')?.addEventListener('keydown', event => {
+        if (event.key === 'Enter') { event.preventDefault(); findNext(); }
+        if (event.key === 'Escape') toggleFind(false);
+    });
+}
+
+function handlePasteEditorKeydown(event) {
+    const ta = event.currentTarget;
+    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'f') {
+        event.preventDefault();
+        document.getElementById('paste-find-toggle')?.click();
+        return;
+    }
+    if (event.key === 'Tab') {
+        event.preventDefault();
+        ta.setRangeText('    ', ta.selectionStart, ta.selectionEnd, 'end');
+        ta.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+}
+
+async function initPasteDraftRecovery() {
+    const enabled = document.getElementById('paste-draft-enabled');
+    const deleteButton = document.getElementById('paste-delete-draft');
+    if (!enabled) return;
+    enabled.checked = draftRecoveryEnabled();
+    deleteButton.hidden = !enabled.checked;
+    enabled.addEventListener('change', async () => {
+        setDraftRecoveryEnabled(enabled.checked);
+        deleteButton.hidden = !enabled.checked;
+        track('direct_input_draft', { action: enabled.checked ? 'enable' : 'disable', size: 'none' });
+        if (!enabled.checked) {
+            await deleteDirectInputDraft();
+            hidePasteDraftRecovery();
+        } else {
+            schedulePasteDraftSave();
+        }
+    });
+    deleteButton?.addEventListener('click', async () => {
+        await deleteDirectInputDraft();
+        hidePasteDraftRecovery();
+        track('direct_input_draft', { action: 'delete', size: 'none' });
+        showToast('<strong>저장된 초안을 삭제했습니다</strong>', { timeout: 2500 });
+    });
+    document.getElementById('paste-discard-draft')?.addEventListener('click', async () => {
+        await deleteDirectInputDraft();
+        hidePasteDraftRecovery();
+        track('direct_input_draft', { action: 'discard', size: 'none' });
+    });
+    document.getElementById('paste-restore-draft')?.addEventListener('click', restorePasteDraft);
+    if (!enabled.checked) return;
+    const draft = await loadDirectInputDraft();
+    if (draft) showPasteDraftRecovery(draft);
+}
+
+let recoverablePasteDraft = null;
+function showPasteDraftRecovery(draft) {
+    recoverablePasteDraft = draft;
+    const panel = document.getElementById('paste-draft-recovery');
+    const message = document.getElementById('paste-draft-recovery-message');
+    if (!panel || !message) return;
+    const when = new Date(draft.updatedAt).toLocaleString('ko-KR');
+    message.textContent = `${when}에 저장한 ${PASTE_FORMAT_LABEL[draft.format] || '텍스트'} 초안이 있습니다.`;
+    panel.hidden = false;
+}
+
+function hidePasteDraftRecovery() {
+    recoverablePasteDraft = null;
+    const panel = document.getElementById('paste-draft-recovery');
+    if (panel) panel.hidden = true;
+}
+
+function restorePasteDraft() {
+    const draft = recoverablePasteDraft;
+    const ta = document.getElementById('paste-input');
+    const name = document.getElementById('paste-name');
+    const fmt = document.getElementById('paste-format');
+    if (!draft || !ta || !fmt) return;
+    ta.value = draft.text;
+    if (name) name.value = draft.name || '';
+    pasteFormatLocked = Boolean(draft.formatLocked);
+    applyingDetectedPasteFormat = !pasteFormatLocked;
+    fmt.value = draft.format;
+    fmt.dispatchEvent(new Event('change'));
+    applyingDetectedPasteFormat = false;
+    ta.dispatchEvent(new Event('input', { bubbles: true }));
+    hidePasteDraftRecovery();
+    track('direct_input_draft', {
+        action: 'restore', size: utf8Bytes(draft.text) < 100_000 ? 'xs' : 'sm',
+    });
+    ta.focus();
+}
+
+function schedulePasteDraftSave() {
+    window.clearTimeout(pasteDraftTimer);
+    if (!draftRecoveryEnabled()) return;
+    pasteDraftTimer = window.setTimeout(saveCurrentPasteDraft, 1000);
+}
+
+async function saveCurrentPasteDraft() {
+    const text = document.getElementById('paste-input')?.value || '';
+    const result = await saveDirectInputDraft({
+        text,
+        format: document.getElementById('paste-format')?.value || 'txt',
+        name: document.getElementById('paste-name')?.value || '',
+        formatLocked: pasteFormatLocked,
+    });
+    if (result.reason === 'too-large') {
+        showToast('<strong>초안을 저장하지 않았습니다</strong> <span>자동복구는 2MB 이하에서만 동작합니다.</span>', { timeout: 3500 });
+    }
 }
 // 직접 입력 미리보기(paste_preview)와 HTML 복사/다운로드(html_actions)는
 // v4.10.6부터 정식 공개되어 항상 노출된다(더 이상 admin 게이트 대상 아님).
@@ -2783,6 +3153,7 @@ function setInputMode(mode) {
     clearSelectedFile();
 
     if (mode === 'paste') {
+        track('direct_input_open', {});
         const ta  = document.getElementById('paste-input');
         const fmt = document.getElementById('paste-format');
         if (fmt) updateFormatExpectation(fmt.value);   // 선택 형식의 보존/손실 안내 표시
@@ -2796,6 +3167,15 @@ function setInputMode(mode) {
 
 function schedulePastePreview() {
     window.clearTimeout(pastePreviewTimer);
+    const text = document.getElementById('paste-input')?.value || '';
+    const refresh = document.getElementById('refresh-paste-preview');
+    if (utf8Bytes(text) > DIRECT_INPUT_LIMITS.previewAutoBytes) {
+        if (refresh) refresh.hidden = false;
+        const status = document.getElementById('paste-preview-status');
+        if (status) status.textContent = '큰 문서입니다 · 미리보기 갱신을 눌러 확인하세요.';
+        return;
+    }
+    if (refresh) refresh.hidden = true;
     pastePreviewTimer = window.setTimeout(renderPastePreview, 220);
 }
 
@@ -2827,7 +3207,7 @@ function summarizeIr(ir) {
     ].join(' · ');
 }
 
-function renderPastePreview() {
+function renderPastePreview(force = false) {
     const output = document.getElementById('paste-preview-output');
     const status = document.getElementById('paste-preview-status');
     const ta = document.getElementById('paste-input');
@@ -2838,17 +3218,26 @@ function renderPastePreview() {
         if (status) status.textContent = '입력하면 해석 결과가 표시됩니다.';
         return;
     }
+    if (!force && utf8Bytes(text) > DIRECT_INPUT_LIMITS.previewAutoBytes) {
+        const refresh = document.getElementById('refresh-paste-preview');
+        if (refresh) refresh.hidden = false;
+        if (status) status.textContent = '큰 문서입니다 · 미리보기 갱신을 눌러 확인하세요.';
+        return;
+    }
     try {
         const ext = document.getElementById('paste-format')?.value || 'md';
         const ir = getPastePreviewIr(text, ext);
+        const blocks = Array.isArray(ir.blocks) ? ir.blocks.slice(0, 200) : [];
+        const truncated = Array.isArray(ir.blocks) && ir.blocks.length > blocks.length;
         // eslint-disable-next-line no-unsanitized/property -- escHtml(ir.title) and irBlocksToHtml() apply escHtml() to all user content
         output.innerHTML = `
             <div class="paste-preview-doc">
                 ${ir.title && ir.title.trim() ? `<h4>${escHtml(ir.title.trim())}</h4>` : ''}
-                ${irBlocksToHtml(ir.blocks) || '<p class="paste-preview-empty">표시할 본문이 없습니다.</p>'}
+                ${irBlocksToHtml(blocks) || '<p class="paste-preview-empty">표시할 본문이 없습니다.</p>'}
+                ${truncated ? `<p class="paste-preview-empty">미리보기는 처음 200개 블록만 표시합니다. HWPX에는 전체 내용이 변환됩니다.</p>` : ''}
             </div>
         `;
-        if (status) status.textContent = `${ext.toUpperCase()} 해석 완료 · ${summarizeIr(ir)}`;
+        if (status) status.textContent = `${ext.toUpperCase()} 해석 완료 · ${summarizeIr(ir)}${truncated ? ' · 200개 블록까지 표시' : ''}`;
     } catch (err) {
         output.innerHTML = `
             <div class="paste-preview-error">
@@ -2967,6 +3356,12 @@ function runPasteConversion() {
     if (!text.trim()) {
         showToast('<strong>입력 내용이 비어 있습니다</strong> <span>변환할 내용을 입력해 주세요.</span>', { timeout: 4000 });
         ta?.focus();
+        return;
+    }
+    updatePasteDiagnostics();
+    if (hasBlockingPasteDiagnostic()) {
+        showToast('<strong>입력 오류를 먼저 확인해 주세요</strong> <span>오류 안내를 누르면 해당 위치로 이동합니다.</span>', { timeout: 4500 });
+        document.querySelector('.paste-diagnostic[data-severity="error"]')?.focus();
         return;
     }
     const ext  = document.getElementById('paste-format')?.value || 'md';
@@ -5106,6 +5501,15 @@ function resetConverterState() {
     const pasteNameEl  = document.getElementById('paste-name');
     if (pasteInputEl) pasteInputEl.value = '';
     if (pasteNameEl)  pasteNameEl.value = '';
+    window.clearTimeout(pasteDraftTimer);
+    deleteDirectInputDraft().catch(() => {});
+    pasteFormatLocked = false;
+    lastPasteDetection = null;
+    pendingRichClipboardHtml = '';
+    hidePasteDraftRecovery();
+    updateDirectInputEditorState();
+    updatePasteDiagnostics();
+    renderPasteFormatRecommendation();
     if (state.inputMode !== 'upload') setInputMode('upload');
 
     state.docType = 'plain';
