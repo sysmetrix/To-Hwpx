@@ -3,6 +3,30 @@
 Date: 2026-06-25
 Scope: static browser-only conversion flow from file selection to HWPX download.
 
+## 45. v4.20.0 변환 작업 공간 전면 개편
+
+### 자동·브라우저 확인
+
+- [x] `npm run test:release` 구성 게이트 전체 통과. 접근성 대비 수정 후 `test:accessibility`와 `test:performance`를 재통과.
+- [x] `npm run test:workspace` — 1280·1024·768·390px 첫 화면 잘림 없음, 준비→설정→결과 라우트, 최근 작업 복원 확인.
+- [x] `npm run test:legacy` — v4.19.3 고정 커밋·푸터 링크·서비스워커 캐시 격리 확인.
+- [x] `node tests/orientation-e2e.js` — A3 가로 3쪽, 내부 잘림 0, HWPX `landscape="NARROWLY"` 확인.
+- [x] Playwright 캡처로 데스크톱·390px 모바일 첫 화면과 직전 버전 링크를 확인.
+- [x] 한컴오피스 COM에서 DOCX 충실도 산출물 HWPX 실제 열기 및 PDF 내보내기 성공(14,363바이트).
+- [ ] 배포 후 `node qa/production-smoke.js`로 Vercel·Pages 현재판과 Pages `/legacy/v4.19.3/` 확인.
+
+### 사람이 반드시 확인할 항목
+
+- [ ] 브라우저 캐시를 비우고 `📋 v4.20.0`이 보이는지 확인.
+- [ ] MD·DOCX·XLSX·PDF 샘플을 각각 변환해 결과 요약의 성공·경고·실패가 실제 결과 카드와 일치하는지 확인.
+- [ ] 생성 HWPX를 한컴에서 열어 본문·표·이미지와 페이지 방향을 눈으로 확인. 자동 게이트 통과는 렌더링 통과가 아니다.
+- [ ] 푸터의 `이전 버전(v4.19.3)` 링크에서 실제 v4.19.3 화면이 열리고 현재판 캐시를 지우지 않는지 확인.
+
+### 개인정보 경계
+
+- 최근 작업은 파일명·형식·크기·결과 요약·출력 이름·감사 요약·허용된 설정만 IndexedDB에 최대 30건/90일 저장한다.
+- 원본 본문, IR, 파일 바이트, Blob URL, 원격 URL은 저장하지 않는다. 설정 복원 뒤에도 사용자가 원본 파일을 다시 골라야 한다.
+
 ## 44. v4.16.20 공문서 항목 들여쓰기 — 규정 기반 변환
 
 ### 릴리스 전 확인

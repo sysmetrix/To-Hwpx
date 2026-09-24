@@ -1,4 +1,4 @@
-'use strict';
+﻿'use strict';
 
 const fs = require('fs');
 const http = require('http');
@@ -678,6 +678,9 @@ async function convertThroughUi(page, { inputPath, format, text, baseName, setup
   await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => window.JSZip && window.marked && window.__appReady, null, { timeout: 30000 });
   if (!inputPath) {
+    assert(await page.locator('#start-paste').isVisible(), 'direct: 첫 화면에서 직접 입력 진입점이 보이지 않음');
+    await page.locator('#start-paste').click();
+    await page.waitForFunction(() => document.body.dataset.workspaceRoute === 'settings');
     assert(await page.locator('.input-mode-tabs').isVisible(), 'direct: 일반 모드에서 직접 입력 탭이 보이지 않음');
   }
 
@@ -685,7 +688,6 @@ async function convertThroughUi(page, { inputPath, format, text, baseName, setup
   if (inputPath) {
     await page.setInputFiles('#file-input', inputPath);
   } else {
-    await page.locator('#mode-paste').click();
     await page.locator(`.paste-format-btn[data-paste-format="${format}"]`).click();
     assert(await page.locator('#paste-format').inputValue() === format,
       `direct ${format}: 입력 형식 버튼 선택이 select 값과 동기화되지 않음`);
@@ -710,11 +712,14 @@ async function validateDirectInput(page) {
   const baseUrl = `http://127.0.0.1:${PORT}/index.html`;
   await page.goto(`${baseUrl}?admin=0`, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => window.__appReady, null, { timeout: 30000 });
+  assert(await page.locator('#start-paste').isVisible(),
+    'direct: 일반 사용자에게 직접 입력 시작 버튼이 보이지 않음 (v4.8.3 베타 공개)');
+  await page.locator('#start-paste').click();
+  await page.waitForFunction(() => document.body.dataset.workspaceRoute === 'settings');
   assert(await page.locator('.input-mode-tabs').isVisible(),
     'direct: 일반 사용자에게 직접 입력 탭이 보이지 않음 (v4.8.3 베타 공개)');
   assert(await page.locator('.paste-preview-panel:not([hidden])').count() === 1,
     'direct: 일반 모드에서 미리보기 패널이 노출되지 않음 (v4.10.6부터 정식 공개)');
-  await page.locator('#mode-paste').click();
   await page.locator('.paste-format-btn[data-paste-format="md"]').click();
   await page.locator('#paste-input').fill('# 일반 모드 미리보기\n\n본문 내용');
   await page.waitForFunction(() => document.querySelector('#paste-preview-status')?.textContent.includes('MD 해석 완료'));
@@ -794,7 +799,8 @@ async function validateDirectInput(page) {
 
   await page.keyboard.press('Escape');
 
-  await page.locator('#mode-paste').click();
+  await page.locator('#start-paste').click();
+  await page.waitForFunction(() => document.body.dataset.workspaceRoute === 'settings');
   await page.locator('.paste-format-btn[data-paste-format="md"]').click();
   await page.locator('#paste-input').fill('# 미리보기 제목\n\n본문 **강조**\n\n| A | B |\n| - | - |\n| 1 | 2 |');
   await page.waitForFunction(() => document.querySelector('#paste-preview-status')?.textContent.includes('MD 해석 완료'));
@@ -881,6 +887,10 @@ async function validateDirectInput(page) {
 
   await page.goto(`${baseUrl}?lab=1`, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => window.__appReady, null, { timeout: 30000 });
+  assert(await page.locator('#start-paste').isVisible(),
+    'admin: 호환용 ?lab=1에서 직접 입력 시작 버튼이 보이지 않음');
+  await page.locator('#start-paste').click();
+  await page.waitForFunction(() => document.body.dataset.workspaceRoute === 'settings');
   assert(await page.locator('.input-mode-tabs').isVisible(),
     'admin: 호환용 ?lab=1에서 직접 입력 탭이 보이지 않음');
   await page.locator('#open-changelog').click();
@@ -894,6 +904,10 @@ async function validateDirectInput(page) {
   await page.locator('[data-lab-toggle]').click();
   await page.waitForLoadState('domcontentloaded');
   // 직접 입력 탭은 v4.8.3부터 일반 공개 — 관리자 모드 해제 후에도 항상 노출
+  assert(await page.locator('#start-paste').isVisible(),
+    'admin: 토글을 끈 뒤 직접 입력 시작 버튼이 사라짐');
+  await page.locator('#start-paste').click();
+  await page.waitForFunction(() => document.body.dataset.workspaceRoute === 'settings');
   assert(await page.locator('.input-mode-tabs').isVisible(),
     'admin: 토글을 끈 뒤 직접 입력 탭이 사라짐 (일반 사용자에게 항상 노출돼야 함)');
   await page.locator('#open-changelog').click();
@@ -948,7 +962,8 @@ async function validateXssHardening(page) {
   // (3) 미리보기 렌더(innerHTML 경로) — 실제 XSS 표면. 실행/요소 생성이 0이어야 한다.
   await page.goto(`${baseUrl}?admin=1`, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => window.JSZip && window.marked && window.__appReady, null, { timeout: 30000 });
-  await page.locator('#mode-paste').click();
+  await page.locator('#start-paste').click();
+  await page.waitForFunction(() => document.body.dataset.workspaceRoute === 'settings');
   await page.locator('.paste-format-btn[data-paste-format="md"]').click();
   await page.locator('#paste-input').fill(mdPayload);
   await page.waitForFunction(() => document.querySelector('#paste-preview-status')?.textContent.includes('해석 완료'));
@@ -1144,6 +1159,8 @@ async function validateCommercialUx(page) {
   assert(await envGuideBtn.evaluate(el => document.activeElement === el),
     'ux: 지원 환경 모달 종료 후 열기 버튼으로 포커스가 복귀하지 않음');
 
+  await page.locator('[data-workspace-route="guide"]').first().click();
+  await page.waitForFunction(() => document.body.dataset.workspaceRoute === 'guide');
   const mdCard = page.locator('.format-card[data-ext="md"]');
   assert(await page.locator('#format-more-tabs').isVisible()
     && await page.locator('#format-more-panels').count() === 1
@@ -1178,8 +1195,8 @@ async function validateCommercialUx(page) {
     'ux: 입력 포맷 섹션에 별도 상단 타이틀이 다시 노출됨');
   const tabTargets = await tabs.evaluateAll(els => els.map(e => e.dataset.target));
   assert(JSON.stringify(tabTargets) === JSON.stringify(
-    ['panel-dev-story', 'panel-basic', 'panel-ext', 'panel-support', 'panel-how', 'panel-quality']),
-    'ux: 포맷 탭 순서가 개발 배경/입력 포맷/예정 포맷/지원 현황/변환 과정/변환 품질이 아님');
+    ['panel-dev-story', 'panel-basic', 'panel-ext', 'panel-support', 'panel-how']),
+    'ux: 포맷 탭 순서가 개발 배경/입력 포맷/예정 포맷/지원 현황/변환 과정이 아님');
   assert((await tabs.first().textContent()).trim() === '개발 배경',
     'ux: 첫 탭이 개발 배경이 아님');
   assert((await tabs.nth(1).textContent()).trim() === '입력 포맷',
@@ -1254,12 +1271,15 @@ async function validateCommercialUx(page) {
     && serviceWorker.includes("'./js/posthog-init.js'"),
     'pwa: 설치/분석 앱 셸 파일이 오프라인 캐시에 없음');
   assert(serviceWorker.includes('isCacheableRequest')
-    && serviceWorker.includes('CACHEABLE_URLS.has(request.url)'),
+    && serviceWorker.includes('CACHEABLE_URLS.has(url.href)')
+    && serviceWorker.includes("url.hash = ''"),
     'pwa: 서비스 워커가 명시 허용 URL만 런타임 캐시하도록 제한되지 않음');
   const indexHtml = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
   assert(indexHtml.includes('<script src="js/posthog-init.js" defer></script>')
     && !indexHtml.includes("var POSTHOG_KEY"),
     'security: PostHog 초기화가 CSP 비호환 인라인 스크립트로 남아 있음');
+  await page.locator('#workspace-steps [data-workspace-route="settings"]').click();
+  await page.waitForFunction(() => document.body.dataset.workspaceRoute === 'settings');
   const rhwpFrame = await page.locator('#rhwp-iframe').evaluate(iframe => ({
     src: iframe.getAttribute('src'),
     dataSrc: iframe.getAttribute('data-src'),
@@ -1299,6 +1319,8 @@ async function validateCommercialUx(page) {
 
   // ESC 전체 초기화는 "더 알아보기" 포맷 탭이 열려 있어도 버튼·패널을 함께 닫아야 한다.
   // (resetConverterState()가 stylePolicy 등 다른 상태도 초기화하므로 이 함수의 마지막에 둔다.)
+  await page.locator('[data-workspace-route="guide"]').first().click();
+  await page.waitForFunction(() => document.body.dataset.workspaceRoute === 'guide');
   await page.locator('.service-info .format-tab').first().click();
   assert(await page.locator('.format-tab.active').count() === 1,
     'ux: 포맷 탭 클릭이 열리지 않음(ESC 회귀 테스트 준비 실패)');
@@ -1318,6 +1340,13 @@ async function validateOfflineAppShell(page, context) {
   await page.evaluate(async () => { await navigator.serviceWorker.ready; });
   await page.reload({ waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => !!navigator.serviceWorker.controller && window.__appReady, null, { timeout: 30000 });
+  const warmCache = await page.evaluate(async () => ({
+    keys: await caches.keys(),
+    index: !!(await caches.match(new URL('index.html', location.href))),
+    root: !!(await caches.match(new URL('./', location.href))),
+  }));
+  assert(warmCache.index && warmCache.root,
+    `offline: 전환 전 앱 셸 캐시 누락 (${JSON.stringify(warmCache)})`);
 
   await context.setOffline(true);
   try {
@@ -1536,6 +1565,8 @@ async function validatePaperMatrix(page) {
   const previewWidths = {};
   await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => window.JSZip && window.marked && window.__appReady, null, { timeout: 30000 });
+  await page.locator('#start-paste').click();
+  await page.waitForFunction(() => document.body.dataset.workspaceRoute === 'settings');
   await page.locator('.advanced-settings > summary').click();
 
   for (const [paper, [rawWidth, rawHeight]] of Object.entries(papers)) {
@@ -1596,6 +1627,8 @@ async function validateLineSpacingOption(page) {
   const baseUrl = `http://127.0.0.1:${PORT}/index.html`;
   await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => window.JSZip && window.marked && window.__appReady, null, { timeout: 30000 });
+  await page.locator('#start-paste').click();
+  await page.waitForFunction(() => document.body.dataset.workspaceRoute === 'settings');
   await page.locator('.advanced-settings > summary').click();
   const defaultValue = await page.locator('#line-spacing').inputValue();
   assert(defaultValue === '160', 'line spacing: UI 기본값 160%가 아님');
@@ -1627,6 +1660,8 @@ async function validateDetailSettingsUx(page) {
   const baseUrl = `http://127.0.0.1:${PORT}/index.html`;
   await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => window.JSZip && window.marked && window.__appReady, null, { timeout: 30000 });
+  await page.locator('#start-paste').click();
+  await page.waitForFunction(() => document.body.dataset.workspaceRoute === 'settings');
   const shapeSummary = await page.locator('#advanced-settings-summary').evaluate(el => ({
     text: el.textContent.trim(),
     scrollWidth: el.scrollWidth,
@@ -1893,8 +1928,9 @@ async function validateMobileFormFontSize(page) {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => window.__appReady, null, { timeout: 30000 });
+  await page.locator('#start-paste').click();
+  await page.waitForFunction(() => document.body.dataset.workspaceRoute === 'settings');
   await page.locator('.advanced-settings > summary').click();
-  await page.locator('#mode-paste').click();
   const sizes = await page.evaluate(() => {
     const px = sel => {
       const el = document.querySelector(sel);
@@ -1939,6 +1975,8 @@ async function validatePretendardCompatibility(page) {
   const baseUrl = `http://127.0.0.1:${PORT}/index.html`;
   await page.goto(baseUrl, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => window.JSZip && window.marked && window.__appReady, null, { timeout: 30000 });
+  await page.locator('#start-paste').click();
+  await page.waitForFunction(() => document.body.dataset.workspaceRoute === 'settings');
 
   const options = await page.locator('#doc-font option').evaluateAll(nodes =>
     nodes.map(node => ({ value: node.value, text: node.textContent.trim() })));

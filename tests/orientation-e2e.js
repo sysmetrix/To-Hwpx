@@ -1,14 +1,34 @@
 'use strict';
 
 const fs = require('fs');
+const http = require('http');
 const os = require('os');
 const path = require('path');
 const JSZip = require('jszip');
 const { chromium } = require('playwright');
 
-const target = process.argv[2] || 'https://sysmetrix.github.io/To-Hwpx/';
+const ROOT = path.resolve(__dirname, '..');
+let staticServer;
+
+function startServer() {
+  return new Promise(resolve => {
+    staticServer = http.createServer((request, response) => {
+      const pathname = decodeURIComponent(new URL(request.url, 'http://localhost').pathname);
+      const relative = pathname === '/' ? 'index.html' : pathname.replace(/^\/+/, '');
+      const file = path.resolve(ROOT, relative);
+      if (!file.startsWith(ROOT + path.sep) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) {
+        response.writeHead(404).end('not found'); return;
+      }
+      const mime = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.md': 'text/markdown', '.woff2': 'font/woff2' }[path.extname(file).toLowerCase()];
+      if (mime) response.setHeader('Content-Type', `${mime}; charset=utf-8`);
+      response.end(fs.readFileSync(file));
+    });
+    staticServer.listen(0, '127.0.0.1', () => resolve(`http://127.0.0.1:${staticServer.address().port}/`));
+  });
+}
 
 (async () => {
+  const target = process.argv[2] || await startServer();
   const browser = await chromium.launch();
   const context = await browser.newContext({ acceptDownloads: true, viewport: { width: 1440, height: 1000 } });
   const page = await context.newPage();
@@ -26,6 +46,9 @@ const target = process.argv[2] || 'https://sysmetrix.github.io/To-Hwpx/';
   await page.reload({ waitUntil: 'networkidle' });
   await page.waitForFunction(() => window.JSZip && window.marked && window.__appReady, null, { timeout: 30000 });
 
+  await page.setInputFiles('#file-input', path.join(__dirname, 'fixtures', 'sample.md'));
+  await page.locator('.prepare-continue').click();
+  await page.waitForFunction(() => document.body.dataset.workspaceRoute === 'settings');
   await page.locator('.advanced-settings > summary').click();
   await page.locator('#paper-size').selectOption('A3');
   await page.locator('[data-orient="landscape"]').click();
@@ -38,7 +61,6 @@ const target = process.argv[2] || 'https://sysmetrix.github.io/To-Hwpx/';
   }));
 
   const downloadPromise = page.waitForEvent('download', { timeout: 30000 });
-  await page.setInputFiles('#file-input', path.join(__dirname, 'fixtures', 'sample.md'));
   await page.locator('#convert-btn').click();
   const download = await downloadPromise;
   const outPath = path.join(os.tmpdir(), 'to-hwpx-orientation-e2e.hwpx');
@@ -83,7 +105,9 @@ const target = process.argv[2] || 'https://sysmetrix.github.io/To-Hwpx/';
   if (!/landscape="NARROWLY"/.test(pagePr) || !(width < height)) throw new Error('HWPX landscape structure mismatch');
   if (errors.length) throw new Error(`Page errors: ${errors.join(' | ')}`);
   await browser.close();
+  staticServer?.close();
 })().catch(error => {
+  staticServer?.close();
   console.error(error.stack || error.message);
   process.exit(1);
 });
