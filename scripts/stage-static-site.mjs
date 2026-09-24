@@ -15,7 +15,7 @@ const files = [
     'index.html', 'style.css', 'legal.css', 'privacy.html', 'terms.html', 'notices.html',
     'LICENSE', 'robots.txt', 'sitemap.xml', 'sw.js', 'manifest.json', 'changelog.json', 'roadmap.json',
 ];
-const dirs = ['js', 'icons', 'fonts', '.well-known'];
+const dirs = ['js', 'icons', 'fonts', 'samples', '.well-known'];
 
 fs.mkdirSync(dest, { recursive: true });
 for (const file of files) {
@@ -25,14 +25,6 @@ for (const file of files) {
 for (const dir of dirs) {
     const from = path.join(source, dir);
     if (fs.existsSync(from)) fs.cpSync(from, path.join(dest, dir), { recursive: true });
-}
-
-// 네 가지 사용자 샘플만 배포한다. 테스트 전체를 공개 자산으로 복사하지 않는다.
-const sampleDir = path.join(dest, 'tests', 'fixtures');
-fs.mkdirSync(sampleDir, { recursive: true });
-for (const name of ['sample.md', 'sample.docx', 'sample.xlsx', 'sample.pdf']) {
-    const from = path.join(source, 'tests', 'fixtures', name);
-    if (fs.existsSync(from)) fs.copyFileSync(from, path.join(sampleDir, name));
 }
 
 if (legacy) {
