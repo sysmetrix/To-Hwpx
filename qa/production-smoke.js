@@ -37,7 +37,7 @@ async function checkSite(base, { headers = false, legacyNoticeRedirect = false }
     for (const path of [
         'privacy.html', 'terms.html', 'notices.html', 'sw.js', 'fonts/InterVariable.woff2',
         'js/core/runtime.js', 'js/docx-audit.js', 'js/gov-doc.js', 'js/xlsx-worker.js',
-        'js/workspace.js', 'js/workspace-history.js', 'tests/fixtures/sample.md', 'icons/logo-mark.svg',
+        'js/workspace.js', 'js/workspace-history.js', 'samples/sample.md', 'icons/logo-mark.svg',
     ]) {
         const asset = await get(new URL(path, base));
         if (!asset.ok) throw new Error(`${base}${path} HTTP ${asset.status}`);

@@ -124,7 +124,8 @@ assert(workflow.includes('npm run test:release') && workflow.includes('npm run t
     && !workflow.includes('cp -R js fonts icons'), 'Pages 전체 릴리스/브라우저 게이트 또는 선별 배포 누락');
 const stageScript = read('scripts/stage-static-site.mjs');
 assert(stageScript.includes("'privacy.html'") && stageScript.includes("'notices.html'")
-    && stageScript.includes("'js'") && stageScript.includes("'fonts'") && stageScript.includes("'icons'"),
+    && stageScript.includes("'js'") && stageScript.includes("'fonts'") && stageScript.includes("'icons'")
+    && stageScript.includes("'samples'"),
     'Pages 선별 배포 스크립트의 필수 앱 셸 누락');
 assert(!/uses:\s+[^\s]+@(v\d+|main|master)\b/.test(workflow), 'GitHub Action이 커밋 SHA로 고정되지 않음');
 assert(read('.github/workflows/production-smoke.yml').includes('*/15 * * * *')
