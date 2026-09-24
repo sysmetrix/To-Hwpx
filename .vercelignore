@@ -5,6 +5,14 @@ node_modules
 .claude
 qa
 tests
+!tests/
+tests/*
+!tests/fixtures/
+tests/fixtures/*
+!tests/fixtures/sample.md
+!tests/fixtures/sample.docx
+!tests/fixtures/sample.xlsx
+!tests/fixtures/sample.pdf
 pitch
 hwpx-public-doc
 debug.log

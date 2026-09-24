@@ -6,6 +6,7 @@ const crypto = require('crypto');
 const primary = process.argv[2] || 'https://to-hwpx.vercel.app/';
 const mirror = process.argv[3] || 'https://sysmetrix.github.io/To-Hwpx/';
 const expectedVersion = JSON.parse(fs.readFileSync('package.json', 'utf8')).version;
+const legacyVersion = '4.19.3';
 const vendorIntegrity = JSON.parse(fs.readFileSync('qa/vendor-integrity.json', 'utf8'));
 const vendorDirectoryProbes = Object.freeze({
     'js/vendor/pdfjs-6.3.289/cmaps/': Object.freeze([
@@ -27,6 +28,7 @@ async function checkSite(base, { headers = false, legacyNoticeRedirect = false }
     if (!response.ok) throw new Error(`${base} HTTP ${response.status}`);
     const html = await response.text();
     if (!html.includes(`v${expectedVersion}`)) throw new Error(`${base} 운영 버전이 v${expectedVersion}이 아님`);
+    if (!html.includes(`/legacy/v${legacyVersion}/`)) throw new Error(`${base} 직전 버전 링크 누락`);
     if (headers) {
         for (const key of ['content-security-policy', 'x-content-type-options', 'referrer-policy', 'permissions-policy']) {
             if (!response.headers.get(key)) throw new Error(`${base} 보안 헤더 누락: ${key}`);
@@ -34,7 +36,8 @@ async function checkSite(base, { headers = false, legacyNoticeRedirect = false }
     }
     for (const path of [
         'privacy.html', 'terms.html', 'notices.html', 'sw.js', 'fonts/InterVariable.woff2',
-        'js/core/runtime.js', 'js/docx-audit.js', 'js/gov-doc.js', 'js/xlsx-worker.js', 'icons/logo-mark.svg',
+        'js/core/runtime.js', 'js/docx-audit.js', 'js/gov-doc.js', 'js/xlsx-worker.js',
+        'js/workspace.js', 'js/workspace-history.js', 'tests/fixtures/sample.md', 'icons/logo-mark.svg',
     ]) {
         const asset = await get(new URL(path, base));
         if (!asset.ok) throw new Error(`${base}${path} HTTP ${asset.status}`);
@@ -44,6 +47,21 @@ async function checkSite(base, { headers = false, legacyNoticeRedirect = false }
         if (!legacy.ok || !legacy.url.endsWith('/notices.html')) {
             throw new Error(`${base} 기존 고지 URL이 notices.html로 이동하지 않음`);
         }
+    }
+}
+
+async function checkLegacy(base) {
+    const legacyBase = new URL(`legacy/v${legacyVersion}/`, base);
+    const response = await get(legacyBase);
+    if (!response.ok) throw new Error(`${legacyBase} HTTP ${response.status}`);
+    const html = await response.text();
+    if (!html.includes(`v${legacyVersion}`) || html.includes(`v${expectedVersion}`)) {
+        throw new Error(`${legacyBase} 고정 버전이 v${legacyVersion}이 아님`);
+    }
+    const sw = await get(new URL('sw.js', legacyBase));
+    const source = await sw.text();
+    if (!sw.ok || !source.includes(`to-hwpx-legacy-v${legacyVersion}`)) {
+        throw new Error(`${legacyBase} 서비스워커 캐시가 격리되지 않음`);
     }
 }
 
@@ -73,6 +91,7 @@ async function checkVendor(base) {
     await checkVendor(primary);
     await checkSite(mirror);
     await checkVendor(mirror);
+    await checkLegacy(mirror);
     console.log(`PRODUCTION SMOKE: PASS v${expectedVersion} primary+mirror`);
 })().catch(error => {
     console.error(`PRODUCTION SMOKE: FAIL — ${error.message}`);

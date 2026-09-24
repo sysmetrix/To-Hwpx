@@ -146,7 +146,7 @@
             <span>｢BWYF｣ AX Challenger 2026</span>
             <!-- [주의] id="open-changelog"는 app.js에서 관리자 모드일 때 업데이트 내역 모달을 여는 연결값 -->
             <button class="util-changelog-btn" id="open-changelog" aria-label="버전 정보">
-                📋 v4.19.3
+                📋 v4.20.0
             </button>
         </div>
     </div>
@@ -168,6 +168,12 @@
             <!-- [링크 수정 가능] href와 화면 글자만 바꾸세요. class는 스타일/툴팁에 사용됩니다. -->
             <nav id="main-nav" role="navigation" aria-label="주 메뉴">
                 <ul class="main-nav">
+                    <li>
+                        <button class="nav-shortcut-btn" data-workspace-route="guide" aria-label="지원 형식과 변환 과정 보기" title="지원 형식·보존 범위·변환 과정">
+                            <span class="nav-btn-icon" aria-hidden="true">▦</span>
+                            변환 안내
+                        </button>
+                    </li>
                     <li>
                         <!-- [주의] id="open-env-guide"는 app.js에서 지원 환경 통합 모달을 여는 연결값 -->
                         <button class="nav-shortcut-btn" id="open-env-guide" aria-label="지원 환경 안내 열기" title="PC/모바일 브라우저 지원·설치·로컬 처리 안내">
@@ -200,6 +206,15 @@
         </div>
     </div>
 </header>
+
+<nav id="workspace-steps" class="workspace-steps" aria-label="변환 진행 단계" hidden>
+    <div class="container workspace-steps-inner">
+        <button type="button" data-workspace-route="start"><span>1</span>입력</button>
+        <button type="button" data-workspace-route="prepare"><span>2</span>준비</button>
+        <button type="button" data-workspace-route="settings"><span>3</span>설정·미리보기</button>
+        <button type="button" data-workspace-route="result"><span>4</span>결과</button>
+    </div>
+</nav>
 
 <!-- 전역 알림 박스 (오류 발생 시 app.js에서 표시) -->
 <div id="alert-box" class="alert-box" role="alert" aria-live="polite">
@@ -251,6 +266,33 @@
             <span class="drop-trust-mark" aria-hidden="true">🔒</span>
             <span class="drop-trust-text">파일은 <b>브라우저 안에서만</b> 변환됩니다. 서버에 업로드되지 않습니다.</span>
         </p>
+        <div class="start-secondary-actions" aria-label="다른 시작 방법">
+            <button type="button" class="start-action" id="start-paste">
+                <strong>⌨ 직접 입력</strong><span>AI 답변·Markdown·표를 붙여넣기</span>
+            </button>
+            <button type="button" class="start-action" id="start-samples">
+                <strong>▦ 샘플로 체험</strong><span>내 파일 없이 전체 흐름 확인</span>
+            </button>
+            <button type="button" class="start-action" id="start-history">
+                <strong>↶ 최근 작업</strong><span>이전 설정을 다시 적용</span>
+            </button>
+        </div>
+        <section id="sample-panel" class="sample-panel" aria-labelledby="sample-title" hidden>
+            <div class="sample-panel-head">
+                <div><span class="eyebrow">빠른 체험</span><h2 id="sample-title">대표 문서로 변환해 보기</h2></div>
+                <button type="button" id="close-samples" aria-label="샘플 닫기">×</button>
+            </div>
+            <div class="sample-grid">
+                <button type="button" data-sample-path="tests/fixtures/sample.md" data-sample-name="보고서-예시.md"><b>MD</b><strong>구조화 보고서</strong><span>제목·목록·표·링크</span></button>
+                <button type="button" data-sample-path="tests/fixtures/sample.docx" data-sample-name="워드-예시.docx"><b>DOCX</b><strong>워드 문서</strong><span>문단·표·서식 감사</span></button>
+                <button type="button" data-sample-path="tests/fixtures/sample.xlsx" data-sample-name="엑셀-예시.xlsx"><b>XLSX</b><strong>데이터 표</strong><span>시트·행·열 변환</span></button>
+                <button type="button" data-sample-path="tests/fixtures/sample.pdf" data-sample-name="PDF-예시.pdf"><b>PDF</b><strong>좌표 기반 문서</strong><span>구조 추론 근거 확인</span></button>
+            </div>
+        </section>
+        <section id="recent-start" class="recent-start" aria-labelledby="recent-start-title" hidden>
+            <div class="recent-start-head"><h2 id="recent-start-title">최근 작업</h2><button type="button" data-workspace-route="history">전체 보기</button></div>
+            <div id="recent-start-list"></div>
+        </section>
         <!-- 숨겨진 파일 인풋 (드롭존 클릭 시 트리거됨) -->
         <!-- [포맷 추가 시] accept에 새 확장자를 추가해야 파일 선택창에서 보입니다. -->
         <!-- multiple: 여러 파일을 한 번에 선택해 배치 변환 -->
@@ -301,6 +343,7 @@
                     </div>
                     <!-- 선택한 파일 목록(배치) — 2개 이상일 때 app.js renderQueueList()가 채움 -->
                     <div id="file-queue" class="file-queue" hidden aria-label="선택한 파일 목록"></div>
+                    <button type="button" class="prepare-continue" data-workspace-route="settings">계속: 설정·미리보기 →</button>
                 </div>
 
                 <!-- ── 모드 2: 직접 입력 (텍스트 기반 포맷을 붙여넣어 변환) ── -->
@@ -762,6 +805,7 @@
 
                 <!-- 변환 결과 + 다운로드 버튼
                      app.js의 showResult()에서 내용 주입 -->
+                <div id="workspace-run-summary" class="workspace-run-summary" hidden aria-label="변환 요약"></div>
                 <div id="result-area" aria-label="변환 결과" aria-live="polite"></div>
 
                 <!-- 다운로드 준비 중 표시 — result-area 아래 고정 -->
@@ -774,6 +818,20 @@
 
         </div><!-- /.converter-layout -->
     </div><!-- /.container -->
+</section>
+
+<section id="workspace-history" class="workspace-page workspace-history" aria-labelledby="workspace-history-title" hidden>
+    <div class="container">
+        <div class="workspace-page-head">
+            <div><span class="eyebrow">이 브라우저에만 저장</span><h1 id="workspace-history-title">최근 작업과 설정 프리셋</h1></div>
+            <button type="button" class="btn sm ghost" data-workspace-route="start">새 변환</button>
+        </div>
+        <div class="history-privacy"><strong>문서 내용은 저장하지 않습니다.</strong><span>파일명·형식·크기·결과 요약·설정만 보관합니다. 파일은 다시 선택해야 합니다.</span></div>
+        <div class="history-layout">
+            <section class="history-card"><div class="history-card-head"><h2>최근 작업</h2><div><label><input id="history-enabled" type="checkbox" checked> 기록</label><button type="button" id="clear-history">전체 삭제</button></div></div><div id="history-list" class="history-list"></div></section>
+            <section class="history-card"><div class="history-card-head"><h2>설정 프리셋</h2><button type="button" id="save-preset">현재 설정 저장</button></div><div id="preset-list" class="preset-list"></div></section>
+        </div>
+    </div>
 </section>
 
 
@@ -820,13 +878,6 @@
                             aria-selected="false"
                             aria-controls="panel-how">
                         변환 과정
-                    </button>
-                    <button class="format-tab"
-                            data-target="panel-quality"
-                            role="tab"
-                            aria-selected="false"
-                            aria-controls="panel-quality">
-                        변환 품질
                     </button>
                 </div>
             </div>
@@ -1166,7 +1217,7 @@
         <!-- ── 변환 품질 패널 ─────────────────────────────────────
              initQualityPanel()이 app.js에서 renderQualityPanel()로 채움
              ─────────────────────────────────────────────────────── -->
-            <div class="format-panel" id="panel-quality" role="tabpanel">
+            <div class="format-panel" id="panel-quality" role="tabpanel" hidden aria-hidden="true">
                 <!-- JS가 채움 -->
             </div><!-- /#panel-quality -->
 
@@ -1198,6 +1249,7 @@
             <div class="footer-links">
                 <h4>관련 서비스</h4>
                 <ul>
+                    <li><a href="https://sysmetrix.github.io/To-Hwpx/legacy/v4.19.3/" target="_blank" rel="noopener">이전 버전(v4.19.3)</a><small class="footer-link-note">새 화면에 문제가 있을 때 사용</small></li>
                     <li><a href="https://md-to-hwpx.vercel.app/" target="_blank" rel="noopener">MD→HWPX 변환기</a></li>
                     <li><a href="https://md-to-html-seven.vercel.app/" target="_blank" rel="noopener">MD→HTML 변환기</a></li>
                     <li><a href="https://www.hancom.com/support/downloadCenter/download" target="_blank" rel="noopener">한컴 HWPX 변환기</a></li>

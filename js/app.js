@@ -15,6 +15,10 @@
 // 자체 호스팅 JSZip/marked/XLSX는 classic <script>로 로드된 window 전역을 사용
 import { fileToIR, parseMd, parseHtml, parseTxt, parseCsv, parseJson } from './parsers.js';
 import { buildHwpx, isNumericCell } from './hwpx.js';
+import {
+    initWorkspace, workspaceQueueChanged, workspaceReset,
+    workspaceRunCompleted, workspaceRunStarted,
+} from './workspace.js';
 // validateHwpx는 golden test의 window 재할당 패턴 지원을 위해 window에서 접근
 // (hwpx.js가 window.validateHwpx = validateHwpx 로 노출하며, 테스트가 재할당 가능)
 
@@ -32,6 +36,10 @@ const ANALYTICS_SCHEMA = Object.freeze({
     hwp_export_fail: new Set([]),
     pdf_print_success: new Set(['pages']),
     pdf_print_fail: new Set([]),
+    workspace_sample_open: new Set(['format']),
+    workspace_settings_restore: new Set(['source']),
+    workspace_preset_save: new Set([]),
+    workspace_history_toggle: new Set(['enabled']),
 });
 
 function track(name, data) {
@@ -176,6 +184,16 @@ function initApp() {
     initFormatCards();          // 포맷 카드 클릭 이벤트
     initOptions();              // 문서 유형·제목·폰트·여백 옵션
     initInputMode();            // 입력 방식 탭(파일 업로드 / 직접 입력)
+    initWorkspace({
+        openFiles: files => handleFileList(files),
+        openPaste: () => setInputMode('paste'),
+        hasInput: () => state.queue.length > 0 || state.inputMode === 'paste',
+        isConverting: () => state.isConverting,
+        collectOptions: collectWorkspaceOptions,
+        applyOptions: applyWorkspaceOptions,
+        notify: message => showToast(`<strong>${escHtml(message)}</strong>`, { timeout: 5000 }),
+        track: (name, data) => track(name, data),
+    });
     initConvertButton();        // 변환 시작 버튼 + Ctrl/⌘+Enter 단축키
     initKeyboardShortcuts();     // Ctrl/⌘+O 파일 선택 등 공통 단축키
     initScrollBehavior();       // 스크롤 시 헤더 효과
@@ -632,6 +650,7 @@ function onQueueChanged({ scroll = false } = {}) {
     renderQueueList();
     updateTitlePlaceholder();
     scheduleSelectedFileIrAnalysis();
+    workspaceQueueChanged(n);
 
     if (scroll) {
         document.getElementById('converter')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -831,6 +850,7 @@ function clearSelectedFile() {
 
     const fileInput = document.getElementById('file-input');
     if (fileInput) fileInput.value = '';
+    workspaceReset();
 }
 
 /** 드롭존 내부 UI를 파일 선택 상태로 업데이트 */
@@ -3046,6 +3066,94 @@ function updateConvertButton(enabled) {
     else btn.textContent = label;
 }
 
+/** 최근 작업/프리셋에 저장 가능한 변환 설정만 반환한다. 문서 내용은 포함하지 않는다. */
+function collectWorkspaceOptions() {
+    return {
+        docType: state.docType,
+        // 사용자 입력 제목 자체는 저장하지 않는다. custom은 안전한 기본값으로 복원한다.
+        titleSource: state.titleSource === 'custom' ? 'heading' : state.titleSource,
+        docFont: state.docFont,
+        fontSize: state.fontSize,
+        paperSize: state.paperSize,
+        orientation: state.orientation,
+        lineSpacing: state.lineSpacing,
+        showHorizontalRules: state.showHorizontalRules,
+        govDocIndent: state.govDocIndent,
+        paragraphSpacing: state.paragraphSpacing,
+        headingStyle: state.headingStyle,
+        tableStyle: state.tableStyle,
+        linkStyle: state.linkStyle,
+        imageMaxWidth: state.imageMaxWidth,
+        imageAlign: state.imageAlign,
+        titleBodyPolicy: state.titleBodyPolicy,
+        stylePolicy: state.stylePolicy,
+        pageMargins: { ...state.pageMargins },
+        autoDownload: state.autoDownload,
+    };
+}
+
+/** 저장된 설정을 기존 컨트롤 계약과 localStorage 키를 통해 복원한다. */
+function applyWorkspaceOptions(options = {}) {
+    const setSelect = (id, value) => {
+        const el = document.getElementById(id);
+        if (!el || value == null || !Array.from(el.options).some(option => option.value === String(value))) return;
+        el.value = String(value);
+        el.dispatchEvent(new Event('change'));
+    };
+    setSelect('doc-font', options.docFont);
+    setSelect('font-size', options.fontSize);
+    setSelect('paper-size', options.paperSize);
+    setSelect('line-spacing', options.lineSpacing);
+    setSelect('style-policy', options.stylePolicy);
+    setSelect('paragraph-spacing', options.paragraphSpacing);
+    setSelect('heading-style', options.headingStyle);
+    setSelect('table-style', options.tableStyle);
+    setSelect('link-style', options.linkStyle);
+    setSelect('image-max-width', options.imageMaxWidth);
+    setSelect('image-align', options.imageAlign);
+    setSelect('title-body-policy', options.titleBodyPolicy);
+
+    if (['portrait', 'landscape'].includes(options.orientation)) {
+        state.orientation = options.orientation;
+        localStorage.setItem('tohwpx_orientation', state.orientation);
+        applyOrientationUi(state.orientation);
+    }
+    if (typeof options.showHorizontalRules === 'boolean') {
+        state.showHorizontalRules = options.showHorizontalRules;
+        localStorage.setItem('tohwpx_showHorizontalRules', String(state.showHorizontalRules));
+        applyHrDisplayUi(state.showHorizontalRules);
+    }
+    if (typeof options.govDocIndent === 'boolean') {
+        state.govDocIndent = options.govDocIndent;
+        localStorage.setItem('tohwpx_govDocIndent', String(state.govDocIndent));
+        applyGovDocUi(state.govDocIndent);
+    }
+    if (['plain', 'titleblock', 'cover-unit', 'cover-annual'].includes(options.docType)) {
+        const radio = document.querySelector(`input[name="doc-type"][value="${options.docType}"]`);
+        if (radio) { radio.checked = true; radio.dispatchEvent(new Event('change')); }
+    }
+    if (['heading', 'filename', 'custom'].includes(options.titleSource)) {
+        state.titleSource = options.titleSource;
+        applyTitleSourceUi(state.titleSource);
+    }
+    if (options.pageMargins && typeof options.pageMargins === 'object') {
+        for (const side of ['top', 'bottom', 'left', 'right', 'header', 'footer']) {
+            const value = Number(options.pageMargins[side]);
+            if (!Number.isFinite(value)) continue;
+            const max = (side === 'header' || side === 'footer') ? 30 : 60;
+            state.pageMargins[side] = Math.max(0, Math.min(max, value));
+        }
+        syncMarginInputs();
+        updateMarginPreview();
+    }
+    if (typeof options.autoDownload === 'boolean') {
+        const input = document.getElementById('auto-download');
+        if (input) { input.checked = options.autoDownload; input.dispatchEvent(new Event('change')); }
+    }
+    syncDetailSegButtons();
+    updateAdvancedSettingsSummary();
+}
+
 
 // ─────────────────────────────────────────────────────────────────────────
 // [핵심: 7단계 변환 파이프라인 실행]
@@ -3054,7 +3162,9 @@ function updateConvertButton(enabled) {
 async function runConversionPipeline() {
     if (!state.queue.length || state.isConverting) return;
 
+    const workspaceStartedAt = Date.now();
     state.isConverting = true;
+    workspaceRunStarted();
     setProgressPanelState('converting');
     hideResult();
     hideAlert();
@@ -3118,6 +3228,14 @@ async function runConversionPipeline() {
     }
 
     setProgress(100);
+    renderWorkspaceRunSummary({
+        total,
+        ok: okCount,
+        warn: warnCount,
+        error: errCount,
+        durationMs: Date.now() - workspaceStartedAt,
+        outputBytes: state.queue.reduce((sum, item) => sum + (item.blob?.size || 0), 0),
+    });
 
     if (!batch) {
         // ── 단일 파일: 기존 동작 유지(결과 카드 1개 + 자동 다운로드) ──
@@ -3167,6 +3285,26 @@ async function runConversionPipeline() {
     state.isConverting = false;
     updateConvertButton(state.queue.length > 0);
     renderQueueList();   // 변환 종료 후 목록 갱신(편집 버튼 복귀)
+    const workspaceSummary = {
+        total: state.queue.length,
+        ok: state.queue.filter(item => item.status === 'done').length,
+        warn: state.queue.filter(item => item.status === 'warn').length,
+        error: state.queue.filter(item => item.status === 'error').length,
+        durationMs: Date.now() - workspaceStartedAt,
+        outputBytes: state.queue.reduce((sum, item) => sum + (item.blob?.size || 0), 0),
+    };
+    workspaceRunCompleted({
+        files: state.queue.map(item => ({
+            name: item.file?.name || '',
+            ext: item.ext || '',
+            size: item.file?.size || 0,
+            status: item.status,
+            outputName: item.fileName || '',
+            audit: item.validation?.pass ? '패키지 구조 통과' : (item.error ? classifyConversionError(item.error, item.ext).category : '구조 확인 필요'),
+        })),
+        summary: workspaceSummary,
+        options: collectWorkspaceOptions(),
+    }).catch(error => console.warn('[최근 작업 저장]', error));
 }
 
 /**
@@ -3307,6 +3445,22 @@ async function convertOneFile(file, statusPrefix = '', outputFontName = state.do
     return { blob: finalBlob, fileName, validation };
 }
 
+
+function renderWorkspaceRunSummary(summary) {
+    const host = document.getElementById('workspace-run-summary');
+    if (!host) return;
+    const seconds = Math.max(0.1, Number(summary.durationMs || 0) / 1000).toFixed(1);
+    // eslint-disable-next-line no-unsanitized/property -- summary values are finite counters formatted here
+    host.innerHTML = `
+        <div><span>전체</span><b>${Number(summary.total || 0).toLocaleString()}개</b></div>
+        <div><span>성공</span><b>${Number(summary.ok || 0).toLocaleString()}개</b></div>
+        <div><span>경고</span><b>${Number(summary.warn || 0).toLocaleString()}개</b></div>
+        <div><span>실패</span><b>${Number(summary.error || 0).toLocaleString()}개</b></div>
+        <div><span>처리 시간</span><b>${seconds}초</b></div>
+        <div><span>출력 용량</span><b>${formatBytes(Number(summary.outputBytes || 0))}</b></div>
+    `;
+    host.hidden = false;
+}
 
 // ─────────────────────────────────────────────────────────────────────────
 // [IR 미리보기]
@@ -4073,6 +4227,8 @@ function hideResult() {
     }
     const ind = document.getElementById('dl-indicator');
     if (ind) ind.hidden = true;
+    const summary = document.getElementById('workspace-run-summary');
+    if (summary) { summary.hidden = true; summary.replaceChildren(); }
 }
 
 function triggerDownload(url, fileName) {

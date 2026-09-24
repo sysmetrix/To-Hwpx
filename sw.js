@@ -11,7 +11,8 @@
 
 'use strict';
 
-const CACHE_VERSION = 'to-hwpx-v4.19.3';
+const CACHE_PREFIX = 'to-hwpx-v';
+const CACHE_VERSION = 'to-hwpx-v4.20.0';
 
 // 설치 시 미리 캐시할 파일 목록 (앱 셸)
 // [주의] 절대경로(/)가 아닌 상대경로(./)를 사용해야 함.
@@ -40,6 +41,8 @@ const APP_SHELL = [
     './js/parsers.js',
     './js/hwpx.js',
     './js/app.js',
+    './js/workspace.js',
+    './js/workspace-history.js',
     './js/pdf-parser.js',
     './js/pdf-style.js',
     './js/pdf-graphics.js',
@@ -66,6 +69,10 @@ const APP_SHELL = [
     './icons/brand/microsoftpowerpoint.svg',
     './fonts/InterVariable.woff2',
     './fonts/NotoSansKR-Regular.ttf',
+    './tests/fixtures/sample.md',
+    './tests/fixtures/sample.docx',
+    './tests/fixtures/sample.xlsx',
+    './tests/fixtures/sample.pdf',
     './privacy.html',
     './terms.html',
     './notices.html',
@@ -76,7 +83,16 @@ const CACHEABLE_URLS = new Set(APP_SHELL.map(url => new URL(url, self.location.h
 
 function isCacheableRequest(request) {
     if (request.method !== 'GET') return false;
-    return CACHEABLE_URLS.has(request.url);
+    const url = new URL(request.url);
+    // 해시 라우트(#/settings 등)는 네트워크 요청 대상이 아니므로 캐시 키에서 제외한다.
+    url.hash = '';
+    return CACHEABLE_URLS.has(url.href);
+}
+
+function cacheKeyForRequest(request) {
+    const url = new URL(request.url);
+    url.hash = '';
+    return url.href;
 }
 
 // ── 설치 이벤트: 앱 셸을 캐시에 미리 저장 ────────────────────────
@@ -96,7 +112,7 @@ self.addEventListener('activate', event => {
         caches.keys().then(keys =>
             Promise.all(
                 keys
-                    .filter(key => key !== CACHE_VERSION)
+                    .filter(key => key.startsWith(CACHE_PREFIX) && key !== CACHE_VERSION)
                     .map(key => caches.delete(key))
             )
         ).then(() => self.clients.claim()) // 열린 탭 즉시 제어
@@ -114,7 +130,7 @@ self.addEventListener('fetch', event => {
     if (!isCacheableRequest(event.request)) return;
 
     event.respondWith(
-        caches.match(event.request).then(cached => {
+        caches.match(cacheKeyForRequest(event.request)).then(cached => {
             if (cached) return cached;
 
             // 캐시 미스: 네트워크에서 가져오고 캐시에 저장
@@ -124,7 +140,7 @@ self.addEventListener('fetch', event => {
                     return response;
                 }
                 const toCache = response.clone();
-                caches.open(CACHE_VERSION).then(cache => cache.put(event.request, toCache));
+                caches.open(CACHE_VERSION).then(cache => cache.put(cacheKeyForRequest(event.request), toCache));
                 return response;
             }).catch(() => {
                 // 오프라인 + 캐시 미스: index.html 폴백 (SPA용)

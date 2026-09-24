@@ -6,6 +6,7 @@
 
 - 정식 주소: `https://to-hwpx.vercel.app/`
 - 재해복구 미러: `https://sysmetrix.github.io/To-Hwpx/`
+- 직전 화면: `https://sysmetrix.github.io/To-Hwpx/legacy/v4.19.3/` (커밋 `8fcc68338f7e8d753ba5ad0468d30ba1189657f0` 고정)
 - 월 가용성 목표: 99.9%
 - 운영 감지 목표: 15분 이내
 - P0(전체 접속/다운로드 불가, 문서 외부 전송) 대응 시작: 감지 후 30분 이내
@@ -18,6 +19,8 @@ Pages 배포는 `release-gates`와 `browser-compatibility`를 병렬 실행하�
 
 서비스워커는 필수 앱 셸을 `cache.addAll()`로 원자적으로 설치한다. 일부 파일만 저장된 채 새 버전이 활성화되면 오프라인에서 ES module import가 조용히 끊기므로, 하나라도 실패하면 이전 정상 서비스워커를 유지한다.
 
+Pages는 현재판과 직전판을 별도 디렉터리로 배포한다. 현재판 캐시는 `to-hwpx-v`, 직전판 캐시는 `to-hwpx-legacy-` 접두사만 정리해 서로의 오프라인 캐시를 삭제하지 않는다. 직전판은 새 코드로 재빌드하지 않고 고정 커밋을 그대로 스테이징한다.
+
 ## 릴리스 승인
 
 1. 작업 브랜치에서 `npm ci`.
@@ -26,7 +29,7 @@ Pages 배포는 `release-gates`와 `browser-compatibility`를 병렬 실행하�
 4. `qa/release-qa.md`의 해당 버전 자동·수동 항목 기록.
 5. 버전 범프 및 `changelog.json` 일치 확인.
 6. PR에서 Pages 워크플로 성공 확인 후 병합.
-7. Vercel과 Pages 모두 새 버전인지 `node qa/production-smoke.js`로 확인.
+7. Vercel과 Pages 모두 새 버전이고 Pages 직전판이 v4.19.3으로 고정됐는지 `node qa/production-smoke.js`로 확인.
 8. 한컴오피스 시각 검증 결과와 확인자·환경을 릴리스 QA에 기록.
 
 테스트한 커밋 SHA는 PR merge SHA 및 GitHub Actions 실행의 `head_sha`와 일치해야 한다. 운영 배포가 다른 SHA를 가리키면 출시 승인을 취소한다.

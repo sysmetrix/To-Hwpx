@@ -120,8 +120,12 @@ assert(vercelIgnore.includes('THIRD_PARTY_NOTICES.md'), 'Markdown 고지 파일�
 const workflow = read('.github/workflows/pages.yml');
 assert(workflow.includes('npm run test:release') && workflow.includes('npm run test:browsers')
     && workflow.includes('needs: [release-gates, browser-compatibility]')
-    && workflow.includes('privacy.html') && workflow.includes('notices.html')
+    && workflow.includes('scripts/stage-static-site.mjs')
     && !workflow.includes('cp -R js fonts icons'), 'Pages 전체 릴리스/브라우저 게이트 또는 선별 배포 누락');
+const stageScript = read('scripts/stage-static-site.mjs');
+assert(stageScript.includes("'privacy.html'") && stageScript.includes("'notices.html'")
+    && stageScript.includes("'js'") && stageScript.includes("'fonts'") && stageScript.includes("'icons'"),
+    'Pages 선별 배포 스크립트의 필수 앱 셸 누락');
 assert(!/uses:\s+[^\s]+@(v\d+|main|master)\b/.test(workflow), 'GitHub Action이 커밋 SHA로 고정되지 않음');
 assert(read('.github/workflows/production-smoke.yml').includes('*/15 * * * *')
     && read('OPERATIONS.md').includes('10분 이내'), '15분 감시 또는 10분 롤백 기준 누락');
