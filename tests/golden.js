@@ -1085,8 +1085,21 @@ async function validateCommercialUx(page) {
     'privacy: 분석 거부/철회 상태가 저장·반영되지 않음');
 
   const heroDropText = await page.locator('#drop-zone .drop-sub').textContent();
-  assert(heroDropText.includes('MD · HTML · DOCX · PPTX · CSV · XLSX · JSON · TXT · IPYNB · HWP'),
+  assert(heroDropText.includes('MD · PDF · DOCX · PPTX · XLSX · CSV · JSON · IPYNB'),
     'ux: 첫 화면 드롭존 입력 포맷 순서가 안내 기준과 다름');
+  const expectedDropFormats = ['MD', 'PDF', 'DOCX', 'PPTX', 'XLSX', 'CSV', 'JSON', 'IPYNB'];
+  const heroDropFormats = await page.locator('#drop-zone .drop-fmt-icons img').evaluateAll(
+    icons => icons.map(icon => icon.alt));
+  const converterDropFormats = await page.locator('#converter-drop-area .cda-fmt-icons img').evaluateAll(
+    icons => icons.map(icon => icon.alt));
+  assert(JSON.stringify(heroDropFormats) === JSON.stringify(expectedDropFormats),
+    'ux: 첫 화면 드롭존 아이콘이 입력 포맷 순서와 다름');
+  assert(JSON.stringify(converterDropFormats) === JSON.stringify(expectedDropFormats),
+    'ux: 변환 작업면 드롭존 아이콘이 입력 포맷 순서와 다름');
+  for (const icon of ['csv.svg', 'json.svg']) {
+    assert(fs.existsSync(path.join(ROOT, 'icons', 'brand', icon)),
+      `ux: 드롭존 전용 아이콘 누락 — ${icon}`);
+  }
   // 베타 배지는 관리자 전용 — 일반 사용자 화면엔 generic 배지 제거 + 모든 .badge-beta가 hidden
   assert(await page.locator('.hero-beta-badge').count() === 0,
     'ux: 첫 화면 generic 베타 배지가 일반 사용자에게 남아 있음');
@@ -1108,7 +1121,7 @@ async function validateCommercialUx(page) {
     'ux: 관리자 모드에서 베타 배지가 표시되지 않음');
   await page.goto(`${baseUrl}?admin=0`, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => window.JSZip && window.marked && window.__appReady, null, { timeout: 30000 });
-  assert((await page.locator('#file-input').getAttribute('accept')).startsWith('.md,.markdown,.docx,.pptx,.html,.htm,.csv,.xlsx,.xls,.json,.txt,.hwp,.ipynb'),
+  assert((await page.locator('#file-input').getAttribute('accept')).startsWith('.md,.markdown,.pdf,.docx,.pptx,.xlsx,.xls,.csv,.json,.ipynb'),
     'ux: 파일 선택 accept 순서가 드롭존 입력 포맷 순서와 다름');
   const versionButtonText = (await page.locator('#open-changelog').textContent()).trim();
   assert(/^📋 v\d+\.\d+\.\d+$/.test(versionButtonText) && !versionButtonText.includes('업데이트 내역'),
@@ -1350,6 +1363,8 @@ async function validateCommercialUx(page) {
     && serviceWorker.includes("'./icons/app-icon-maskable-512.png'")
     && serviceWorker.includes("'./icons/favicon.ico'")
     && serviceWorker.includes("'./icons/apple-touch-icon.png'")
+    && serviceWorker.includes("'./icons/brand/csv.svg'")
+    && serviceWorker.includes("'./icons/brand/json.svg'")
     && serviceWorker.includes("'./js/posthog-init.js'"),
     'pwa: 설치/분석 앱 셸 파일이 오프라인 캐시에 없음');
   assert(serviceWorker.includes('isCacheableRequest')
