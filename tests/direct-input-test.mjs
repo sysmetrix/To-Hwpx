@@ -9,6 +9,7 @@ const cases = [
     [{ plainText: '<h1>제목</h1><p>본문</p>' }, 'html'],
     [{ plainText: '# 제목\n\n- 항목\n- 항목' }, 'md'],
     [{ plainText: '문법 표지가 없는 일반 문장입니다.' }, 'txt'],
+    [{ plainText: '안녕하세요, 반갑습니다.\n오늘은, 날씨가 좋습니다.' }, 'txt'],
     [{ plainText: '복사된 문장', htmlText: '<p><strong>복사된</strong> 문장</p>' }, 'html'],
 ];
 

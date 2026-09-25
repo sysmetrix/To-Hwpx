@@ -63,7 +63,8 @@ node tests/docx-real-convert.js "원본.docx" && node tests/docx-fidelity-score.
 
 관련 코드: `initInputMode()`, `renderPastePreview()`, `getPastePreviewIr()` in `js/app.js`
 
-- 직접 입력은 v4.21.0부터 정식 기능이다. MD/HTML/TXT/CSV/JSON 텍스트를 가상 `File`로 감싸 기존 `fileToIR()` 변환 파이프라인을 재사용한다. 자동 추천은 JSON → CSV/TSV → HTML → Markdown → TXT 순서의 증거 기반 판별이며, 사용자가 형식 버튼을 누르면 잠그고 `다시 감지`에서만 재개한다.
+- 직접 입력은 v4.21.0부터 정식 기능이다. MD/HTML/TXT/CSV/JSON 텍스트를 가상 `File`로 감싸 기존 `fileToIR()` 변환 파이프라인을 재사용한다. 자동 감지는 JSON → CSV/TSV → HTML → Markdown → TXT 순서의 증거 기반 판별이며 결과를 실제 입력 형식에 적용한다. 사용자가 형식 버튼을 누르면 수동 선택으로 잠그고 `자동 감지 켜기`에서만 재개한다. 쉼표 하나가 반복되는 두 줄의 일반 문장은 CSV로 오인하지 않는다.
+- TXT는 중복 기능이 아니다. Markdown·HTML·표·JSON 문법이 없는 회의 메모와 일반 문장을 빈 줄 기준 문단으로 보존하고, 원문 속 기호가 다른 문법으로 과하게 해석되는 일을 피하는 안전한 폴백이다.
 - 입력 아래 미리보기는 실제 HWPX 렌더러가 아니라 변환 전 IR 해석 결과다. `parseMd()`, `parseHtml()`, `parseTxt()`, `parseCsv()`, `parseJson()`을 직접 호출하고 `irBlocksToHtml()`로 표시한다.
 - 미리보기는 타이핑마다 즉시 무거운 변환을 돌리지 않고 짧은 debounce를 둔다. 파일 미리보기와 실제 변환이 같은 파싱 서명(파일명·크기·수정시각·문서 유형)이면 하나의 in-flight Promise와 raw IR 캐시를 공유한다. 큐/제목 정책 세대와 서명이 달라진 뒤 늦게 끝난 분석은 현재 미리보기와 캐시를 갱신하지 않는다.
 - 복사는 `원문 복사`, `미리보기 복사`, `HTML` 메뉴로 분리한다. HTML 메뉴에서는 미리보기 DOM의 정리된 HTML 조각을 `복사`하거나 간단한 독립 HTML 파일로 `다운로드`한다. 이 HTML은 HWPX 최종 XML이나 한컴 렌더링 결과가 아니다. Clipboard API가 막힌 브라우저에서는 textarea fallback을 사용한다.

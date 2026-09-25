@@ -2371,7 +2371,7 @@ let pendingRichClipboardHtml = '';
 let lastPasteDetection = null;
 
 const PASTE_FORMAT_LABEL = Object.freeze({
-    md: 'MD', html: 'HTML', txt: 'TXT', csv: 'CSV/TSV', json: 'JSON',
+    md: 'MD', html: 'HTML', txt: '일반 텍스트', csv: 'CSV/TSV', json: 'JSON',
 });
 
 /** 관리자 모드 활성 여부. URL 파라미터 또는 localStorage 저장값으로 결정. */
@@ -2820,14 +2820,16 @@ function applyPasteFormatDetection(payload, force = false) {
 
 function renderPasteFormatRecommendation() {
     const host = document.getElementById('paste-format-detection');
+    const mode = document.getElementById('paste-detection-mode');
     const message = document.getElementById('paste-format-recommendation');
     const redetect = document.getElementById('paste-redetect');
-    if (!host || !message || !redetect) return;
+    if (!host || !mode || !message || !redetect) return;
     host.querySelector('.paste-rich-actions')?.remove();
     host.classList.toggle('is-locked', pasteFormatLocked);
     host.classList.toggle('is-confident', !pasteFormatLocked && (lastPasteDetection?.confidence || 0) >= 0.7);
     redetect.hidden = !pasteFormatLocked;
     if (pendingRichClipboardHtml) {
+        mode.textContent = '붙여넣기 확인';
         message.textContent = '웹 서식이 함께 복사되었습니다. HTML 서식을 유지할지 일반 텍스트로 사용할지 선택하세요.';
         const actions = document.createElement('span');
         actions.className = 'paste-rich-actions';
@@ -2857,12 +2859,15 @@ function renderPasteFormatRecommendation() {
     }
     if (pasteFormatLocked) {
         const fmt = document.getElementById('paste-format')?.value || 'txt';
-        message.textContent = `${PASTE_FORMAT_LABEL[fmt]} 형식으로 고정했습니다.`;
+        mode.textContent = '수동 선택';
+        message.textContent = `${PASTE_FORMAT_LABEL[fmt]} 형식으로 고정했습니다. 입력 내용이 바뀌어도 유지됩니다.`;
     } else if (lastPasteDetection) {
         const pct = Math.round(lastPasteDetection.confidence * 100);
-        message.textContent = `추천 ${PASTE_FORMAT_LABEL[lastPasteDetection.format]} · 신뢰 ${pct}% — ${lastPasteDetection.evidence}`;
+        mode.textContent = '자동 적용';
+        message.textContent = `${PASTE_FORMAT_LABEL[lastPasteDetection.format]} · 신뢰 ${pct}% — ${lastPasteDetection.evidence}`;
     } else {
-        message.textContent = '내용을 붙여넣으면 형식을 추천합니다.';
+        mode.textContent = '자동 감지';
+        message.textContent = '내용을 입력하면 MD·HTML·일반 텍스트·표·JSON 중 알맞은 형식을 자동으로 적용합니다.';
     }
 }
 
@@ -3102,7 +3107,7 @@ async function saveCurrentPasteDraft() {
 const PASTE_FORMAT_HELP = {
     md:   'ChatGPT·Claude 등 AI 채팅 답변을 그대로 붙여넣으면 제목·목록·표·강조가 모두 살아납니다.',
     html: 'HTML 소스 코드를 붙여넣으세요. 웹 화면에서 복사한 일반 텍스트는 MD·TXT를 사용하세요.',
-    txt:  '입력한 텍스트와 빈 줄 기준 문단을 그대로 변환합니다.',
+    txt:  '회의 메모·일반 문장처럼 별도 문법이 없는 글을 안전하게 변환합니다. 빈 줄은 문단 구분으로 사용합니다.',
     csv:  '쉼표 CSV와 Excel·Google Sheets에서 복사한 탭 구분 표를 자동 인식합니다.',
     json: '유효한 JSON 또는 To HWPX IR 구조를 입력하세요.',
 };
@@ -5426,8 +5431,8 @@ function updateThemeToggleUI(theme) {
 function updateThemeColorMeta(theme) {
     const meta = document.getElementById('theme-color-meta');
     if (!meta) return;
-    // 라이트는 Survey 제품군과 공유하는 슬레이트 primary, 다크는 헤더 표면색에 맞춘다.
-    meta.setAttribute('content', theme === 'dark' ? '#14171b' : '#3b5a7a');
+    // 라이트는 To HWPX 전용 제이드 primary, 다크는 헤더 표면색에 맞춘다.
+    meta.setAttribute('content', theme === 'dark' ? '#121817' : '#146c63');
 }
 
 /** 토글: 현재 해석된 테마의 반대로 전환하고 명시적으로 저장 */

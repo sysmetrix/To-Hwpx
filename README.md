@@ -6,7 +6,7 @@
 
 **재해복구 미러:** https://sysmetrix.github.io/To-Hwpx/
 
-**직전 화면(v4.21.4):** https://sysmetrix.github.io/To-Hwpx/legacy/v4.21.4/
+**직전 화면(v4.21.5):** https://sysmetrix.github.io/To-Hwpx/legacy/v4.21.5/
 
 ---
 

@@ -2,21 +2,21 @@
   <!-- Android 마스크 가능 아이콘: 바깥 20%가 잘려도 문서와 화살표가 남는 안전영역 구성. -->
   <defs>
     <linearGradient id="m-bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#f7fafd"/><stop offset="1" stop-color="#dce6ef"/>
+      <stop offset="0" stop-color="#f7faf8"/><stop offset="1" stop-color="#dcebe6"/>
     </linearGradient>
     <linearGradient id="m-back" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#a9c6e3"/><stop offset="1" stop-color="#6f91b1"/>
+      <stop offset="0" stop-color="#a7d2c8"/><stop offset="1" stop-color="#5c9b8f"/>
     </linearGradient>
     <linearGradient id="m-front" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#48698d"/><stop offset="1" stop-color="#2f4863"/>
+      <stop offset="0" stop-color="#1b7b70"/><stop offset="1" stop-color="#0f514b"/>
     </linearGradient>
     <linearGradient id="m-fold" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#b6f0ff"/><stop offset="1" stop-color="#3e9bea"/>
+      <stop offset="0" stop-color="#f6c5a9"/><stop offset="1" stop-color="#d36b32"/>
     </linearGradient>
   </defs>
   <rect width="512" height="512" fill="url(#m-bg)"/>
   <path d="M108 164h164l54 54v188H108z" fill="url(#m-back)"/>
-  <path d="M136 136h170l54 54v202H136z" fill="#94b6d6"/>
+  <path d="M136 136h170l54 54v202H136z" fill="#69a99d"/>
   <path d="M166 106h174l58 58v238H166z" fill="url(#m-front)"/>
   <path d="M340 106v66h66" fill="url(#m-fold)"/>
   <path d="M210 240h84v-36l70 52-70 52v-36h-84z" fill="#fff"/>

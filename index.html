@@ -103,7 +103,7 @@
     <!-- PWA 웹 앱 매니페스트 (홈 화면 추가, 앱 이름/아이콘 정의) -->
     <link rel="manifest" href="manifest.json">
     <!-- [주의] id="theme-color-meta"는 app.js가 다크/라이트에 맞춰 색을 갱신함 -->
-    <meta name="theme-color" content="#3b5a7a" id="theme-color-meta">
+    <meta name="theme-color" content="#146c63" id="theme-color-meta">
 
     <!-- 핵심 변환 라이브러리는 버전과 라이선스를 js/vendor에 고정한다. -->
 
@@ -188,7 +188,7 @@
                     </li>
                     <li>
                         <!-- [주의] id="open-changelog"는 app.js에서 관리자 모드일 때 업데이트 내역 모달을 여는 연결값 -->
-                        <button class="util-changelog-btn" id="open-changelog" aria-label="버전 정보">📋 v4.21.5</button>
+                        <button class="util-changelog-btn" id="open-changelog" aria-label="버전 정보">📋 v4.21.6</button>
                     </li>
                 </ul>
             </nav>
@@ -361,7 +361,7 @@
                         <div class="paste-format-buttons" role="group" aria-label="직접 입력 내용의 형식">
                             <button type="button" class="paste-format-btn is-active" data-paste-format="md">MD</button>
                             <button type="button" class="paste-format-btn" data-paste-format="html">HTML</button>
-                            <button type="button" class="paste-format-btn" data-paste-format="txt">TXT</button>
+                            <button type="button" class="paste-format-btn" data-paste-format="txt">일반 텍스트</button>
                             <button type="button" class="paste-format-btn" data-paste-format="csv">CSV/TSV</button>
                             <button type="button" class="paste-format-btn" data-paste-format="json">JSON</button>
                         </div>
@@ -373,8 +373,9 @@
                             <option value="json">JSON (.json)</option>
                         </select>
                         <div class="paste-format-detection" id="paste-format-detection" role="status" aria-live="polite">
-                            <span id="paste-format-recommendation">내용을 붙여넣으면 형식을 추천합니다.</span>
-                            <button type="button" id="paste-redetect" hidden>다시 감지</button>
+                            <strong class="paste-detection-mode" id="paste-detection-mode">자동 감지</strong>
+                            <span id="paste-format-recommendation">내용을 입력하면 알맞은 형식을 자동으로 적용합니다.</span>
+                            <button type="button" id="paste-redetect" hidden>자동 감지 켜기</button>
                         </div>
                         <p id="paste-format-help" class="paste-format-help" aria-live="polite"></p>
                     </div>
@@ -559,6 +560,7 @@
                 <details class="advanced-settings">
                     <summary>
                         <span class="adv-summary-text">문서 세부 설정 <small>상단 제목 블록 · 구분선 · 여백 · 진단</small></span>
+                        <span class="adv-summary-guide"><b>선택 사항</b><small>처음이라면 기본값 그대로</small></span>
                         <span class="adv-summary-chevron" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
                     </summary>
                     <div class="advanced-settings-body">
@@ -1280,7 +1282,7 @@
                 <p>여러 문서를 브라우저 안에서 한글(HWPX)로 변환합니다.</p>
             </div>
             <nav class="footer-nav" aria-label="하단 메뉴">
-                <a href="https://sysmetrix.github.io/To-Hwpx/legacy/v4.21.4/" target="_blank" rel="noopener">이전 버전 v4.21.4</a>
+                <a href="https://sysmetrix.github.io/To-Hwpx/legacy/v4.21.5/" target="_blank" rel="noopener">이전 버전 v4.21.5</a>
                 <!-- 헤더를 단순화하고 필요 시 찾는 지원·설치 정보는 하단에서 제공한다. -->
                 <button type="button" id="open-env-guide">지원 환경·설치</button>
                 <a href="https://md-to-hwpx.vercel.app/" target="_blank" rel="noopener">MD→HWPX</a>
@@ -1294,7 +1296,6 @@
         <!-- 하단 저작권 -->
         <div class="footer-bottom">
             <span>© 2026 To HWPX. MIT License. <strong>By Sysmetrix</strong></span>
-            <span>파일은 서버에 저장되지 않습니다.</span>
         </div>
     </div><!-- /.container -->
 </footer>

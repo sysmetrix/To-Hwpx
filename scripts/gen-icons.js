@@ -54,11 +54,11 @@ async function main() {
             faviconImages.push({ size, bytes });
         }
         writeIco(faviconImages, 'favicon.ico');
-        await renderSvg(browser, svg, 180, 'apple-touch-icon.png', { background: '#f7f8fa' });
+        await renderSvg(browser, svg, 180, 'apple-touch-icon.png', { background: '#f7f8f5' });
         for (const size of [192, 512]) {
             await renderSvg(browser, svg, size, `app-icon-${size}.png`);
         }
-        await renderSvg(browser, maskableSvg, 512, 'app-icon-maskable-512.png', { background: '#dce6ef' });
+        await renderSvg(browser, maskableSvg, 512, 'app-icon-maskable-512.png', { background: '#dcebe6' });
     } finally {
         await browser.close();
     }

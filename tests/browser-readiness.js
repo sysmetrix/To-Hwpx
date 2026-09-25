@@ -73,14 +73,18 @@ async function accessibility(baseUrl) {
     try {
         const targets = [
             { url: baseUrl, viewport: { width: 1280, height: 900 }, label: 'index-desktop' },
+            { url: baseUrl, viewport: { width: 1280, height: 900 }, label: 'index-dark', theme: 'dark' },
             { url: baseUrl, viewport: { width: 390, height: 844 }, label: 'index-mobile' },
             { url: new URL('privacy.html', baseUrl).href, viewport: { width: 1280, height: 900 }, label: 'privacy' },
             { url: new URL('terms.html', baseUrl).href, viewport: { width: 1280, height: 900 }, label: 'terms' },
             { url: new URL('notices.html', baseUrl).href, viewport: { width: 1280, height: 900 }, label: 'notices' },
         ];
-        for (const { url, viewport, label } of targets) {
+        for (const { url, viewport, label, theme } of targets) {
             const context = await browser.newContext({ viewport });
-            await context.addInitScript(() => localStorage.setItem('tohwpx_analytics_consent', 'denied'));
+            await context.addInitScript(selectedTheme => {
+                localStorage.setItem('tohwpx_analytics_consent', 'denied');
+                if (selectedTheme) localStorage.setItem('tohwpx_theme', selectedTheme);
+            }, theme);
             const page = await context.newPage();
             await page.goto(url, { waitUntil: 'domcontentloaded' });
             if (label.startsWith('index')) await page.waitForFunction(() => window.__appReady);

@@ -733,20 +733,26 @@ async function validateDirectInput(page) {
   assert(await page.locator('.paste-notice--quality').isVisible(),
     'direct commercial: 로컬 처리·미리보기 한계 안내가 보이지 않음');
 
-  // 내용 기반 자동 추천 → 사용자가 형식을 고르면 잠금 → 다시 감지로 복귀.
+  // 내용 기반 자동 적용 → 사용자가 형식을 고르면 잠금 → 자동 감지 켜기로 복귀.
+  assert((await page.locator('#paste-detection-mode').textContent()).includes('자동 감지')
+    && (await page.locator('#paste-format-recommendation').textContent()).includes('자동으로 적용'),
+  'direct detect: 빈 편집기에서 자동 감지 동작이 명확히 안내되지 않음');
   await page.locator('#paste-input').fill('{"제목":"자동 감지","값":1}');
   await page.waitForFunction(() => document.querySelector('#paste-format')?.value === 'json');
-  assert((await page.locator('#paste-format-recommendation').textContent()).includes('추천 JSON'),
-    'direct detect: 유효한 JSON을 JSON으로 추천하지 않음');
+  assert((await page.locator('#paste-detection-mode').textContent()).includes('자동 적용')
+    && (await page.locator('#paste-format-recommendation').textContent()).includes('JSON'),
+  'direct detect: 유효한 JSON을 JSON으로 자동 적용하지 않음');
   await page.locator('.paste-format-btn[data-paste-format="md"]').click();
-  assert(await page.locator('#paste-redetect').isVisible(),
-    'direct detect: 사용자가 고른 형식이 잠기거나 다시 감지 버튼이 나타나지 않음');
+  assert(await page.locator('#paste-redetect').isVisible()
+    && (await page.locator('#paste-detection-mode').textContent()).includes('수동 선택')
+    && (await page.locator('#paste-redetect').textContent()).includes('자동 감지 켜기'),
+  'direct detect: 사용자가 고른 형식이 잠기거나 자동 감지 복귀 행동이 나타나지 않음');
   await page.locator('#paste-input').fill('{"제목":"잠금 유지","값":2}');
   assert(await page.locator('#paste-format').inputValue() === 'md',
     'direct detect: 사용자 형식 잠금을 자동 감지가 덮어씀');
   await page.locator('#paste-redetect').click();
   assert(await page.locator('#paste-format').inputValue() === 'json',
-    'direct detect: 다시 감지가 JSON 추천을 적용하지 않음');
+    'direct detect: 자동 감지 재개가 JSON 형식을 적용하지 않음');
 
   // 오류 위치 진단과 변환 차단.
   await page.locator('#paste-input').fill('{\n  "값": 1,\n}');
@@ -1203,6 +1209,22 @@ async function validateCommercialUx(page) {
   assert(pasteEmphasis.classed && pasteEmphasis.background !== pasteEmphasis.peerBackground
     && pasteEmphasis.color === 'rgb(255, 255, 255)',
   'ux: 자주 쓰는 직접 입력이 실제 렌더에서 메인색 핵심 행동으로 강조되지 않음');
+  const brandPalette = await page.evaluate(() => {
+    const root = getComputedStyle(document.documentElement);
+    return {
+      primary: root.getPropertyValue('--c-primary').trim().toLowerCase(),
+      accent: root.getPropertyValue('--c-accent').trim().toLowerCase(),
+      background: root.getPropertyValue('--c-bg').trim().toLowerCase(),
+      theme: document.querySelector('meta[name="theme-color"]')?.content.toLowerCase(),
+      footerAlign: getComputedStyle(document.querySelector('.footer-bottom')).justifyContent,
+    };
+  });
+  assert(brandPalette.primary === '#146c63'
+    && brandPalette.accent === '#d36b32'
+    && brandPalette.background === '#f7f8f5'
+    && brandPalette.theme === '#146c63',
+  `ux brand: 제이드+귤 전용 팔레트가 일관되지 않음 (${JSON.stringify(brandPalette)})`);
+  assert(brandPalette.footerAlign === 'center', 'ux footer: 저작권 문구가 중앙 정렬되지 않음');
   const darkPasteContrast = await page.locator('#start-paste').evaluate(button => {
     const root = document.documentElement;
     const previousTheme = root.dataset.theme;
@@ -1228,7 +1250,9 @@ async function validateCommercialUx(page) {
   assert(await page.locator('#recent-start').count() === 0,
     'ux: 최근 작업이 첫 화면 아래에 자동 누적되는 구형 패널이 남아 있음');
   const compactFooterText = await page.locator('.site-footer').textContent();
-  assert(compactFooterText.includes('MIT License. By Sysmetrix') && !compactFooterText.includes('기술 스택:'),
+  assert(compactFooterText.includes('MIT License. By Sysmetrix')
+    && !compactFooterText.includes('기술 스택:')
+    && !compactFooterText.includes('파일은 서버에 저장되지 않습니다.'),
     'ux: 컴팩트 푸터의 제작자 표기 또는 정보 정리가 반영되지 않음');
   const envGuideModal = page.locator('#env-guide-modal');
   assert(!(await envGuideModal.isVisible()), 'ux: 지원 환경 모달이 열기 전부터 보임');
@@ -1387,6 +1411,9 @@ async function validateCommercialUx(page) {
   const manifest = JSON.parse(fs.readFileSync(path.join(ROOT, 'manifest.json'), 'utf8'));
   assert(manifest.id === './' && manifest.start_url === './' && manifest.scope === './',
     'pwa: 하위 경로용 id/start_url/scope 불일치');
+  assert(manifest.theme_color.toLowerCase() === '#146c63'
+    && manifest.background_color.toLowerCase() === '#f7f8f5',
+  'pwa: 제이드 브랜드색과 앱 배경색이 manifest에 반영되지 않음');
   assert(manifest.icons.some(icon => icon.src === 'icons/app-icon-192.png' && icon.type === 'image/png')
     && manifest.icons.some(icon => icon.src === 'icons/app-icon-512.png' && icon.type === 'image/png'),
     'pwa: PNG 설치 아이콘이 manifest에 없음');
@@ -1410,6 +1437,11 @@ async function validateCommercialUx(page) {
     && serviceWorker.includes("url.hash = ''"),
     'pwa: 서비스 워커가 명시 허용 URL만 런타임 캐시하도록 제한되지 않음');
   const indexHtml = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  for (const svgName of ['logo-mark.svg', 'app-icon.svg', 'app-icon-maskable.svg']) {
+    const svg = fs.readFileSync(path.join(ROOT, 'icons', svgName), 'utf8').toLowerCase();
+    assert(svg.includes('#0f514b') && svg.includes('#d36b32') && !svg.includes('#48698d'),
+      `brand icon: ${svgName}이 제이드+귤 팔레트로 갱신되지 않음`);
+  }
   for (const [file, expected] of [
     ['favicon-16.png', 16], ['favicon-32.png', 32], ['favicon-48.png', 48],
     ['apple-touch-icon.png', 180], ['app-icon-maskable-512.png', 512],
@@ -1825,6 +1857,14 @@ async function validateDetailSettingsUx(page) {
     && shapeSummary.whiteSpace === 'nowrap'
     && shapeSummary.scrollWidth <= shapeSummary.clientWidth + 1,
     'detail settings: 문서 기본 설정 현재값 요약이 한 줄에서 잘림');
+  const optionalDetailGuide = await page.locator('.advanced-settings').evaluate(details => ({
+    open: details.open,
+    text: details.querySelector('.adv-summary-guide')?.textContent.replace(/\s+/g, ' ').trim() || '',
+  }));
+  assert(!optionalDetailGuide.open
+    && optionalDetailGuide.text.includes('선택 사항')
+    && optionalDetailGuide.text.includes('처음이라면 기본값 그대로'),
+  'detail settings: 초보자용 선택 사항·기본값 안내가 접힌 상태에서 보이지 않음');
   const basicControlLayout = await page.evaluate(() => {
     const grid = document.querySelector('.document-shape-grid');
     const ids = [...grid.querySelectorAll('#font-size, #line-spacing, #paper-size, [data-orient="portrait"], #auto-download')]
