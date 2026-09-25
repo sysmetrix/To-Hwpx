@@ -68,6 +68,9 @@ function startServer() {
       }
       const logoReady = await page.locator('.site-logo-mark').evaluate(image => image.complete && image.naturalWidth > 0);
       if (!logoReady) throw new Error(`${width}: benchmark logo did not load`);
+      const footer = await page.locator('.site-footer').boundingBox();
+      if (!footer || (width >= 1024 && footer.height > 190)) throw new Error(`${width}: compact footer is too tall`);
+      if (await page.locator('#main-nav #open-env-guide').count()) throw new Error(`${width}: support environment still occupies header navigation`);
       if (width === 1280 || width === 1147 || width === 390) {
         await page.screenshot({ path: path.join(os.tmpdir(), `to-hwpx-workspace-${width}x${height}.png`), fullPage: true });
       }
@@ -113,8 +116,12 @@ function startServer() {
     await page.locator('.site-logo').click();
     await page.locator('#start-history').click();
     await page.locator('#history-list article').waitFor();
+    if ((await page.locator('.history-new-button').textContent()).trim() !== '＋새 문서 변환') throw new Error('history primary new-document action missing');
+    if ((await page.locator('#history-list article button').textContent()).trim() !== '설정 재사용') throw new Error('history reuse action is unclear');
+    await page.screenshot({ path: path.join(os.tmpdir(), 'to-hwpx-history-1280x900.png'), fullPage: true });
     await page.locator('#history-list article button').click();
     await page.waitForFunction(() => location.hash === '#/start');
+    if (await page.locator('#recent-start').count()) throw new Error('recent history is appended below the main hero');
     await context.close();
     console.log('PASS WORKSPACE routes · benchmark responsive brand · guide intro · metadata-only history');
   } finally {

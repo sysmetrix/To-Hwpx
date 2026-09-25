@@ -90,7 +90,6 @@ function renderRoute() {
         else button.removeAttribute('aria-current');
     });
     if (route === 'history') renderHistory();
-    if (route === 'start') renderRecentStart();
     if (route === 'guide' && previousRoute !== 'guide') openGuideIntroduction();
     requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: 'instant' }));
 }
@@ -99,27 +98,6 @@ export function goWorkspace(route) {
     const next = validRoute(ROUTES.has(route) ? route : 'start');
     if (location.hash === `#/${next}`) renderRoute();
     else location.hash = `#/${next}`;
-}
-
-async function renderRecentStart() {
-    const host = document.getElementById('recent-start-list');
-    const section = document.getElementById('recent-start');
-    if (!host || !section) return;
-    const runs = historyEnabled() ? (await listRuns()).slice(0, 2) : [];
-    section.hidden = !runs.length;
-    host.replaceChildren();
-    for (const run of runs) {
-        const item = document.createElement('article');
-        item.className = 'recent-start-item';
-        const copy = document.createElement('div');
-        const title = document.createElement('strong');
-        title.textContent = run.files.map(file => file.name).slice(0, 2).join(' · ') || '이전 변환';
-        const meta = document.createElement('span');
-        meta.textContent = `${formatWhen(run.completedAt)} · 성공 ${run.summary.ok} · 경고 ${run.summary.warn} · 실패 ${run.summary.error}`;
-        copy.append(title, meta);
-        item.append(copy, makeButton('설정 다시 쓰기', () => restoreOptions(run.options)));
-        host.append(item);
-    }
 }
 
 function restoreOptions(options, source = 'history') {
@@ -153,7 +131,7 @@ async function renderHistory() {
             head.append(title, time);
             const meta = document.createElement('p');
             meta.textContent = `파일 ${run.summary.total}개 · 성공 ${run.summary.ok} · 경고 ${run.summary.warn} · 실패 ${run.summary.error} · 출력 ${formatBytes(run.summary.outputBytes)}`;
-            item.append(head, meta, makeButton('이 설정으로 새 변환', () => restoreOptions(run.options)));
+            item.append(head, meta, makeButton('설정 재사용', () => restoreOptions(run.options), 'history-reuse-button'));
             historyHost.append(item);
         }
     }

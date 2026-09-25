@@ -24,7 +24,7 @@
   [수정 가이드]
     포맷 카드 추가 → .format-grid 안에 .format-card 항목 추가
     내비게이션 링크 → .main-nav ul 안에 <li><a> 추가
-    푸터 링크 → .footer-links ul 안에 추가
+    푸터 링크 → .footer-nav 안에 추가
 
   [비개발자 수정 규칙]
     화면 문구만 바꿀 때는 태그 안의 글자만 수정하세요.
@@ -168,13 +168,6 @@
                         </button>
                     </li>
                     <li>
-                        <!-- [주의] id="open-env-guide"는 app.js에서 지원 환경 통합 모달을 여는 연결값 -->
-                        <button class="nav-shortcut-btn" id="open-env-guide" aria-label="지원 환경 안내 열기" title="PC/모바일 브라우저 지원·설치·로컬 처리 안내">
-                            <span class="nav-btn-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg></span>
-                            지원 환경
-                        </button>
-                    </li>
-                    <li>
                         <button class="nav-shortcut-btn" id="open-help" aria-label="도움말 열기" title="도움말 보기 (Shift + /)">
                             <span class="nav-btn-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><circle cx="12" cy="17" r=".5" fill="currentColor"/></svg></span>
                             도움말
@@ -195,7 +188,7 @@
                     </li>
                     <li>
                         <!-- [주의] id="open-changelog"는 app.js에서 관리자 모드일 때 업데이트 내역 모달을 여는 연결값 -->
-                        <button class="util-changelog-btn" id="open-changelog" aria-label="버전 정보">📋 v4.21.4</button>
+                        <button class="util-changelog-btn" id="open-changelog" aria-label="버전 정보">📋 v4.21.5</button>
                     </li>
                 </ul>
             </nav>
@@ -273,8 +266,8 @@
                     <span class="drop-trust-text">파일은 <b>브라우저 안에서만</b> 변환됩니다. 서버에 업로드되지 않습니다.</span>
                 </p>
                 <div class="start-secondary-actions" aria-label="다른 시작 방법">
-                    <button type="button" class="start-action" id="start-paste">
-                        <strong>직접 입력</strong><span>AI 답변·Markdown·표 붙여넣기</span>
+                    <button type="button" class="start-action start-action--primary" id="start-paste">
+                        <strong>직접 입력 <span class="start-action-badge">자주 사용</span></strong><span>AI 답변·Markdown·표 붙여넣기</span>
                     </button>
                     <button type="button" class="start-action" id="start-samples">
                         <strong>샘플 체험</strong><span>내 파일 없이 흐름 확인</span>
@@ -296,10 +289,6 @@
                 <button type="button" data-sample-path="samples/sample.xlsx" data-sample-name="엑셀-예시.xlsx"><b>XLSX</b><strong>데이터 표</strong><span>시트·행·열 변환</span></button>
                 <button type="button" data-sample-path="samples/sample.pdf" data-sample-name="PDF-예시.pdf"><b>PDF</b><strong>좌표 기반 문서</strong><span>구조 추론 근거 확인</span></button>
             </div>
-        </section>
-        <section id="recent-start" class="recent-start" aria-labelledby="recent-start-title" hidden>
-            <div class="recent-start-head"><h2 id="recent-start-title">최근 작업</h2><button type="button" data-workspace-route="history">전체 보기</button></div>
-            <div id="recent-start-list"></div>
         </section>
         <!-- 숨겨진 파일 인풋 (드롭존 클릭 시 트리거됨) -->
         <!-- [포맷 추가 시] accept에 새 확장자를 추가해야 파일 선택창에서 보입니다. -->
@@ -876,7 +865,7 @@
     <div class="container">
         <div class="workspace-page-head">
             <div><span class="eyebrow">이 브라우저에만 저장</span><h1 id="workspace-history-title">최근 작업과 설정 프리셋</h1></div>
-            <button type="button" class="btn sm ghost" data-workspace-route="start">새 변환</button>
+            <button type="button" class="history-new-button" data-workspace-route="start"><span aria-hidden="true">＋</span>새 문서 변환</button>
         </div>
         <div class="history-privacy"><strong>문서 내용은 저장하지 않습니다.</strong><span>파일명·형식·크기·결과 요약·설정만 보관합니다. 파일은 다시 선택해야 합니다.</span></div>
         <div class="history-layout">
@@ -1285,51 +1274,27 @@
      ════════════════════════════════════════════════════════════════ -->
 <footer class="site-footer">
     <div class="container">
-        <div class="footer-inner anim-target">
-
-            <!-- 브랜드 소개 -->
-            <div class="footer-brand">
+        <div class="footer-compact anim-target">
+            <div class="footer-brand-inline">
                 <span class="footer-logo">To HWPX</span>
-                <p>
-                    다양한 문서 포맷을 한글(HWPX)로 변환합니다.<br>
-                    오픈소스 브라우저 기반 도구입니다.
-                </p>
+                <p>여러 문서를 브라우저 안에서 한글(HWPX)로 변환합니다.</p>
             </div>
-
-            <!-- 관련 서비스 링크 -->
-            <!-- [링크 수정 가능] href 주소와 글자만 수정. <a> 닫힘 태그를 유지하세요. -->
-            <div class="footer-links">
-                <h4>관련 서비스</h4>
-                <ul>
-                    <li><a href="https://sysmetrix.github.io/To-Hwpx/legacy/v4.21.3/" target="_blank" rel="noopener">이전 버전(v4.21.3)</a><small class="footer-link-note">새 화면에 문제가 있을 때 사용</small></li>
-                    <li><a href="https://md-to-hwpx.vercel.app/" target="_blank" rel="noopener">MD→HWPX 변환기</a></li>
-                    <li><a href="https://md-to-html-seven.vercel.app/" target="_blank" rel="noopener">MD→HTML 변환기</a></li>
-                    <li><a href="https://www.hancom.com/support/downloadCenter/download" target="_blank" rel="noopener">한컴 HWPX 변환기</a></li>
-                </ul>
-            </div>
-
-            <!-- 외부 링크 -->
-            <!-- [링크 수정 가능] 관련 링크를 추가하려면 <li><a ...>...</a></li> 형태를 복사하세요. -->
-            <div class="footer-links">
-                <h4>관련 링크</h4>
-                <ul>
-                    <li><a href="privacy.html">개인정보처리방침</a></li>
-                    <li><a href="terms.html">이용약관</a></li>
-                    <li><a href="notices.html">오픈소스·글꼴 고지</a></li>
-                </ul>
-            </div>
-
-        </div><!-- /.footer-inner -->
+            <nav class="footer-nav" aria-label="하단 메뉴">
+                <a href="https://sysmetrix.github.io/To-Hwpx/legacy/v4.21.4/" target="_blank" rel="noopener">이전 버전 v4.21.4</a>
+                <!-- 헤더를 단순화하고 필요 시 찾는 지원·설치 정보는 하단에서 제공한다. -->
+                <button type="button" id="open-env-guide">지원 환경·설치</button>
+                <a href="https://md-to-hwpx.vercel.app/" target="_blank" rel="noopener">MD→HWPX</a>
+                <a href="https://md-to-html-seven.vercel.app/" target="_blank" rel="noopener">MD→HTML</a>
+                <a href="privacy.html">개인정보처리방침</a>
+                <a href="terms.html">이용약관</a>
+                <a href="notices.html">오픈소스·글꼴 고지</a>
+            </nav>
+        </div>
 
         <!-- 하단 저작권 -->
         <div class="footer-bottom">
-            <span>© 2026 To HWPX. MIT License.</span>
-            <span>
-                기술 스택:
-                <a href="https://stuk.github.io/jszip/" target="_blank" rel="noopener">JSZip</a> ·
-                <a href="https://marked.js.org/" target="_blank" rel="noopener">marked.js</a> ·
-                <a href="https://sheetjs.com/" target="_blank" rel="noopener">SheetJS</a>
-            </span>
+            <span>© 2026 To HWPX. MIT License. <strong>By Sysmetrix</strong></span>
+            <span>파일은 서버에 저장되지 않습니다.</span>
         </div>
     </div><!-- /.container -->
 </footer>
