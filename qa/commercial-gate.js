@@ -20,6 +20,7 @@ for (const file of [
     'js/direct-input.js', 'tests/direct-input-test.mjs', 'qa/direct-input-visual.js',
     'icons/favicon-16.png', 'icons/favicon-32.png', 'icons/favicon-48.png', 'icons/favicon.ico',
     'icons/apple-touch-icon.png', 'icons/app-icon-maskable.svg', 'icons/app-icon-maskable-512.png',
+    'icons/brand/csv.svg', 'icons/brand/json.svg',
     'qa/impact-graph.json', 'qa/impact-gate.js', 'qa/docx-fidelity-harness.js',
     'qa/hwp-export-pdf.ps1', 'qa/render-pdf-contact-sheets.py',
 ]) mustExist(file);

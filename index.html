@@ -195,7 +195,7 @@
                     </li>
                     <li>
                         <!-- [주의] id="open-changelog"는 app.js에서 관리자 모드일 때 업데이트 내역 모달을 여는 연결값 -->
-                        <button class="util-changelog-btn" id="open-changelog" aria-label="버전 정보">📋 v4.21.2</button>
+                        <button class="util-changelog-btn" id="open-changelog" aria-label="버전 정보">📋 v4.21.3</button>
                     </li>
                 </ul>
             </nav>
@@ -254,14 +254,17 @@
                     <div class="drop-title">파일을 끌어다 놓거나 눌러서 선택하세요</div>
                     <div class="drop-fmt-icons" aria-hidden="true">
                         <img src="icons/brand/markdown.svg" alt="MD">
+                        <img src="icons/brand/adobeacrobatreader.svg" alt="PDF">
                         <img src="icons/brand/microsoftword.svg" alt="DOCX">
-                        <img src="icons/brand/html5.svg" alt="HTML">
+                        <img src="icons/brand/microsoftpowerpoint.svg" alt="PPTX">
                         <img src="icons/brand/microsoftexcel.svg" alt="XLSX">
+                        <img src="icons/brand/csv.svg" alt="CSV">
+                        <img src="icons/brand/json.svg" alt="JSON">
                         <img src="icons/brand/jupyter.svg" alt="IPYNB">
                     </div>
                     <!-- [AGENTS.md UI 불변식] 입력과 출력을 분리해 적는다. HWPX를 입력 포맷처럼 쓰지 않는다. -->
                     <div class="drop-sub">
-                        <span class="drop-io"><b>입력</b> PDF · MD · HTML · DOCX · PPTX · CSV · XLSX · JSON · TXT · IPYNB · HWP</span>
+                        <span class="drop-io"><b>입력</b> MD · PDF · DOCX · PPTX · XLSX · CSV · JSON · IPYNB</span>
                         <span class="drop-io"><b>출력</b> HWPX <span class="drop-io-aux">(HWP · PDF로도 저장 가능)</span></span>
                     </div>
                 </div>
@@ -302,7 +305,7 @@
         <!-- [포맷 추가 시] accept에 새 확장자를 추가해야 파일 선택창에서 보입니다. -->
         <!-- multiple: 여러 파일을 한 번에 선택해 배치 변환 -->
         <input type="file" id="file-input" hidden multiple
-               accept=".md,.markdown,.docx,.pptx,.html,.htm,.csv,.xlsx,.xls,.json,.txt,.hwp,.ipynb,.hwpx,.pdf">
+               accept=".md,.markdown,.pdf,.docx,.pptx,.xlsx,.xls,.csv,.json,.ipynb,.html,.htm,.txt,.hwp,.hwpx">
     </div>
 </section>
 
@@ -335,9 +338,12 @@
                             <svg class="cda-upload-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                             <div class="cda-fmt-icons">
                                 <img src="icons/brand/markdown.svg" alt="MD">
+                                <img src="icons/brand/adobeacrobatreader.svg" alt="PDF">
                                 <img src="icons/brand/microsoftword.svg" alt="DOCX">
-                                <img src="icons/brand/html5.svg" alt="HTML">
+                                <img src="icons/brand/microsoftpowerpoint.svg" alt="PPTX">
                                 <img src="icons/brand/microsoftexcel.svg" alt="XLSX">
+                                <img src="icons/brand/csv.svg" alt="CSV">
+                                <img src="icons/brand/json.svg" alt="JSON">
                                 <img src="icons/brand/jupyter.svg" alt="IPYNB">
                             </div>
                         </div>
@@ -1295,7 +1301,7 @@
             <div class="footer-links">
                 <h4>관련 서비스</h4>
                 <ul>
-                    <li><a href="https://sysmetrix.github.io/To-Hwpx/legacy/v4.21.1/" target="_blank" rel="noopener">이전 버전(v4.21.1)</a><small class="footer-link-note">새 화면에 문제가 있을 때 사용</small></li>
+                    <li><a href="https://sysmetrix.github.io/To-Hwpx/legacy/v4.21.2/" target="_blank" rel="noopener">이전 버전(v4.21.2)</a><small class="footer-link-note">새 화면에 문제가 있을 때 사용</small></li>
                     <li><a href="https://md-to-hwpx.vercel.app/" target="_blank" rel="noopener">MD→HWPX 변환기</a></li>
                     <li><a href="https://md-to-html-seven.vercel.app/" target="_blank" rel="noopener">MD→HTML 변환기</a></li>
                     <li><a href="https://www.hancom.com/support/downloadCenter/download" target="_blank" rel="noopener">한컴 HWPX 변환기</a></li>

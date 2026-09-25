@@ -6,7 +6,7 @@ const crypto = require('crypto');
 const primary = process.argv[2] || 'https://to-hwpx.vercel.app/';
 const mirror = process.argv[3] || 'https://sysmetrix.github.io/To-Hwpx/';
 const expectedVersion = JSON.parse(fs.readFileSync('package.json', 'utf8')).version;
-const legacyVersion = '4.21.1';
+const legacyVersion = '4.21.2';
 const vendorIntegrity = JSON.parse(fs.readFileSync('qa/vendor-integrity.json', 'utf8'));
 const vendorDirectoryProbes = Object.freeze({
     'js/vendor/pdfjs-6.3.289/cmaps/': Object.freeze([
@@ -39,7 +39,7 @@ async function checkSite(base, { headers = false, legacyNoticeRedirect = false }
         'js/core/runtime.js', 'js/docx-audit.js', 'js/gov-doc.js', 'js/xlsx-worker.js',
         'js/workspace.js', 'js/workspace-history.js', 'samples/sample.md', 'icons/logo-mark.svg',
         'icons/favicon.ico', 'icons/favicon-32.png', 'icons/apple-touch-icon.png',
-        'icons/app-icon-maskable-512.png',
+        'icons/app-icon-maskable-512.png', 'icons/brand/csv.svg', 'icons/brand/json.svg',
     ]) {
         const asset = await get(new URL(path, base));
         if (!asset.ok) throw new Error(`${base}${path} HTTP ${asset.status}`);

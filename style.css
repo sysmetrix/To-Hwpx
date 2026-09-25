@@ -768,6 +768,7 @@ a:hover { text-decoration: underline; }
 .drop-zone.drag-over .drop-icon { opacity: 1; }
 .drop-fmt-icons {
     display: flex;
+    flex-wrap: wrap;
     gap: 9px;
     justify-content: center;
     align-items: center;
@@ -787,6 +788,9 @@ a:hover { text-decoration: underline; }
 .drop-zone:hover .drop-fmt-icons img:nth-child(3) { transition-delay: 80ms; }
 .drop-zone:hover .drop-fmt-icons img:nth-child(4) { transition-delay: 120ms; }
 .drop-zone:hover .drop-fmt-icons img:nth-child(5) { transition-delay: 160ms; }
+.drop-zone:hover .drop-fmt-icons img:nth-child(6) { transition-delay: 200ms; }
+.drop-zone:hover .drop-fmt-icons img:nth-child(7) { transition-delay: 240ms; }
+.drop-zone:hover .drop-fmt-icons img:nth-child(8) { transition-delay: 280ms; }
 .drop-zone .drop-title   { font-size: 1.15rem; font-weight: 700; margin-bottom: 6px; color: var(--c-text); }
 .drop-zone .drop-sub {
     display: inline-flex;
