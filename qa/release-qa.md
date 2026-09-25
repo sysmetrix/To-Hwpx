@@ -990,7 +990,7 @@ v4.12.1 출시 승인 판정:
 - [x] HTML이 SVG 우선과 PNG/ICO 폴백 및 Apple Touch 아이콘을 크기와 함께 선언
 - [x] manifest에서 일반 아이콘은 `any`, 전용 512px 아이콘은 `maskable`로 분리
 - [x] golden이 PNG 시그니처·실제 픽셀 크기, ICO 엔트리 수, HTML/manifest/SW 연결을 검증
-- [ ] `npm run test:release`와 `npm run test:browsers` 통과
+- [x] `npm run test:release`와 `npm run test:browsers` 통과
 
 수동 확인 기준:
 
