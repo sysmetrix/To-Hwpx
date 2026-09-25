@@ -188,7 +188,7 @@
                     </li>
                     <li>
                         <!-- [주의] id="open-changelog"는 app.js에서 관리자 모드일 때 업데이트 내역 모달을 여는 연결값 -->
-                        <button class="util-changelog-btn" id="open-changelog" aria-label="버전 정보">📋 v4.21.6</button>
+                        <button class="util-changelog-btn" id="open-changelog" aria-label="버전 정보">📋 v4.21.7</button>
                     </li>
                 </ul>
             </nav>
@@ -416,6 +416,10 @@
                                 <span id="paste-preview-status" aria-live="polite">입력하면 해석 결과가 표시됩니다.</span>
                             </div>
                             <div class="paste-preview-actions">
+                                <label class="paste-scroll-sync" title="입력과 미리보기를 같은 문서 진행 위치로 함께 움직입니다.">
+                                    <input type="checkbox" id="paste-scroll-sync" checked>
+                                    <span>스크롤 연동</span>
+                                </label>
                                 <button type="button" class="paste-copy-btn" id="refresh-paste-preview" hidden>미리보기 갱신</button>
                                 <button type="button" class="paste-copy-btn" id="copy-paste-source">원문 복사</button>
                                 <button type="button" class="paste-copy-btn paste-copy-btn--primary" id="copy-paste-preview" title="미리보기 내용을 클립보드에 복사">미리보기 복사</button>
@@ -1282,7 +1286,7 @@
                 <p>여러 문서를 브라우저 안에서 한글(HWPX)로 변환합니다.</p>
             </div>
             <nav class="footer-nav" aria-label="하단 메뉴">
-                <a href="https://sysmetrix.github.io/To-Hwpx/legacy/v4.21.5/" target="_blank" rel="noopener">이전 버전 v4.21.5</a>
+                <a href="https://sysmetrix.github.io/To-Hwpx/legacy/v4.21.6/" target="_blank" rel="noopener">이전 버전 v4.21.6</a>
                 <!-- 헤더를 단순화하고 필요 시 찾는 지원·설치 정보는 하단에서 제공한다. -->
                 <button type="button" id="open-env-guide">지원 환경·설치</button>
                 <a href="https://md-to-hwpx.vercel.app/" target="_blank" rel="noopener">MD→HWPX</a>
