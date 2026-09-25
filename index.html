@@ -97,7 +97,7 @@
     <!-- PWA 웹 앱 매니페스트 (홈 화면 추가, 앱 이름/아이콘 정의) -->
     <link rel="manifest" href="manifest.json">
     <!-- [주의] id="theme-color-meta"는 app.js가 다크/라이트에 맞춰 색을 갱신함 -->
-    <meta name="theme-color" content="#2252e4" id="theme-color-meta">
+    <meta name="theme-color" content="#3b5a7a" id="theme-color-meta">
 
     <!-- 핵심 변환 라이브러리는 버전과 라이선스를 js/vendor에 고정한다. -->
 
@@ -135,30 +135,17 @@
 <a href="#converter-drop-area" class="skip-link">본문(파일 선택)으로 바로가기</a>
 
 <!-- ════════════════════════════════════════════════════════════════
-     [헤더] — 유틸리티 바(상단) + 메인 네비게이션(하단) 2단 구조
-     공공기관형 신뢰 UI 헤더 레이아웃 참조
+     [헤더] — Survey 서비스군의 단일 작업 헤더를 벤치마킹한 구조
+     로고·주요 안내·상태(버전)를 한 줄에서 빠르게 찾도록 구성
      ════════════════════════════════════════════════════════════════ -->
 <header class="site-header">
-    <!-- 유틸리티 바: 서비스 안내 문구 -->
-    <div class="utility-bar">
-        <div class="container">
-            <!-- [문구 수정 가능] 행사명/서비스명을 바꾸려면 아래 글자만 수정 -->
-            <span>｢BWYF｣ AX Challenger 2026</span>
-            <!-- [주의] id="open-changelog"는 app.js에서 관리자 모드일 때 업데이트 내역 모달을 여는 연결값 -->
-            <button class="util-changelog-btn" id="open-changelog" aria-label="버전 정보">
-                📋 v4.21.0
-            </button>
-        </div>
-    </div>
-
-    <!-- 메인 헤더: 로고 + 내비게이션 -->
     <div class="container">
         <div class="header-inner">
             <!-- 로고 -->
             <!-- [문구 수정 가능] 로고 표시 문구만 변경 가능. class/id 구조는 유지 -->
             <a href="#" class="site-logo" aria-label="To HWPX 홈">
-                <img src="icons/logo-mark.svg" class="site-logo-mark" alt="" aria-hidden="true" width="28" height="28">
-                To <span class="logo-badge">HWPX</span>
+                <img src="icons/logo-mark.svg" class="site-logo-mark" alt="" aria-hidden="true" width="34" height="34">
+                <span class="site-logo-copy"><strong>To HWPX</strong><small>한글 문서 변환 도구</small></span>
             </a>
 
             <!-- 모바일 햄버거 버튼 (app.js의 initMobileMenu에서 제어) -->
@@ -200,6 +187,10 @@
                             초기화
                         </button>
                     </li>
+                    <li>
+                        <!-- [주의] id="open-changelog"는 app.js에서 관리자 모드일 때 업데이트 내역 모달을 여는 연결값 -->
+                        <button class="util-changelog-btn" id="open-changelog" aria-label="버전 정보">📋 v4.21.1</button>
+                    </li>
                 </ul>
             </nav>
 
@@ -228,54 +219,62 @@
      ════════════════════════════════════════════════════════════════ -->
 <section class="hero" aria-labelledby="hero-title">
     <div class="container">
-        <!-- 메인 제목 -->
-        <!-- [문구 수정 가능] h1 안의 글자와 줄바꿈(<br>)만 수정. id="hero-title"은 유지 -->
-        <h1 id="hero-title" class="hero-title-anim"><span class="hero-title-accent">TO HWPX</span> - 한글로</h1>
-
-        <!-- 가치 제안 — 제품명만으로는 "왜 써야 하는지"를 말하지 못한다.
-             무엇을 하는지 / 왜 필요한지 / 무엇이 다른지 순서로 한 문장씩. -->
-        <p class="hero-lead hero-lead-anim">
-            PDF·워드·엑셀 문서를 <b>한글(HWPX)</b>로 바꿉니다.
-            <span>한컴오피스 없이, 브라우저에서 바로.</span>
-        </p>
-        <ul class="hero-points hero-lead-anim" aria-label="주요 특징">
-            <li><span aria-hidden="true">🔒</span> 파일이 서버로 가지 않습니다</li>
-            <li><span aria-hidden="true">📁</span> 폴더째 100개까지 한 번에</li>
-            <li><span aria-hidden="true">📐</span> 공문서 항목 규정 자동 적용</li>
-        </ul>
-
-        <!-- 파일 드롭존 (app.js의 initDropZone에서 이벤트 연결) -->
-        <div id="drop-zone" class="drop-zone" role="button" tabindex="0"
-             aria-label="파일을 드래그하거나 클릭하여 선택">
-            <div class="drop-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
-            <div class="drop-fmt-icons" aria-hidden="true">
-                <img src="icons/brand/markdown.svg" alt="MD">
-                <img src="icons/brand/microsoftword.svg" alt="DOCX">
-                <img src="icons/brand/html5.svg" alt="HTML">
-                <img src="icons/brand/microsoftexcel.svg" alt="XLSX">
-                <img src="icons/brand/jupyter.svg" alt="IPYNB">
+        <div class="hero-grid">
+            <div class="hero-copy">
+                <span class="hero-eyebrow hero-lead-anim">문서를 한글 업무 흐름으로</span>
+                <!-- [문구 수정 가능] h1 안의 글자와 줄바꿈(<br>)만 수정. id="hero-title"은 유지 -->
+                <h1 id="hero-title" class="hero-title-anim">여러 형식의 문서를<br><span class="hero-title-accent">한글(HWPX) 하나로</span></h1>
+                <p class="hero-lead hero-lead-anim">
+                    PDF·워드·엑셀·Markdown을 <b>한글 문서</b>로 바꿉니다.
+                    <span>한컴오피스 없이, 브라우저에서 바로.</span>
+                </p>
+                <ul class="hero-points hero-lead-anim" aria-label="주요 특징">
+                    <li><span aria-hidden="true">✓</span> 파일 외부 전송 없음</li>
+                    <li><span aria-hidden="true">✓</span> 폴더째 100개 일괄 변환</li>
+                    <li><span aria-hidden="true">✓</span> 공문서 항목 규정 적용</li>
+                </ul>
+                <ol class="hero-flow hero-lead-anim" aria-label="변환 순서">
+                    <li class="is-current"><span>1</span><b>문서 선택</b></li>
+                    <li><span>2</span><b>설정·미리보기</b></li>
+                    <li><span>3</span><b>HWPX 받기</b></li>
+                </ol>
             </div>
-            <div class="drop-title">여러 파일을 드래그하거나 클릭하세요</div>
-            <!-- [AGENTS.md UI 불변식] 입력과 출력을 분리해 적는다. HWPX를 입력 포맷처럼 쓰지 않는다. -->
-            <div class="drop-sub">
-                <span class="drop-io"><b>입력</b> PDF · MD · HTML · DOCX · PPTX · CSV · XLSX · JSON · TXT · IPYNB · HWP</span>
-                <span class="drop-io"><b>출력</b> HWPX <span class="drop-io-aux">(HWP · PDF로도 저장 가능)</span></span>
+            <div class="hero-action-area">
+                <span class="hero-action-label">문서 불러오기</span>
+                <!-- 파일 드롭존 (app.js의 initDropZone에서 이벤트 연결) -->
+                <div id="drop-zone" class="drop-zone" role="button" tabindex="0"
+                     aria-label="파일을 드래그하거나 클릭하여 선택">
+                    <div class="drop-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
+                    <div class="drop-title">파일을 끌어다 놓거나 눌러서 선택하세요</div>
+                    <div class="drop-fmt-icons" aria-hidden="true">
+                        <img src="icons/brand/markdown.svg" alt="MD">
+                        <img src="icons/brand/microsoftword.svg" alt="DOCX">
+                        <img src="icons/brand/html5.svg" alt="HTML">
+                        <img src="icons/brand/microsoftexcel.svg" alt="XLSX">
+                        <img src="icons/brand/jupyter.svg" alt="IPYNB">
+                    </div>
+                    <!-- [AGENTS.md UI 불변식] 입력과 출력을 분리해 적는다. HWPX를 입력 포맷처럼 쓰지 않는다. -->
+                    <div class="drop-sub">
+                        <span class="drop-io"><b>입력</b> PDF · MD · HTML · DOCX · PPTX · CSV · XLSX · JSON · TXT · IPYNB · HWP</span>
+                        <span class="drop-io"><b>출력</b> HWPX <span class="drop-io-aux">(HWP · PDF로도 저장 가능)</span></span>
+                    </div>
+                </div>
+                <p class="drop-trust">
+                    <span class="drop-trust-mark" aria-hidden="true">♢</span>
+                    <span class="drop-trust-text">파일은 <b>브라우저 안에서만</b> 변환됩니다. 서버에 업로드되지 않습니다.</span>
+                </p>
+                <div class="start-secondary-actions" aria-label="다른 시작 방법">
+                    <button type="button" class="start-action" id="start-paste">
+                        <strong>직접 입력</strong><span>AI 답변·Markdown·표 붙여넣기</span>
+                    </button>
+                    <button type="button" class="start-action" id="start-samples">
+                        <strong>샘플 체험</strong><span>내 파일 없이 흐름 확인</span>
+                    </button>
+                    <button type="button" class="start-action" id="start-history">
+                        <strong>최근 작업</strong><span>이전 설정 다시 적용</span>
+                    </button>
+                </div>
             </div>
-        </div>
-        <p class="drop-trust">
-            <span class="drop-trust-mark" aria-hidden="true">🔒</span>
-            <span class="drop-trust-text">파일은 <b>브라우저 안에서만</b> 변환됩니다. 서버에 업로드되지 않습니다.</span>
-        </p>
-        <div class="start-secondary-actions" aria-label="다른 시작 방법">
-            <button type="button" class="start-action" id="start-paste">
-                <strong>⌨ 직접 입력</strong><span>AI 답변·Markdown·표를 붙여넣기</span>
-            </button>
-            <button type="button" class="start-action" id="start-samples">
-                <strong>▦ 샘플로 체험</strong><span>내 파일 없이 전체 흐름 확인</span>
-            </button>
-            <button type="button" class="start-action" id="start-history">
-                <strong>↶ 최근 작업</strong><span>이전 설정을 다시 적용</span>
-            </button>
         </div>
         <section id="sample-panel" class="sample-panel" aria-labelledby="sample-title" hidden>
             <div class="sample-panel-head">
@@ -1290,7 +1289,7 @@
             <div class="footer-links">
                 <h4>관련 서비스</h4>
                 <ul>
-                    <li><a href="https://sysmetrix.github.io/To-Hwpx/legacy/v4.20.0/" target="_blank" rel="noopener">이전 버전(v4.20.0)</a><small class="footer-link-note">새 화면에 문제가 있을 때 사용</small></li>
+                    <li><a href="https://sysmetrix.github.io/To-Hwpx/legacy/v4.21.0/" target="_blank" rel="noopener">이전 버전(v4.21.0)</a><small class="footer-link-note">새 화면에 문제가 있을 때 사용</small></li>
                     <li><a href="https://md-to-hwpx.vercel.app/" target="_blank" rel="noopener">MD→HWPX 변환기</a></li>
                     <li><a href="https://md-to-html-seven.vercel.app/" target="_blank" rel="noopener">MD→HTML 변환기</a></li>
                     <li><a href="https://www.hancom.com/support/downloadCenter/download" target="_blank" rel="noopener">한컴 HWPX 변환기</a></li>

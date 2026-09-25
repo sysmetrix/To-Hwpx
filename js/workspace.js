@@ -42,7 +42,28 @@ function validRoute(route) {
     return route;
 }
 
+/**
+ * 상단의 "변환 안내"는 단순한 포맷 목록보다 서비스가 왜 필요한지를 먼저
+ * 설명한다. 안내 화면으로 새로 들어올 때마다 개발 배경을 기본 선택하되,
+ * 같은 화면 안에서 사용자가 다른 탭을 고른 뒤에는 그 선택을 방해하지 않는다.
+ */
+function openGuideIntroduction() {
+    const scope = document.querySelector('.service-info');
+    const introTab = scope?.querySelector('.format-tab[data-target="panel-dev-story"]');
+    const introPanel = scope?.querySelector('#panel-dev-story');
+    if (!scope || !introTab || !introPanel) return;
+    scope.querySelectorAll('.format-tab').forEach(tab => {
+        const active = tab === introTab;
+        tab.classList.toggle('active', active);
+        tab.setAttribute('aria-selected', String(active));
+    });
+    scope.querySelectorAll('.format-panel').forEach(panel => {
+        panel.classList.toggle('active', panel === introPanel);
+    });
+}
+
 function renderRoute() {
+    const previousRoute = document.body.dataset.workspaceRoute;
     const route = validRoute(routeFromHash());
     if (route !== routeFromHash()) {
         history.replaceState(null, '', `#/` + route);
@@ -70,6 +91,7 @@ function renderRoute() {
     });
     if (route === 'history') renderHistory();
     if (route === 'start') renderRecentStart();
+    if (route === 'guide' && previousRoute !== 'guide') openGuideIntroduction();
     requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: 'instant' }));
 }
 

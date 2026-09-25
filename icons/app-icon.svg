@@ -1,7 +1,23 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <!-- To HWPX 브랜드 마크 — "변환 화살표 문서" (브랜드 컨셉 A: 조용한 공공 신뢰, 2026-07 확정) -->
-  <rect width="512" height="512" rx="112" fill="#2252e4"/>
-  <path d="M148 96h156l60 60v260H148z" fill="#ffffff"/>
-  <path d="M304 96v68h68" fill="#c9d9fb"/>
-  <path d="M196 226h88v-34l68 62-68 62v-34h-88z" fill="#2252e4"/>
+  <!-- Survey 제품군의 겹친 면·슬레이트 블루를 공유하되, 문서 묶음과 변환 화살표로 To HWPX를 구분한다. -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f7fafd"/><stop offset="1" stop-color="#dce6ef"/>
+    </linearGradient>
+    <linearGradient id="back" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#a9c6e3"/><stop offset="1" stop-color="#6f91b1"/>
+    </linearGradient>
+    <linearGradient id="front" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#48698d"/><stop offset="1" stop-color="#2f4863"/>
+    </linearGradient>
+    <linearGradient id="fold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#b6f0ff"/><stop offset="1" stop-color="#3e9bea"/>
+    </linearGradient>
+  </defs>
+  <rect x="20" y="20" width="472" height="472" rx="112" fill="url(#bg)"/>
+  <path d="M88 148h190l64 64v222H88z" fill="url(#back)"/>
+  <path d="M120 116h198l64 64v238H120z" fill="#94b6d6"/>
+  <path d="M154 82h202l68 68v278H154z" fill="url(#front)"/>
+  <path d="M356 82v76h76" fill="url(#fold)"/>
+  <path d="M206 238h98v-42l82 60-82 60v-42h-98z" fill="#fff"/>
 </svg>
