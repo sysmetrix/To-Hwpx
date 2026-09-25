@@ -1339,11 +1339,17 @@ async function validateCommercialUx(page) {
   assert(manifest.icons.some(icon => icon.src === 'icons/app-icon-192.png' && icon.type === 'image/png')
     && manifest.icons.some(icon => icon.src === 'icons/app-icon-512.png' && icon.type === 'image/png'),
     'pwa: PNG 설치 아이콘이 manifest에 없음');
+  assert(manifest.icons.some(icon => icon.src === 'icons/app-icon-maskable-512.png'
+      && icon.type === 'image/png' && icon.purpose === 'maskable'),
+    'pwa: 전용 maskable 512 PNG 설치 아이콘이 manifest에 없음');
   const serviceWorker = fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8');
   assert(serviceWorker.includes("'./icons/chrome-install.svg'")
     && serviceWorker.includes("'./icons/edge-install.svg'")
     && serviceWorker.includes("'./icons/app-icon-192.png'")
     && serviceWorker.includes("'./icons/app-icon-512.png'")
+    && serviceWorker.includes("'./icons/app-icon-maskable-512.png'")
+    && serviceWorker.includes("'./icons/favicon.ico'")
+    && serviceWorker.includes("'./icons/apple-touch-icon.png'")
     && serviceWorker.includes("'./js/posthog-init.js'"),
     'pwa: 설치/분석 앱 셸 파일이 오프라인 캐시에 없음');
   assert(serviceWorker.includes('isCacheableRequest')
@@ -1351,6 +1357,23 @@ async function validateCommercialUx(page) {
     && serviceWorker.includes("url.hash = ''"),
     'pwa: 서비스 워커가 명시 허용 URL만 런타임 캐시하도록 제한되지 않음');
   const indexHtml = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  for (const [file, expected] of [
+    ['favicon-16.png', 16], ['favicon-32.png', 32], ['favicon-48.png', 48],
+    ['apple-touch-icon.png', 180], ['app-icon-maskable-512.png', 512],
+  ]) {
+    const png = fs.readFileSync(path.join(ROOT, 'icons', file));
+    assert(png.subarray(1, 4).toString('ascii') === 'PNG'
+      && png.readUInt32BE(16) === expected && png.readUInt32BE(20) === expected,
+    `brand icon: ${file} PNG 시그니처 또는 ${expected}px 크기 불일치`);
+  }
+  const faviconIco = fs.readFileSync(path.join(ROOT, 'icons', 'favicon.ico'));
+  assert(faviconIco.readUInt16LE(0) === 0 && faviconIco.readUInt16LE(2) === 1
+    && faviconIco.readUInt16LE(4) === 3,
+  'brand icon: favicon.ico가 16/32/48 멀티사이즈 아이콘이 아님');
+  assert(indexHtml.includes('icons/favicon-16.png') && indexHtml.includes('icons/favicon-32.png')
+    && indexHtml.includes('icons/favicon-48.png') && indexHtml.includes('icons/favicon.ico')
+    && indexHtml.includes('icons/apple-touch-icon.png'),
+  'brand icon: 브라우저/Windows/iOS 파비콘 링크가 index.html에 없음');
   assert(indexHtml.includes('<script src="js/posthog-init.js" defer></script>')
     && !indexHtml.includes("var POSTHOG_KEY"),
     'security: PostHog 초기화가 CSP 비호환 인라인 스크립트로 남아 있음');

@@ -1,6 +1,21 @@
 {
-  "current": "4.21.1",
+  "current": "4.21.2",
   "versions": [
+    {
+      "version": "4.21.2",
+      "date": "2026-09-25",
+      "user": [
+        "새 로고를 브라우저 탭 파비콘, Windows 바로가기, iPhone·iPad 홈 화면과 Android 설치 아이콘에 모두 적용했습니다.",
+        "작은 16px 탭 아이콘부터 512px 설치 아이콘까지 환경에 맞는 크기로 제공해 흐릿하거나 검게 채워지는 문제를 방지했습니다.",
+        "새 아이콘에 문제가 있을 때 사용할 이전 버전 링크를 v4.21.1로 갱신했습니다."
+      ],
+      "dev": [
+        "scripts/gen-icons.js가 app-icon.svg와 app-icon-maskable.svg에서 16/32/48 PNG, 멀티사이즈 ICO, Apple Touch 180px, PWA 192/512px, maskable 512px을 재현 가능하게 생성한다.",
+        "index.html에 SVG 우선 favicon과 PNG/ICO 폴백, Apple Touch 메타를 선언하고 manifest의 any/maskable purpose를 분리했다.",
+        "golden이 PNG 시그니처와 IHDR 크기, ICO 3개 엔트리, HTML·manifest·서비스워커 연결을 검증하며 운영 smoke도 대표 아이콘을 요청한다.",
+        "Pages 직전판을 커밋 8d68dcf8a412fefd38a910e76a4037a27bf6669f의 v4.21.1로 교체하고 레거시 캐시를 격리했다."
+      ]
+    },
     {
       "version": "4.21.1",
       "date": "2026-09-25",

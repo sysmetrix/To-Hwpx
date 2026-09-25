@@ -979,3 +979,22 @@ v4.12.1 출시 승인 판정:
 - [x] 라이트/다크 테마에서 새 로고의 문서 3겹·접힌 면·화살표가 구분됨
 - [ ] 실제 배포에서 캐시를 비운 뒤 새 버전과 파비콘·PWA 아이콘 반영 확인
 - [x] 푸터와 Pages 배포가 직전판 v4.21.0 커밋 `0bb5400`을 정확히 가리킴
+
+## 47. 브라우저·설치 환경별 아이콘 세트
+
+배경: SVG 파비콘과 192/512px PWA 아이콘만으로는 구형 브라우저·Windows 바로가기·iOS 홈 화면·Android 마스크 아이콘을 각각 최적화할 수 없다. 하나의 브랜드 심벌에서 환경별 파생 자산을 재현 가능하게 생성한다.
+
+자동 승인 기준:
+
+- [x] `npm run icons:build`가 16/32/48 PNG, 3개 크기 ICO, Apple Touch 180px, PWA 192/512px, maskable 512px을 생성
+- [x] HTML이 SVG 우선과 PNG/ICO 폴백 및 Apple Touch 아이콘을 크기와 함께 선언
+- [x] manifest에서 일반 아이콘은 `any`, 전용 512px 아이콘은 `maskable`로 분리
+- [x] golden이 PNG 시그니처·실제 픽셀 크기, ICO 엔트리 수, HTML/manifest/SW 연결을 검증
+- [ ] `npm run test:release`와 `npm run test:browsers` 통과
+
+수동 확인 기준:
+
+- [x] 16px 파비콘에서도 문서 외곽과 흰색 변환 화살표가 구분됨
+- [x] Apple Touch와 maskable 미리보기에서 심벌이 안전영역 안에 있고 투명 모서리로 검게 채워지지 않음
+- [ ] 실제 배포 후 새 브라우저 프로필에서 탭 파비콘과 설치 UI 아이콘 확인
+- [x] 푸터와 Pages 배포가 직전판 v4.21.1 커밋 `8d68dcf`를 정확히 가리킴

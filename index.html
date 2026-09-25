@@ -79,9 +79,15 @@
     <meta name="twitter:title" content="To HWPX - 한글로">
     <meta name="twitter:description" content="다양한 문서 포맷을 HWPX로 변환하는 브라우저 도구">
 
-    <!-- 파비콘 (텍스트 기반 SVG) -->
-    <link rel="icon" type="image/svg+xml" href="icons/app-icon.svg">
-    <link rel="apple-touch-icon" href="icons/app-icon.svg">
+    <!-- 브라우저·Windows·iOS·설치형 앱에서 같은 브랜드 심벌 사용 -->
+    <link rel="icon" href="icons/app-icon.svg" type="image/svg+xml" sizes="any">
+    <link rel="icon" href="icons/favicon-48.png" type="image/png" sizes="48x48">
+    <link rel="icon" href="icons/favicon-32.png" type="image/png" sizes="32x32">
+    <link rel="icon" href="icons/favicon-16.png" type="image/png" sizes="16x16">
+    <link rel="shortcut icon" href="icons/favicon.ico" sizes="16x16 32x32 48x48">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" sizes="180x180">
+    <meta name="apple-mobile-web-app-title" content="To HWPX">
+    <meta name="mobile-web-app-capable" content="yes">
 
     <!-- ─── 테마(다크/라이트) 선적용 ───────────────────────────────
          [FOUC 방지] 스타일시트보다 먼저, 첫 페인트 전에 동기 실행해야 한다.
@@ -189,7 +195,7 @@
                     </li>
                     <li>
                         <!-- [주의] id="open-changelog"는 app.js에서 관리자 모드일 때 업데이트 내역 모달을 여는 연결값 -->
-                        <button class="util-changelog-btn" id="open-changelog" aria-label="버전 정보">📋 v4.21.1</button>
+                        <button class="util-changelog-btn" id="open-changelog" aria-label="버전 정보">📋 v4.21.2</button>
                     </li>
                 </ul>
             </nav>
@@ -1289,7 +1295,7 @@
             <div class="footer-links">
                 <h4>관련 서비스</h4>
                 <ul>
-                    <li><a href="https://sysmetrix.github.io/To-Hwpx/legacy/v4.21.0/" target="_blank" rel="noopener">이전 버전(v4.21.0)</a><small class="footer-link-note">새 화면에 문제가 있을 때 사용</small></li>
+                    <li><a href="https://sysmetrix.github.io/To-Hwpx/legacy/v4.21.1/" target="_blank" rel="noopener">이전 버전(v4.21.1)</a><small class="footer-link-note">새 화면에 문제가 있을 때 사용</small></li>
                     <li><a href="https://md-to-hwpx.vercel.app/" target="_blank" rel="noopener">MD→HWPX 변환기</a></li>
                     <li><a href="https://md-to-html-seven.vercel.app/" target="_blank" rel="noopener">MD→HTML 변환기</a></li>
                     <li><a href="https://www.hancom.com/support/downloadCenter/download" target="_blank" rel="noopener">한컴 HWPX 변환기</a></li>

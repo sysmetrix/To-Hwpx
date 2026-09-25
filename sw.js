@@ -12,7 +12,7 @@
 'use strict';
 
 const CACHE_PREFIX = 'to-hwpx-v';
-const CACHE_VERSION = 'to-hwpx-v4.21.1';
+const CACHE_VERSION = 'to-hwpx-v4.21.2';
 
 // 설치 시 미리 캐시할 파일 목록 (앱 셸)
 // [주의] 절대경로(/)가 아닌 상대경로(./)를 사용해야 함.
@@ -57,6 +57,13 @@ const APP_SHELL = [
     './icons/app-icon.svg',
     './icons/app-icon-192.png',
     './icons/app-icon-512.png',
+    './icons/app-icon-maskable.svg',
+    './icons/app-icon-maskable-512.png',
+    './icons/favicon-16.png',
+    './icons/favicon-32.png',
+    './icons/favicon-48.png',
+    './icons/favicon.ico',
+    './icons/apple-touch-icon.png',
     './icons/chrome-install.svg',
     './icons/edge-install.svg',
     './icons/logo-mark.svg',
