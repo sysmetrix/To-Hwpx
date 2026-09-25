@@ -5426,8 +5426,8 @@ function updateThemeToggleUI(theme) {
 function updateThemeColorMeta(theme) {
     const meta = document.getElementById('theme-color-meta');
     if (!meta) return;
-    // 라이트는 브랜드 primary(--c-primary) 유지, 다크는 헤더 표면색(#1c1e26)에 맞춘다.
-    meta.setAttribute('content', theme === 'dark' ? '#1c1e26' : '#2252e4');
+    // 라이트는 Survey 제품군과 공유하는 슬레이트 primary, 다크는 헤더 표면색에 맞춘다.
+    meta.setAttribute('content', theme === 'dark' ? '#14171b' : '#3b5a7a');
 }
 
 /** 토글: 현재 해석된 테마의 반대로 전환하고 명시적으로 저장 */

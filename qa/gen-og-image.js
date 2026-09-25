@@ -16,14 +16,14 @@ const HTML = String.raw`<!DOCTYPE html>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
     width: 1200px; height: 630px; overflow: hidden;
-    background: #1e3a8a;
+    background: #2f4863;
     font-family: 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
     display: flex; align-items: center; justify-content: center;
     position: relative;
   }
   .bg-accent {
     position: absolute; inset: 0;
-    background: linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 60%, #0f172a 100%);
+    background: linear-gradient(135deg, #48698d 0%, #3b5a7a 55%, #22394f 100%);
   }
   .card {
     position: relative; z-index: 1;
@@ -37,7 +37,7 @@ const HTML = String.raw`<!DOCTYPE html>
     border-radius: 24px;
     padding: 6px 20px;
     font-size: 18px; font-weight: 600; letter-spacing: 0.05em;
-    color: #93c5fd;
+    color: #dceaf8;
     margin-bottom: 28px;
   }
   .title {
@@ -46,9 +46,9 @@ const HTML = String.raw`<!DOCTYPE html>
     color: #fff;
     margin-bottom: 20px;
   }
-  .title span { color: #60a5fa; }
+  .title span { color: #b6f0ff; }
   .subtitle {
-    font-size: 30px; font-weight: 500; color: #bfdbfe;
+    font-size: 30px; font-weight: 500; color: #dceaf8;
     margin-bottom: 40px;
   }
   .formats {
@@ -59,13 +59,13 @@ const HTML = String.raw`<!DOCTYPE html>
     border: 1px solid rgba(255,255,255,0.2);
     border-radius: 8px;
     padding: 8px 16px;
-    font-size: 18px; font-weight: 700; color: #e0f2fe;
+    font-size: 18px; font-weight: 700; color: #f1f6fa;
     letter-spacing: 0.02em;
   }
-  .arrow { color: #60a5fa; font-size: 22px; display: flex; align-items: center; }
+  .arrow { color: #b6f0ff; font-size: 22px; display: flex; align-items: center; }
   .deco-circle {
     position: absolute; border-radius: 50%;
-    background: rgba(96,165,250,0.08); border: 1px solid rgba(96,165,250,0.12);
+    background: rgba(182,240,255,0.08); border: 1px solid rgba(182,240,255,0.12);
   }
 </style>
 </head>
@@ -86,7 +86,7 @@ const HTML = String.raw`<!DOCTYPE html>
       <span class="fmt">JSON</span>
       <span class="fmt">IPYNB</span>
       <span class="arrow">→</span>
-      <span class="fmt" style="background:rgba(96,165,250,0.25);border-color:#60a5fa;color:#fff;">HWPX</span>
+      <span class="fmt" style="background:rgba(182,240,255,0.2);border-color:#b6f0ff;color:#fff;">HWPX</span>
     </div>
   </div>
 </body>

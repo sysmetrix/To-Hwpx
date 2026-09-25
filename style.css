@@ -47,30 +47,30 @@
     /* 아래 값들은 사이트 전체에 재사용되는 디자인 변수입니다.
        비개발자는 이 영역의 색상/숫자 값만 바꾸는 것이 가장 안전합니다. */
 
-    /* 주 색상 (단일 신뢰 블루 — 화면 전체의 유일한 포인트 컬러) */
-    --c-primary:        #2252e4;
-    --c-primary-dark:   #1640c8;
-    --c-primary-light:  #e9effc;
+    /* Survey 서비스군과 공유하는 슬레이트 블루 — 차분한 공공 업무 도구 인상 */
+    --c-primary:        #3b5a7a;
+    --c-primary-dark:   #2f4863;
+    --c-primary-light:  #e4eaf1;
 
     /* 액센트 — 퍼플 은퇴, 포인트는 블루 하나로 통일.
        (변수명은 JS/레거시 호환을 위해 유지하되 값은 블루 계열로 매핑) */
-    --c-accent:         #2252e4;
-    --c-accent-light:   #e9effc;
+    --c-accent:         #2a78d6;
+    --c-accent-light:   #e3edf8;
 
     /* 배경 계층 (따뜻한 오프화이트) */
-    --c-bg:             #faf9f6;    /* 페이지 배경 — 따뜻한 오프화이트 */
+    --c-bg:             #f7f8fa;    /* Survey와 같은 차가운 업무용 캔버스 */
     --c-surface:        #ffffff;    /* 카드/패널 배경 */
-    --c-surface-alt:    #f4f3ef;    /* 구분용 옅은 웜그레이 */
+    --c-surface-alt:    #eef1f4;    /* 구분용 옅은 슬레이트 */
 
     /* 텍스트 (차콜 계열) */
-    --c-text:           #1c1d22;    /* 본문 — 진한 차콜 */
-    --c-text-sub:       #565a62;    /* 부제목·설명 */
-    --c-text-muted:     #686c75;    /* 비활성·보조 (WCAG AA: 오프화이트 위 ~5:1) */
+    --c-text:           #0a0a0a;    /* 본문 — Survey 제품군 공통 뉴트럴 */
+    --c-text-sub:       #3d444c;    /* 부제목·설명 */
+    --c-text-muted:     #63707d;    /* 비활성·보조 (WCAG AA) */
 
     /* 테두리 (얇은 헤어라인) */
-    --c-border:         #e6e4dd;
-    --c-border-strong:  #d6d3ca;
-    --c-border-focus:   #93c5fd;
+    --c-border:         #dce2e8;
+    --c-border-strong:  #c3ccd5;
+    --c-border-focus:   #2a78d6;
 
     /* 상태 색상 (성공·오류만 제한적으로 사용) */
     --c-success:        #047857;
@@ -96,9 +96,9 @@
     --c-installed-text:   #16a34a;
 
     /* 그림자 (짙은 그림자 제거 — 옅은 단계감만) */
-    --shadow-sm:   0 1px 2px rgba(20,21,26,.04);
-    --shadow-md:   0 4px 16px rgba(20,21,26,.06);
-    --shadow-lg:   0 14px 44px rgba(20,21,26,.10);
+    --shadow-sm:   0 1px 2px rgba(16,20,26,.05);
+    --shadow-md:   0 1px 2px rgba(16,20,26,.04), 0 4px 16px rgba(16,20,26,.05);
+    --shadow-lg:   0 12px 40px rgba(16,20,26,.14);
 
     /* 타이포그래피 */
     --font-main:   'Noto Sans KR', 'Malgun Gothic', '맑은 고딕', sans-serif;
@@ -126,9 +126,9 @@
     /* 레이아웃 */
     --max-w:        1200px;    /* 최대 콘텐츠 너비 */
     --max-w-work:   1040px;    /* 변환 작업 공간 최대 폭 (과도한 확산 방지) */
-    --radius-sm:    6px;
-    --radius-md:    10px;
-    --radius-lg:    14px;
+    --radius-sm:    8px;
+    --radius-md:    12px;
+    --radius-lg:    18px;
 
     /* ── 간격 스케일 ───────────────────────────────────────────────
        4px 기준 배수. 지금까지 간격은 전부 리터럴이라 같은 위계의 요소가
@@ -205,24 +205,24 @@
 :root[data-theme="dark"] {
     color-scheme: dark;   /* 스크롤바·select·number 스피너를 네이티브 다크로 */
 
-    --c-primary:        #4f8cff;
-    --c-primary-dark:   #6ea2ff;   /* 다크에선 hover가 더 밝아야 자연스럽다 */
-    --c-primary-light:  rgba(79, 140, 255, 0.16);
+    --c-primary:        #5885aa;
+    --c-primary-dark:   #70a0c5;   /* 다크에선 hover가 더 밝아야 자연스럽다 */
+    --c-primary-light:  rgba(70, 112, 143, 0.24);
 
-    --c-accent:         #4f8cff;
-    --c-accent-light:   rgba(79, 140, 255, 0.16);
+    --c-accent:         #3987e5;
+    --c-accent-light:   rgba(57, 135, 229, 0.16);
 
-    --c-bg:             #14151a;
-    --c-surface:        #1c1e26;
-    --c-surface-alt:    #24262f;
+    --c-bg:             #0b0d10;
+    --c-surface:        #14171b;
+    --c-surface-alt:    #1a1e23;
 
-    --c-text:           #e7e8ec;
-    --c-text-sub:       #aab0ba;
-    --c-text-muted:     #8a8f99;   /* WCAG AA: 다크 표면(#14~#24) 위 ≥4.6:1 */
+    --c-text:           #f1f3f5;
+    --c-text-sub:       #c5cbd1;
+    --c-text-muted:     #8f98a2;   /* WCAG AA: 다크 표면 위 ≥4.6:1 */
 
-    --c-border:         #2e313b;
-    --c-border-strong:  #3b3f4a;
-    --c-border-focus:   #4f8cff;
+    --c-border:         #2b3138;
+    --c-border-strong:  #3c434c;
+    --c-border-focus:   #3987e5;
 
     --c-success:        #34d399;
     --c-success-light:  rgba(52, 211, 153, 0.16);
@@ -7058,4 +7058,258 @@ body[data-workspace-route="result"] .progress-panel { max-width: 1100px; margin-
     .recent-start-item, .sample-panel-head, .workspace-page-head, .history-card-head { align-items: stretch; flex-direction: column; }
     .recent-start-item button { width: 100%; }
     .workspace-run-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* ==================================================================
+   Survey 제품군 벤치마킹 — v4.22
+   같은 제작자의 서비스라는 인상은 색 하나가 아니라 헤더 높이, 낮은 그림자,
+   넓은 작업 캔버스, 단계 표시와 입체 심벌의 조합으로 만든다. Survey 화면을
+   복제하지 않고 To HWPX의 핵심 행동(문서 선택)을 오른쪽 작업면으로 번역한다.
+   ================================================================== */
+.site-header {
+    background: color-mix(in srgb, var(--c-surface) 88%, transparent);
+    backdrop-filter: saturate(1.35) blur(14px);
+}
+.header-inner { height: 64px; gap: 18px; }
+.site-logo { gap: 10px; font-family: var(--font-main); color: var(--c-text); }
+.site-logo-mark { width: 34px; height: 34px; border-radius: 0; }
+.site-logo-copy { display: flex; flex-direction: column; min-width: 0; line-height: 1.15; }
+.site-logo-copy strong { font-size: 1rem; font-weight: 800; letter-spacing: -0.025em; }
+.site-logo-copy small { margin-top: 3px; color: var(--c-text-muted); font-size: var(--fs-2xs); font-weight: 550; letter-spacing: -0.01em; }
+.util-changelog-btn {
+    min-height: 32px;
+    padding: 0 11px;
+    border: 1px solid var(--c-border);
+    border-radius: 999px;
+    background: var(--c-surface-alt);
+    color: var(--c-text-sub);
+    font-family: var(--font-latin);
+    font-size: var(--fs-2xs);
+    font-weight: 700;
+    cursor: default;
+}
+body.is-admin .util-changelog-btn { cursor: pointer; }
+
+.hero {
+    padding: clamp(42px, 6vw, 76px) 0 clamp(44px, 6vw, 72px);
+    text-align: left;
+    background-color: var(--c-bg);
+    background-image: radial-gradient(circle, color-mix(in srgb, var(--c-primary) 10%, transparent) 1px, transparent 1px);
+    background-size: 24px 24px;
+}
+.hero-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.08fr) minmax(500px, .92fr);
+    align-items: center;
+    gap: clamp(44px, 6vw, 88px);
+    min-height: min(720px, calc(100vh - 130px));
+}
+.hero-copy { min-width: 0; }
+.hero .hero-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    margin: 0 0 18px;
+    padding: 5px 11px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--c-primary-light);
+    color: var(--c-primary-dark);
+    font-size: var(--fs-xs);
+    font-weight: 750;
+    letter-spacing: -0.01em;
+}
+.hero .hero-eyebrow::before { content: "✦"; margin-right: 6px; font-size: .8em; }
+.hero h1 {
+    max-width: none;
+    margin: 0 0 18px;
+    font-size: clamp(2.45rem, 4vw, 3.5rem);
+    line-height: 1.16;
+    letter-spacing: -0.055em;
+    text-wrap: balance;
+}
+.hero-title-accent {
+    color: var(--c-primary-dark);
+    font-family: var(--font-main);
+    box-shadow: inset 0 -0.26em color-mix(in srgb, var(--c-primary-light) 86%, transparent);
+}
+.hero .hero-lead {
+    max-width: 42ch;
+    margin: 0 0 18px;
+    font-size: clamp(1rem, 1.55vw, 1.12rem);
+    line-height: 1.72;
+    text-wrap: pretty;
+}
+.hero .hero-points {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 7px;
+    margin: 0 0 34px;
+    font-size: var(--fs-sm);
+}
+.hero .hero-points li { white-space: normal; }
+.hero .hero-points span {
+    display: grid;
+    place-items: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--c-primary-light);
+    color: var(--c-primary-dark);
+    font-size: 11px;
+    font-weight: 900;
+}
+.hero-flow {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    max-width: 480px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+.hero-flow li {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    color: var(--c-text-muted);
+    font-size: var(--fs-2xs);
+}
+.hero-flow li:not(:last-child)::after {
+    content: "";
+    position: absolute;
+    top: 11px;
+    left: 28px;
+    right: 8px;
+    border-top: 2px dashed var(--c-border-strong);
+}
+.hero-flow span {
+    display: grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    border: 1px solid var(--c-border-strong);
+    border-radius: 50%;
+    background: var(--c-surface);
+    color: var(--c-text-muted);
+    font-size: 11px;
+    font-weight: 800;
+    z-index: 1;
+}
+.hero-flow .is-current { color: var(--c-primary-dark); }
+.hero-flow .is-current span { border-color: var(--c-primary); background: var(--c-primary); color: #fff; }
+.hero-flow b { font-weight: 700; }
+
+.hero-action-area {
+    position: relative;
+    min-width: 0;
+    padding: clamp(22px, 3vw, 34px);
+    border: 1px solid var(--c-border);
+    border-radius: 28px;
+    background: color-mix(in srgb, var(--c-surface) 92%, transparent);
+    box-shadow: var(--shadow-lg);
+}
+.hero-action-area::before,
+.hero-action-area::after {
+    content: "";
+    position: absolute;
+    width: 26px;
+    height: 26px;
+    pointer-events: none;
+}
+.hero-action-area::before {
+    top: 14px;
+    left: 14px;
+    border-top: 3px solid var(--c-primary);
+    border-left: 3px solid var(--c-primary);
+    border-radius: 9px 0 0;
+}
+.hero-action-area::after {
+    right: 14px;
+    bottom: 14px;
+    border-right: 3px solid var(--c-primary);
+    border-bottom: 3px solid var(--c-primary);
+    border-radius: 0 0 9px;
+}
+.hero-action-label {
+    display: block;
+    margin: 0 0 16px;
+    color: var(--c-text-muted);
+    font-size: var(--fs-xs);
+    font-weight: 750;
+    text-align: center;
+}
+.hero .drop-zone {
+    width: 100%;
+    max-width: none;
+    min-height: 330px;
+    margin: 0;
+    padding: clamp(34px, 5vw, 56px) clamp(22px, 3vw, 34px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: 1.5px dashed var(--c-border-strong);
+    border-radius: var(--radius-lg);
+    background: color-mix(in srgb, var(--c-surface) 76%, transparent);
+    box-shadow: none;
+    text-align: center;
+}
+.hero .drop-zone .drop-icon {
+    width: 72px;
+    height: 72px;
+    margin: 0 auto 18px;
+    border-radius: 22px;
+    background: var(--c-primary);
+    color: #fff;
+    box-shadow: 0 12px 24px color-mix(in srgb, var(--c-primary) 28%, transparent);
+    opacity: 1;
+}
+.hero .drop-zone .drop-icon svg { width: 34px; height: 34px; animation: none; }
+.hero .drop-zone .drop-title {
+    margin-bottom: 14px;
+    font-size: clamp(1rem, 1.6vw, 1.2rem);
+    font-weight: 800;
+    letter-spacing: -0.025em;
+    word-break: keep-all;
+}
+.hero .drop-zone .drop-fmt-icons { order: 3; margin: 18px auto 0; }
+.hero .drop-zone .drop-sub { order: 2; align-items: center; text-align: center; font-size: var(--fs-xs); }
+.hero .drop-trust { width: 100%; margin: 12px 0 0; font-size: var(--fs-xs); }
+.hero .drop-trust-mark { color: var(--c-primary); font-size: 1.05rem; transform: rotate(45deg); }
+.hero .start-secondary-actions { width: 100%; margin: 14px 0 0; gap: 8px; }
+.hero .start-action {
+    min-height: 62px;
+    padding: 11px 12px;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--c-surface) 90%, transparent);
+}
+.hero .start-action strong { color: var(--c-text); font-size: var(--fs-xs); }
+.hero .start-action span { font-size: var(--fs-2xs); }
+.hero .sample-panel,
+.hero .recent-start { width: 100%; margin-top: 22px; }
+
+@media (max-width: 980px) {
+    .hero-grid { grid-template-columns: 1fr; gap: 36px; min-height: 0; }
+    .hero-copy { text-align: center; }
+    .hero h1 { max-width: 15ch; margin-inline: auto; }
+    .hero .hero-lead { margin-inline: auto; }
+    .hero .hero-points { align-items: center; }
+    .hero-flow { margin-inline: auto; text-align: left; }
+    .hero-action-area { width: min(680px, 100%); margin-inline: auto; }
+}
+@media (max-width: 768px) {
+    .site-logo-copy small { display: none; }
+    .hero { padding-top: 38px; }
+    .hero h1 { font-size: clamp(2.15rem, 10vw, 3.15rem); }
+    .hero-action-area { padding: 20px 16px; border-radius: 22px; }
+    .hero .drop-zone { min-height: 300px; padding: 32px 18px; }
+    .hero .start-secondary-actions { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 520px) {
+    .hero .hero-points { align-items: flex-start; width: fit-content; margin-inline: auto; }
+    .hero-flow b { font-size: .66rem; }
+    .hero .drop-zone { min-height: 310px; }
+    .hero .drop-zone .drop-sub { align-items: flex-start; text-align: left; }
+    .hero .start-secondary-actions { grid-template-columns: 1fr; }
+    .hero .start-action { min-height: 54px; }
 }

@@ -1,7 +1,19 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <!-- 헤더 로고 전용 모노톤 버전 — favicon/PWA 아이콘(app-icon.svg)은 브랜드 블루 유지, 헤더만 무채색 워드마크로 통일 -->
-  <rect width="512" height="512" rx="112" fill="#1c1d22"/>
-  <path d="M148 96h156l60 60v260H148z" fill="#ffffff"/>
-  <path d="M304 96v68h68" fill="#d7d8dc"/>
-  <path d="M196 226h88v-34l68 62-68 62v-34h-88z" fill="#1c1d22"/>
+  <!-- 헤더용 투명 심벌: 겹친 문서(입력) → 화살표(변환) → 전면 문서(HWPX). -->
+  <defs>
+    <linearGradient id="l-back" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#dceaf8"/><stop offset="1" stop-color="#94b6d6"/>
+    </linearGradient>
+    <linearGradient id="l-front" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#48698d"/><stop offset="1" stop-color="#2f4863"/>
+    </linearGradient>
+    <linearGradient id="l-fold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#b6f0ff"/><stop offset="1" stop-color="#3e9bea"/>
+    </linearGradient>
+  </defs>
+  <path d="M62 166h204l66 66v210H62z" fill="url(#l-back)"/>
+  <path d="M102 126h208l66 66v230H102z" fill="#94b6d6"/>
+  <path d="M148 80h208l76 76v276H148z" fill="url(#l-front)"/>
+  <path d="M356 80v84h84" fill="url(#l-fold)"/>
+  <path d="M204 238h98v-42l84 60-84 60v-42h-98z" fill="#fff"/>
 </svg>

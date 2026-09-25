@@ -50,6 +50,17 @@ function startServer() {
       if (await page.locator('body').getAttribute('data-workspace-route') !== 'start') throw new Error(`${width}: start route missing`);
       const actions = await page.locator('.start-secondary-actions').boundingBox();
       if (!actions || actions.x < -1 || actions.x + actions.width > width + 1) throw new Error(`${width}: start actions clipped`);
+      const heroCopy = await page.locator('.hero-copy').boundingBox();
+      const heroAction = await page.locator('.hero-action-area').boundingBox();
+      if (!heroCopy || !heroAction) throw new Error(`${width}: benchmark hero regions missing`);
+      if (width >= 1024 && !(heroCopy.x < heroAction.x && Math.abs(heroCopy.y - heroAction.y) < 180)) {
+        throw new Error(`${width}: desktop benchmark hero is not a two-column workspace`);
+      }
+      if (width <= 768 && !(heroCopy.y < heroAction.y && heroAction.x >= -1 && heroAction.x + heroAction.width <= width + 1)) {
+        throw new Error(`${width}: mobile benchmark hero is not stacked or is clipped`);
+      }
+      const logoReady = await page.locator('.site-logo-mark').evaluate(image => image.complete && image.naturalWidth > 0);
+      if (!logoReady) throw new Error(`${width}: benchmark logo did not load`);
       if (width === 1280 || width === 390) {
         await page.screenshot({ path: path.join(os.tmpdir(), `to-hwpx-workspace-${width}.png`), fullPage: true });
       }
@@ -66,6 +77,11 @@ function startServer() {
     const page = await context.newPage();
     await page.goto(url, { waitUntil: 'domcontentloaded' });
     await page.waitForFunction(() => window.__appReady);
+    await page.locator('[data-workspace-route="guide"]').first().click();
+    await page.waitForFunction(() => location.hash === '#/guide');
+    if (!(await page.locator('#panel-dev-story').isVisible())) throw new Error('guide did not open with development background');
+    await page.locator('.site-logo').click();
+    await page.waitForFunction(() => location.hash === '#/start');
     await page.setInputFiles('#file-input', path.join(__dirname, 'fixtures', 'sample.md'));
     await page.waitForFunction(() => location.hash === '#/prepare');
     await page.locator('.prepare-continue').click();
@@ -93,7 +109,7 @@ function startServer() {
     await page.locator('#history-list article button').click();
     await page.waitForFunction(() => location.hash === '#/start');
     await context.close();
-    console.log('PASS WORKSPACE routes · responsive · metadata-only history');
+    console.log('PASS WORKSPACE routes · benchmark responsive brand · guide intro · metadata-only history');
   } finally {
     await browser.close();
     await new Promise(resolve => server.close(resolve));

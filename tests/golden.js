@@ -1240,8 +1240,9 @@ async function validateCommercialUx(page) {
     el => el.firstChild?.textContent.trim());
   assert(moreLabelHead === '더 알아보기'
     && (await page.locator('.service-info-label small').textContent()).trim().length > 0
-    && await page.locator('.service-info .format-panel.active').count() === 0,
-    'ux: 더 알아보기 라벨/부제가 없거나 기본 열린 포맷 패널이 남아 있음');
+    && await page.locator('#panel-dev-story').isVisible()
+    && await page.locator('.service-info .format-tab[data-target="panel-dev-story"]').getAttribute('aria-selected') === 'true',
+    'ux: 변환 안내 진입 시 개발 배경이 기본으로 열리지 않거나 라벨/부제가 없음');
   const basicTab = page.locator('.service-info .format-tab[data-target="panel-basic"]');
   await basicTab.click();
   assert(await page.locator('#panel-basic').isVisible()
@@ -1271,6 +1272,13 @@ async function validateCommercialUx(page) {
     'ux: 입력 포맷 탭에 설명 문구가 섞여 있음');
   assert((await tabs.nth(2).textContent()).trim() === '예정 포맷',
     'ux: 예정 포맷 탭에 불필요한 이모지 또는 설명 문구가 섞여 있음');
+  // 앞에서 입력 포맷을 열었으므로 개발 배경으로 전환한 뒤 재클릭 닫기도 검증한다.
+  await tabs.first().click();
+  assert(await page.locator('#panel-dev-story').isVisible(),
+    'ux: 입력 포맷에서 개발 배경 탭으로 전환되지 않음');
+  await tabs.first().click();
+  assert(await page.locator('.service-info .format-panel.active').count() === 0,
+    'ux: 개발 배경 탭을 다시 눌러 닫을 수 없음');
   await tabs.first().click();
   assert(await page.locator('#panel-dev-story').isVisible(), 'ux: 개발 배경 탭 클릭 후 패널이 열리지 않음');
   const devStoryText = await page.locator('#panel-dev-story').textContent();
@@ -1389,9 +1397,8 @@ async function validateCommercialUx(page) {
   // (resetConverterState()가 stylePolicy 등 다른 상태도 초기화하므로 이 함수의 마지막에 둔다.)
   await page.locator('[data-workspace-route="guide"]').first().click();
   await page.waitForFunction(() => document.body.dataset.workspaceRoute === 'guide');
-  await page.locator('.service-info .format-tab').first().click();
   assert(await page.locator('.format-tab.active').count() === 1,
-    'ux: 포맷 탭 클릭이 열리지 않음(ESC 회귀 테스트 준비 실패)');
+    'ux: 변환 안내 진입 시 개발 배경이 열리지 않음(ESC 회귀 테스트 준비 실패)');
   await page.keyboard.press('Escape');
   await page.waitForTimeout(200);
   assert(await page.locator('.format-tab.active').count() === 0,
