@@ -1190,8 +1190,46 @@ async function validateCommercialUx(page) {
 
   assert(await page.locator('.hero-badges').count() === 0,
     'ux: 드롭존 아래 PC/모바일/설치/로컬 처리 버튼이 남아 있음 (지원 환경 모달로 이동해야 함)');
-  const envGuideBtn = page.locator('#open-env-guide');
-  assert((await envGuideBtn.textContent()).includes('지원 환경'), 'ux: 지원 환경 버튼 라벨이 없음');
+  assert(await page.locator('#main-nav #open-env-guide').count() === 0,
+    'ux: 저빈도 지원 환경 버튼이 헤더를 계속 차지함');
+  const envGuideBtn = page.locator('.site-footer #open-env-guide');
+  assert((await envGuideBtn.textContent()).includes('지원 환경'), 'ux: 푸터에 지원 환경 진입점이 없음');
+  const pasteEmphasis = await page.locator('#start-paste').evaluate(button => {
+    const own = getComputedStyle(button);
+    const peer = getComputedStyle(document.getElementById('start-samples'));
+    return { classed: button.classList.contains('start-action--primary'),
+      background: own.backgroundColor, peerBackground: peer.backgroundColor, color: own.color };
+  });
+  assert(pasteEmphasis.classed && pasteEmphasis.background !== pasteEmphasis.peerBackground
+    && pasteEmphasis.color === 'rgb(255, 255, 255)',
+  'ux: 자주 쓰는 직접 입력이 실제 렌더에서 메인색 핵심 행동으로 강조되지 않음');
+  const darkPasteContrast = await page.locator('#start-paste').evaluate(button => {
+    const root = document.documentElement;
+    const previousTheme = root.dataset.theme;
+    root.dataset.theme = 'dark';
+    const style = getComputedStyle(button);
+    const rgb = value => (value.match(/[\d.]+/g) || []).slice(0, 3).map(Number);
+    const luminance = value => {
+      const channels = rgb(value).map(channel => {
+        const normalized = channel / 255;
+        return normalized <= 0.04045 ? normalized / 12.92 : ((normalized + 0.055) / 1.055) ** 2.4;
+      });
+      return channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722;
+    };
+    const foreground = luminance(style.color);
+    const background = luminance(style.backgroundColor);
+    const ratio = (Math.max(foreground, background) + 0.05) / (Math.min(foreground, background) + 0.05);
+    if (previousTheme) root.dataset.theme = previousTheme;
+    else delete root.dataset.theme;
+    return ratio;
+  });
+  assert(darkPasteContrast >= 4.5,
+    `ux: 다크 모드 직접 입력 버튼의 텍스트 명암비가 WCAG AA 미달 (${darkPasteContrast.toFixed(2)}:1)`);
+  assert(await page.locator('#recent-start').count() === 0,
+    'ux: 최근 작업이 첫 화면 아래에 자동 누적되는 구형 패널이 남아 있음');
+  const compactFooterText = await page.locator('.site-footer').textContent();
+  assert(compactFooterText.includes('MIT License. By Sysmetrix') && !compactFooterText.includes('기술 스택:'),
+    'ux: 컴팩트 푸터의 제작자 표기 또는 정보 정리가 반영되지 않음');
   const envGuideModal = page.locator('#env-guide-modal');
   assert(!(await envGuideModal.isVisible()), 'ux: 지원 환경 모달이 열기 전부터 보임');
 

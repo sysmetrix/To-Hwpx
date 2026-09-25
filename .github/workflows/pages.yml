@@ -84,10 +84,10 @@ jobs:
       - name: 배포 파일 구성
         run: |
           node scripts/stage-static-site.mjs --source . --dest _site
-          mkdir -p "$RUNNER_TEMP/tohwpx-v4.21.3"
-          git archive 8de8a3832566e757600e6a92d8424b7759f9bd94 | tar -x -C "$RUNNER_TEMP/tohwpx-v4.21.3"
-          node scripts/stage-static-site.mjs --source "$RUNNER_TEMP/tohwpx-v4.21.3" --dest _site/legacy/v4.21.3 --legacy
-          test "$(grep -o '📋 v4.21.3' _site/legacy/v4.21.3/index.html | head -1)" = "📋 v4.21.3"
+          mkdir -p "$RUNNER_TEMP/tohwpx-v4.21.4"
+          git archive ee5a9ef181ef47cf5fa111a1f1f87465e7bf4791 | tar -x -C "$RUNNER_TEMP/tohwpx-v4.21.4"
+          node scripts/stage-static-site.mjs --source "$RUNNER_TEMP/tohwpx-v4.21.4" --dest _site/legacy/v4.21.4 --legacy
+          test "$(grep -o '📋 v4.21.4' _site/legacy/v4.21.4/index.html | head -1)" = "📋 v4.21.4"
       - name: 정적 파일 업로드
         uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3
         with:
