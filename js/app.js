@@ -2369,6 +2369,8 @@ let applyingDetectedPasteFormat = false;
 let pasteDiagnostics = [];
 let pendingRichClipboardHtml = '';
 let lastPasteDetection = null;
+let pasteScrollSyncing = false;
+const PASTE_SCROLL_SYNC_KEY = 'tohwpx_pasteScrollSync';
 
 const PASTE_FORMAT_LABEL = Object.freeze({
     md: 'MD', html: 'HTML', txt: '일반 텍스트', csv: 'CSV/TSV', json: 'JSON',
@@ -2746,7 +2748,7 @@ function initInputMode() {
         schedulePasteDraftSave();
     });
     ta?.addEventListener('paste', handleDirectInputPaste);
-    ta?.addEventListener('scroll', syncPasteEditorScroll);
+    ta?.addEventListener('scroll', () => syncPasteWorkbenchScroll('source'));
     ta?.addEventListener('click', updateDirectInputEditorState);
     ta?.addEventListener('keyup', updateDirectInputEditorState);
     ta?.addEventListener('keydown', handlePasteEditorKeydown);
@@ -2764,6 +2766,16 @@ function initInputMode() {
     initPasteHtmlMenu();
     document.getElementById('copy-paste-html')?.addEventListener('click', copyPasteHtml);
     document.getElementById('download-paste-html')?.addEventListener('click', downloadPasteHtml);
+    const scrollSync = document.getElementById('paste-scroll-sync');
+    const storedScrollSync = localStorage.getItem(PASTE_SCROLL_SYNC_KEY);
+    if (scrollSync) {
+        scrollSync.checked = storedScrollSync !== '0';
+        scrollSync.addEventListener('change', () => {
+            localStorage.setItem(PASTE_SCROLL_SYNC_KEY, scrollSync.checked ? '1' : '0');
+            if (scrollSync.checked) syncPasteWorkbenchScroll('source');
+        });
+    }
+    document.getElementById('paste-preview-output')?.addEventListener('scroll', () => syncPasteWorkbenchScroll('preview'));
     document.getElementById('paste-name')?.addEventListener('input', schedulePasteDraftSave);
     updateDirectInputEditorState();
     updatePasteDiagnostics();
@@ -2886,10 +2898,32 @@ function updateDirectInputEditorState() {
     if (count) count.textContent = `${value.length.toLocaleString()}자 · ${bytes < 1024 ? `${bytes}B` : `${(bytes / 1024).toFixed(1)}KB`}`;
 }
 
-function syncPasteEditorScroll() {
+function syncPasteEditorLineNumbers() {
     const ta = document.getElementById('paste-input');
     const lines = document.getElementById('paste-line-numbers');
     if (ta && lines) lines.scrollTop = ta.scrollTop;
+}
+
+/** 원문과 해석 미리보기의 세로 진행률을 양방향으로 맞춘다. */
+function syncPasteWorkbenchScroll(origin) {
+    const source = document.getElementById('paste-input');
+    const preview = document.getElementById('paste-preview-output');
+    const enabled = document.getElementById('paste-scroll-sync')?.checked !== false;
+    if (!source || !preview) return;
+    if (origin === 'source') syncPasteEditorLineNumbers();
+    if (!enabled || pasteScrollSyncing) return;
+
+    const from = origin === 'preview' ? preview : source;
+    const to = origin === 'preview' ? source : preview;
+    const fromRange = from.scrollHeight - from.clientHeight;
+    const toRange = to.scrollHeight - to.clientHeight;
+    if (fromRange <= 1 || toRange <= 1) return;
+
+    pasteScrollSyncing = true;
+    const progress = Math.min(1, Math.max(0, from.scrollTop / fromRange));
+    to.scrollTop = progress * toRange;
+    if (origin === 'preview') syncPasteEditorLineNumbers();
+    window.requestAnimationFrame(() => { pasteScrollSyncing = false; });
 }
 
 let lastDiagnosticSignature = '';
@@ -3243,6 +3277,7 @@ function renderPastePreview(force = false) {
             </div>
         `;
         if (status) status.textContent = `${ext.toUpperCase()} 해석 완료 · ${summarizeIr(ir)}${truncated ? ' · 200개 블록까지 표시' : ''}`;
+        syncPasteWorkbenchScroll('source');
     } catch (err) {
         output.innerHTML = `
             <div class="paste-preview-error">

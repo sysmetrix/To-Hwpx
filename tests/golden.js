@@ -723,11 +723,26 @@ async function validateDirectInput(page) {
   const desktopWorkbench = await page.evaluate(() => {
     const editor = document.querySelector('.paste-editor')?.getBoundingClientRect();
     const preview = document.querySelector('.paste-preview-panel')?.getBoundingClientRect();
-    return editor && preview ? { editorX: editor.x, editorY: editor.y, previewX: preview.x, previewY: preview.y } : null;
+    const editorBody = document.querySelector('.paste-editor-body')?.getBoundingClientRect();
+    const previewOutput = document.querySelector('.paste-preview-output')?.getBoundingClientRect();
+    return editor && preview && editorBody && previewOutput ? {
+      editorX: editor.x,
+      editorY: editor.y,
+      editorWidth: editor.width,
+      previewX: preview.x,
+      previewY: preview.y,
+      previewWidth: preview.width,
+      editorWorkHeight: editorBody.height,
+      previewWorkHeight: previewOutput.height,
+    } : null;
   });
   assert(desktopWorkbench && desktopWorkbench.previewX > desktopWorkbench.editorX
     && Math.abs(desktopWorkbench.previewY - desktopWorkbench.editorY) < 10,
   'direct layout: 데스크톱에서 편집기와 미리보기가 나란히 배치되지 않음');
+  assert(Math.abs(desktopWorkbench.editorWidth - desktopWorkbench.previewWidth) <= 2
+    && Math.abs(desktopWorkbench.editorWorkHeight - desktopWorkbench.previewWorkHeight) <= 2
+    && desktopWorkbench.previewWorkHeight >= 360,
+  `direct layout: 입력·미리보기 작업 영역의 폭/높이가 균형적이지 않음 (${JSON.stringify(desktopWorkbench)})`);
   assert(await page.locator('#mode-paste .svc-beta-badge').count() === 0,
     'direct commercial: 직접 입력 탭에 베타 배지가 남아 있음');
   assert(await page.locator('.paste-notice--quality').isVisible(),
@@ -799,6 +814,52 @@ async function validateDirectInput(page) {
   await page.waitForFunction(() => document.querySelector('#paste-preview-status')?.textContent.includes('MD 해석 완료'));
   assert((await page.locator('#paste-preview-output').textContent()).includes('일반 모드 미리보기'),
     'direct: 일반 모드에서 직접 입력 미리보기가 동작하지 않음 (v4.10.6부터 정식 공개)');
+  const longMarkdown = Array.from({ length: 120 }, (_, index) =>
+    `## 항목 ${index + 1}\n\n이 문단은 입력과 미리보기의 스크롤 위치 연동을 검증합니다.`).join('\n\n');
+  await page.locator('#paste-input').fill(longMarkdown);
+  await page.waitForFunction(() => document.querySelector('#paste-preview-output')?.scrollHeight
+    > document.querySelector('#paste-preview-output')?.clientHeight * 2);
+  const sourceToPreview = await page.evaluate(async () => {
+    const source = document.querySelector('#paste-input');
+    const preview = document.querySelector('#paste-preview-output');
+    source.scrollTop = (source.scrollHeight - source.clientHeight) * 0.42;
+    source.dispatchEvent(new Event('scroll'));
+    await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    return {
+      source: source.scrollTop / (source.scrollHeight - source.clientHeight),
+      preview: preview.scrollTop / (preview.scrollHeight - preview.clientHeight),
+    };
+  });
+  assert(Math.abs(sourceToPreview.source - sourceToPreview.preview) < 0.03,
+    `direct scroll: 입력→미리보기 진행률이 연동되지 않음 (${JSON.stringify(sourceToPreview)})`);
+  const previewToSource = await page.evaluate(async () => {
+    const source = document.querySelector('#paste-input');
+    const preview = document.querySelector('#paste-preview-output');
+    preview.scrollTop = (preview.scrollHeight - preview.clientHeight) * 0.76;
+    preview.dispatchEvent(new Event('scroll'));
+    await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    return {
+      source: source.scrollTop / (source.scrollHeight - source.clientHeight),
+      preview: preview.scrollTop / (preview.scrollHeight - preview.clientHeight),
+      lines: document.querySelector('#paste-line-numbers').scrollTop,
+    };
+  });
+  assert(Math.abs(previewToSource.source - previewToSource.preview) < 0.03
+    && previewToSource.lines > 0,
+  `direct scroll: 미리보기→입력·줄 번호 진행률이 연동되지 않음 (${JSON.stringify(previewToSource)})`);
+  await page.locator('#paste-scroll-sync').uncheck();
+  const independentScroll = await page.evaluate(async () => {
+    const source = document.querySelector('#paste-input');
+    const preview = document.querySelector('#paste-preview-output');
+    const before = preview.scrollTop;
+    source.scrollTop = 0;
+    source.dispatchEvent(new Event('scroll'));
+    await new Promise(resolve => requestAnimationFrame(resolve));
+    return { before, after: preview.scrollTop };
+  });
+  assert(Math.abs(independentScroll.before - independentScroll.after) < 1,
+    'direct scroll: 연동을 끈 뒤에도 미리보기가 함께 움직임');
+  await page.locator('#paste-scroll-sync').check();
   assert(await page.locator('#paste-html-action').isVisible(),
     'direct: 일반 모드에서 HTML 복사/다운로드 버튼이 노출되지 않음 (v4.10.6부터 정식 공개)');
   await page.locator('#open-changelog').click();
