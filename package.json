@@ -1,12 +1,13 @@
 {
   "name": "to-hwpx",
-  "version": "4.21.1",
+  "version": "4.21.2",
   "private": true,
   "bin": {
     "tohwpx": "js/core/cli.js",
     "tohwpx-mcp": "js/core/mcp-server.js"
   },
   "scripts": {
+    "icons:build": "node scripts/gen-icons.js",
     "test:golden": "node tests/golden.js",
     "test:commercial": "node qa/commercial-gate.js",
     "test:accessibility": "node tests/browser-readiness.js accessibility",

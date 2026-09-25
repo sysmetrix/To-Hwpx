@@ -10,6 +10,45 @@
   },
   "phases": [
     {
+      "id": "phase-8",
+      "name": "브라우저·설치 환경별 아이콘 완성",
+      "status": "done",
+      "versions": [
+        "4.21.2"
+      ],
+      "prs": [
+        172
+      ],
+      "goal": "새 브랜드 심벌을 브라우저 탭, Windows 바로가기, iOS 홈 화면과 Android 설치 UI에서 각각 선명하고 안전하게 표시한다.",
+      "items": [
+        {
+          "title": "다중 크기 파비콘",
+          "status": "done",
+          "note": "SVG 우선과 16/32/48 PNG, 세 크기를 담은 ICO 폴백을 함께 선언한다."
+        },
+        {
+          "title": "Apple Touch 아이콘",
+          "status": "done",
+          "note": "180px 불투명 배경 자산을 별도로 생성해 투명 모서리가 검게 채워지는 문제를 막는다."
+        },
+        {
+          "title": "Android maskable 아이콘",
+          "status": "done",
+          "note": "전용 안전영역 SVG/512px PNG를 만들고 manifest의 일반 any 아이콘과 purpose를 분리한다."
+        },
+        {
+          "title": "재현 가능한 아이콘 빌드와 검증",
+          "status": "done",
+          "note": "단일 npm 명령으로 파생 자산을 만들고 PNG 크기·ICO 엔트리·HTML·manifest·서비스워커 연결을 golden에서 고정한다."
+        },
+        {
+          "title": "직전판 v4.21.1 고정 배포",
+          "status": "done",
+          "note": "아이콘 변경의 비상 복귀 대상으로 v4.21.1 정확한 커밋을 Pages 하위 경로에 격리한다."
+        }
+      ]
+    },
+    {
       "id": "phase-7",
       "name": "Survey 제품군 디자인·브랜드 정렬",
       "status": "done",
