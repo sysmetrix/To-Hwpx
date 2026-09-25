@@ -36,8 +36,8 @@ function startServer() {
   const { server, url } = await startServer();
   const browser = await chromium.launch();
   try {
-    for (const width of [1280, 1024, 768, 390]) {
-      const context = await browser.newContext({ viewport: { width, height: 900 } });
+    for (const [width, height] of [[1280, 900], [1147, 807], [1024, 768], [768, 900], [390, 844]]) {
+      const context = await browser.newContext({ viewport: { width, height } });
       await context.addInitScript(() => {
         localStorage.setItem('tohwpx_analytics_consent', 'denied');
         localStorage.setItem('tohwpx_autoDownload', 'false');
@@ -52,17 +52,24 @@ function startServer() {
       if (!actions || actions.x < -1 || actions.x + actions.width > width + 1) throw new Error(`${width}: start actions clipped`);
       const heroCopy = await page.locator('.hero-copy').boundingBox();
       const heroAction = await page.locator('.hero-action-area').boundingBox();
+      const header = await page.locator('.site-header').boundingBox();
       if (!heroCopy || !heroAction) throw new Error(`${width}: benchmark hero regions missing`);
       if (width >= 1024 && !(heroCopy.x < heroAction.x && Math.abs(heroCopy.y - heroAction.y) < 180)) {
         throw new Error(`${width}: desktop benchmark hero is not a two-column workspace`);
+      }
+      if (width >= 1024 && (!header || heroAction.y - (header.y + header.height) > 64)) {
+        throw new Error(`${width}x${height}: excessive whitespace between header and primary workspace`);
+      }
+      if (width >= 1024 && heroAction.y + heroAction.height > height - 24) {
+        throw new Error(`${width}x${height}: primary workspace is pushed below the first viewport`);
       }
       if (width <= 768 && !(heroCopy.y < heroAction.y && heroAction.x >= -1 && heroAction.x + heroAction.width <= width + 1)) {
         throw new Error(`${width}: mobile benchmark hero is not stacked or is clipped`);
       }
       const logoReady = await page.locator('.site-logo-mark').evaluate(image => image.complete && image.naturalWidth > 0);
       if (!logoReady) throw new Error(`${width}: benchmark logo did not load`);
-      if (width === 1280 || width === 390) {
-        await page.screenshot({ path: path.join(os.tmpdir(), `to-hwpx-workspace-${width}.png`), fullPage: true });
+      if (width === 1280 || width === 1147 || width === 390) {
+        await page.screenshot({ path: path.join(os.tmpdir(), `to-hwpx-workspace-${width}x${height}.png`), fullPage: true });
       }
       const blockingErrors = errors.filter(message => !message.includes("document is sandboxed and lacks the 'allow-same-origin' flag"));
       if (blockingErrors.length) throw new Error(`${width}: ${blockingErrors.join(' | ')}`);

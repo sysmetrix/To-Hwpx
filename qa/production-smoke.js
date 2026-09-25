@@ -6,7 +6,7 @@ const crypto = require('crypto');
 const primary = process.argv[2] || 'https://to-hwpx.vercel.app/';
 const mirror = process.argv[3] || 'https://sysmetrix.github.io/To-Hwpx/';
 const expectedVersion = JSON.parse(fs.readFileSync('package.json', 'utf8')).version;
-const legacyVersion = '4.21.2';
+const legacyVersion = '4.21.3';
 const vendorIntegrity = JSON.parse(fs.readFileSync('qa/vendor-integrity.json', 'utf8'));
 const vendorDirectoryProbes = Object.freeze({
     'js/vendor/pdfjs-6.3.289/cmaps/': Object.freeze([
