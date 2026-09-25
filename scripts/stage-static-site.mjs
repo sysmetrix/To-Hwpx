@@ -31,8 +31,8 @@ if (legacy) {
     const swPath = path.join(dest, 'sw.js');
     let sw = fs.readFileSync(swPath, 'utf8');
     sw = sw.replace(
-        "const CACHE_PREFIX = 'to-hwpx-v';\nconst CACHE_VERSION = 'to-hwpx-v4.21.4';",
-        "const CACHE_PREFIX = 'to-hwpx-legacy-v4.21.4-';\nconst CACHE_VERSION = 'to-hwpx-legacy-v4.21.4-cache';",
+        "const CACHE_PREFIX = 'to-hwpx-v';\nconst CACHE_VERSION = 'to-hwpx-v4.21.5';",
+        "const CACHE_PREFIX = 'to-hwpx-legacy-v4.21.5-';\nconst CACHE_VERSION = 'to-hwpx-legacy-v4.21.5-cache';",
     );
     fs.writeFileSync(swPath, sw);
 }

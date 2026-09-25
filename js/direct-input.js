@@ -51,6 +51,9 @@ function delimitedEvidence(text) {
         const counts = lines.map(line => count(line, candidate.delimiter));
         const positive = counts.filter(value => value > 0);
         if (positive.length >= Math.min(2, lines.length) && new Set(positive).size === 1) {
+            // 두 줄에 쉼표 하나씩 있는 일반 문장은 흔하다. 이를 2열 CSV로 오인하면
+            // 문장이 표로 바뀌므로, 쉼표 1개짜리는 최소 3행에서만 자동 적용한다.
+            if (candidate.delimiter === ',' && positive[0] === 1 && lines.length < 3) continue;
             return { label: candidate.label, columns: positive[0] + 1 };
         }
     }

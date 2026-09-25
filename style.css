@@ -47,20 +47,21 @@
     /* 아래 값들은 사이트 전체에 재사용되는 디자인 변수입니다.
        비개발자는 이 영역의 색상/숫자 값만 바꾸는 것이 가장 안전합니다. */
 
-    /* Survey 서비스군과 공유하는 슬레이트 블루 — 차분한 공공 업무 도구 인상 */
-    --c-primary:        #3b5a7a;
-    --c-primary-dark:   #2f4863;
-    --c-primary-light:  #e4eaf1;
+    /* To HWPX 전용 제이드 — Survey의 슬레이트 블루와 제품 인상을 분리 */
+    --c-primary:        #146c63;
+    --c-primary-dark:   #0f514b;
+    --c-primary-light:  #e2f1ed;
+    --c-primary-action: #146c63;
+    --c-primary-action-hover: #0f514b;
 
-    /* 액센트 — 퍼플 은퇴, 포인트는 블루 하나로 통일.
-       (변수명은 JS/레거시 호환을 위해 유지하되 값은 블루 계열로 매핑) */
-    --c-accent:         #2a78d6;
-    --c-accent-light:   #e3edf8;
+    /* 변환 화살표와 핵심 강조에만 쓰는 귤색 액센트 */
+    --c-accent:         #d36b32;
+    --c-accent-light:   #f6e6dc;
 
     /* 배경 계층 (따뜻한 오프화이트) */
-    --c-bg:             #f7f8fa;    /* Survey와 같은 차가운 업무용 캔버스 */
+    --c-bg:             #f7f8f5;    /* 종이와 잘 어울리는 옅은 뉴트럴 그린 */
     --c-surface:        #ffffff;    /* 카드/패널 배경 */
-    --c-surface-alt:    #eef1f4;    /* 구분용 옅은 슬레이트 */
+    --c-surface-alt:    #edf2ef;    /* 구분용 옅은 제이드 그레이 */
 
     /* 텍스트 (차콜 계열) */
     --c-text:           #0a0a0a;    /* 본문 — Survey 제품군 공통 뉴트럴 */
@@ -68,9 +69,9 @@
     --c-text-muted:     #63707d;    /* 비활성·보조 (WCAG AA) */
 
     /* 테두리 (얇은 헤어라인) */
-    --c-border:         #dce2e8;
-    --c-border-strong:  #c3ccd5;
-    --c-border-focus:   #2a78d6;
+    --c-border:         #d9e2dd;
+    --c-border-strong:  #bdcbc4;
+    --c-border-focus:   #d36b32;
 
     /* 상태 색상 (성공·오류만 제한적으로 사용) */
     --c-success:        #047857;
@@ -205,24 +206,26 @@
 :root[data-theme="dark"] {
     color-scheme: dark;   /* 스크롤바·select·number 스피너를 네이티브 다크로 */
 
-    --c-primary:        #5885aa;
-    --c-primary-dark:   #70a0c5;   /* 다크에선 hover가 더 밝아야 자연스럽다 */
-    --c-primary-light:  rgba(70, 112, 143, 0.24);
+    --c-primary:        #54b8aa;
+    --c-primary-dark:   #78d1c4;   /* 다크 표면 위 텍스트·테두리는 더 밝게 */
+    --c-primary-light:  rgba(45, 139, 126, 0.24);
+    --c-primary-action: #146c63;
+    --c-primary-action-hover: #0f514b;
 
-    --c-accent:         #3987e5;
-    --c-accent-light:   rgba(57, 135, 229, 0.16);
+    --c-accent:         #f09a64;
+    --c-accent-light:   rgba(240, 154, 100, 0.16);
 
-    --c-bg:             #0b0d10;
-    --c-surface:        #14171b;
-    --c-surface-alt:    #1a1e23;
+    --c-bg:             #0b0f0e;
+    --c-surface:        #121817;
+    --c-surface-alt:    #19211f;
 
     --c-text:           #f1f3f5;
     --c-text-sub:       #c5cbd1;
     --c-text-muted:     #8f98a2;   /* WCAG AA: 다크 표면 위 ≥4.6:1 */
 
-    --c-border:         #2b3138;
-    --c-border-strong:  #3c434c;
-    --c-border-focus:   #3987e5;
+    --c-border:         #2b3834;
+    --c-border-strong:  #3d4c47;
+    --c-border-focus:   #f09a64;
 
     --c-success:        #34d399;
     --c-success-light:  rgba(52, 211, 153, 0.16);
@@ -1521,6 +1524,24 @@ a:hover { text-decoration: underline; }
     min-width: 0;
     font-weight: 600;
 }
+.adv-summary-guide {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+    color: var(--c-text-sub);
+    font-size: var(--fs-2xs);
+    font-weight: 600;
+    white-space: nowrap;
+}
+.adv-summary-guide b {
+    padding: 3px 7px;
+    border-radius: 999px;
+    background: var(--c-primary-light);
+    color: var(--c-primary);
+    font-size: inherit;
+}
+.adv-summary-guide small { color: var(--c-text-muted); font-size: inherit; }
 /* 구형 .adv-summary-note 호환 유지 */
 .adv-summary-note {
     margin-left: auto;
@@ -3245,12 +3266,13 @@ a:hover { text-decoration: underline; }
     border-top: 1px solid var(--c-border);
     padding-top: 14px;
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
     flex-wrap: wrap;
     gap: 8px;
     font-size: 0.78rem;
     color: var(--c-text-sub);
+    text-align: center;
 }
 .footer-bottom strong { color: var(--c-text-sub); font-weight: 750; }
 
@@ -3309,6 +3331,7 @@ a:hover { text-decoration: underline; }
     .advanced-settings-grid { grid-template-columns: 1fr; }
     .detail-settings-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .advanced-settings summary { align-items: flex-start; }
+    .adv-summary-guide small { display: none; }
     .adv-summary-note { display: none; }
     .margin-paper-map {
         grid-template-columns: minmax(140px, 0.55fr) minmax(0, 1fr);
@@ -6015,6 +6038,21 @@ a:hover { text-decoration: underline; }
     background: var(--c-primary-light);
 }
 .paste-format-detection.is-locked { color: var(--c-text-sub); }
+.paste-detection-mode {
+    flex-shrink: 0;
+    padding: 2px 7px;
+    border-radius: 999px;
+    background: var(--c-primary-light);
+    color: var(--c-primary);
+    font-size: var(--fs-2xs);
+    font-weight: 800;
+    white-space: nowrap;
+}
+.paste-format-detection.is-locked .paste-detection-mode {
+    background: var(--c-surface);
+    color: var(--c-text-sub);
+}
+#paste-format-recommendation { flex: 1; min-width: 0; }
 .paste-format-detection button,
 .paste-editor-toolbar button,
 .paste-find-panel button,
@@ -6039,7 +6077,7 @@ a:hover { text-decoration: underline; }
 }
 .paste-editor:focus-within {
     border-color: var(--c-primary);
-    box-shadow: 0 0 0 3px rgba(56, 108, 255, 0.15);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--c-primary) 24%, transparent);
 }
 .paste-editor-toolbar,
 .paste-editor-status {
@@ -7029,7 +7067,7 @@ button.paste-diagnostic { cursor: pointer; }
     margin-left: 5px;
     padding: 2px 6px;
     border-radius: 999px;
-    background: rgba(255,255,255,.18);
+    background: rgba(0,0,0,.16);
     color: #fff;
     font-size: .62rem;
     font-weight: 750;
@@ -7372,12 +7410,63 @@ body.is-admin .util-changelog-btn { cursor: pointer; }
 .hero .start-action--primary > span { color: #fff; }
 .hero .start-action--primary .start-action-badge { color: #fff; }
 :root[data-theme="dark"] .hero .start-action--primary {
-    border-color: #3b5a7a;
-    background: #3b5a7a;
+    border-color: var(--c-primary-action);
+    background: var(--c-primary-action);
 }
 :root[data-theme="dark"] .hero .start-action--primary:hover {
-    border-color: #2f4863;
-    background: #2f4863;
+    border-color: var(--c-primary-action-hover);
+    background: var(--c-primary-action-hover);
+}
+
+/* 다크 테마는 밝은 제이드를 링크·테두리에, 짙은 제이드를 흰 글자 CTA에 사용한다. */
+:root[data-theme="dark"] :is(
+    .skip-link,
+    .advanced-settings summary:hover .adv-chevron,
+    .toggle-input:checked ~ .toggle-switch,
+    #detected-format,
+    .btn-convert,
+    .step-active .step-dot,
+    .btn-hwpx-converter,
+    .support-table th,
+    .onboarding-steps li::before,
+    .btn-primary-lite,
+    .font-guide-actions a,
+    .btn-skip-rhwp:hover,
+    .fallback-download,
+    .changelog-lab-toggle[aria-pressed="true"] .changelog-lab-toggle-track,
+    .admin-feature-toggle[aria-pressed="true"] .admin-feature-toggle-track,
+    .changelog-ver-badge,
+    .fmt-modal-link-btn,
+    .btn-primary,
+    .paste-format-btn.is-active,
+    .paste-copy-btn--primary,
+    .analytics-consent-controls button[data-analytics-consent="granted"],
+    .rm-phase--done .rm-phase-badge,
+    .nav-shortcut-btn.has-nudge::after,
+    .workspace-steps button.is-current span,
+    .start-action--primary,
+    .prepare-continue,
+    .history-new-button,
+    .hero-flow .is-current span,
+    .hero .drop-zone .drop-icon,
+    .hero .start-action--primary
+) {
+    border-color: var(--c-primary-action);
+    background: var(--c-primary-action);
+}
+:root[data-theme="dark"] .nav-related-link:hover {
+    border-color: var(--c-primary-action) !important;
+    background: var(--c-primary-action) !important;
+}
+:root[data-theme="dark"] :is(
+    .btn-convert:hover:not(:disabled),
+    .font-guide-actions a:hover,
+    .start-action--primary:hover,
+    .history-new-button:hover,
+    .hero .start-action--primary:hover
+) {
+    border-color: var(--c-primary-action-hover);
+    background: var(--c-primary-action-hover);
 }
 .hero .sample-panel { width: 100%; margin-top: 22px; }
 

@@ -2,17 +2,17 @@
   <!-- 헤더용 투명 심벌: 겹친 문서(입력) → 화살표(변환) → 전면 문서(HWPX). -->
   <defs>
     <linearGradient id="l-back" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#dceaf8"/><stop offset="1" stop-color="#94b6d6"/>
+      <stop offset="0" stop-color="#dcebe6"/><stop offset="1" stop-color="#8fc4b8"/>
     </linearGradient>
     <linearGradient id="l-front" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#48698d"/><stop offset="1" stop-color="#2f4863"/>
+      <stop offset="0" stop-color="#1b7b70"/><stop offset="1" stop-color="#0f514b"/>
     </linearGradient>
     <linearGradient id="l-fold" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#b6f0ff"/><stop offset="1" stop-color="#3e9bea"/>
+      <stop offset="0" stop-color="#f6c5a9"/><stop offset="1" stop-color="#d36b32"/>
     </linearGradient>
   </defs>
   <path d="M62 166h204l66 66v210H62z" fill="url(#l-back)"/>
-  <path d="M102 126h208l66 66v230H102z" fill="#94b6d6"/>
+  <path d="M102 126h208l66 66v230H102z" fill="#69a99d"/>
   <path d="M148 80h208l76 76v276H148z" fill="url(#l-front)"/>
   <path d="M356 80v84h84" fill="url(#l-fold)"/>
   <path d="M204 238h98v-42l84 60-84 60v-42h-98z" fill="#fff"/>
