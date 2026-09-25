@@ -5,8 +5,8 @@ const path = require('node:path');
 const { execFileSync } = require('node:child_process');
 
 const ROOT = path.resolve(__dirname, '..');
-const LEGACY_VERSION = '4.21.2';
-const LEGACY_COMMIT = '6204946ef155103617c9fc39b5e74cb30dcd183f';
+const LEGACY_VERSION = '4.21.3';
+const LEGACY_COMMIT = '8de8a3832566e757600e6a92d8424b7759f9bd94';
 
 function assert(condition, message) {
     if (!condition) throw new Error(message);
@@ -31,11 +31,11 @@ assert(workflow.includes(`legacy/v${LEGACY_VERSION}`), 'Pages 워크플로의 �
 assert(stageScript.includes('to-hwpx-legacy-'), '레거시 서비스워커 캐시 격리 누락');
 assert(archivedSw.includes('key.startsWith(CACHE_PREFIX)'), '고정 커밋 서비스워커 캐시 삭제 범위 격리 누락');
 const stagedLegacySw = archivedSw.replace(
-    "const CACHE_PREFIX = 'to-hwpx-v';\nconst CACHE_VERSION = 'to-hwpx-v4.21.2';",
-    "const CACHE_PREFIX = 'to-hwpx-legacy-v4.21.2-';\nconst CACHE_VERSION = 'to-hwpx-legacy-v4.21.2-cache';",
+    "const CACHE_PREFIX = 'to-hwpx-v';\nconst CACHE_VERSION = 'to-hwpx-v4.21.3';",
+    "const CACHE_PREFIX = 'to-hwpx-legacy-v4.21.3-';\nconst CACHE_VERSION = 'to-hwpx-legacy-v4.21.3-cache';",
 );
 assert(stagedLegacySw !== archivedSw, '고정 커밋 서비스워커 패치가 실제 원문과 일치하지 않음');
-assert(stagedLegacySw.includes("const CACHE_VERSION = 'to-hwpx-legacy-v4.21.2-cache'"), '레거시 캐시 버전 패치 실패');
+assert(stagedLegacySw.includes("const CACHE_VERSION = 'to-hwpx-legacy-v4.21.3-cache'"), '레거시 캐시 버전 패치 실패');
 assert(stagedLegacySw.includes('key.startsWith(CACHE_PREFIX)'), '레거시 캐시 삭제 범위 패치 실패');
 
 console.log(`PASS LEGACY v${LEGACY_VERSION} exact commit · link · isolated cache`);

@@ -7095,7 +7095,10 @@ body[data-workspace-route="result"] .progress-panel { max-width: 1100px; margin-
 body.is-admin .util-changelog-btn { cursor: pointer; }
 
 .hero {
-    padding: clamp(42px, 6vw, 76px) 0 clamp(44px, 6vw, 72px);
+    /* 첫 화면은 문서 선택 작업면이 헤더와 바로 연결돼 보여야 한다.
+       가로 폭 기반 6vw 여백은 노트북에서 세로 여백까지 과도하게 키우므로
+       데스크톱 상단은 28~44px, 하단은 36~56px 범위로 제한한다. */
+    padding: clamp(28px, 3vw, 44px) 0 clamp(36px, 4vw, 56px);
     text-align: left;
     background-color: var(--c-bg);
     background-image: radial-gradient(circle, color-mix(in srgb, var(--c-primary) 10%, transparent) 1px, transparent 1px);
@@ -7106,7 +7109,9 @@ body.is-admin .util-changelog-btn { cursor: pointer; }
     grid-template-columns: minmax(0, 1.08fr) minmax(500px, .92fr);
     align-items: center;
     gap: clamp(44px, 6vw, 88px);
-    min-height: min(720px, calc(100vh - 130px));
+    /* 카드보다 큰 뷰포트 최소 높이를 주고 가운데 정렬하면 헤더 아래에
+       의미 없는 빈 띠가 생긴다. 콘텐츠 높이를 기준으로 자연스럽게 배치한다. */
+    min-height: 0;
 }
 .hero-copy { min-width: 0; }
 .hero .hero-eyebrow {
