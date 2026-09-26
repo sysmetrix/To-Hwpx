@@ -849,11 +849,11 @@
       "date": "2026-07-12",
       "user": [
         "오픈소스·글꼴 고지를 읽기 쉬운 전용 웹 문서로 바꾸고 개인정보처리방침·이용약관·푸터에서 같은 화면으로 연결했습니다.",
-        "서비스 화면에서 GitHub와 부천여성청소년재단으로 이동하는 링크를 제거했습니다."
+        "서비스 화면에서 GitHub와 외부 기관 사이트로 이동하는 링크를 제거했습니다."
       ],
       "dev": [
         "[v4.13.1] .gitattributes: Windows core.autocrlf 환경에서도 js/vendor 원본 바이트와 SHA-256이 유지되도록 -text 적용",
-        "[v4.13.1] notices.html/index.html/privacy.html/terms.html: Markdown 직접 링크를 반응형 HTML 고지로 교체하고 GitHub/BWYF 사용자 링크 제거",
+        "[v4.13.1] notices.html/index.html/privacy.html/terms.html: Markdown 직접 링크를 반응형 HTML 고지로 교체하고 GitHub/기관 사용자 링크 제거",
         "[v4.13.1] vercel.json/.vercelignore: 기존 THIRD_PARTY_NOTICES.md URL을 notices.html로 영구 이동하고 Markdown 직접 배포 제외",
         "[v4.13.1] sw.js/pages.yml/sitemap.xml: notices.html의 오프라인 캐시·Pages 배포·검색 경로 추가",
         "[v4.13.1] commercial/golden/axe/production smoke: 외부 링크 재유입, 고지 접근성, 기존 URL 이동 회귀 검사 추가"
@@ -3646,7 +3646,7 @@
       "version": "4.3.12",
       "date": "2026-06-21",
       "user": [
-        "상단 안내 띠(｢BWYF｣ AX Challenger)의 배경을 페이지 맨 아래 저작권 영역과 같은 차분한 차콜 색으로 맞춰 화면 위아래 톤을 통일했습니다"
+        "상단 안내 띠(AX Challenger)의 배경을 페이지 맨 아래 저작권 영역과 같은 차분한 차콜 색으로 맞춰 화면 위아래 톤을 통일했습니다"
       ],
       "dev": [
         "[v4.3.12] style.css: .utility-bar 배경을 var(--c-primary)에서 푸터와 동일한 #1b1c20으로 변경",
@@ -4185,7 +4185,7 @@
         "변환 시작 시 진행 패널로 자동 스크롤",
         "상단 연계 서비스 링크에 마우스 올리면 서비스 설명 표시",
         "★ 즐겨찾기 버튼 추가 (단축키 Ctrl+D / ⌘D 안내)",
-        "페이지 제목 변경: To HWPX - ｢BWYF｣ AX Challenger",
+        "페이지 제목 변경: To HWPX - AX Challenger",
         "포맷 카드를 클릭하면 지원 기능과 제한사항을 확인할 수 있습니다",
         "KoPub돋움체 Medium 폰트 추가",
         "표 변환 품질 개선: 자동 쪽 넘김, 제목 행 반복, 셀 정렬",
@@ -4255,7 +4255,7 @@
       "dev": [
         "JSZip 3.10.1, marked.js 9.1.6, SheetJS 0.18.5 CDN 통합",
         "HWPX ZIP+XML 패키징 구현 (mimetype ZIP_STORED 규칙)",
-        "부천여성청소년재단 홈페이지 디자인 참조 UI 구성"
+        "공공기관 홈페이지 디자인 참조 UI 구성"
       ]
     }
   ]

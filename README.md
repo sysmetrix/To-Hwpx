@@ -1,6 +1,6 @@
 # To HWPX
 
-｢BWYF｣ AX Challenger 2026 프로젝트로 제작된 브라우저에서 바로 실행되는 문서 변환기입니다. Markdown, DOCX, HTML 등 다양한 포맷을 한글 오피스(.hwpx) 파일로 변환합니다.
+AX Challenger 2026 프로젝트로 제작된 브라우저에서 바로 실행되는 문서 변환기입니다. Markdown, DOCX, HTML 등 다양한 포맷을 한글 오피스(.hwpx) 파일로 변환합니다.
 
 **정식 운영 주소:** https://to-hwpx.vercel.app/
 
@@ -168,4 +168,4 @@ MIT License — 자유롭게 사용, 수정, 배포할 수 있습니다.
 
 운영·장애 대응 기준은 [OPERATIONS.md](./OPERATIONS.md), 수동 출시 승인은 [qa/manual-release-evidence-template.md](./qa/manual-release-evidence-template.md)를 사용합니다.
 
-© 2026 BWYF / sysmetrix
+© 2026 sysmetrix

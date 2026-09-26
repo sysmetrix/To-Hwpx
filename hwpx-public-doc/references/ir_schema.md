@@ -99,7 +99,7 @@
     {"type": "heading", "level": 1, "text": "1. 목적"},
     {"type": "para", "text": "사업의 효율적 추진을 위함."},
     {"type": "list", "items": ["기간: 3월~11월", "대상: 15명"]},
-    {"type": "table", "header": ["부서", "인원"], "rows": [["전략경영실", "3명"]]},
+    {"type": "table", "header": ["부서", "인원"], "rows": [["기획팀", "3명"]]},
     {"type": "para", "text": "붙임. 세부계획서 1부.  끝."}
   ]
 }
